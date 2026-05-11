@@ -1,8 +1,10 @@
-# 🕰️ Stash
+# 🛟 SmartRecover
 
-> Workspace time machine. Snapshots your terminals, tmux sessions, browser tabs, clipboard and shell history on a schedule. When something hangs or crashes, scrub back through history and recover what you lost.
+> When your machine crashes, freezes or hangs — pick up exactly where you left off.
 
-A terminal-first "git for your desktop." Zero dependencies, single file, pure Python stdlib.
+SmartRecover quietly snapshots your terminals, tmux sessions, browser tabs, clipboard and shell history every few minutes. After a crash or reboot, scrub back through the timeline in a TUI and restore what you lost.
+
+Zero dependencies. Single file. Pure Python stdlib.
 
 ---
 
@@ -17,21 +19,21 @@ A terminal-first "git for your desktop." Zero dependencies, single file, pure Py
 | **Clipboard** | Current clipboard text (via `wl-paste` / `xclip` / `xsel`) |
 | **Shell history** | Last 200 commands from bash, zsh, fish |
 
-All optional. Stash gracefully degrades when helpers (tmux, wmctrl, xclip…) aren't installed.
+All optional. SmartRecover gracefully degrades when helpers aren't installed.
 
 ---
 
 ## 🚀 Quick start
 
 ```bash
-# One snapshot, right now
-python3 stash.py save "before-meeting"
+# Take one snapshot, right now
+python3 smartrecover.py save "before-meeting"
 
 # Browse all snapshots in the TUI
-python3 stash.py
+python3 smartrecover.py
 
 # Auto-snapshot every 10 minutes in the background
-python3 stash.py daemon &
+python3 smartrecover.py daemon &
 ```
 
 That's it. No config, no setup, no dependencies.
@@ -41,7 +43,7 @@ That's it. No config, no setup, no dependencies.
 ## 📺 The TUI
 
 ```
- Stash — Workspace Time Machine   12 snapshots
+ SmartRecover — Pick up where you left off   12 snapshots
 ────────────────────────────────────────────────────────────────────
  ● 05-11 14:32  before-meeting   │ Snapshot #12  [manual]  before-meeting
  ○ 05-11 14:15  auto             │   2026-05-11 14:32  ·  3m ago
@@ -71,19 +73,21 @@ That's it. No config, no setup, no dependencies.
 ## 💻 Command reference
 
 ```bash
-stash                       # launch the TUI
-stash save [name]           # take a manual snapshot
-stash list                  # list snapshots
-stash show <id>             # full details of one snapshot
-stash restore <id>          # restore everything from snapshot id
-stash restore <id> --tmux   # restore only tmux sessions
-stash restore <id> --browser
-stash restore <id> --clipboard
-stash search "rebase -i"    # grep across every snapshot ever taken
-stash daemon --interval 600 # autosaver, every 10 min (default)
-stash prune --keep 50       # delete all but newest 50 snapshots
-stash where                 # print the SQLite db path
+smartrecover                       # launch the TUI
+smartrecover save [name]           # take a manual snapshot
+smartrecover list                  # list snapshots
+smartrecover show <id>             # full details of one snapshot
+smartrecover restore <id>          # restore everything from snapshot id
+smartrecover restore <id> --tmux   # restore only tmux sessions
+smartrecover restore <id> --browser
+smartrecover restore <id> --clipboard
+smartrecover search "rebase -i"    # grep across every snapshot ever taken
+smartrecover daemon --interval 600 # autosaver, every 10 min (default)
+smartrecover prune --keep 50       # delete all but newest 50 snapshots
+smartrecover where                 # print the SQLite db path
 ```
+
+Tip: add a shell alias `alias sr='python3 /path/to/smartrecover.py'` so you can just type `sr`.
 
 ---
 
@@ -91,35 +95,35 @@ stash where                 # print the SQLite db path
 
 | Layer | What "restore" does |
 |-------|---------------------|
-| **tmux** | Spins up new tmux sessions (prefixed `stash-`) with original CWDs and pane layout. Attach with `tmux attach -t stash-…` |
+| **tmux** | Spins up new tmux sessions (prefixed `sr-`) with original CWDs and pane layout. Attach with `tmux attach -t sr-…` |
 | **Browser tabs** | Writes a clickable HTML page with all captured URLs and opens it in your default browser |
 | **Clipboard** | Pipes the saved text back into your clipboard via `wl-copy` / `xclip` / `xsel` |
 | **Processes** | Not auto-launched (too risky). Shown so you remember what you had open. |
 
-Stash favours *recoverable evidence* over *automated chaos*. It won't relaunch a misbehaving app for you, but it'll show you exactly what was running and where.
+SmartRecover favours *recoverable evidence* over *automated chaos*. It won't relaunch a misbehaving app for you, but it'll show you exactly what was running and where.
 
 ---
 
 ## 🔁 The crash recovery workflow
 
 ```bash
-# One-time: start the daemon at login (systemd user unit, .bashrc, etc.)
-python3 stash.py daemon --interval 300 &
+# One-time: start the daemon at login (.bashrc, systemd --user, etc.)
+python3 smartrecover.py daemon --interval 300 &
 
 # ...machine crashes / freezes / you reboot...
 
 # After reboot:
-stash                       # browse the timeline
-                            # → find the snapshot from just before the crash
-                            # → press r to restore tmux, browser tabs, clipboard
-                            # → done.
+smartrecover                        # browse the timeline
+                                    # → find the snapshot from just before the crash
+                                    # → press r to restore tmux, browser tabs, clipboard
+                                    # → done.
 ```
 
 Or, if you just want to recover one lost thing:
 
 ```bash
-stash search "the command I lost"
-stash search "the URL I had open"
+smartrecover search "the command I lost"
+smartrecover search "the URL I had open"
 ```
 
 ---
@@ -127,19 +131,19 @@ stash search "the URL I had open"
 ## 📂 Where things live
 
 ```
-~/.local/share/stash/
-├── stash.db        SQLite — all snapshots + captured data
-├── blobs/          (reserved for future binary captures)
-└── daemon.lock     PID file when the daemon is running
+~/.local/share/smartrecover/
+├── smartrecover.db   SQLite — all snapshots + captured data
+├── blobs/            (reserved for future binary captures)
+└── daemon.lock       PID file when the daemon is running
 ```
 
-Snapshots are tiny (a few KB each typically). 1000 snapshots ≈ a few MB.
+Snapshots are tiny (a few KB each). 1000 snapshots ≈ a few MB.
 
 ---
 
 ## 🤔 Why not just use tmux-resurrect?
 
-`tmux-resurrect` only saves your latest tmux state, and only tmux. Stash gives you a full **timeline** across tmux + browser + clipboard + shell history, so you can travel back to "3 hours ago, before I closed those tabs."
+`tmux-resurrect` only saves your latest tmux state, and only tmux. SmartRecover gives you a full **timeline** across tmux + browser + clipboard + shell history, so you can travel back to "3 hours ago, before I closed those tabs."
 
 ---
 
