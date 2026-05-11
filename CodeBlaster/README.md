@@ -76,10 +76,10 @@ Single-file, zero-dependency game — everything in one `codeblaster.html`:
 codeblaster.html
 ├── HTML — HUD, start screen, game over screen, choice buttons
 ├── CSS — Dark arcade theme, Orbitron font, neon animations
-└── JavaScript (~1600 lines)
+└── JavaScript (~1900 lines)
     ├── Canvas rendering (ship, asteroids, bullets, particles, stars, backgrounds)
     ├── Physics (wobble, gravity, easing, collision)
-    ├── Question bank (100+ questions across 9 languages)
+    ├── Question bank (400+ questions across 9 languages)
     ├── Scoring (combos, streaks, levels, high score)
     └── Game state machine (idle → playing → over)
 ```
