@@ -18,7 +18,7 @@ Inspired by [Scott Hanselman's TinyToolTown](https://tinytooltown.com) — _"Vib
 | [**WingetDiff**](./WingetDiff/) | Diff two `winget export` JSON files with a gorgeous terminal UI | C# / .NET 8 | Windows |
 | [**JumpDir**](./JumpDir/) | Interactive fuzzy directory navigator for your terminal | Python 3 | Windows / macOS / Linux |
 | [**CodeBlaster**](./CodeBlaster/) | Arcade game — shoot falling code asteroids with the correct keyword | HTML / JS | Any browser |
-| [**Stash**](./Stash/) | Workspace time machine — snapshot tmux / browser / clipboard, scrub back through history when something crashes | Python 3 | Linux |
+| [**SmartRecover**](./SmartRecover/) | When your machine crashes — pick up where you left off. Snapshots tmux / browser / clipboard on a schedule, restores from any past timeline state | Python 3 | Linux |
 
 ---
 
@@ -55,11 +55,11 @@ python jumpdir.py --make-bat   # Windows one-time setup
 j                               # Launch interactive picker
 ```
 
-### Stash
+### SmartRecover
 ```bash
-cd Stash
-python3 stash.py daemon &       # autosave every 10 min in the background
-python3 stash.py                # browse the timeline — restore tmux, tabs, clipboard
+cd SmartRecover
+python3 smartrecover.py daemon &   # autosave every 10 min in the background
+python3 smartrecover.py            # browse the timeline — restore tmux, tabs, clipboard
 ```
 
 ---

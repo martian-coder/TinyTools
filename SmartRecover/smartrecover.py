@@ -1,23 +1,24 @@
 #!/usr/bin/env python3
 """
-Stash — Workspace Time Machine.
+SmartRecover — Workspace recovery for when things crash.
 
 Snapshots your terminals, tmux sessions, browser tabs, clipboard, shell
-history and running apps on a schedule. Browse the timeline in a TUI and
-recover what you lost when something crashed.
+history and running apps on a schedule. When something hangs, freezes or
+reboots, scrub back through the timeline in a TUI and pick up exactly
+where you left off.
 
 Zero dependencies. Pure Python stdlib.
 
 Usage:
-  stash                       launch interactive timeline TUI
-  stash save [name]           take a manual snapshot (optionally named)
-  stash list                  list all snapshots
-  stash show <id>             show full details of a snapshot
-  stash restore <id>          interactively restore from a snapshot
-  stash search <text>         grep across all captured terminal/clipboard text
-  stash daemon [--interval N] run the autosaver (default every 600s)
-  stash prune --keep N        keep newest N snapshots, delete the rest
-  stash where                 print the database path
+  smartrecover                       launch interactive timeline TUI
+  smartrecover save [name]           take a manual snapshot (optionally named)
+  smartrecover list                  list all snapshots
+  smartrecover show <id>             show full details of a snapshot
+  smartrecover restore <id>          interactively restore from a snapshot
+  smartrecover search <text>         grep across all captured terminal/clipboard text
+  smartrecover daemon [--interval N] run the autosaver (default every 600s)
+  smartrecover prune --keep N        keep newest N snapshots, delete the rest
+  smartrecover where                 print the database path
 
 Designed for Linux (X11/Wayland). Gracefully degrades when optional helpers
 (tmux, wmctrl, xclip, xsel, wl-paste) are missing.
@@ -41,9 +42,9 @@ from typing import Any
 # Paths & constants
 # ---------------------------------------------------------------------------
 
-APP = "stash"
+APP = "smartrecover"
 DATA_DIR = Path(os.environ.get("XDG_DATA_HOME", Path.home() / ".local" / "share")) / APP
-DB_PATH = DATA_DIR / "stash.db"
+DB_PATH = DATA_DIR / "smartrecover.db"
 BLOB_DIR = DATA_DIR / "blobs"
 LOCK_PATH = DATA_DIR / "daemon.lock"
 
@@ -494,7 +495,7 @@ def restore_tmux(snap: dict, confirm=True) -> int:
         return 0
     restored = 0
     for sess in sessions:
-        sname = f"stash-{sess['name']}-{int(time.time()) % 10000}"
+        sname = f"sr-{sess['name']}-{int(time.time()) % 10000}"
         windows = sess.get("windows", [])
         if not windows:
             continue
@@ -525,7 +526,7 @@ def restore_browser(snap: dict) -> int:
         return 0
     out_path = DATA_DIR / f"restore-tabs-{snap['id']}.html"
     parts = ["<!doctype html><meta charset=utf-8>",
-             f"<title>Stash restore — snapshot {snap['id']}</title>",
+             f"<title>SmartRecover — snapshot {snap['id']}</title>",
              "<style>body{font:14px system-ui;max-width:800px;margin:2em auto;padding:0 1em}",
              "h2{border-bottom:1px solid #ccc;padding-bottom:.3em}",
              "li{margin:.3em 0}</style>",
@@ -663,7 +664,7 @@ def _clear():
 def tui():
     snaps = list_snapshots(500)
     if not snaps:
-        tprint(YELLOW("No snapshots yet. Run `stash save` or `stash daemon` first."))
+        tprint(YELLOW("No snapshots yet. Run `smartrecover save` or `smartrecover daemon` first."))
         return
 
     sel = 0
@@ -678,7 +679,7 @@ def tui():
         right_w = cols - left_w - 3
 
         _clear()
-        title = f" Stash — Workspace Time Machine   {DIM(str(len(snaps)) + ' snapshots')} "
+        title = f" SmartRecover — Pick up where you left off   {DIM(str(len(snaps)) + ' snapshots')} "
         tprint(BOLD(title))
         tprint("─" * cols)
 
@@ -929,7 +930,7 @@ def cmd_daemon(args):
     signal.signal(signal.SIGINT, _stop)
     signal.signal(signal.SIGTERM, _stop)
 
-    tprint(GREEN(f"stash daemon started (pid {os.getpid()}, interval {interval}s)"))
+    tprint(GREEN(f"smartrecover daemon started (pid {os.getpid()}, interval {interval}s)"))
     try:
         # take one immediately
         sid = take_snapshot(None, kind="auto")
@@ -952,7 +953,7 @@ def cmd_daemon(args):
             pass
     finally:
         LOCK_PATH.unlink(missing_ok=True)
-        tprint(GREEN("stash daemon stopped."))
+        tprint(GREEN("smartrecover daemon stopped."))
     return 0
 
 # ---------------------------------------------------------------------------
@@ -960,7 +961,8 @@ def cmd_daemon(args):
 # ---------------------------------------------------------------------------
 
 def build_parser() -> argparse.ArgumentParser:
-    p = argparse.ArgumentParser(prog="stash", description="Workspace time machine.")
+    p = argparse.ArgumentParser(prog="smartrecover",
+                                description="Smart recovery for your workspace — when things crash, pick up where you left off.")
     sub = p.add_subparsers(dest="cmd")
 
     sp = sub.add_parser("save", help="take a manual snapshot")
