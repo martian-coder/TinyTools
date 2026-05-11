@@ -132,12 +132,11 @@ smartrecover search "the URL I had open"
 
 ```
 ~/.local/share/smartrecover/
-├── smartrecover.db   SQLite — all snapshots + captured data
-├── blobs/            (reserved for future binary captures)
+├── snapshots.jsonl   one snapshot per line — open it in any editor
 └── daemon.lock       PID file when the daemon is running
 ```
 
-Snapshots are tiny (a few KB each). 1000 snapshots ≈ a few MB.
+A single human-readable file. No database, no binary blobs — just JSONL you can `grep`, `jq`, diff or version-control yourself. Snapshots are tiny (a few KB each). 1000 snapshots ≈ a few MB.
 
 ---
 

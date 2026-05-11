@@ -31,12 +31,17 @@ import json
 import os
 import shutil
 import signal
-import sqlite3
 import subprocess
 import sys
 import time
 from pathlib import Path
 from typing import Any
+
+try:
+    import fcntl
+    HAVE_FCNTL = True
+except ImportError:
+    HAVE_FCNTL = False
 
 # ---------------------------------------------------------------------------
 # Paths & constants
@@ -44,8 +49,7 @@ from typing import Any
 
 APP = "smartrecover"
 DATA_DIR = Path(os.environ.get("XDG_DATA_HOME", Path.home() / ".local" / "share")) / APP
-DB_PATH = DATA_DIR / "smartrecover.db"
-BLOB_DIR = DATA_DIR / "blobs"
+SNAPSHOTS_FILE = DATA_DIR / "snapshots.jsonl"
 LOCK_PATH = DATA_DIR / "daemon.lock"
 
 CAPTURE_KINDS = ("processes", "tmux", "windows", "browser", "clipboard", "history")
@@ -130,32 +134,49 @@ else:
 # Storage
 # ---------------------------------------------------------------------------
 
-SCHEMA = """
-CREATE TABLE IF NOT EXISTS snapshots (
-    id        INTEGER PRIMARY KEY AUTOINCREMENT,
-    ts        INTEGER NOT NULL,
-    name      TEXT,
-    kind      TEXT NOT NULL DEFAULT 'auto',
-    host      TEXT,
-    note      TEXT
-);
-CREATE TABLE IF NOT EXISTS captures (
-    snapshot_id INTEGER NOT NULL,
-    kind        TEXT NOT NULL,
-    data        TEXT NOT NULL,
-    PRIMARY KEY (snapshot_id, kind),
-    FOREIGN KEY (snapshot_id) REFERENCES snapshots(id) ON DELETE CASCADE
-);
-CREATE INDEX IF NOT EXISTS idx_snap_ts ON snapshots(ts);
-"""
+# Storage is a single append-only JSONL file. One snapshot per line.
+# An exclusive flock guards concurrent writes by the daemon and manual saves.
 
-def db() -> sqlite3.Connection:
+def _ensure_store() -> None:
     DATA_DIR.mkdir(parents=True, exist_ok=True)
-    BLOB_DIR.mkdir(parents=True, exist_ok=True)
-    conn = sqlite3.connect(str(DB_PATH))
-    conn.execute("PRAGMA foreign_keys=ON")
-    conn.executescript(SCHEMA)
-    return conn
+    if not SNAPSHOTS_FILE.exists():
+        SNAPSHOTS_FILE.touch()
+
+def _lock_ex(fh) -> None:
+    if HAVE_FCNTL:
+        fcntl.flock(fh.fileno(), fcntl.LOCK_EX)
+
+def _unlock(fh) -> None:
+    if HAVE_FCNTL:
+        fcntl.flock(fh.fileno(), fcntl.LOCK_UN)
+
+def _iter_snapshots():
+    """Yield every snapshot dict in the store, in file order (oldest first)."""
+    if not SNAPSHOTS_FILE.exists():
+        return
+    with open(SNAPSHOTS_FILE, "r", encoding="utf-8") as f:
+        for line in f:
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                yield json.loads(line)
+            except json.JSONDecodeError:
+                continue
+
+def _rewrite(snapshots) -> None:
+    """Atomically rewrite the store (used for delete / prune)."""
+    _ensure_store()
+    tmp = SNAPSHOTS_FILE.with_suffix(".jsonl.tmp")
+    with open(SNAPSHOTS_FILE, "r+", encoding="utf-8") as lock_fh:
+        _lock_ex(lock_fh)
+        try:
+            with open(tmp, "w", encoding="utf-8") as out:
+                for snap in snapshots:
+                    out.write(json.dumps(snap, ensure_ascii=False) + "\n")
+            os.replace(tmp, SNAPSHOTS_FILE)
+        finally:
+            _unlock(lock_fh)
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -432,53 +453,83 @@ CAPTURERS = {
 }
 
 def take_snapshot(name: str | None = None, kind: str = "manual", note: str = "") -> int:
-    conn = db()
-    ts = int(time.time())
-    cur = conn.execute(
-        "INSERT INTO snapshots (ts, name, kind, host, note) VALUES (?, ?, ?, ?, ?)",
-        (ts, name, kind, hostname(), note),
-    )
-    snap_id = cur.lastrowid
+    _ensure_store()
+    # Capture first, then write under lock — keeps the critical section short.
+    captures: dict[str, Any] = {}
     for ckind, fn in CAPTURERS.items():
         try:
-            data = fn()
+            captures[ckind] = fn()
         except Exception as e:
-            data = {"error": f"{type(e).__name__}: {e}"}
-        conn.execute(
-            "INSERT INTO captures (snapshot_id, kind, data) VALUES (?, ?, ?)",
-            (snap_id, ckind, json.dumps(data)),
-        )
-    conn.commit()
-    conn.close()
-    return snap_id
+            captures[ckind] = {"error": f"{type(e).__name__}: {e}"}
+
+    with open(SNAPSHOTS_FILE, "r+", encoding="utf-8") as f:
+        _lock_ex(f)
+        try:
+            # Determine next id by scanning current file (under the lock).
+            max_id = 0
+            for line in f:
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    obj = json.loads(line)
+                    if obj.get("id", 0) > max_id:
+                        max_id = obj["id"]
+                except json.JSONDecodeError:
+                    continue
+            sid = max_id + 1
+            snap = {
+                "id": sid,
+                "ts": int(time.time()),
+                "name": name,
+                "kind": kind,
+                "host": hostname(),
+                "note": note,
+                "captures": captures,
+            }
+            f.seek(0, os.SEEK_END)
+            f.write(json.dumps(snap, ensure_ascii=False) + "\n")
+            f.flush()
+            os.fsync(f.fileno())
+            return sid
+        finally:
+            _unlock(f)
 
 def load_snapshot(snap_id: int) -> dict | None:
-    conn = db()
-    row = conn.execute(
-        "SELECT id, ts, name, kind, host, note FROM snapshots WHERE id = ?", (snap_id,)
-    ).fetchone()
-    if not row:
-        conn.close()
-        return None
-    snap = {"id": row[0], "ts": row[1], "name": row[2], "kind": row[3],
-            "host": row[4], "note": row[5], "captures": {}}
-    for ck, data in conn.execute(
-        "SELECT kind, data FROM captures WHERE snapshot_id = ?", (snap_id,)
-    ):
-        try:
-            snap["captures"][ck] = json.loads(data)
-        except json.JSONDecodeError:
-            snap["captures"][ck] = None
-    conn.close()
-    return snap
+    for snap in _iter_snapshots():
+        if snap.get("id") == snap_id:
+            snap.setdefault("captures", {})
+            return snap
+    return None
 
 def list_snapshots(limit: int = 200) -> list[dict]:
-    conn = db()
-    rows = conn.execute(
-        "SELECT id, ts, name, kind, host FROM snapshots ORDER BY ts DESC LIMIT ?", (limit,)
-    ).fetchall()
-    conn.close()
-    return [{"id": r[0], "ts": r[1], "name": r[2], "kind": r[3], "host": r[4]} for r in rows]
+    snaps = []
+    for snap in _iter_snapshots():
+        snaps.append({
+            "id": snap.get("id"),
+            "ts": snap.get("ts", 0),
+            "name": snap.get("name"),
+            "kind": snap.get("kind", "auto"),
+            "host": snap.get("host"),
+        })
+    snaps.sort(key=lambda s: (s["ts"], s["id"] or 0), reverse=True)
+    return snaps[:limit]
+
+def delete_snapshots(ids) -> int:
+    """Delete snapshots whose id is in `ids`. Returns the count removed."""
+    ids = set(ids)
+    if not ids:
+        return 0
+    kept = []
+    removed = 0
+    for snap in _iter_snapshots():
+        if snap.get("id") in ids:
+            removed += 1
+        else:
+            kept.append(snap)
+    if removed:
+        _rewrite(kept)
+    return removed
 
 # ---------------------------------------------------------------------------
 # Restore
@@ -763,10 +814,7 @@ def tui():
             tprint(YELLOW(f"Delete snapshot #{snap['id']}? [y/N] "), end="")
             _tty.flush()
             if _getch() in ("y", "Y"):
-                conn = db()
-                conn.execute("DELETE FROM snapshots WHERE id = ?", (snap["id"],))
-                conn.commit()
-                conn.close()
+                delete_snapshots([snap["id"]])
                 snaps = list_snapshots(500)
                 if sel >= len(snaps): sel = max(0, len(snaps) - 1)
                 msg = RED(f"deleted #{snap['id']}")
@@ -866,13 +914,15 @@ def cmd_restore(args):
 def cmd_search(query_or_args):
     q = query_or_args if isinstance(query_or_args, str) else query_or_args.query
     q_low = q.lower()
-    conn = db()
-    rows = conn.execute(
-        "SELECT s.id, s.ts, s.name, c.kind, c.data "
-        "FROM snapshots s JOIN captures c ON c.snapshot_id = s.id "
-        "ORDER BY s.ts DESC"
-    ).fetchall()
-    conn.close()
+    # Build a flat list of (snap_id, ts, capture_kind, json_blob) ordered newest first.
+    rows = []
+    for snap in _iter_snapshots():
+        sid = snap.get("id")
+        ts = snap.get("ts", 0)
+        for ck, payload in (snap.get("captures") or {}).items():
+            rows.append((sid, ts, snap.get("name"), ck,
+                         json.dumps(payload, ensure_ascii=False)))
+    rows.sort(key=lambda r: r[1], reverse=True)
     hits = 0
     for sid, ts, name, kind, data in rows:
         low = data.lower()
@@ -899,15 +949,12 @@ def cmd_prune(args):
         tprint(DIM(f"only {len(snaps)} snapshots, nothing to prune"))
         return 0
     to_delete = snaps[args.keep:]
-    conn = db()
-    conn.executemany("DELETE FROM snapshots WHERE id = ?", [(s["id"],) for s in to_delete])
-    conn.commit()
-    conn.close()
-    tprint(GREEN(f"✓ pruned {len(to_delete)} snapshots, kept {args.keep}"))
+    removed = delete_snapshots(s["id"] for s in to_delete)
+    tprint(GREEN(f"✓ pruned {removed} snapshots, kept {args.keep}"))
     return 0
 
 def cmd_where(args):
-    tprint(str(DB_PATH))
+    tprint(str(SNAPSHOTS_FILE))
     return 0
 
 def cmd_daemon(args):
