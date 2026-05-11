@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CodeBlaster</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@700;900&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;background:#050810;overflow:hidden;font-family:'Share Tech Mono',monospace}
+#canvas{display:block;position:absolute;inset:0;width:100%;height:100%}
+
+#hud{position:absolute;top:0;left:0;right:0;height:52px;display:none;align-items:center;justify-content:space-between;padding:0 24px;background:rgba(5,8,16,.92);border-bottom:1px solid rgba(88,166,255,.12);z-index:10}
+.hud-block{display:flex;flex-direction:column;align-items:center;gap:2px;min-width:70px}
+.hud-label{font-size:9px;letter-spacing:.18em;color:rgba(255,255,255,.28);text-transform:uppercase}
+.hud-val{font-size:18px;font-weight:700;color:#f0f6fc;font-family:'Orbitron',monospace;letter-spacing:.04em}
+#streakHud{font-size:11px;color:#3fb950;letter-spacing:.1em;min-width:130px;text-align:center}
+#comboHud{font-size:13px;color:#e3b341;font-family:'Orbitron',monospace;font-weight:700;display:none;animation:cpulse .4s ease infinite alternate}
+@keyframes cpulse{from{opacity:1}to{opacity:.55}}
+#livesRow{display:flex;gap:5px}
+.heart{font-size:17px;transition:all .3s}
+.heart.alive{color:#ff6b6b}
+.heart.dead{color:rgba(255,255,255,.1)}
+#langPill{font-size:10px;letter-spacing:.12em;padding:3px 12px;border-radius:20px;background:rgba(88,166,255,.1);border:1px solid rgba(88,166,255,.3);color:#79c0ff;text-transform:uppercase}
+
+#progressWrap{position:absolute;top:52px;left:0;right:0;height:2px;background:rgba(255,255,255,.04);display:none;z-index:9}
+#progressFill{height:100%;background:#58a6ff;width:0%;transition:width .3s}
+
+#choiceBar{position:absolute;bottom:0;left:0;right:0;z-index:10;padding:12px 16px 16px;background:rgba(5,8,16,.93);border-top:1px solid rgba(255,255,255,.06);display:none;flex-direction:column;gap:10px;align-items:center}
+#choiceBtns{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+.cbtn{font-family:'Share Tech Mono',monospace;font-size:14px;font-weight:700;padding:10px 28px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);color:rgba(255,255,255,.75);border-radius:7px;cursor:pointer;letter-spacing:.08em;transition:all .15s;min-width:90px}
+.cbtn:hover:not(:disabled){border-color:rgba(88,166,255,.55);color:#79c0ff;background:rgba(88,166,255,.1);transform:translateY(-2px)}
+.cbtn:disabled{cursor:default;opacity:.6}
+.cbtn.correct{border-color:#3fb950!important;background:rgba(63,185,80,.18)!important;color:#3fb950!important;animation:fgreen .4s ease}
+.cbtn.wrong{border-color:#ff6b6b!important;background:rgba(255,107,107,.12)!important;color:#ff6b6b!important;animation:fred .35s ease}
+.cbtn.reveal{border-color:#e3b341!important;background:rgba(227,179,65,.12)!important;color:#e3b341!important}
+@keyframes fgreen{0%{box-shadow:0 0 0 rgba(63,185,80,0)}50%{box-shadow:0 0 22px rgba(63,185,80,.6)}100%{box-shadow:0 0 0 rgba(63,185,80,0)}}
+@keyframes fred{0%,100%{transform:translateX(0)}25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+
+#speedRow{display:flex;align-items:center;gap:10px;font-size:11px;color:rgba(255,255,255,.3);letter-spacing:.1em}
+#speedSlider{width:120px;accent-color:#58a6ff}
+#speedLabel{color:#58a6ff;min-width:36px;font-size:12px}
+
+.screen{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:20;background:rgba(5,8,16,.96)}
+.stitle{font-family:'Orbitron',monospace;font-weight:900;font-size:46px;letter-spacing:.12em;color:#58a6ff;margin-bottom:6px}
+.ssub{font-size:11px;letter-spacing:.16em;color:rgba(255,255,255,.28);margin-bottom:18px}
+.srule{font-size:11px;color:rgba(255,255,255,.2);letter-spacing:.08em;margin-bottom:5px}
+.sbtn{font-family:'Orbitron',monospace;font-size:13px;font-weight:700;letter-spacing:.2em;padding:12px 38px;background:rgba(88,166,255,.1);border:1px solid rgba(88,166,255,.4);color:#58a6ff;border-radius:7px;cursor:pointer;transition:all .2s;margin-top:14px}
+.sbtn:hover{background:rgba(88,166,255,.2);transform:translateY(-1px)}
+
+/* ── Language selector ── */
+#langSelect{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-bottom:22px}
+.lbtn{font-family:'Share Tech Mono',monospace;font-size:11px;letter-spacing:.1em;padding:5px 14px;border-radius:20px;border:1px solid rgba(255,255,255,.12);background:transparent;color:rgba(255,255,255,.35);cursor:pointer;transition:all .18s}
+.lbtn:hover{border-color:rgba(255,255,255,.3);color:rgba(255,255,255,.7)}
+.lbtn.active{color:#0d1117;font-weight:700}
+
+#goScreen{display:none}
+#goTitle{font-family:'Orbitron',monospace;font-size:34px;font-weight:900;color:#ff6b6b;letter-spacing:.1em;margin-bottom:6px}
+#goStats{font-size:12px;color:rgba(255,255,255,.4);letter-spacing:.1em;margin-bottom:4px}
+#goBest{font-size:11px;color:#e3b341;letter-spacing:.1em;margin-bottom:16px}
+#mistakesBox{max-height:230px;overflow-y:auto;width:min(520px,90vw);margin-bottom:18px;border:1px solid rgba(255,255,255,.08);border-radius:8px}
+.mrow{display:flex;align-items:flex-start;gap:12px;padding:9px 14px;border-bottom:1px solid rgba(255,255,255,.05);font-size:11px}
+.mrow:last-child{border-bottom:none}
+.mlabel{font-size:8px;letter-spacing:.12em;color:rgba(255,255,255,.22);text-transform:uppercase;display:block;margin-bottom:2px}
+
+#tutBar{position:absolute;top:58px;left:50%;transform:translateX(-50%);font-size:10px;color:rgba(255,255,255,.18);letter-spacing:.12em;z-index:10;pointer-events:none;transition:opacity 1.5s;white-space:nowrap}
+
+#credit{position:absolute;bottom:0;right:0;z-index:30;padding:5px 12px;display:flex;align-items:center;gap:6px;background:rgba(5,8,16,.7);border-top:1px solid rgba(255,255,255,.05);border-left:1px solid rgba(255,255,255,.05);border-radius:8px 0 0 0}
+#credit span{font-size:9px;letter-spacing:.1em;color:rgba(255,255,255,.22);text-transform:uppercase}
+#credit a{font-size:9px;letter-spacing:.06em;color:rgba(88,166,255,.45);text-decoration:none}
+#credit a:hover{color:rgba(88,166,255,.8)}
+</style>
+</head>
+<body>
+<canvas id="canvas"></canvas>
+
+<div id="credit">
+  <span>built by</span>
+  <span style="color:rgba(255,255,255,.5);font-weight:700;letter-spacing:.12em">Martain Coder</span>
+  <span style="color:rgba(255,255,255,.12)">·</span>
+  <a href="mailto:martain.coders.x@gmail.com">martain.coders.x@gmail.com</a>
+</div>
+
+<div id="hud">
+  <div class="hud-block"><div class="hud-label">Score</div><div class="hud-val" id="scoreVal">0</div></div>
+  <div style="display:flex;flex-direction:column;align-items:center;gap:3px">
+    <div id="streakHud"></div><div id="comboHud"></div>
+  </div>
+  <div class="hud-block"><div class="hud-label">Level</div><div class="hud-val" id="levelVal">1</div></div>
+  <div style="display:flex;flex-direction:column;align-items:center;gap:5px">
+    <div class="hud-label">Lives</div><div id="livesRow"></div>
+  </div>
+  <div id="langPill">all</div>
+</div>
+<div id="progressWrap"><div id="progressFill"></div></div>
+<div id="tutBar">move mouse to steer · click an answer to fire the keyword</div>
+
+<div id="choiceBar">
+  <div id="choiceBtns"></div>
+  <div id="speedRow">
+    SPEED
+    <input type="range" id="speedSlider" min="1" max="5" step="1" value="2">
+    <span id="speedLabel">2 — slow</span>
+  </div>
+</div>
+
+<!-- Start screen -->
+<div class="screen" id="startScreen">
+  <div class="stitle">CodeBlaster</div>
+  <div class="ssub">shoot the syntax · survive the vibe coding era</div>
+
+  <div style="font-size:10px;letter-spacing:.14em;color:rgba(255,255,255,.25);margin-bottom:10px;text-transform:uppercase">Choose language (or all)</div>
+  <div id="langSelect">
+    <button class="lbtn active" data-lang="all"   style="border-color:rgba(255,255,255,.3);color:#fff">ALL</button>
+    <button class="lbtn" data-lang="py"  style="--lc:#3fb950">Python</button>
+    <button class="lbtn" data-lang="ts"  style="--lc:#79c0ff">TypeScript</button>
+    <button class="lbtn" data-lang="go"  style="--lc:#58a6ff">Go</button>
+    <button class="lbtn" data-lang="rs"  style="--lc:#ff7b72">Rust</button>
+    <button class="lbtn" data-lang="cs"  style="--lc:#e3b341">C#</button>
+    <button class="lbtn" data-lang="js"  style="--lc:#d2a8ff">JavaScript</button>
+  </div>
+
+  <div class="srule">asteroids fall — each has a missing keyword</div>
+  <div class="srule">click the correct answer · keyword flies into the blank</div>
+  <div class="srule">miss 3 and game over · adjust speed with the slider</div>
+  <button class="sbtn" id="startBtn">LAUNCH</button>
+</div>
+
+<!-- Game over screen -->
+<div class="screen" id="goScreen">
+  <div id="goTitle">GAME OVER</div>
+  <div id="goStats"></div>
+  <div id="goBest"></div>
+  <div id="mistakesBox"></div>
+  <button class="sbtn" id="restartBtn">PLAY AGAIN</button>
+</div>
+
+<script>
+(function(){
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+let W, H;
+function resize(){ W = canvas.width = window.innerWidth; H = canvas.height = window.innerHeight; }
+resize();
+window.addEventListener('resize', resize);
+
+// ── Speed slider ──
+const speedSlider = document.getElementById('speedSlider');
+const speedLabel  = document.getElementById('speedLabel');
+const speedNames  = ['1 — very slow','2 — slow','3 — normal','4 — fast','5 — insane'];
+speedSlider.addEventListener('input', () => { speedLabel.textContent = speedNames[+speedSlider.value-1]; });
+
+function getSpeedMult(){
+  return [0.28, 0.5, 0.85, 1.3, 1.9][+speedSlider.value-1];
+}
+
+// ── Language selector ──
+let selectedLang = 'all';
+const langColors = {all:'#fff',py:'#3fb950',ts:'#79c0ff',go:'#58a6ff',rs:'#ff7b72',cs:'#e3b341',js:'#d2a8ff'};
+document.querySelectorAll('.lbtn').forEach(btn => {
+  const lc = langColors[btn.dataset.lang] || '#fff';
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.lbtn').forEach(b => {
+      b.classList.remove('active');
+      b.style.background = 'transparent';
+      b.style.color = 'rgba(255,255,255,.35)';
+      b.style.borderColor = 'rgba(255,255,255,.12)';
+    });
+    btn.classList.add('active');
+    btn.style.background = lc;
+    btn.style.color = '#0d1117';
+    btn.style.borderColor = lc;
+    selectedLang = btn.dataset.lang;
+  });
+  if(btn.dataset.lang === 'all'){
+    btn.style.background = '#fff'; btn.style.color = '#0d1117'; btn.style.borderColor = '#fff';
+  }
+});
+
+// ── Questions ──
+const Q = [
+  {code:'def greet(name) -> ___:',       ans:'str',          opts:['str','int','None','bool'],          lang:'py',col:'#3fb950'},
+  {code:'for i in ___(10):',             ans:'range',        opts:['range','list','map','len'],         lang:'py',col:'#3fb950'},
+  {code:'with ___(file) as f:',          ans:'open',         opts:['open','read','load','get'],         lang:'py',col:'#3fb950'},
+  {code:'if y ___ None: pass',           ans:'is',           opts:['is','==','not','in'],               lang:'py',col:'#3fb950'},
+  {code:'result = [x for x ___ arr]',    ans:'in',           opts:['in','of','from','at'],              lang:'py',col:'#3fb950'},
+  {code:'raise ___(msg)',                ans:'ValueError',   opts:['ValueError','Exception','TypeError','KeyError'],lang:'py',col:'#3fb950'},
+  {code:'from typing import ___',        ans:'Optional',     opts:['Optional','Maybe','Nullable','Either'],lang:'py',col:'#3fb950'},
+  {code:'x: dict[str, ___] = {}',        ans:'Any',          opts:['Any','all','*','object'],           lang:'py',col:'#3fb950'},
+  {code:'class Dog(___):',              ans:'Animal',       opts:['Animal','Base','Super','object'],    lang:'py',col:'#3fb950'},
+  {code:'@___',                          ans:'staticmethod', opts:['staticmethod','classmethod','property','decorator'],lang:'py',col:'#3fb950'},
+
+  {code:'const x: ___ = "hello"',        ans:'string',       opts:['string','str','text','char'],       lang:'ts',col:'#79c0ff'},
+  {code:'async ___ fetchData()',         ans:'function',     opts:['function','def','fn','func'],       lang:'ts',col:'#79c0ff'},
+  {code:'type Id = string | ___',        ans:'number',       opts:['number','int','num','float'],       lang:'ts',col:'#79c0ff'},
+  {code:'const arr: ___<string> = []',   ans:'Array',        opts:['Array','List','Vec','Slice'],       lang:'ts',col:'#79c0ff'},
+  {code:'x as ___',                      ans:'unknown',      opts:['unknown','any','never','void'],     lang:'ts',col:'#79c0ff'},
+  {code:'type F = () ___ void',          ans:'=>',           opts:['=>','->',':','='],                  lang:'ts',col:'#79c0ff'},
+  {code:'enum Color { Red, ___, Blue }', ans:'Green',        opts:['Green','Yellow','Middle','None'],   lang:'ts',col:'#79c0ff'},
+
+  {code:'___ (err != nil) { return }',   ans:'if',           opts:['if','when','check','guard'],        lang:'go',col:'#58a6ff'},
+  {code:'var wg sync.___',               ans:'WaitGroup',    opts:['WaitGroup','Mutex','Channel','Once'],lang:'go',col:'#58a6ff'},
+  {code:'ch := ___(chan int, 5)',         ans:'make',         opts:['make','new','alloc','init'],        lang:'go',col:'#58a6ff'},
+  {code:'___ i, v := range items',       ans:'for',          opts:['for','each','loop','iter'],         lang:'go',col:'#58a6ff'},
+  {code:'type Node ___',                 ans:'struct',       opts:['struct','class','record','object'], lang:'go',col:'#58a6ff'},
+  {code:'defer ___()',                   ans:'wg.Done',      opts:['wg.Done','done','finish','close'],  lang:'go',col:'#58a6ff'},
+
+  {code:'let x: ___ = 42;',             ans:'i32',          opts:['i32','int','num','u8'],             lang:'rs',col:'#ff7b72'},
+  {code:'fn add(a: i32) ___ i32',       ans:'->',           opts:['->','=>','>>','::'],                lang:'rs',col:'#ff7b72'},
+  {code:'impl ___ for MyStruct {}',      ans:'Display',      opts:['Display','Debug','Clone','Copy'],   lang:'rs',col:'#ff7b72'},
+  {code:'let v: Vec<___> = vec![]',      ans:'String',       opts:['String','str','&str','Text'],       lang:'rs',col:'#ff7b72'},
+  {code:'use std::___::HashMap',         ans:'collections',  opts:['collections','map','hash','data'],  lang:'rs',col:'#ff7b72'},
+  {code:'___ x = Arc::new(val)',         ans:'let',          opts:['let','mut','var','const'],          lang:'rs',col:'#ff7b72'},
+
+  {code:'public ___ void Main()',        ans:'static',       opts:['static','async','partial','new'],   lang:'cs',col:'#e3b341'},
+  {code:'await Task.___();',            ans:'Delay',        opts:['Delay','Sleep','Wait','Pause'],     lang:'cs',col:'#e3b341'},
+  {code:'string? name = ___',           ans:'null',         opts:['null','nil','None','undefined'],    lang:'cs',col:'#e3b341'},
+  {code:'record Point(___ x, int y)',    ans:'int',          opts:['int','var','float','double'],       lang:'cs',col:'#e3b341'},
+  {code:'var x = list.___(i => i.Id)',   ans:'FirstOrDefault',opts:['FirstOrDefault','Find','First','Get'],lang:'cs',col:'#e3b341'},
+
+  {code:'const x = ___ fetch(url)',      ans:'await',        opts:['await','async','yield','defer'],    lang:'js',col:'#d2a8ff'},
+  {code:'arr.___(x => x * 2)',           ans:'map',          opts:['map','filter','find','forEach'],    lang:'js',col:'#d2a8ff'},
+  {code:'___ x = JSON.parse(s)',         ans:'const',        opts:['const','let','var','def'],          lang:'js',col:'#d2a8ff'},
+  {code:'obj?.name ___ "anon"',         ans:'??',           opts:['??','||','&&','||='],               lang:'js',col:'#d2a8ff'},
+  {code:'Promise.___(promises)',         ans:'all',          opts:['all','any','race','each'],          lang:'js',col:'#d2a8ff'},
+  {code:'function* gen() { ___ x }',    ans:'yield',        opts:['yield','return','emit','next'],     lang:'js',col:'#d2a8ff'},
+];
+
+function pickQ(){
+  const pool = selectedLang === 'all' ? Q : Q.filter(q => q.lang === selectedLang);
+  return pool[Math.floor(Math.random()*pool.length)];
+}
+
+// ── State ──
+let state = 'idle';
+let score=0,lives=3,streak=0,combo=1,level=1,highScore=0;
+let asteroids=[],kwBullets=[],particles=[],confetti=[],floaters=[],stars=[];
+let ship={x:0,y:0};
+let spawnTimer=0;
+let currentQ=null;
+let thrustT=0,shakeT=0;
+let mistakes=[];
+
+// ── Stars ──
+function initStars(){
+  stars=[];
+  for(let i=0;i<90;i++) stars.push({
+    x:Math.random()*8000,y:Math.random()*3000,
+    r:Math.random()*1.3+0.3,twinkle:Math.random()*Math.PI*2,speed:0.07+Math.random()*0.22
+  });
+}
+initStars();
+
+// ── Asteroid ──
+function newAsteroid(){
+  const q = pickQ();
+  const pad = 70;
+  const w = Math.min(W-pad*2, Math.max(200, q.code.length*9+60));
+  const x = pad + Math.random()*(W-pad*2-w) + w/2;
+  const sm = getSpeedMult();
+  return {
+    q, x, y:-44, w, h:44,
+    speed:(0.5+Math.random()*0.4)*sm,
+    wobble:Math.random()*Math.PI*2, wobbleAmt:1.3+Math.random()*1.3, wobbleSpeed:0.015+Math.random()*0.015,
+    hit:false, hitTimer:0, wrong:false, wrongTimer:0,
+    slotFilled:false, slotText:'',
+  };
+}
+
+// ── Keyword bullet ──
+// Flies from ship toward the blank slot in the asteroid
+function fireKeyword(chosen, target){
+  // Estimate blank x position on the asteroid
+  ctx.save();
+  ctx.font='600 13px "Share Tech Mono",monospace';
+  const parts = target.q.code.split('___');
+  const pre = parts[0];
+  const blankW = Math.max(ctx.measureText(chosen).width, 40);
+  const preW = ctx.measureText(pre).width;
+  const postW = ctx.measureText(parts[1]||'').width;
+  const totalW = preW + blankW + postW;
+  ctx.restore();
+
+  // blank center x relative to asteroid center
+  const blankRelX = -totalW/2 + preW + blankW/2;
+  const wx = target.x + Math.sin(target.wobble)*target.wobbleAmt + blankRelX;
+  const wy = target.y;
+
+  kwBullets.push({
+    x: ship.x, y: ship.y - 14,
+    tx: wx, ty: wy,
+    text: chosen,
+    col: target.q.col,
+    correct: chosen === target.q.ans,
+    target: target,
+    t: 0,           // 0..1 animation progress
+    speed: 0.045,
+    done: false,
+    // store start for lerp
+    sx: ship.x, sy: ship.y - 14,
+  });
+}
+
+// ── Confetti ──
+function spawnConfetti(x, y, col){
+  const colors = [col, '#fff', '#e3b341', '#58a6ff', '#3fb950', '#d2a8ff', '#ff7b72'];
+  for(let i=0;i<60;i++){
+    const a = Math.random()*Math.PI*2;
+    const spd = 2+Math.random()*7;
+    confetti.push({
+      x, y,
+      vx: Math.cos(a)*spd,
+      vy: Math.sin(a)*spd - 3,
+      life: 1, decay: 0.012+Math.random()*0.018,
+      w: 4+Math.random()*6, h: 3+Math.random()*4,
+      rot: Math.random()*Math.PI*2,
+      rotV: (Math.random()-.5)*0.3,
+      col: colors[Math.floor(Math.random()*colors.length)],
+    });
+  }
+}
+
+function burst(x,y,col,n){
+  for(let i=0;i<n;i++){
+    const a=Math.random()*Math.PI*2, spd=1.5+Math.random()*4.5;
+    particles.push({x,y,vx:Math.cos(a)*spd,vy:Math.sin(a)*spd-1,life:1,decay:.028+Math.random()*.03,size:2+Math.random()*3.5,col});
+  }
+}
+
+function addFloat(x,y,text,col){
+  floaters.push({x,y,text,col,life:1,vy:-2});
+}
+
+// ── Answer ──
+function answer(chosen){
+  if(state!=='playing'||!currentQ) return;
+  const target = asteroids.find(a=>a.q===currentQ&&!a.hit);
+  if(!target) return;
+
+  const btns = document.querySelectorAll('.cbtn');
+  const clickedBtn = [...btns].find(b=>b.dataset.val===chosen);
+  const correctBtn = [...btns].find(b=>b.dataset.val===currentQ.ans);
+
+  disableAll();
+
+  if(chosen === currentQ.ans){
+    if(clickedBtn) clickedBtn.classList.add('correct');
+    fireKeyword(chosen, target);
+    // bullet landing handled in loop
+  } else {
+    if(clickedBtn) clickedBtn.classList.add('wrong');
+    if(correctBtn) correctBtn.classList.add('reveal');
+    fireKeyword(chosen, target);
+    mistakes.push({code:target.q.code, yours:chosen, correct:target.q.ans, lang:target.q.lang});
+    streak=0; combo=1;
+    lives--;
+    shakeT=12;
+    addFloat(target.x, target.y-24, 'WRONG!', '#ff6b6b');
+    updateHUD();
+    if(lives<=0){ setTimeout(endGame,900); return; }
+    setTimeout(nextQ, 950);
+  }
+}
+
+function disableAll(){
+  document.querySelectorAll('.cbtn').forEach(b=>b.disabled=true);
+}
+
+function nextQ(){
+  asteroids=asteroids.filter(a=>!a.hit||a.hitTimer>0);
+  spawnNext();
+}
+
+function spawnNext(){
+  const alive=asteroids.filter(a=>!a.hit);
+  if(alive.length===0){
+    const a=newAsteroid(); asteroids.push(a);
+    currentQ=a.q; showChoices(a.q);
+  } else {
+    currentQ=alive[0].q; showChoices(alive[0].q);
+  }
+}
+
+// ── Choices ──
+function showChoices(q){
+  const bar=document.getElementById('choiceBtns');
+  bar.innerHTML='';
+  [...q.opts].sort(()=>Math.random()-.5).forEach(opt=>{
+    const b=document.createElement('button');
+    b.className='cbtn'; b.textContent=opt; b.dataset.val=opt;
+    b.onclick=()=>answer(opt);
+    bar.appendChild(b);
+  });
+  const names={py:'python',ts:'typescript',go:'golang',rs:'rust',cs:'c#',js:'javascript'};
+  document.getElementById('langPill').textContent = selectedLang==='all' ? names[q.lang]||q.lang : selectedLang;
+}
+
+// ── HUD ──
+function updateHUD(){
+  document.getElementById('scoreVal').textContent=score.toLocaleString();
+  document.getElementById('levelVal').textContent=level;
+  const row=document.getElementById('livesRow');
+  row.innerHTML='';
+  for(let i=0;i<3;i++){
+    const h=document.createElement('span');
+    h.className='heart '+(i<lives?'alive':'dead'); h.textContent='♥'; row.appendChild(h);
+  }
+  document.getElementById('streakHud').textContent=streak>=2?'STREAK ×'+streak:'';
+  const co=document.getElementById('comboHud');
+  if(combo>1){co.style.display='block';co.textContent='COMBO ×'+combo+'!';}
+  else co.style.display='none';
+
+  document.getElementById('progressFill').style.width=Math.min(100,(score%500)/5)+'%';
+  const newLevel=Math.floor(score/500)+1;
+  if(newLevel>level){
+    level=newLevel;
+    addFloat(W/2,H/2-40,'LEVEL '+level+'!','#e3b341');
+    burst(W/2,H/2,'#e3b341',28);
+  }
+}
+
+// ── Draw ship ──
+function drawShip(){
+  const x=ship.x,y=ship.y; thrustT++;
+  ctx.save(); ctx.translate(x,y);
+  if(thrustT%3<2){
+    ctx.beginPath(); ctx.moveTo(-7,14); ctx.lineTo(0,24+Math.random()*10); ctx.lineTo(7,14);
+    ctx.strokeStyle='#e3b341'; ctx.lineWidth=2.5; ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(-4,14); ctx.lineTo(0,18+Math.random()*6); ctx.lineTo(4,14);
+    ctx.strokeStyle='#ff6b6b'; ctx.lineWidth=1.5; ctx.stroke();
+  }
+  ctx.beginPath(); ctx.moveTo(0,-16); ctx.lineTo(18,14); ctx.lineTo(10,8); ctx.lineTo(-10,8); ctx.lineTo(-18,14); ctx.closePath();
+  ctx.fillStyle='#0f1f35'; ctx.fill(); ctx.strokeStyle='#58a6ff'; ctx.lineWidth=1.5; ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(0,-10); ctx.lineTo(7,5); ctx.lineTo(-7,5); ctx.closePath();
+  ctx.fillStyle='rgba(88,166,255,.35)'; ctx.fill();
+  ctx.fillStyle='#58a6ff';
+  ctx.beginPath(); ctx.arc(-9,10,2.5,0,Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(9,10,2.5,0,Math.PI*2); ctx.fill();
+  ctx.restore();
+}
+
+// ── Draw asteroid ──
+function drawAsteroid(a){
+  const wx=a.x+Math.sin(a.wobble)*a.wobbleAmt, wy=a.y;
+  const hw=a.w/2, hh=a.h/2;
+  ctx.save();
+  ctx.globalAlpha=a.hit?Math.max(0,a.hitTimer/22):1;
+  ctx.translate(wx,wy);
+  if(a.wrong){ctx.shadowColor='#ff6b6b';ctx.shadowBlur=16;}
+
+  ctx.beginPath(); ctx.roundRect(-hw,-hh,a.w,a.h,9);
+  ctx.fillStyle=a.hit?'rgba(255,107,107,.05)':'rgba(8,12,22,.96)'; ctx.fill();
+  ctx.strokeStyle=a.hit?'#ff6b6b':a.q.col; ctx.lineWidth=a.hit?2:1; ctx.stroke();
+  ctx.shadowBlur=0;
+
+  // bracket corners
+  const bw=8; ctx.strokeStyle=a.q.col; ctx.globalAlpha*=.35; ctx.lineWidth=1;
+  [[- hw+2,-hh+bw,-hw+2,-hh+2,-hw+bw,-hh+2],[hw-2,-hh+bw,hw-2,-hh+2,hw-bw,-hh+2],
+   [-hw+2,hh-bw,-hw+2,hh-2,-hw+bw,hh-2],[hw-2,hh-bw,hw-2,hh-2,hw-bw,hh-2]].forEach(([x1,y1,x2,y2,x3,y3])=>{
+    ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.lineTo(x3,y3); ctx.stroke();
+  });
+  ctx.globalAlpha=a.hit?Math.max(0,a.hitTimer/22):1;
+
+  // Code text
+  ctx.font='600 13px "Share Tech Mono",monospace';
+  ctx.textAlign='center'; ctx.textBaseline='middle';
+
+  const parts=a.q.code.split('___');
+  const pre=parts[0], post=parts[1]||'';
+  const displayBlank = a.slotFilled ? a.slotText : '___';
+  const blankCol = a.slotFilled ? '#3fb950' : a.q.col;
+  const pW=ctx.measureText(pre).width;
+  const bW=ctx.measureText(displayBlank).width;
+  const poW=ctx.measureText(post).width;
+  const total=pW+bW+poW;
+  let cx=-total/2;
+
+  ctx.fillStyle='rgba(200,215,228,.88)'; ctx.fillText(pre,cx+pW/2,0); cx+=pW;
+
+  if(!a.slotFilled){
+    ctx.fillStyle='rgba(88,166,255,.07)'; ctx.strokeStyle='rgba(88,166,255,.3)'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.roundRect(cx-4,-10,bW+8,20,4); ctx.fill(); ctx.stroke();
+  } else {
+    // glowing slot when filled
+    ctx.fillStyle='rgba(63,185,80,.12)'; ctx.strokeStyle='rgba(63,185,80,.45)'; ctx.lineWidth=1.5;
+    ctx.beginPath(); ctx.roundRect(cx-6,-12,bW+12,24,5); ctx.fill(); ctx.stroke();
+  }
+  ctx.fillStyle=blankCol; ctx.fillText(displayBlank,cx+bW/2,0); cx+=bW;
+  ctx.fillStyle='rgba(200,215,228,.88)'; ctx.fillText(post,cx+poW/2,0);
+
+  // lang tag
+  ctx.font='9px "Share Tech Mono",monospace'; ctx.textAlign='right';
+  ctx.fillStyle='rgba(255,255,255,.18)'; ctx.fillText(a.q.lang,hw-6,-hh+9);
+  ctx.restore();
+}
+
+// ── Draw keyword bullet ──
+function drawKwBullet(b){
+  ctx.save();
+  ctx.globalAlpha=Math.min(1, b.t < 0.1 ? b.t*10 : b.t > 0.85 ? (1-b.t)/0.15 : 1);
+
+  // glow halo
+  ctx.beginPath();
+  ctx.arc(b.x,b.y,14,0,Math.PI*2);
+  ctx.fillStyle=b.col+'22';
+  ctx.fill();
+
+  // pill background
+  ctx.font='700 13px "Share Tech Mono",monospace';
+  const tw=ctx.measureText(b.text).width;
+  const pw=tw+20, ph=26;
+  ctx.beginPath(); ctx.roundRect(b.x-pw/2, b.y-ph/2, pw, ph, 6);
+  ctx.fillStyle='rgba(8,12,22,.95)'; ctx.fill();
+  ctx.strokeStyle=b.col; ctx.lineWidth=1.5; ctx.stroke();
+
+  // text
+  ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.fillStyle=b.col;
+  ctx.fillText(b.text, b.x, b.y);
+
+  ctx.restore();
+}
+
+// ── Draw confetti ──
+function drawConfetti(){
+  confetti.forEach(c=>{
+    ctx.save();
+    ctx.globalAlpha=c.life;
+    ctx.translate(c.x, c.y);
+    ctx.rotate(c.rot);
+    ctx.fillStyle=c.col;
+    ctx.fillRect(-c.w/2,-c.h/2,c.w,c.h);
+    ctx.restore();
+  });
+}
+
+// ── Stars ──
+function drawStars(){
+  stars.forEach(s=>{
+    s.twinkle+=.015; s.y+=s.speed; if(s.y>H+5) s.y=-5;
+    ctx.globalAlpha=.1+Math.sin(s.twinkle)*.1;
+    ctx.beginPath(); ctx.arc(s.x%W,s.y,s.r,0,Math.PI*2); ctx.fillStyle='#fff'; ctx.fill();
+  });
+  ctx.globalAlpha=1;
+}
+
+// ── Main loop ──
+function loop(){
+  requestAnimationFrame(loop);
+  let sx=0,sy=0;
+  if(shakeT>0){sx=(Math.random()-.5)*shakeT*1.1;sy=(Math.random()-.5)*shakeT*1.1;shakeT=Math.max(0,shakeT-1.5);}
+  ctx.save(); ctx.translate(sx,sy);
+  ctx.fillStyle='#050810'; ctx.fillRect(-10,-10,W+20,H+20);
+  drawStars();
+  if(state!=='playing'){ctx.restore();return;}
+
+  // Spawn
+  spawnTimer++;
+  const sm=getSpeedMult();
+  const baseInterval=Math.round(230-sm*28);
+  if(spawnTimer>baseInterval && asteroids.filter(a=>!a.hit).length < Math.min(3,Math.ceil(level/2))){
+    spawnTimer=0;
+    const a=newAsteroid(); asteroids.push(a);
+    if(!currentQ){currentQ=a.q;showChoices(a.q);}
+  }
+
+  // Update asteroids
+  for(let i=asteroids.length-1;i>=0;i--){
+    const a=asteroids[i];
+    a.wobble+=a.wobbleSpeed;
+    if(!a.hit) a.y+=a.speed;
+    if(a.hit){a.hitTimer--;if(a.hitTimer<=0){asteroids.splice(i,1);continue;}}
+    if(a.wrong){a.wrongTimer--;if(a.wrongTimer<=0)a.wrong=false;}
+    if(a.y>H+50&&!a.hit){
+      asteroids.splice(i,1);
+      lives=Math.max(0,lives-1);streak=0;combo=1;shakeT=8;
+      burst(a.x,H-20,'#ff6b6b',12);
+      addFloat(a.x,H-60,'MISSED!','#ff6b6b');
+      mistakes.push({code:a.q.code,yours:'(missed)',correct:a.q.ans,lang:a.q.lang});
+      updateHUD();
+      if(lives<=0){endGame();return;}
+      if(currentQ===a.q){
+        const alive=asteroids.find(x=>!x.hit);
+        if(alive){currentQ=alive.q;showChoices(alive.q);}
+        else{currentQ=null;document.getElementById('choiceBtns').innerHTML='';}
+      }
+      continue;
+    }
+    drawAsteroid(a);
+  }
+
+  // ── Update keyword bullets ──
+  for(let i=kwBullets.length-1;i>=0;i--){
+    const b=kwBullets[i];
+
+    // Update target position as asteroid moves
+    if(b.target && !b.target.hit){
+      ctx.save();
+      ctx.font='600 13px "Share Tech Mono",monospace';
+      const parts=b.target.q.code.split('___');
+      const pre=parts[0];
+      const blankW=Math.max(ctx.measureText(b.text).width,40);
+      const preW=ctx.measureText(pre).width;
+      const postW=ctx.measureText(parts[1]||'').width;
+      const totalW=preW+blankW+postW;
+      const blankRelX=-totalW/2+preW+blankW/2;
+      ctx.restore();
+      b.tx=b.target.x+Math.sin(b.target.wobble)*b.target.wobbleAmt+blankRelX;
+      b.ty=b.target.y;
+    }
+
+    b.t=Math.min(1,b.t+b.speed);
+    // ease in-out
+    const ease=b.t<.5?2*b.t*b.t:1-Math.pow(-2*b.t+2,2)/2;
+    b.x=b.sx+(b.tx-b.sx)*ease;
+    b.y=b.sy+(b.ty-b.sy)*ease;
+
+    if(b.t>=1&&!b.done){
+      b.done=true;
+      if(b.correct){
+        // LAND in slot
+        b.target.slotFilled=true;
+        b.target.slotText=b.text;
+        b.target.hit=true;
+        b.target.hitTimer=35;
+        const pts=100*combo*Math.ceil(level/2);
+        score+=pts; streak++;
+        if(streak%3===0) combo=Math.min(combo+1,8);
+        // CONFETTI
+        spawnConfetti(b.tx,b.ty,b.target.q.col);
+        burst(b.tx,b.ty,'#fff',10);
+        addFloat(b.tx,b.ty-36,'+'+pts+(combo>1?' ×'+combo:''),b.target.q.col);
+        updateHUD();
+        setTimeout(nextQ,700);
+      } else {
+        b.target.wrong=true; b.target.wrongTimer=22;
+        burst(b.tx,b.ty,'#ff6b6b',14);
+      }
+      kwBullets.splice(i,1);
+      continue;
+    }
+
+    if(!b.done) drawKwBullet(b);
+  }
+
+  // Confetti
+  for(let i=confetti.length-1;i>=0;i--){
+    const c=confetti[i];
+    c.x+=c.vx; c.y+=c.vy; c.vy+=0.15; c.vx*=0.99;
+    c.rot+=c.rotV; c.life-=c.decay;
+    if(c.life<=0){confetti.splice(i,1);continue;}
+  }
+  drawConfetti();
+
+  // Particles
+  for(let i=particles.length-1;i>=0;i--){
+    const p=particles[i];
+    p.x+=p.vx;p.y+=p.vy;p.vy+=.09;p.life-=p.decay;
+    if(p.life<=0){particles.splice(i,1);continue;}
+    ctx.globalAlpha=p.life;
+    ctx.beginPath();ctx.arc(p.x,p.y,p.size*p.life,0,Math.PI*2);ctx.fillStyle=p.col;ctx.fill();
+  }
+  ctx.globalAlpha=1;
+
+  // Floaters
+  for(let i=floaters.length-1;i>=0;i--){
+    const f=floaters[i]; f.y+=f.vy; f.life-=.022;
+    if(f.life<=0){floaters.splice(i,1);continue;}
+    ctx.globalAlpha=f.life;
+    ctx.font='700 14px "Share Tech Mono",monospace';
+    ctx.textAlign='center'; ctx.fillStyle=f.col; ctx.fillText(f.text,f.x,f.y);
+  }
+  ctx.globalAlpha=1;
+
+  drawShip();
+  ctx.restore();
+}
+
+// ── Game control ──
+function startGame(){
+  score=0;lives=3;streak=0;combo=1;level=1;
+  asteroids=[];kwBullets=[];particles=[];confetti=[];floaters=[];
+  spawnTimer=0;thrustT=0;currentQ=null;mistakes=[];
+  ship.x=W/2;ship.y=H-90;
+  document.getElementById('startScreen').style.display='none';
+  document.getElementById('goScreen').style.display='none';
+  document.getElementById('hud').style.display='flex';
+  document.getElementById('progressWrap').style.display='block';
+  document.getElementById('choiceBar').style.display='flex';
+  const tut=document.getElementById('tutBar');
+  tut.style.opacity='1'; setTimeout(()=>tut.style.opacity='0',3500);
+  state='playing';
+  const a=newAsteroid(); asteroids.push(a); currentQ=a.q; showChoices(a.q);
+  updateHUD();
+}
+
+function endGame(){
+  state='over';
+  if(score>highScore) highScore=score;
+  document.getElementById('choiceBtns').innerHTML='';
+  document.getElementById('choiceBar').style.display='none';
+  document.getElementById('hud').style.display='none';
+  document.getElementById('progressWrap').style.display='none';
+  document.getElementById('goStats').textContent='score: '+score.toLocaleString()+'   streak: '+streak+'   level: '+level;
+  document.getElementById('goBest').textContent='best: '+highScore.toLocaleString();
+  const box=document.getElementById('mistakesBox');
+  const langNames={py:'Python',ts:'TypeScript',go:'Go',rs:'Rust',cs:'C#',js:'JS'};
+  if(mistakes.length===0){
+    box.innerHTML='<div style="padding:18px;text-align:center;font-size:12px;color:rgba(255,255,255,.3);letter-spacing:.1em">NO MISTAKES — PERFECT RUN!</div>';
+  } else {
+    box.innerHTML='<div style="padding:7px 14px 5px;font-size:9px;letter-spacing:.16em;color:rgba(255,255,255,.22);border-bottom:1px solid rgba(255,255,255,.05)">MISTAKES — '+mistakes.length+' total</div>'
+      +mistakes.map(m=>`<div class="mrow">
+        <div style="flex:1"><span class="mlabel">${langNames[m.lang]||m.lang}</span>
+        <span style="color:rgba(255,255,255,.55)">${m.code.replace('___','<span style="opacity:.5">___</span>')}</span></div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:3px">
+          <span><span class="mlabel">you clicked</span><span style="color:#ff6b6b">${m.yours}</span></span>
+          <span><span class="mlabel">correct</span><span style="color:#3fb950">${m.correct}</span></span>
+        </div></div>`).join('');
+  }
+  document.getElementById('goScreen').style.display='flex';
+}
+
+canvas.addEventListener('mousemove',e=>{
+  const r=canvas.getBoundingClientRect();
+  ship.x=Math.max(30,Math.min(W-30,e.clientX-r.left));
+  ship.y=H-90;
+});
+canvas.addEventListener('touchmove',e=>{
+  e.preventDefault();
+  const t=e.touches[0],r=canvas.getBoundingClientRect();
+  ship.x=Math.max(30,Math.min(W-30,t.clientX-r.left));
+},{passive:false});
+
+document.addEventListener('keydown',e=>{
+  if(state!=='playing')return;
+  const btns=[...document.querySelectorAll('.cbtn:not(:disabled)')];
+  const idx=parseInt(e.key)-1;
+  if(idx>=0&&idx<btns.length)btns[idx].click();
+});
+
+document.getElementById('startBtn').onclick=startGame;
+document.getElementById('restartBtn').onclick=startGame;
+
+requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>
