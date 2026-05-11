@@ -1,748 +1,1597 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CodeBlaster</title>
-<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@700;900&display=swap" rel="stylesheet">
-<style>
-*{margin:0;padding:0;box-sizing:border-box}
-html,body{width:100%;height:100%;background:#050810;overflow:hidden;font-family:'Share Tech Mono',monospace}
-#canvas{display:block;position:absolute;inset:0;width:100%;height:100%}
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+  <title>CodeBlaster</title>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Press+Start+2P&family=Orbitron:wght@700;900&display=swap"
+    rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent
+    }
 
-#hud{position:absolute;top:0;left:0;right:0;height:52px;display:none;align-items:center;justify-content:space-between;padding:0 24px;background:rgba(5,8,16,.92);border-bottom:1px solid rgba(88,166,255,.12);z-index:10}
-.hud-block{display:flex;flex-direction:column;align-items:center;gap:2px;min-width:70px}
-.hud-label{font-size:9px;letter-spacing:.18em;color:rgba(255,255,255,.28);text-transform:uppercase}
-.hud-val{font-size:18px;font-weight:700;color:#f0f6fc;font-family:'Orbitron',monospace;letter-spacing:.04em}
-#streakHud{font-size:11px;color:#3fb950;letter-spacing:.1em;min-width:130px;text-align:center}
-#comboHud{font-size:13px;color:#e3b341;font-family:'Orbitron',monospace;font-weight:700;display:none;animation:cpulse .4s ease infinite alternate}
-@keyframes cpulse{from{opacity:1}to{opacity:.55}}
-#livesRow{display:flex;gap:5px}
-.heart{font-size:17px;transition:all .3s}
-.heart.alive{color:#ff6b6b}
-.heart.dead{color:rgba(255,255,255,.1)}
-#langPill{font-size:10px;letter-spacing:.12em;padding:3px 12px;border-radius:20px;background:rgba(88,166,255,.1);border:1px solid rgba(88,166,255,.3);color:#79c0ff;text-transform:uppercase}
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      background: #050810;
+      overflow: hidden;
+      font-family: 'Share Tech Mono', monospace;
+      touch-action: none
+    }
 
-#progressWrap{position:absolute;top:52px;left:0;right:0;height:2px;background:rgba(255,255,255,.04);display:none;z-index:9}
-#progressFill{height:100%;background:#58a6ff;width:0%;transition:width .3s}
+    #canvas {
+      display: block;
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%
+    }
 
-#choiceBar{position:absolute;bottom:0;left:0;right:0;z-index:10;padding:12px 16px 16px;background:rgba(5,8,16,.93);border-top:1px solid rgba(255,255,255,.06);display:none;flex-direction:column;gap:10px;align-items:center}
-#choiceBtns{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
-.cbtn{font-family:'Share Tech Mono',monospace;font-size:14px;font-weight:700;padding:10px 28px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);color:rgba(255,255,255,.75);border-radius:7px;cursor:pointer;letter-spacing:.08em;transition:all .15s;min-width:90px}
-.cbtn:hover:not(:disabled){border-color:rgba(88,166,255,.55);color:#79c0ff;background:rgba(88,166,255,.1);transform:translateY(-2px)}
-.cbtn:disabled{cursor:default;opacity:.6}
-.cbtn.correct{border-color:#3fb950!important;background:rgba(63,185,80,.18)!important;color:#3fb950!important;animation:fgreen .4s ease}
-.cbtn.wrong{border-color:#ff6b6b!important;background:rgba(255,107,107,.12)!important;color:#ff6b6b!important;animation:fred .35s ease}
-.cbtn.reveal{border-color:#e3b341!important;background:rgba(227,179,65,.12)!important;color:#e3b341!important}
-@keyframes fgreen{0%{box-shadow:0 0 0 rgba(63,185,80,0)}50%{box-shadow:0 0 22px rgba(63,185,80,.6)}100%{box-shadow:0 0 0 rgba(63,185,80,0)}}
-@keyframes fred{0%,100%{transform:translateX(0)}25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+    /* HUD */
+    #hud {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 54px;
+      display: none;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 14px;
+      background: rgba(5, 8, 16, .93);
+      border-bottom: 1px solid rgba(88, 166, 255, .12);
+      z-index: 10;
+      gap: 6px
+    }
 
-#speedRow{display:flex;align-items:center;gap:10px;font-size:11px;color:rgba(255,255,255,.3);letter-spacing:.1em}
-#speedSlider{width:120px;accent-color:#58a6ff}
-#speedLabel{color:#58a6ff;min-width:36px;font-size:12px}
+    .hud-block {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1px;
+      min-width: 48px
+    }
 
-.screen{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:20;background:rgba(5,8,16,.96)}
-.stitle{font-family:'Orbitron',monospace;font-weight:900;font-size:46px;letter-spacing:.12em;color:#58a6ff;margin-bottom:6px}
-.ssub{font-size:11px;letter-spacing:.16em;color:rgba(255,255,255,.28);margin-bottom:18px}
-.srule{font-size:11px;color:rgba(255,255,255,.2);letter-spacing:.08em;margin-bottom:5px}
-.sbtn{font-family:'Orbitron',monospace;font-size:13px;font-weight:700;letter-spacing:.2em;padding:12px 38px;background:rgba(88,166,255,.1);border:1px solid rgba(88,166,255,.4);color:#58a6ff;border-radius:7px;cursor:pointer;transition:all .2s;margin-top:14px}
-.sbtn:hover{background:rgba(88,166,255,.2);transform:translateY(-1px)}
+    .hud-label {
+      font-size: 7px;
+      letter-spacing: .16em;
+      color: rgba(255, 255, 255, .28);
+      text-transform: uppercase
+    }
 
-/* ── Language selector ── */
-#langSelect{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-bottom:22px}
-.lbtn{font-family:'Share Tech Mono',monospace;font-size:11px;letter-spacing:.1em;padding:5px 14px;border-radius:20px;border:1px solid rgba(255,255,255,.12);background:transparent;color:rgba(255,255,255,.35);cursor:pointer;transition:all .18s}
-.lbtn:hover{border-color:rgba(255,255,255,.3);color:rgba(255,255,255,.7)}
-.lbtn.active{color:#0d1117;font-weight:700}
+    .hud-val {
+      font-size: 15px;
+      font-weight: 700;
+      color: #f0f6fc;
+      font-family: 'Orbitron', monospace
+    }
 
-#goScreen{display:none}
-#goTitle{font-family:'Orbitron',monospace;font-size:34px;font-weight:900;color:#ff6b6b;letter-spacing:.1em;margin-bottom:6px}
-#goStats{font-size:12px;color:rgba(255,255,255,.4);letter-spacing:.1em;margin-bottom:4px}
-#goBest{font-size:11px;color:#e3b341;letter-spacing:.1em;margin-bottom:16px}
-#mistakesBox{max-height:230px;overflow-y:auto;width:min(520px,90vw);margin-bottom:18px;border:1px solid rgba(255,255,255,.08);border-radius:8px}
-.mrow{display:flex;align-items:flex-start;gap:12px;padding:9px 14px;border-bottom:1px solid rgba(255,255,255,.05);font-size:11px}
-.mrow:last-child{border-bottom:none}
-.mlabel{font-size:8px;letter-spacing:.12em;color:rgba(255,255,255,.22);text-transform:uppercase;display:block;margin-bottom:2px}
+    #streakHud {
+      font-size: 9px;
+      color: #3fb950;
+      letter-spacing: .08em;
+      text-align: center;
+      min-width: 110px
+    }
 
-#tutBar{position:absolute;top:58px;left:50%;transform:translateX(-50%);font-size:10px;color:rgba(255,255,255,.18);letter-spacing:.12em;z-index:10;pointer-events:none;transition:opacity 1.5s;white-space:nowrap}
+    #comboHud {
+      font-size: 11px;
+      color: #e3b341;
+      font-family: 'Orbitron', monospace;
+      font-weight: 700;
+      display: none;
+      animation: cpulse .4s ease infinite alternate
+    }
 
-#credit{position:absolute;bottom:0;right:0;z-index:30;padding:5px 12px;display:flex;align-items:center;gap:6px;background:rgba(5,8,16,.7);border-top:1px solid rgba(255,255,255,.05);border-left:1px solid rgba(255,255,255,.05);border-radius:8px 0 0 0}
-#credit span{font-size:9px;letter-spacing:.1em;color:rgba(255,255,255,.22);text-transform:uppercase}
-#credit a{font-size:9px;letter-spacing:.06em;color:rgba(88,166,255,.45);text-decoration:none}
-#credit a:hover{color:rgba(88,166,255,.8)}
-</style>
+    @keyframes cpulse {
+      from {
+        opacity: 1
+      }
+
+      to {
+        opacity: .45
+      }
+    }
+
+    #livesRow {
+      display: flex;
+      gap: 3px
+    }
+
+    .heart {
+      font-size: 14px;
+      transition: all .3s
+    }
+
+    .heart.alive {
+      color: #ff6b6b;
+      text-shadow: 0 0 6px rgba(255, 107, 107, .6)
+    }
+
+    .heart.dead {
+      color: rgba(255, 255, 255, .1)
+    }
+
+    #langPill {
+      font-size: 8px;
+      letter-spacing: .1em;
+      padding: 2px 9px;
+      border-radius: 20px;
+      background: rgba(88, 166, 255, .1);
+      border: 1px solid rgba(88, 166, 255, .3);
+      color: #79c0ff;
+      text-transform: uppercase;
+      white-space: nowrap
+    }
+
+    #levelBadge {
+      font-size: 8px;
+      letter-spacing: .1em;
+      padding: 2px 9px;
+      border-radius: 20px;
+      text-transform: uppercase;
+      white-space: nowrap
+    }
+
+    .lb-beg {
+      background: rgba(63, 185, 80, .1);
+      border: 1px solid rgba(63, 185, 80, .3);
+      color: #3fb950
+    }
+
+    .lb-int {
+      background: rgba(227, 179, 65, .1);
+      border: 1px solid rgba(227, 179, 65, .3);
+      color: #e3b341
+    }
+
+    .lb-exp {
+      background: rgba(255, 107, 107, .1);
+      border: 1px solid rgba(255, 107, 107, .3);
+      color: #ff6b6b
+    }
+
+    #progressWrap {
+      position: absolute;
+      top: 54px;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: rgba(255, 255, 255, .04);
+      display: none;
+      z-index: 9
+    }
+
+    #progressFill {
+      height: 100%;
+      background: #58a6ff;
+      width: 0%;
+      transition: width .3s
+    }
+
+    /* Choice bar */
+    #choiceBar {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      z-index: 10;
+      padding: 8px 10px 12px;
+      background: rgba(5, 8, 16, .95);
+      border-top: 1px solid rgba(255, 255, 255, .06);
+      display: none;
+      flex-direction: column;
+      gap: 7px;
+      align-items: center
+    }
+
+    #choiceBtns {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 7px;
+      width: 100%;
+      max-width: 520px
+    }
+
+    .cbtn {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 13px;
+      font-weight: 700;
+      padding: 12px 8px;
+      background: rgba(255, 255, 255, .04);
+      border: 1px solid rgba(255, 255, 255, .1);
+      color: rgba(255, 255, 255, .8);
+      border-radius: 8px;
+      cursor: pointer;
+      letter-spacing: .05em;
+      transition: all .15s;
+      min-height: 46px;
+      touch-action: manipulation
+    }
+
+    .cbtn:hover:not(:disabled) {
+      border-color: rgba(88, 166, 255, .55);
+      color: #79c0ff;
+      background: rgba(88, 166, 255, .1)
+    }
+
+    .cbtn:active:not(:disabled) {
+      transform: scale(.95)
+    }
+
+    .cbtn:disabled {
+      cursor: default;
+      opacity: .5
+    }
+
+    .cbtn.correct {
+      border-color: #3fb950 !important;
+      background: rgba(63, 185, 80, .18) !important;
+      color: #3fb950 !important;
+      animation: fgreen .4s ease
+    }
+
+    .cbtn.wrong {
+      border-color: #ff6b6b !important;
+      background: rgba(255, 107, 107, .12) !important;
+      color: #ff6b6b !important;
+      animation: fred .35s ease
+    }
+
+    .cbtn.reveal {
+      border-color: #e3b341 !important;
+      background: rgba(227, 179, 65, .12) !important;
+      color: #e3b341 !important
+    }
+
+    @keyframes fgreen {
+      50% {
+        box-shadow: 0 0 20px rgba(63, 185, 80, .6)
+      }
+    }
+
+    @keyframes fred {
+      25% {
+        transform: translateX(-5px)
+      }
+
+      75% {
+        transform: translateX(5px)
+      }
+    }
+
+    #bottomRow {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      width: 100%;
+      max-width: 520px;
+      justify-content: space-between;
+      flex-wrap: wrap
+    }
+
+    #speedRow {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      font-size: 9px;
+      color: rgba(255, 255, 255, .3);
+      letter-spacing: .08em
+    }
+
+    #speedSlider {
+      width: 80px;
+      accent-color: #58a6ff;
+      height: 18px
+    }
+
+    #speedLabel {
+      color: #58a6ff;
+      font-size: 10px;
+      min-width: 56px
+    }
+
+    #modeTag {
+      font-size: 8px;
+      letter-spacing: .14em;
+      padding: 3px 9px;
+      border-radius: 20px;
+      text-transform: uppercase
+    }
+
+    .mode-learn {
+      background: rgba(63, 185, 80, .12);
+      border: 1px solid rgba(63, 185, 80, .3);
+      color: #3fb950
+    }
+
+    .mode-play {
+      background: rgba(88, 166, 255, .1);
+      border: 1px solid rgba(88, 166, 255, .25);
+      color: #58a6ff
+    }
+
+    #learnHint {
+      font-size: 11px;
+      color: #3fb950;
+      letter-spacing: .06em;
+      min-height: 14px;
+      text-align: center;
+      width: 100%;
+      max-width: 520px
+    }
+
+    /* Screens */
+    .screen {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 20;
+      padding: 14px;
+      overflow-y: auto
+    }
+
+    #startScreen {
+      background: #050810
+    }
+
+    /* RETRO title */
+    .s-title {
+      font-family: 'Press Start 2P', monospace;
+      font-size: clamp(24px, 6vw, 48px);
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      color: #e0f0ff;
+      animation: neonglow 2.4s ease-in-out infinite alternate;
+      margin-bottom: 14px;
+      image-rendering: pixelated;
+    }
+
+    @keyframes neonglow {
+      0% {
+        text-shadow: 0 0 8px #58a6ff, 0 0 20px #58a6ff, 0 0 40px #1a6fff;
+        color: #c8e4ff;
+      }
+
+      50% {
+        text-shadow: 0 0 12px #a78bfa, 0 0 28px #a78bfa, 0 0 55px #7c3aed;
+        color: #e8d8ff;
+      }
+
+      100% {
+        text-shadow: 0 0 8px #58a6ff, 0 0 22px #00cfff, 0 0 45px #0077cc;
+        color: #d0eeff;
+      }
+    }
+
+    .s-pixelsub {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: clamp(13px, 2.2vw, 16px);
+      color: rgba(180, 210, 255, .7);
+      margin-bottom: 16px;
+      letter-spacing: .18em;
+      text-align: center;
+      text-transform: uppercase
+    }
+
+    /* Section labels */
+    .s-section {
+      font-size: 8px;
+      letter-spacing: .18em;
+      color: rgba(255, 255, 255, .25);
+      margin-bottom: 7px;
+      text-transform: uppercase;
+      margin-top: 10px
+    }
+
+    /* Language buttons */
+    #langSelect {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-bottom: 4px
+    }
+
+    .lbtn {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: clamp(9px, 2vw, 12px);
+      font-weight: 700;
+      letter-spacing: .07em;
+      padding: 7px 14px;
+      border-radius: 22px;
+      border: 1.5px solid;
+      background: transparent;
+      cursor: pointer;
+      transition: all .18s;
+      touch-action: manipulation;
+      min-height: 36px
+    }
+
+    .lbtn:active {
+      transform: scale(.93)
+    }
+
+    /* Difficulty */
+    #diffSelect {
+      display: flex;
+      gap: 0;
+      border: 1.5px solid rgba(255, 255, 255, .15);
+      border-radius: 8px;
+      overflow: hidden;
+      margin-bottom: 4px
+    }
+
+    .dbtn {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 10px;
+      letter-spacing: .1em;
+      padding: 9px 18px;
+      background: transparent;
+      border: none;
+      border-right: 1px solid rgba(255, 255, 255, .1);
+      cursor: pointer;
+      color: rgba(255, 255, 255, .35);
+      transition: all .18s;
+      min-height: 40px;
+      touch-action: manipulation
+    }
+
+    .dbtn:last-child {
+      border-right: none
+    }
+
+    .dbtn.active-beg {
+      background: #3fb950;
+      color: #050810;
+      font-weight: 700
+    }
+
+    .dbtn.active-int {
+      background: #e3b341;
+      color: #050810;
+      font-weight: 700
+    }
+
+    .dbtn.active-exp {
+      background: #ff6b6b;
+      color: #050810;
+      font-weight: 700
+    }
+
+    /* Background selector */
+    #bgSelect {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-bottom: 4px
+    }
+
+    .bgbtn {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 9px;
+      letter-spacing: .08em;
+      padding: 6px 12px;
+      border-radius: 6px;
+      border: 1px solid rgba(255, 255, 255, .15);
+      background: transparent;
+      color: rgba(255, 255, 255, .4);
+      cursor: pointer;
+      transition: all .18s;
+      touch-action: manipulation
+    }
+
+    .bgbtn.active {
+      border-color: #58a6ff;
+      color: #58a6ff;
+      background: rgba(88, 166, 255, .1)
+    }
+
+    /* Mode toggle */
+    #modeToggle {
+      display: flex;
+      gap: 0;
+      border: 1.5px solid rgba(255, 255, 255, .15);
+      border-radius: 8px;
+      overflow: hidden;
+      margin-bottom: 6px
+    }
+
+    .mtbtn {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 10px;
+      letter-spacing: .1em;
+      padding: 9px 20px;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      color: rgba(255, 255, 255, .35);
+      transition: all .18s;
+      min-height: 40px
+    }
+
+    .mtbtn.active-play {
+      background: #58a6ff;
+      color: #050810;
+      font-weight: 700
+    }
+
+    .mtbtn.active-learn {
+      background: #3fb950;
+      color: #050810;
+      font-weight: 700
+    }
+
+    #learnInfo {
+      font-size: 9px;
+      color: rgba(63, 185, 80, .65);
+      letter-spacing: .07em;
+      margin-bottom: 5px;
+      text-align: center;
+      line-height: 1.6;
+      display: none
+    }
+
+    .srule {
+      font-size: clamp(8px, 1.8vw, 10px);
+      color: rgba(255, 255, 255, .2);
+      letter-spacing: .06em;
+      margin-bottom: 3px;
+      text-align: center
+    }
+
+    .sbtn {
+      font-family: 'Press Start 2P', monospace;
+      font-size: clamp(9px, 2vw, 11px);
+      font-weight: 400;
+      letter-spacing: .15em;
+      padding: 14px 36px;
+      background: rgba(88, 166, 255, .12);
+      border: 2px solid rgba(88, 166, 255, .5);
+      color: #58a6ff;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all .2s;
+      margin-top: 10px;
+      min-height: 48px;
+      touch-action: manipulation;
+      image-rendering: pixelated
+    }
+
+    .sbtn:hover {
+      background: rgba(88, 166, 255, .22);
+      transform: translateY(-1px);
+      box-shadow: 0 0 16px rgba(88, 166, 255, .3)
+    }
+
+    .sbtn:active {
+      transform: scale(.96)
+    }
+
+    /* Game over */
+    #goScreen {
+      background: rgba(5, 8, 16, .97);
+      display: none
+    }
+
+    #goTitle {
+      font-family: 'Press Start 2P', monospace;
+      font-size: clamp(18px, 5vw, 28px);
+      color: #ff6b6b;
+      letter-spacing: .06em;
+      margin-bottom: 8px;
+      text-align: center
+    }
+
+    #goStats {
+      font-size: 11px;
+      color: rgba(255, 255, 255, .4);
+      letter-spacing: .08em;
+      margin-bottom: 3px
+    }
+
+    #goBest {
+      font-size: 10px;
+      color: #e3b341;
+      letter-spacing: .08em;
+      margin-bottom: 12px
+    }
+
+    #mistakesBox {
+      max-height: min(200px, 35vh);
+      overflow-y: auto;
+      width: min(540px, 94vw);
+      margin-bottom: 12px;
+      border: 1px solid rgba(255, 255, 255, .08);
+      border-radius: 8px
+    }
+
+    .mrow {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 8px 12px;
+      border-bottom: 1px solid rgba(255, 255, 255, .05);
+      font-size: 10px
+    }
+
+    .mrow:last-child {
+      border-bottom: none
+    }
+
+    .mlabel {
+      font-size: 7px;
+      letter-spacing: .1em;
+      color: rgba(255, 255, 255, .22);
+      text-transform: uppercase;
+      display: block;
+      margin-bottom: 2px
+    }
+
+    #drillBtn {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .14em;
+      padding: 10px 26px;
+      background: rgba(63, 185, 80, .1);
+      border: 1.5px solid rgba(63, 185, 80, .4);
+      color: #3fb950;
+      border-radius: 8px;
+      cursor: pointer;
+      margin-top: 4px;
+      margin-bottom: 6px;
+      transition: all .2s;
+      min-height: 42px;
+      display: none
+    }
+
+    #drillBtn:hover {
+      background: rgba(63, 185, 80, .2)
+    }
+
+    #tutBar {
+      position: absolute;
+      top: 60px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 9px;
+      color: rgba(255, 255, 255, .18);
+      letter-spacing: .1em;
+      z-index: 10;
+      pointer-events: none;
+      transition: opacity 1.5s;
+      white-space: nowrap
+    }
+
+    /* Credit — bigger */
+    #credit {
+      position: absolute;
+      bottom: 0;
+      right: 0;
+      z-index: 30;
+      padding: 7px 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(5, 8, 16, .8);
+      border-top: 1px solid rgba(255, 255, 255, .08);
+      border-left: 1px solid rgba(255, 255, 255, .08);
+      border-radius: 10px 0 0 0
+    }
+
+    #credit .cby {
+      font-size: 10px;
+      letter-spacing: .1em;
+      color: rgba(255, 255, 255, .3);
+      text-transform: uppercase
+    }
+
+    #credit .cname {
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: .1em;
+      color: rgba(255, 255, 255, .7)
+    }
+
+    #credit .csep {
+      color: rgba(255, 255, 255, .15);
+      font-size: 12px
+    }
+
+    #credit a {
+      font-size: 11px;
+      color: rgba(88, 166, 255, .65);
+      text-decoration: none;
+      letter-spacing: .04em
+    }
+
+    #credit a:hover {
+      color: rgba(88, 166, 255, .95)
+    }
+
+    @media(max-width:420px) {
+      #choiceBtns {
+        grid-template-columns: 1fr 1fr
+      }
+
+      .cbtn {
+        font-size: 12px;
+        padding: 11px 5px
+      }
+
+      #hud {
+        padding: 0 8px;
+        gap: 4px
+      }
+
+      .hud-val {
+        font-size: 13px
+      }
+    }
+  </style>
 </head>
+
 <body>
-<canvas id="canvas"></canvas>
+  <canvas id="canvas"></canvas>
 
-<div id="credit">
-  <span>built by</span>
-  <span style="color:rgba(255,255,255,.5);font-weight:700;letter-spacing:.12em">Martain Coder</span>
-  <span style="color:rgba(255,255,255,.12)">·</span>
-  <a href="mailto:martain.coders.x@gmail.com">martain.coders.x@gmail.com</a>
-</div>
-
-<div id="hud">
-  <div class="hud-block"><div class="hud-label">Score</div><div class="hud-val" id="scoreVal">0</div></div>
-  <div style="display:flex;flex-direction:column;align-items:center;gap:3px">
-    <div id="streakHud"></div><div id="comboHud"></div>
+  <div id="hud">
+    <div class="hud-block">
+      <div class="hud-label">Score</div>
+      <div class="hud-val" id="scoreVal">0</div>
+    </div>
+    <div style="display:flex;flex-direction:column;align-items:center;gap:2px">
+      <div id="streakHud"></div>
+      <div id="comboHud"></div>
+    </div>
+    <div class="hud-block">
+      <div class="hud-label">Lv</div>
+      <div class="hud-val" id="levelVal">1</div>
+    </div>
+    <div style="display:flex;flex-direction:column;align-items:center;gap:3px">
+      <div class="hud-label">Lives</div>
+      <div id="livesRow"></div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:4px;align-items:flex-end">
+      <div id="langPill">all</div>
+      <div id="levelBadge" class="lb-beg">beginner</div>
+    </div>
   </div>
-  <div class="hud-block"><div class="hud-label">Level</div><div class="hud-val" id="levelVal">1</div></div>
-  <div style="display:flex;flex-direction:column;align-items:center;gap:5px">
-    <div class="hud-label">Lives</div><div id="livesRow"></div>
+  <div id="progressWrap">
+    <div id="progressFill"></div>
   </div>
-  <div id="langPill">all</div>
-</div>
-<div id="progressWrap"><div id="progressFill"></div></div>
-<div id="tutBar">move mouse to steer · click an answer to fire the keyword</div>
+  <div id="tutBar">steer with mouse/finger · tap answer to fire keyword</div>
 
-<div id="choiceBar">
-  <div id="choiceBtns"></div>
-  <div id="speedRow">
-    SPEED
-    <input type="range" id="speedSlider" min="1" max="5" step="1" value="2">
-    <span id="speedLabel">2 — slow</span>
-  </div>
-</div>
-
-<!-- Start screen -->
-<div class="screen" id="startScreen">
-  <div class="stitle">CodeBlaster</div>
-  <div class="ssub">shoot the syntax · survive the vibe coding era</div>
-
-  <div style="font-size:10px;letter-spacing:.14em;color:rgba(255,255,255,.25);margin-bottom:10px;text-transform:uppercase">Choose language (or all)</div>
-  <div id="langSelect">
-    <button class="lbtn active" data-lang="all"   style="border-color:rgba(255,255,255,.3);color:#fff">ALL</button>
-    <button class="lbtn" data-lang="py"  style="--lc:#3fb950">Python</button>
-    <button class="lbtn" data-lang="ts"  style="--lc:#79c0ff">TypeScript</button>
-    <button class="lbtn" data-lang="go"  style="--lc:#58a6ff">Go</button>
-    <button class="lbtn" data-lang="rs"  style="--lc:#ff7b72">Rust</button>
-    <button class="lbtn" data-lang="cs"  style="--lc:#e3b341">C#</button>
-    <button class="lbtn" data-lang="js"  style="--lc:#d2a8ff">JavaScript</button>
+  <div id="choiceBar">
+    <div id="learnHint"></div>
+    <div id="choiceBtns"></div>
+    <div id="bottomRow">
+      <div id="speedRow">SPEED <input type="range" id="speedSlider" min="1" max="5" step="1" value="2"><span
+          id="speedLabel">Slow</span></div>
+      <span id="modeTag" class="mode-play">PLAY</span>
+    </div>
   </div>
 
-  <div class="srule">asteroids fall — each has a missing keyword</div>
-  <div class="srule">click the correct answer · keyword flies into the blank</div>
-  <div class="srule">miss 3 and game over · adjust speed with the slider</div>
-  <button class="sbtn" id="startBtn">LAUNCH</button>
-</div>
+  <!-- START SCREEN -->
+  <div class="screen" id="startScreen">
+    <div class="s-title">CodeBlaster</div>
+    <div class="s-pixelsub">shoot the syntax · survive the vibe coding era</div>
 
-<!-- Game over screen -->
-<div class="screen" id="goScreen">
-  <div id="goTitle">GAME OVER</div>
-  <div id="goStats"></div>
-  <div id="goBest"></div>
-  <div id="mistakesBox"></div>
-  <button class="sbtn" id="restartBtn">PLAY AGAIN</button>
-</div>
+    <div class="s-section">Language</div>
+    <div id="langSelect">
+      <button class="lbtn" data-lang="all" data-col="#ffffff">ALL</button>
+      <button class="lbtn" data-lang="py" data-col="#3fb950">Python</button>
+      <button class="lbtn" data-lang="ts" data-col="#79c0ff">TypeScript</button>
+      <button class="lbtn" data-lang="go" data-col="#58a6ff">Go</button>
+      <button class="lbtn" data-lang="rs" data-col="#ff7b72">Rust</button>
+      <button class="lbtn" data-lang="cs" data-col="#e3b341">C#</button>
+      <button class="lbtn" data-lang="js" data-col="#d2a8ff">JavaScript</button>
+      <button class="lbtn" data-lang="sql" data-col="#f97583">SQL</button>
+      <button class="lbtn" data-lang="mdb" data-col="#13aa52">MongoDB</button>
+    </div>
 
-<script>
-(function(){
-const canvas = document.getElementById('canvas');
-const ctx = canvas.getContext('2d');
-let W, H;
-function resize(){ W = canvas.width = window.innerWidth; H = canvas.height = window.innerHeight; }
-resize();
-window.addEventListener('resize', resize);
+    <div class="s-section">Difficulty</div>
+    <div id="diffSelect">
+      <button class="dbtn active-beg" data-diff="beg" onclick="setDiff('beg')">BEGINNER</button>
+      <button class="dbtn" data-diff="int" onclick="setDiff('int')">INTERMEDIATE</button>
+      <button class="dbtn" data-diff="exp" onclick="setDiff('exp')">EXPERT</button>
+    </div>
 
-// ── Speed slider ──
-const speedSlider = document.getElementById('speedSlider');
-const speedLabel  = document.getElementById('speedLabel');
-const speedNames  = ['1 — very slow','2 — slow','3 — normal','4 — fast','5 — insane'];
-speedSlider.addEventListener('input', () => { speedLabel.textContent = speedNames[+speedSlider.value-1]; });
+    <div class="s-section">Background</div>
+    <div id="bgSelect">
+      <button class="bgbtn active" data-bg="space">Universe</button>
+      <button class="bgbtn" data-bg="highway">Highway</button>
+      <button class="bgbtn" data-bg="ocean">Ocean</button>
+      <button class="bgbtn" data-bg="matrix">Matrix</button>
+      <button class="bgbtn" data-bg="aurora">Aurora</button>
+    </div>
 
-function getSpeedMult(){
-  return [0.28, 0.5, 0.85, 1.3, 1.9][+speedSlider.value-1];
-}
+    <div class="s-section">Mode</div>
+    <div id="modeToggle">
+      <button class="mtbtn active-play" id="mPlayBtn" onclick="setMode('play')">PLAY</button>
+      <button class="mtbtn" id="mLearnBtn" onclick="setMode('learn')">LEARN</button>
+    </div>
+    <div id="learnInfo">no lives lost · correct answer revealed · stress-free learning</div>
 
-// ── Language selector ──
-let selectedLang = 'all';
-const langColors = {all:'#fff',py:'#3fb950',ts:'#79c0ff',go:'#58a6ff',rs:'#ff7b72',cs:'#e3b341',js:'#d2a8ff'};
-document.querySelectorAll('.lbtn').forEach(btn => {
-  const lc = langColors[btn.dataset.lang] || '#fff';
-  btn.addEventListener('click', () => {
-    document.querySelectorAll('.lbtn').forEach(b => {
-      b.classList.remove('active');
-      b.style.background = 'transparent';
-      b.style.color = 'rgba(255,255,255,.35)';
-      b.style.borderColor = 'rgba(255,255,255,.12)';
-    });
-    btn.classList.add('active');
-    btn.style.background = lc;
-    btn.style.color = '#0d1117';
-    btn.style.borderColor = lc;
-    selectedLang = btn.dataset.lang;
-  });
-  if(btn.dataset.lang === 'all'){
-    btn.style.background = '#fff'; btn.style.color = '#0d1117'; btn.style.borderColor = '#fff';
-  }
-});
+    <div class="srule">asteroids fall — each has a missing keyword</div>
+    <div class="srule">click the right answer · keyword flies into the blank · confetti on correct!</div>
+    <button class="sbtn" id="startBtn">LAUNCH</button>
+  </div>
 
-// ── Questions ──
-const Q = [
-  {code:'def greet(name) -> ___:',       ans:'str',          opts:['str','int','None','bool'],          lang:'py',col:'#3fb950'},
-  {code:'for i in ___(10):',             ans:'range',        opts:['range','list','map','len'],         lang:'py',col:'#3fb950'},
-  {code:'with ___(file) as f:',          ans:'open',         opts:['open','read','load','get'],         lang:'py',col:'#3fb950'},
-  {code:'if y ___ None: pass',           ans:'is',           opts:['is','==','not','in'],               lang:'py',col:'#3fb950'},
-  {code:'result = [x for x ___ arr]',    ans:'in',           opts:['in','of','from','at'],              lang:'py',col:'#3fb950'},
-  {code:'raise ___(msg)',                ans:'ValueError',   opts:['ValueError','Exception','TypeError','KeyError'],lang:'py',col:'#3fb950'},
-  {code:'from typing import ___',        ans:'Optional',     opts:['Optional','Maybe','Nullable','Either'],lang:'py',col:'#3fb950'},
-  {code:'x: dict[str, ___] = {}',        ans:'Any',          opts:['Any','all','*','object'],           lang:'py',col:'#3fb950'},
-  {code:'class Dog(___):',              ans:'Animal',       opts:['Animal','Base','Super','object'],    lang:'py',col:'#3fb950'},
-  {code:'@___',                          ans:'staticmethod', opts:['staticmethod','classmethod','property','decorator'],lang:'py',col:'#3fb950'},
+  <!-- GAME OVER -->
+  <div class="screen" id="goScreen">
+    <div id="goTitle">GAME OVER</div>
+    <div id="goStats"></div>
+    <div id="goBest"></div>
+    <div id="mistakesBox"></div>
+    <button id="drillBtn" onclick="drillMistakes()">DRILL MY MISTAKES</button>
+    <button class="sbtn" id="restartBtn">PLAY AGAIN</button>
+  </div>
 
-  {code:'const x: ___ = "hello"',        ans:'string',       opts:['string','str','text','char'],       lang:'ts',col:'#79c0ff'},
-  {code:'async ___ fetchData()',         ans:'function',     opts:['function','def','fn','func'],       lang:'ts',col:'#79c0ff'},
-  {code:'type Id = string | ___',        ans:'number',       opts:['number','int','num','float'],       lang:'ts',col:'#79c0ff'},
-  {code:'const arr: ___<string> = []',   ans:'Array',        opts:['Array','List','Vec','Slice'],       lang:'ts',col:'#79c0ff'},
-  {code:'x as ___',                      ans:'unknown',      opts:['unknown','any','never','void'],     lang:'ts',col:'#79c0ff'},
-  {code:'type F = () ___ void',          ans:'=>',           opts:['=>','->',':','='],                  lang:'ts',col:'#79c0ff'},
-  {code:'enum Color { Red, ___, Blue }', ans:'Green',        opts:['Green','Yellow','Middle','None'],   lang:'ts',col:'#79c0ff'},
+  <div id="credit">
+    <span class="cby">Built by</span>
+    <span class="cname">Martain Coder</span>
+    <span class="csep">·</span>
+    <a href="mailto:martain.coders.x@gmail.com">martain.coders.x@gmail.com</a>
+  </div>
 
-  {code:'___ (err != nil) { return }',   ans:'if',           opts:['if','when','check','guard'],        lang:'go',col:'#58a6ff'},
-  {code:'var wg sync.___',               ans:'WaitGroup',    opts:['WaitGroup','Mutex','Channel','Once'],lang:'go',col:'#58a6ff'},
-  {code:'ch := ___(chan int, 5)',         ans:'make',         opts:['make','new','alloc','init'],        lang:'go',col:'#58a6ff'},
-  {code:'___ i, v := range items',       ans:'for',          opts:['for','each','loop','iter'],         lang:'go',col:'#58a6ff'},
-  {code:'type Node ___',                 ans:'struct',       opts:['struct','class','record','object'], lang:'go',col:'#58a6ff'},
-  {code:'defer ___()',                   ans:'wg.Done',      opts:['wg.Done','done','finish','close'],  lang:'go',col:'#58a6ff'},
+  <script>
+    (function () {
+      const canvas = document.getElementById('canvas');
+      const ctx = canvas.getContext('2d');
+      let W, H;
+      function resize() { W = canvas.width = window.innerWidth; H = canvas.height = window.innerHeight; }
+      resize();
+      window.addEventListener('resize', resize);
 
-  {code:'let x: ___ = 42;',             ans:'i32',          opts:['i32','int','num','u8'],             lang:'rs',col:'#ff7b72'},
-  {code:'fn add(a: i32) ___ i32',       ans:'->',           opts:['->','=>','>>','::'],                lang:'rs',col:'#ff7b72'},
-  {code:'impl ___ for MyStruct {}',      ans:'Display',      opts:['Display','Debug','Clone','Copy'],   lang:'rs',col:'#ff7b72'},
-  {code:'let v: Vec<___> = vec![]',      ans:'String',       opts:['String','str','&str','Text'],       lang:'rs',col:'#ff7b72'},
-  {code:'use std::___::HashMap',         ans:'collections',  opts:['collections','map','hash','data'],  lang:'rs',col:'#ff7b72'},
-  {code:'___ x = Arc::new(val)',         ans:'let',          opts:['let','mut','var','const'],          lang:'rs',col:'#ff7b72'},
+      // ── Speed ──
+      const speedSlider = document.getElementById('speedSlider');
+      const speedLabel = document.getElementById('speedLabel');
+      const speedNames = ['Very Slow', 'Slow', 'Normal', 'Fast', 'Insane'];
+      speedSlider.addEventListener('input', () => { speedLabel.textContent = speedNames[+speedSlider.value - 1]; });
+      function getSpeedMult() { return [0.2, 0.4, 0.72, 1.15, 1.8][+speedSlider.value - 1]; }
 
-  {code:'public ___ void Main()',        ans:'static',       opts:['static','async','partial','new'],   lang:'cs',col:'#e3b341'},
-  {code:'await Task.___();',            ans:'Delay',        opts:['Delay','Sleep','Wait','Pause'],     lang:'cs',col:'#e3b341'},
-  {code:'string? name = ___',           ans:'null',         opts:['null','nil','None','undefined'],    lang:'cs',col:'#e3b341'},
-  {code:'record Point(___ x, int y)',    ans:'int',          opts:['int','var','float','double'],       lang:'cs',col:'#e3b341'},
-  {code:'var x = list.___(i => i.Id)',   ans:'FirstOrDefault',opts:['FirstOrDefault','Find','First','Get'],lang:'cs',col:'#e3b341'},
+      // ── Settings ──
+      let selectedLang = 'all', selectedDiff = 'beg', selectedBg = 'space', gameMode = 'play';
 
-  {code:'const x = ___ fetch(url)',      ans:'await',        opts:['await','async','yield','defer'],    lang:'js',col:'#d2a8ff'},
-  {code:'arr.___(x => x * 2)',           ans:'map',          opts:['map','filter','find','forEach'],    lang:'js',col:'#d2a8ff'},
-  {code:'___ x = JSON.parse(s)',         ans:'const',        opts:['const','let','var','def'],          lang:'js',col:'#d2a8ff'},
-  {code:'obj?.name ___ "anon"',         ans:'??',           opts:['??','||','&&','||='],               lang:'js',col:'#d2a8ff'},
-  {code:'Promise.___(promises)',         ans:'all',          opts:['all','any','race','each'],          lang:'js',col:'#d2a8ff'},
-  {code:'function* gen() { ___ x }',    ans:'yield',        opts:['yield','return','emit','next'],     lang:'js',col:'#d2a8ff'},
-];
+      window.setMode = function (m) {
+        gameMode = m;
+        document.getElementById('mPlayBtn').className = 'mtbtn' + (m === 'play' ? ' active-play' : '');
+        document.getElementById('mLearnBtn').className = 'mtbtn' + (m === 'learn' ? ' active-learn' : '');
+        document.getElementById('learnInfo').style.display = m === 'learn' ? 'block' : 'none';
+      };
 
-function pickQ(){
-  const pool = selectedLang === 'all' ? Q : Q.filter(q => q.lang === selectedLang);
-  return pool[Math.floor(Math.random()*pool.length)];
-}
+      window.setDiff = function (d) {
+        selectedDiff = d;
+        document.querySelectorAll('.dbtn').forEach(b => {
+          b.className = 'dbtn' + (b.dataset.diff === d ? ' active-' + d : '');
+        });
+      };
 
-// ── State ──
-let state = 'idle';
-let score=0,lives=3,streak=0,combo=1,level=1,highScore=0;
-let asteroids=[],kwBullets=[],particles=[],confetti=[],floaters=[],stars=[];
-let ship={x:0,y:0};
-let spawnTimer=0;
-let currentQ=null;
-let thrustT=0,shakeT=0;
-let mistakes=[];
+      // Lang buttons
+      document.querySelectorAll('.lbtn').forEach(btn => {
+        const col = btn.dataset.col || '#fff';
+        btn.style.borderColor = col; btn.style.color = col; btn.style.opacity = '0.5';
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('.lbtn').forEach(b => {
+            b.style.background = 'transparent'; b.style.color = b.dataset.col || '#fff'; b.style.opacity = '0.5';
+          });
+          btn.style.background = col; btn.style.color = '#050810'; btn.style.opacity = '1';
+          selectedLang = btn.dataset.lang;
+        });
+      });
+      // default ALL active
+      const allBtn = document.querySelector('.lbtn[data-lang="all"]');
+      allBtn.style.background = '#fff'; allBtn.style.color = '#050810'; allBtn.style.opacity = '1';
 
-// ── Stars ──
-function initStars(){
-  stars=[];
-  for(let i=0;i<90;i++) stars.push({
-    x:Math.random()*8000,y:Math.random()*3000,
-    r:Math.random()*1.3+0.3,twinkle:Math.random()*Math.PI*2,speed:0.07+Math.random()*0.22
-  });
-}
-initStars();
+      // Bg buttons
+      document.querySelectorAll('.bgbtn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('.bgbtn').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          selectedBg = btn.dataset.bg;
+        });
+      });
 
-// ── Asteroid ──
-function newAsteroid(){
-  const q = pickQ();
-  const pad = 70;
-  const w = Math.min(W-pad*2, Math.max(200, q.code.length*9+60));
-  const x = pad + Math.random()*(W-pad*2-w) + w/2;
-  const sm = getSpeedMult();
-  return {
-    q, x, y:-44, w, h:44,
-    speed:(0.5+Math.random()*0.4)*sm,
-    wobble:Math.random()*Math.PI*2, wobbleAmt:1.3+Math.random()*1.3, wobbleSpeed:0.015+Math.random()*0.015,
-    hit:false, hitTimer:0, wrong:false, wrongTimer:0,
-    slotFilled:false, slotText:'',
-  };
-}
+      // ── QUESTIONS ──
+      // difficulty: 1=beginner 2=intermediate 3=expert
+      const Q = [
+        // ────── PYTHON ──────
+        { code: 'for i in ___(10):', ans: 'range', opts: ['range', 'list', 'map', 'len'], lang: 'py', col: '#3fb950', d: 1 },
+        { code: 'def greet(name) -> ___:', ans: 'str', opts: ['str', 'int', 'None', 'bool'], lang: 'py', col: '#3fb950', d: 1 },
+        { code: 'with ___(file) as f:', ans: 'open', opts: ['open', 'read', 'load', 'get'], lang: 'py', col: '#3fb950', d: 1 },
+        { code: 'if y ___ None: pass', ans: 'is', opts: ['is', '==', 'not', 'in'], lang: 'py', col: '#3fb950', d: 1 },
+        { code: 'result=[x for x ___ arr]', ans: 'in', opts: ['in', 'of', 'from', 'at'], lang: 'py', col: '#3fb950', d: 1 },
+        { code: 'raise ___(msg)', ans: 'ValueError', opts: ['ValueError', 'Exception', 'TypeError', 'KeyError'], lang: 'py', col: '#3fb950', d: 1 },
+        { code: 'from typing import ___', ans: 'Optional', opts: ['Optional', 'Maybe', 'Nullable', 'Either'], lang: 'py', col: '#3fb950', d: 1 },
+        { code: 'x: dict[str, ___] = {}', ans: 'Any', opts: ['Any', 'all', '*', 'object'], lang: 'py', col: '#3fb950', d: 1 },
+        { code: 'class Dog(___):', ans: 'Animal', opts: ['Animal', 'Base', 'Super', 'object'], lang: 'py', col: '#3fb950', d: 1 },
+        { code: '@___', ans: 'staticmethod', opts: ['staticmethod', 'classmethod', 'property', 'decorator'], lang: 'py', col: '#3fb950', d: 1 },
+        { code: 'print(f"hi {___}")', ans: 'name', opts: ['name', 'self', 'arg', 'var'], lang: 'py', col: '#3fb950', d: 1 },
+        { code: 'x = ___ if y else z', ans: 'a', opts: ['a', 'True', 'None', 'val'], lang: 'py', col: '#3fb950', d: 1 },
+        { code: 'nums.___( lambda x: x>0 )', ans: 'filter', opts: ['filter', 'map', 'find', 'sort'], lang: 'py', col: '#3fb950', d: 1 },
+        { code: 'import ___ as np', ans: 'numpy', opts: ['numpy', 'pandas', 'math', 'scipy'], lang: 'py', col: '#3fb950', d: 1 },
+        { code: '___ x in range(5): print(x)', ans: 'for', opts: ['for', 'while', 'each', 'loop'], lang: 'py', col: '#3fb950', d: 1 },
+        { code: 'x = [1,2,3]\nx.___( 4 )', ans: 'append', opts: ['append', 'add', 'push', 'insert'], lang: 'py', col: '#3fb950', d: 2 },
+        { code: 'd = {}\nd.___(key, default)', ans: 'get', opts: ['get', 'fetch', 'find', 'read'], lang: 'py', col: '#3fb950', d: 2 },
+        { code: '@app.___(route)', ans: 'route', opts: ['route', 'get', 'handle', 'bind'], lang: 'py', col: '#3fb950', d: 2 },
+        { code: 'async def fetch():\n  ___ asyncio.sleep(1)', ans: 'await', opts: ['await', 'async', 'yield', 'defer'], lang: 'py', col: '#3fb950', d: 2 },
+        { code: 'with contextlib.___():', ans: 'suppress', opts: ['suppress', 'ignore', 'catch', 'pass'], lang: 'py', col: '#3fb950', d: 2 },
+        { code: 'x = next(iter(___), None)', ans: 'gen', opts: ['gen', 'list', 'dict', 'set'], lang: 'py', col: '#3fb950', d: 2 },
+        { code: '___ = lambda x,y: x+y', ans: 'add', opts: ['add', 'fn', 'func', 'op'], lang: 'py', col: '#3fb950', d: 2 },
+        { code: 'class Meta:\n  ___ = True', ans: 'abstract', opts: ['abstract', 'final', 'static', 'virtual'], lang: 'py', col: '#3fb950', d: 2 },
+        { code: 'from functools import ___', ans: 'reduce', opts: ['reduce', 'apply', 'fold', 'scan'], lang: 'py', col: '#3fb950', d: 2 },
+        { code: '@___(maxsize=128)', ans: 'lru_cache', opts: ['lru_cache', 'cache', 'memoize', 'store'], lang: 'py', col: '#3fb950', d: 3 },
+        { code: 'x: TypeVar = ___(\'T\')', ans: 'TypeVar', opts: ['TypeVar', 'Generic', 'Protocol', 'Any'], lang: 'py', col: '#3fb950', d: 3 },
+        { code: 'with ___() as pool:', ans: 'ThreadPoolExecutor', opts: ['ThreadPoolExecutor', 'Pool', 'Executor', 'Worker'], lang: 'py', col: '#3fb950', d: 3 },
+        { code: '__slots__ = [\'___()\']', ans: 'x', opts: ['x', 'self', 'val', 'attr'], lang: 'py', col: '#3fb950', d: 3 },
+        { code: 'class C(metaclass=___):', ans: 'ABCMeta', opts: ['ABCMeta', 'Meta', 'Type', 'Base'], lang: 'py', col: '#3fb950', d: 3 },
+        { code: '___(obj, \'attr\', default)', ans: 'getattr', opts: ['getattr', 'hasattr', 'setattr', 'delattr'], lang: 'py', col: '#3fb950', d: 3 },
 
-// ── Keyword bullet ──
-// Flies from ship toward the blank slot in the asteroid
-function fireKeyword(chosen, target){
-  // Estimate blank x position on the asteroid
-  ctx.save();
-  ctx.font='600 13px "Share Tech Mono",monospace';
-  const parts = target.q.code.split('___');
-  const pre = parts[0];
-  const blankW = Math.max(ctx.measureText(chosen).width, 40);
-  const preW = ctx.measureText(pre).width;
-  const postW = ctx.measureText(parts[1]||'').width;
-  const totalW = preW + blankW + postW;
-  ctx.restore();
+        // ────── TYPESCRIPT ──────
+        { code: 'const x: ___ = "hello"', ans: 'string', opts: ['string', 'str', 'text', 'char'], lang: 'ts', col: '#79c0ff', d: 1 },
+        { code: 'async ___ fetchData()', ans: 'function', opts: ['function', 'def', 'fn', 'func'], lang: 'ts', col: '#79c0ff', d: 1 },
+        { code: 'type Id = string | ___', ans: 'number', opts: ['number', 'int', 'num', 'float'], lang: 'ts', col: '#79c0ff', d: 1 },
+        { code: 'const arr: ___<string>=[]', ans: 'Array', opts: ['Array', 'List', 'Vec', 'Slice'], lang: 'ts', col: '#79c0ff', d: 1 },
+        { code: 'enum Dir { Up, ___, Down }', ans: 'Left', opts: ['Left', 'Middle', 'Neutral', 'Right'], lang: 'ts', col: '#79c0ff', d: 1 },
+        { code: 'type F = () ___ void', ans: '=>', opts: ['=>', '->', ':', '='], lang: 'ts', col: '#79c0ff', d: 1 },
+        { code: 'x as ___', ans: 'unknown', opts: ['unknown', 'any', 'never', 'void'], lang: 'ts', col: '#79c0ff', d: 1 },
+        { code: 'interface User { id: ___ }', ans: 'number', opts: ['number', 'int', 'Integer', 'num'], lang: 'ts', col: '#79c0ff', d: 1 },
+        { code: 'let x: string | ___ = null', ans: 'null', opts: ['null', 'nil', 'None', 'undefined'], lang: 'ts', col: '#79c0ff', d: 1 },
+        { code: 'const fn = (x: ___): void=>{}', ans: 'number', opts: ['number', 'int', 'float', 'any'], lang: 'ts', col: '#79c0ff', d: 2 },
+        { code: 'type R = Record<string,___>', ans: 'unknown', opts: ['unknown', 'any', 'never', 'void'], lang: 'ts', col: '#79c0ff', d: 2 },
+        { code: 'function id<T>(x:T):___ {return x}', ans: 'T', opts: ['T', 'any', 'unknown', 'object'], lang: 'ts', col: '#79c0ff', d: 2 },
+        { code: 'const map = new Map<string,___>()', ans: 'number', opts: ['number', 'any', 'string', 'unknown'], lang: 'ts', col: '#79c0ff', d: 2 },
+        { code: 'type Partial<T> = { [P ___ T]?: T[P] }', ans: 'in keyof', opts: ['in keyof', 'of', 'extends', 'in'], lang: 'ts', col: '#79c0ff', d: 3 },
+        { code: 'type NonNull<T> = T ___ null | undefined', ans: 'extends', opts: ['extends', 'excludes', 'omits', 'picks'], lang: 'ts', col: '#79c0ff', d: 3 },
+        { code: 'declare ___ module "*.svg" {}', ans: 'global', opts: ['global', 'external', 'ambient', 'module'], lang: 'ts', col: '#79c0ff', d: 3 },
+        { code: 'satisfies ___', ans: 'Record<string,unknown>', opts: ['Record<string,unknown>', 'object', 'any', '{}'], lang: 'ts', col: '#79c0ff', d: 3 },
 
-  // blank center x relative to asteroid center
-  const blankRelX = -totalW/2 + preW + blankW/2;
-  const wx = target.x + Math.sin(target.wobble)*target.wobbleAmt + blankRelX;
-  const wy = target.y;
+        // ────── GO ──────
+        { code: '___ (err != nil) { return }', ans: 'if', opts: ['if', 'when', 'check', 'guard'], lang: 'go', col: '#58a6ff', d: 1 },
+        { code: 'ch := ___(chan int, 5)', ans: 'make', opts: ['make', 'new', 'alloc', 'init'], lang: 'go', col: '#58a6ff', d: 1 },
+        { code: '___ i, v := range items', ans: 'for', opts: ['for', 'each', 'loop', 'iter'], lang: 'go', col: '#58a6ff', d: 1 },
+        { code: 'type Node ___', ans: 'struct', opts: ['struct', 'class', 'record', 'object'], lang: 'go', col: '#58a6ff', d: 1 },
+        { code: 'var wg sync.___', ans: 'WaitGroup', opts: ['WaitGroup', 'Mutex', 'Channel', 'Once'], lang: 'go', col: '#58a6ff', d: 1 },
+        { code: 'defer ___.Done()', ans: 'wg', opts: ['wg', 'ch', 'ctx', 'mu'], lang: 'go', col: '#58a6ff', d: 1 },
+        { code: 'go ___()', ans: 'func', opts: ['func', 'run', 'spawn', 'goroutine'], lang: 'go', col: '#58a6ff', d: 1 },
+        { code: 'fmt.___(x)', ans: 'Println', opts: ['Println', 'print', 'log', 'echo'], lang: 'go', col: '#58a6ff', d: 1 },
+        { code: 'err := json.Unmarshal(data, ___)', ans: '&out', opts: ['&out', 'out', '*out', 'out{}'], lang: 'go', col: '#58a6ff', d: 2 },
+        { code: 'ctx, cancel := context.___Background()', ans: 'WithCancel', opts: ['WithCancel', 'WithTimeout', 'New', 'Create'], lang: 'go', col: '#58a6ff', d: 2 },
+        { code: '___ Node interface { Val() int }', ans: 'type', opts: ['type', 'interface', 'define', 'declare'], lang: 'go', col: '#58a6ff', d: 2 },
+        { code: 'sync.___ mu', ans: 'Mutex', opts: ['Mutex', 'Lock', 'RWMutex', 'Once'], lang: 'go', col: '#58a6ff', d: 2 },
+        { code: 'atomic.AddInt64(&n, ___)', ans: '1', opts: ['1', '+1', 'one', 'inc'], lang: 'go', col: '#58a6ff', d: 3 },
+        { code: 'select { ___ <-ch: }', ans: 'case', opts: ['case', 'when', 'on', 'for'], lang: 'go', col: '#58a6ff', d: 3 },
+        { code: '___ a,b = b,a', ans: 'a,b', opts: ['a,b', 'var', 'let', 'swap'], lang: 'go', col: '#58a6ff', d: 3 },
 
-  kwBullets.push({
-    x: ship.x, y: ship.y - 14,
-    tx: wx, ty: wy,
-    text: chosen,
-    col: target.q.col,
-    correct: chosen === target.q.ans,
-    target: target,
-    t: 0,           // 0..1 animation progress
-    speed: 0.045,
-    done: false,
-    // store start for lerp
-    sx: ship.x, sy: ship.y - 14,
-  });
-}
+        // ────── RUST ──────
+        { code: 'let x: ___ = 42;', ans: 'i32', opts: ['i32', 'int', 'num', 'u8'], lang: 'rs', col: '#ff7b72', d: 1 },
+        { code: 'fn add(a: i32) ___ i32', ans: '->', opts: ['->', '=>', '>>', '::'], lang: 'rs', col: '#ff7b72', d: 1 },
+        { code: 'impl ___ for MyStruct {}', ans: 'Display', opts: ['Display', 'Debug', 'Clone', 'Copy'], lang: 'rs', col: '#ff7b72', d: 1 },
+        { code: 'let v: Vec<___> = vec![]', ans: 'String', opts: ['String', 'str', '&str', 'Text'], lang: 'rs', col: '#ff7b72', d: 1 },
+        { code: 'use std::___::HashMap', ans: 'collections', opts: ['collections', 'map', 'hash', 'data'], lang: 'rs', col: '#ff7b72', d: 1 },
+        { code: '___ x = Arc::new(val)', ans: 'let', opts: ['let', 'mut', 'var', 'const'], lang: 'rs', col: '#ff7b72', d: 1 },
+        { code: 'fn borrow(s: &___ str)->usize', ans: '\'a', opts: ['\'a', '\'b', '*', 'ref'], lang: 'rs', col: '#ff7b72', d: 2 },
+        { code: 'match x { ___ => {} }', ans: '_', opts: ['_', '*', 'else', 'default'], lang: 'rs', col: '#ff7b72', d: 2 },
+        { code: 'Box<dyn ___>', ans: 'Fn()', opts: ['Fn()', 'fn()', 'Func', 'Closure'], lang: 'rs', col: '#ff7b72', d: 2 },
+        { code: '___ Some(x) = opt', ans: 'if let', opts: ['if let', 'match', 'unwrap', 'let if'], lang: 'rs', col: '#ff7b72', d: 2 },
+        { code: 'trait Animal { fn sound(&___) }', ans: 'self', opts: ['self', 'Self', 'this', 'me'], lang: 'rs', col: '#ff7b72', d: 2 },
+        { code: 'use tokio::___::spawn', ans: 'task', opts: ['task', 'thread', 'async', 'runtime'], lang: 'rs', col: '#ff7b72', d: 3 },
+        { code: 'PhantomData<___>', ans: 'T', opts: ['T', '*', '&T', '\'a T'], lang: 'rs', col: '#ff7b72', d: 3 },
+        { code: 'unsafe { ___ }', ans: '*ptr', opts: ['*ptr', '&ptr', 'ptr.get()', 'ptr as'], lang: 'rs', col: '#ff7b72', d: 3 },
+        { code: 'where T: ___ + Send', ans: 'Clone', opts: ['Clone', 'Copy', 'Display', 'Debug'], lang: 'rs', col: '#ff7b72', d: 3 },
 
-// ── Confetti ──
-function spawnConfetti(x, y, col){
-  const colors = [col, '#fff', '#e3b341', '#58a6ff', '#3fb950', '#d2a8ff', '#ff7b72'];
-  for(let i=0;i<60;i++){
-    const a = Math.random()*Math.PI*2;
-    const spd = 2+Math.random()*7;
-    confetti.push({
-      x, y,
-      vx: Math.cos(a)*spd,
-      vy: Math.sin(a)*spd - 3,
-      life: 1, decay: 0.012+Math.random()*0.018,
-      w: 4+Math.random()*6, h: 3+Math.random()*4,
-      rot: Math.random()*Math.PI*2,
-      rotV: (Math.random()-.5)*0.3,
-      col: colors[Math.floor(Math.random()*colors.length)],
-    });
-  }
-}
+        // ────── C# ──────
+        { code: 'public ___ void Main()', ans: 'static', opts: ['static', 'async', 'partial', 'new'], lang: 'cs', col: '#e3b341', d: 1 },
+        { code: 'await Task.___();', ans: 'Delay', opts: ['Delay', 'Sleep', 'Wait', 'Pause'], lang: 'cs', col: '#e3b341', d: 1 },
+        { code: 'string? name = ___', ans: 'null', opts: ['null', 'nil', 'None', 'undefined'], lang: 'cs', col: '#e3b341', d: 1 },
+        { code: 'record Point(___ x, int y)', ans: 'int', opts: ['int', 'var', 'float', 'double'], lang: 'cs', col: '#e3b341', d: 1 },
+        { code: 'x ___ y ?? 0', ans: '??=', opts: ['??=', '=', '||=', '+='], lang: 'cs', col: '#e3b341', d: 1 },
+        { code: 'var x=list.___(i=>i.Id)', ans: 'FirstOrDefault', opts: ['FirstOrDefault', 'Find', 'First', 'Get'], lang: 'cs', col: '#e3b341', d: 2 },
+        { code: 'IEnumerable<int> Gen() { ___ i; }', ans: 'yield return', opts: ['yield return', 'return', 'yield', 'emit'], lang: 'cs', col: '#e3b341', d: 2 },
+        { code: '[ApiController]\n[Route("___")]', ans: '[controller]', opts: ['[controller]', 'api', 'route', 'path'], lang: 'cs', col: '#e3b341', d: 2 },
+        { code: 'public T Get<T>() where T: ___', ans: 'class', opts: ['class', 'new()', 'struct', 'IDisposable'], lang: 'cs', col: '#e3b341', d: 2 },
+        { code: 'using var conn = new ___Connection()', ans: 'Sql', opts: ['Sql', 'Db', 'My', 'Postgres'], lang: 'cs', col: '#e3b341', d: 2 },
+        { code: '___ x = obj switch { A a => 1, _ => 0 }', ans: 'var', opts: ['var', 'int', 'auto', 'let'], lang: 'cs', col: '#e3b341', d: 3 },
+        { code: 'Span<byte> ___ = stackalloc byte[256]', ans: 'buf', opts: ['buf', 'span', 'mem', 'data'], lang: 'cs', col: '#e3b341', d: 3 },
+        { code: '[___(AllowMultiple=false)]', ans: 'AttributeUsage', opts: ['AttributeUsage', 'Attribute', 'CustomAttr', 'Meta'], lang: 'cs', col: '#e3b341', d: 3 },
 
-function burst(x,y,col,n){
-  for(let i=0;i<n;i++){
-    const a=Math.random()*Math.PI*2, spd=1.5+Math.random()*4.5;
-    particles.push({x,y,vx:Math.cos(a)*spd,vy:Math.sin(a)*spd-1,life:1,decay:.028+Math.random()*.03,size:2+Math.random()*3.5,col});
-  }
-}
+        // ────── JAVASCRIPT ──────
+        { code: 'const x = ___ fetch(url)', ans: 'await', opts: ['await', 'async', 'yield', 'defer'], lang: 'js', col: '#d2a8ff', d: 1 },
+        { code: 'arr.___(x => x * 2)', ans: 'map', opts: ['map', 'filter', 'find', 'forEach'], lang: 'js', col: '#d2a8ff', d: 1 },
+        { code: '___ x = JSON.parse(s)', ans: 'const', opts: ['const', 'let', 'var', 'def'], lang: 'js', col: '#d2a8ff', d: 1 },
+        { code: 'obj?.name ___ "anon"', ans: '??', opts: ['??', '||', '&&', '||='], lang: 'js', col: '#d2a8ff', d: 1 },
+        { code: 'Promise.___(promises)', ans: 'all', opts: ['all', 'any', 'race', 'each'], lang: 'js', col: '#d2a8ff', d: 1 },
+        { code: 'function* gen(){___ x}', ans: 'yield', opts: ['yield', 'return', 'emit', 'next'], lang: 'js', col: '#d2a8ff', d: 1 },
+        { code: 'arr.___(x => x > 0)', ans: 'filter', opts: ['filter', 'map', 'find', 'some'], lang: 'js', col: '#d2a8ff', d: 1 },
+        { code: 'Object.___(src)', ans: 'keys', opts: ['keys', 'values', 'entries', 'assign'], lang: 'js', col: '#d2a8ff', d: 1 },
+        { code: 'const { a, ___b } = obj', ans: '...rest', opts: ['...rest', '...', 'rest:', '#rest'], lang: 'js', col: '#d2a8ff', d: 2 },
+        { code: 'arr.___((a,b) => a.id - b.id)', ans: 'sort', opts: ['sort', 'order', 'arrange', 'rank'], lang: 'js', col: '#d2a8ff', d: 2 },
+        { code: 'new ___(handler)', ans: 'Proxy', opts: ['Proxy', 'Reflect', 'WeakMap', 'Handler'], lang: 'js', col: '#d2a8ff', d: 2 },
+        { code: 'Symbol.___', ans: 'iterator', opts: ['iterator', 'async', 'toPrimitive', 'species'], lang: 'js', col: '#d2a8ff', d: 2 },
+        { code: 'queueMicrotask(___)', ans: 'fn', opts: ['fn', 'cb', 'task', 'run'], lang: 'js', col: '#d2a8ff', d: 3 },
+        { code: 'globalThis.___', ans: 'structuredClone', opts: ['structuredClone', 'deepCopy', 'clone', 'copy'], lang: 'js', col: '#d2a8ff', d: 3 },
+        { code: 'using ___ = getResource()', ans: 'resource', opts: ['resource', 'res', 'val', 'x'], lang: 'js', col: '#d2a8ff', d: 3 },
 
-function addFloat(x,y,text,col){
-  floaters.push({x,y,text,col,life:1,vy:-2});
-}
+        // ────── SQL ──────
+        { code: 'SELECT * ___ users', ans: 'FROM', opts: ['FROM', 'IN', 'INSIDE', 'WITHIN'], lang: 'sql', col: '#f97583', d: 1 },
+        { code: 'SELECT name FROM users ___ age > 18', ans: 'WHERE', opts: ['WHERE', 'HAVING', 'FILTER', 'IF'], lang: 'sql', col: '#f97583', d: 1 },
+        { code: 'SELECT * FROM a ___ JOIN b ON a.id=b.id', ans: 'INNER', opts: ['INNER', 'OUTER', 'CROSS', 'FULL'], lang: 'sql', col: '#f97583', d: 1 },
+        { code: 'SELECT COUNT(___) FROM orders', ans: '*', opts: ['*', 'id', '1', 'ALL'], lang: 'sql', col: '#f97583', d: 1 },
+        { code: 'SELECT name FROM t ORDER BY name ___', ans: 'ASC', opts: ['ASC', 'UP', 'FIRST', 'AZ'], lang: 'sql', col: '#f97583', d: 1 },
+        { code: 'INSERT ___ users (name) VALUES (\'Al\')', ans: 'INTO', opts: ['INTO', 'TO', 'IN', 'INSIDE'], lang: 'sql', col: '#f97583', d: 1 },
+        { code: '___ FROM users WHERE id=1', ans: 'DELETE', opts: ['DELETE', 'REMOVE', 'DROP', 'ERASE'], lang: 'sql', col: '#f97583', d: 1 },
+        { code: 'UPDATE users ___ name=\'Bob\' WHERE id=1', ans: 'SET', opts: ['SET', 'LET', 'CHANGE', 'ASSIGN'], lang: 'sql', col: '#f97583', d: 1 },
+        { code: 'SELECT ___ name FROM users', ans: 'DISTINCT', opts: ['DISTINCT', 'UNIQUE', 'ONLY', 'SINGLE'], lang: 'sql', col: '#f97583', d: 1 },
+        { code: 'SELECT * FROM t ___ id IN (1,2,3)', ans: 'WHERE', opts: ['WHERE', 'HAVING', 'IF', 'WHEN'], lang: 'sql', col: '#f97583', d: 1 },
+        { code: 'CREATE ___ users (id INT PRIMARY KEY)', ans: 'TABLE', opts: ['TABLE', 'DB', 'SCHEMA', 'VIEW'], lang: 'sql', col: '#f97583', d: 1 },
+        { code: 'ALTER TABLE t ___ COLUMN age INT', ans: 'ADD', opts: ['ADD', 'INSERT', 'APPEND', 'NEW'], lang: 'sql', col: '#f97583', d: 2 },
+        { code: 'SELECT dept, ___(salary) FROM emp GROUP BY dept', ans: 'AVG', opts: ['AVG', 'MEAN', 'SUM', 'MED'], lang: 'sql', col: '#f97583', d: 2 },
+        { code: 'SELECT * FROM t1 ___ SELECT * FROM t2', ans: 'UNION', opts: ['UNION', 'MERGE', 'COMBINE', 'JOIN'], lang: 'sql', col: '#f97583', d: 2 },
+        { code: 'WITH cte ___ (SELECT id FROM t)', ans: 'AS', opts: ['AS', 'IS', 'LIKE', '='], lang: 'sql', col: '#f97583', d: 2 },
+        { code: 'SELECT *, ROW_NUMBER() ___ (ORDER BY id) rn', ans: 'OVER', opts: ['OVER', 'AS', 'ON', 'FOR'], lang: 'sql', col: '#f97583', d: 2 },
+        { code: 'HAVING COUNT(*) ___ 5', ans: '>', opts: ['>', '=', 'OVER', 'ABOVE'], lang: 'sql', col: '#f97583', d: 2 },
+        { code: 'SELECT * FROM t ___ FETCH FIRST 10 ROWS ONLY', ans: 'ORDER BY id', opts: ['ORDER BY id', 'LIMIT 10', 'TOP 10', 'ROWNUM'], lang: 'sql', col: '#f97583', d: 3 },
+        { code: 'EXPLAIN ___ SELECT * FROM users', ans: 'ANALYZE', opts: ['ANALYZE', 'PLAN', 'QUERY', 'SHOW'], lang: 'sql', col: '#f97583', d: 3 },
+        { code: 'CREATE INDEX idx ON t (___ name)', ans: 'LOWER', opts: ['LOWER', 'UPPER', 'FUNC', 'EXPR'], lang: 'sql', col: '#f97583', d: 3 },
+        { code: 'SELECT * FROM t WHERE ts > NOW() - ___', ans: 'INTERVAL \'1 day\'', opts: ['INTERVAL \'1 day\'', '1 DAY', 'DAYS(1)', 'DATE-1'], lang: 'sql', col: '#f97583', d: 3 },
 
-// ── Answer ──
-function answer(chosen){
-  if(state!=='playing'||!currentQ) return;
-  const target = asteroids.find(a=>a.q===currentQ&&!a.hit);
-  if(!target) return;
+        // ────── MONGODB ──────
+        { code: 'db.users.___({})', ans: 'find', opts: ['find', 'get', 'query', 'select'], lang: 'mdb', col: '#13aa52', d: 1 },
+        { code: 'db.users.___({"name":"Al"})', ans: 'findOne', opts: ['findOne', 'getOne', 'first', 'findFirst'], lang: 'mdb', col: '#13aa52', d: 1 },
+        { code: 'db.users.___({name:"Al",age:30})', ans: 'insertOne', opts: ['insertOne', 'insert', 'add', 'create'], lang: 'mdb', col: '#13aa52', d: 1 },
+        { code: 'db.t.updateOne({_id:1},{___:{age:30}})', ans: '$set', opts: ['$set', '$push', '$inc', '$add'], lang: 'mdb', col: '#13aa52', d: 1 },
+        { code: 'db.t.deleteOne({___ :id})', ans: '_id', opts: ['_id', 'id', 'key', 'ref'], lang: 'mdb', col: '#13aa52', d: 1 },
+        { code: 'db.t.find().___( {name:1} )', ans: 'project', opts: ['project', 'select', 'fields', 'pick'], lang: 'mdb', col: '#13aa52', d: 1 },
+        { code: 'db.t.find().sort({age:___})', ans: '-1', opts: ['-1', '0', 'DESC', 'false'], lang: 'mdb', col: '#13aa52', d: 1 },
+        { code: 'db.t.find().limit(___)', ans: '10', opts: ['10', 'null', '0', 'all'], lang: 'mdb', col: '#13aa52', d: 1 },
+        { code: 'db.t.find({age:{___:18}})', ans: '$gt', opts: ['$gt', '$lt', '$gte', '$eq'], lang: 'mdb', col: '#13aa52', d: 1 },
+        { code: 'db.t.find({tags:{___:"js"}})', ans: '$in', opts: ['$in', '$has', '$contains', '$elem'], lang: 'mdb', col: '#13aa52', d: 2 },
+        { code: 'db.t.updateMany({},{___:{score:1}})', ans: '$inc', opts: ['$inc', '$add', '$push', '$set'], lang: 'mdb', col: '#13aa52', d: 2 },
+        { code: 'db.t.aggregate([{___:"$age"}])', ans: '$group', opts: ['$group', '$match', '$sort', '$project'], lang: 'mdb', col: '#13aa52', d: 2 },
+        { code: 'db.t.aggregate([{$match:{age:{$___:18}}}])', ans: 'gte', opts: ['gte', 'gt', 'lte', 'eq'], lang: 'mdb', col: '#13aa52', d: 2 },
+        { code: 'db.t.createIndex({email:1},{___:true})', ans: 'unique', opts: ['unique', 'index', 'sparse', 'text'], lang: 'mdb', col: '#13aa52', d: 2 },
+        { code: 'db.t.find({$___:[{a:1},{b:2}]})', ans: 'and', opts: ['and', 'or', 'nor', 'not'], lang: 'mdb', col: '#13aa52', d: 2 },
+        { code: 'db.t.findOneAndUpdate({},{$set:{}},{___:true})', ans: 'returnDocument:"after"', opts: ['returnDocument:"after"', 'new:true', 'after:true', 'return:"new"'], lang: 'mdb', col: '#13aa52', d: 3 },
+        { code: 'db.t.aggregate([{$___:{from:"a",as:"b"}}])', ans: 'lookup', opts: ['lookup', 'join', 'merge', 'link'], lang: 'mdb', col: '#13aa52', d: 3 },
+        { code: 'db.t.aggregate([{$___:"$tags"}])', ans: 'unwind', opts: ['unwind', 'flatten', 'expand', 'spread'], lang: 'mdb', col: '#13aa52', d: 3 },
+        { code: 'db.t.aggregate([{$___:{_id:null,tot:{$sum:"$price"}}}])', ans: 'group', opts: ['group', 'reduce', 'fold', 'sum'], lang: 'mdb', col: '#13aa52', d: 3 },
+        { code: 'db.t.watch([{$match:{operationType:\'___\'}}])', ans: 'insert', opts: ['insert', 'update', 'delete', 'replace'], lang: 'mdb', col: '#13aa52', d: 3 },
+      ];
 
-  const btns = document.querySelectorAll('.cbtn');
-  const clickedBtn = [...btns].find(b=>b.dataset.val===chosen);
-  const correctBtn = [...btns].find(b=>b.dataset.val===currentQ.ans);
-
-  disableAll();
-
-  if(chosen === currentQ.ans){
-    if(clickedBtn) clickedBtn.classList.add('correct');
-    fireKeyword(chosen, target);
-    // bullet landing handled in loop
-  } else {
-    if(clickedBtn) clickedBtn.classList.add('wrong');
-    if(correctBtn) correctBtn.classList.add('reveal');
-    fireKeyword(chosen, target);
-    mistakes.push({code:target.q.code, yours:chosen, correct:target.q.ans, lang:target.q.lang});
-    streak=0; combo=1;
-    lives--;
-    shakeT=12;
-    addFloat(target.x, target.y-24, 'WRONG!', '#ff6b6b');
-    updateHUD();
-    if(lives<=0){ setTimeout(endGame,900); return; }
-    setTimeout(nextQ, 950);
-  }
-}
-
-function disableAll(){
-  document.querySelectorAll('.cbtn').forEach(b=>b.disabled=true);
-}
-
-function nextQ(){
-  asteroids=asteroids.filter(a=>!a.hit||a.hitTimer>0);
-  spawnNext();
-}
-
-function spawnNext(){
-  const alive=asteroids.filter(a=>!a.hit);
-  if(alive.length===0){
-    const a=newAsteroid(); asteroids.push(a);
-    currentQ=a.q; showChoices(a.q);
-  } else {
-    currentQ=alive[0].q; showChoices(alive[0].q);
-  }
-}
-
-// ── Choices ──
-function showChoices(q){
-  const bar=document.getElementById('choiceBtns');
-  bar.innerHTML='';
-  [...q.opts].sort(()=>Math.random()-.5).forEach(opt=>{
-    const b=document.createElement('button');
-    b.className='cbtn'; b.textContent=opt; b.dataset.val=opt;
-    b.onclick=()=>answer(opt);
-    bar.appendChild(b);
-  });
-  const names={py:'python',ts:'typescript',go:'golang',rs:'rust',cs:'c#',js:'javascript'};
-  document.getElementById('langPill').textContent = selectedLang==='all' ? names[q.lang]||q.lang : selectedLang;
-}
-
-// ── HUD ──
-function updateHUD(){
-  document.getElementById('scoreVal').textContent=score.toLocaleString();
-  document.getElementById('levelVal').textContent=level;
-  const row=document.getElementById('livesRow');
-  row.innerHTML='';
-  for(let i=0;i<3;i++){
-    const h=document.createElement('span');
-    h.className='heart '+(i<lives?'alive':'dead'); h.textContent='♥'; row.appendChild(h);
-  }
-  document.getElementById('streakHud').textContent=streak>=2?'STREAK ×'+streak:'';
-  const co=document.getElementById('comboHud');
-  if(combo>1){co.style.display='block';co.textContent='COMBO ×'+combo+'!';}
-  else co.style.display='none';
-
-  document.getElementById('progressFill').style.width=Math.min(100,(score%500)/5)+'%';
-  const newLevel=Math.floor(score/500)+1;
-  if(newLevel>level){
-    level=newLevel;
-    addFloat(W/2,H/2-40,'LEVEL '+level+'!','#e3b341');
-    burst(W/2,H/2,'#e3b341',28);
-  }
-}
-
-// ── Draw ship ──
-function drawShip(){
-  const x=ship.x,y=ship.y; thrustT++;
-  ctx.save(); ctx.translate(x,y);
-  if(thrustT%3<2){
-    ctx.beginPath(); ctx.moveTo(-7,14); ctx.lineTo(0,24+Math.random()*10); ctx.lineTo(7,14);
-    ctx.strokeStyle='#e3b341'; ctx.lineWidth=2.5; ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(-4,14); ctx.lineTo(0,18+Math.random()*6); ctx.lineTo(4,14);
-    ctx.strokeStyle='#ff6b6b'; ctx.lineWidth=1.5; ctx.stroke();
-  }
-  ctx.beginPath(); ctx.moveTo(0,-16); ctx.lineTo(18,14); ctx.lineTo(10,8); ctx.lineTo(-10,8); ctx.lineTo(-18,14); ctx.closePath();
-  ctx.fillStyle='#0f1f35'; ctx.fill(); ctx.strokeStyle='#58a6ff'; ctx.lineWidth=1.5; ctx.stroke();
-  ctx.beginPath(); ctx.moveTo(0,-10); ctx.lineTo(7,5); ctx.lineTo(-7,5); ctx.closePath();
-  ctx.fillStyle='rgba(88,166,255,.35)'; ctx.fill();
-  ctx.fillStyle='#58a6ff';
-  ctx.beginPath(); ctx.arc(-9,10,2.5,0,Math.PI*2); ctx.fill();
-  ctx.beginPath(); ctx.arc(9,10,2.5,0,Math.PI*2); ctx.fill();
-  ctx.restore();
-}
-
-// ── Draw asteroid ──
-function drawAsteroid(a){
-  const wx=a.x+Math.sin(a.wobble)*a.wobbleAmt, wy=a.y;
-  const hw=a.w/2, hh=a.h/2;
-  ctx.save();
-  ctx.globalAlpha=a.hit?Math.max(0,a.hitTimer/22):1;
-  ctx.translate(wx,wy);
-  if(a.wrong){ctx.shadowColor='#ff6b6b';ctx.shadowBlur=16;}
-
-  ctx.beginPath(); ctx.roundRect(-hw,-hh,a.w,a.h,9);
-  ctx.fillStyle=a.hit?'rgba(255,107,107,.05)':'rgba(8,12,22,.96)'; ctx.fill();
-  ctx.strokeStyle=a.hit?'#ff6b6b':a.q.col; ctx.lineWidth=a.hit?2:1; ctx.stroke();
-  ctx.shadowBlur=0;
-
-  // bracket corners
-  const bw=8; ctx.strokeStyle=a.q.col; ctx.globalAlpha*=.35; ctx.lineWidth=1;
-  [[- hw+2,-hh+bw,-hw+2,-hh+2,-hw+bw,-hh+2],[hw-2,-hh+bw,hw-2,-hh+2,hw-bw,-hh+2],
-   [-hw+2,hh-bw,-hw+2,hh-2,-hw+bw,hh-2],[hw-2,hh-bw,hw-2,hh-2,hw-bw,hh-2]].forEach(([x1,y1,x2,y2,x3,y3])=>{
-    ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.lineTo(x3,y3); ctx.stroke();
-  });
-  ctx.globalAlpha=a.hit?Math.max(0,a.hitTimer/22):1;
-
-  // Code text
-  ctx.font='600 13px "Share Tech Mono",monospace';
-  ctx.textAlign='center'; ctx.textBaseline='middle';
-
-  const parts=a.q.code.split('___');
-  const pre=parts[0], post=parts[1]||'';
-  const displayBlank = a.slotFilled ? a.slotText : '___';
-  const blankCol = a.slotFilled ? '#3fb950' : a.q.col;
-  const pW=ctx.measureText(pre).width;
-  const bW=ctx.measureText(displayBlank).width;
-  const poW=ctx.measureText(post).width;
-  const total=pW+bW+poW;
-  let cx=-total/2;
-
-  ctx.fillStyle='rgba(200,215,228,.88)'; ctx.fillText(pre,cx+pW/2,0); cx+=pW;
-
-  if(!a.slotFilled){
-    ctx.fillStyle='rgba(88,166,255,.07)'; ctx.strokeStyle='rgba(88,166,255,.3)'; ctx.lineWidth=1;
-    ctx.beginPath(); ctx.roundRect(cx-4,-10,bW+8,20,4); ctx.fill(); ctx.stroke();
-  } else {
-    // glowing slot when filled
-    ctx.fillStyle='rgba(63,185,80,.12)'; ctx.strokeStyle='rgba(63,185,80,.45)'; ctx.lineWidth=1.5;
-    ctx.beginPath(); ctx.roundRect(cx-6,-12,bW+12,24,5); ctx.fill(); ctx.stroke();
-  }
-  ctx.fillStyle=blankCol; ctx.fillText(displayBlank,cx+bW/2,0); cx+=bW;
-  ctx.fillStyle='rgba(200,215,228,.88)'; ctx.fillText(post,cx+poW/2,0);
-
-  // lang tag
-  ctx.font='9px "Share Tech Mono",monospace'; ctx.textAlign='right';
-  ctx.fillStyle='rgba(255,255,255,.18)'; ctx.fillText(a.q.lang,hw-6,-hh+9);
-  ctx.restore();
-}
-
-// ── Draw keyword bullet ──
-function drawKwBullet(b){
-  ctx.save();
-  ctx.globalAlpha=Math.min(1, b.t < 0.1 ? b.t*10 : b.t > 0.85 ? (1-b.t)/0.15 : 1);
-
-  // glow halo
-  ctx.beginPath();
-  ctx.arc(b.x,b.y,14,0,Math.PI*2);
-  ctx.fillStyle=b.col+'22';
-  ctx.fill();
-
-  // pill background
-  ctx.font='700 13px "Share Tech Mono",monospace';
-  const tw=ctx.measureText(b.text).width;
-  const pw=tw+20, ph=26;
-  ctx.beginPath(); ctx.roundRect(b.x-pw/2, b.y-ph/2, pw, ph, 6);
-  ctx.fillStyle='rgba(8,12,22,.95)'; ctx.fill();
-  ctx.strokeStyle=b.col; ctx.lineWidth=1.5; ctx.stroke();
-
-  // text
-  ctx.textAlign='center'; ctx.textBaseline='middle';
-  ctx.fillStyle=b.col;
-  ctx.fillText(b.text, b.x, b.y);
-
-  ctx.restore();
-}
-
-// ── Draw confetti ──
-function drawConfetti(){
-  confetti.forEach(c=>{
-    ctx.save();
-    ctx.globalAlpha=c.life;
-    ctx.translate(c.x, c.y);
-    ctx.rotate(c.rot);
-    ctx.fillStyle=c.col;
-    ctx.fillRect(-c.w/2,-c.h/2,c.w,c.h);
-    ctx.restore();
-  });
-}
-
-// ── Stars ──
-function drawStars(){
-  stars.forEach(s=>{
-    s.twinkle+=.015; s.y+=s.speed; if(s.y>H+5) s.y=-5;
-    ctx.globalAlpha=.1+Math.sin(s.twinkle)*.1;
-    ctx.beginPath(); ctx.arc(s.x%W,s.y,s.r,0,Math.PI*2); ctx.fillStyle='#fff'; ctx.fill();
-  });
-  ctx.globalAlpha=1;
-}
-
-// ── Main loop ──
-function loop(){
-  requestAnimationFrame(loop);
-  let sx=0,sy=0;
-  if(shakeT>0){sx=(Math.random()-.5)*shakeT*1.1;sy=(Math.random()-.5)*shakeT*1.1;shakeT=Math.max(0,shakeT-1.5);}
-  ctx.save(); ctx.translate(sx,sy);
-  ctx.fillStyle='#050810'; ctx.fillRect(-10,-10,W+20,H+20);
-  drawStars();
-  if(state!=='playing'){ctx.restore();return;}
-
-  // Spawn
-  spawnTimer++;
-  const sm=getSpeedMult();
-  const baseInterval=Math.round(230-sm*28);
-  if(spawnTimer>baseInterval && asteroids.filter(a=>!a.hit).length < Math.min(3,Math.ceil(level/2))){
-    spawnTimer=0;
-    const a=newAsteroid(); asteroids.push(a);
-    if(!currentQ){currentQ=a.q;showChoices(a.q);}
-  }
-
-  // Update asteroids
-  for(let i=asteroids.length-1;i>=0;i--){
-    const a=asteroids[i];
-    a.wobble+=a.wobbleSpeed;
-    if(!a.hit) a.y+=a.speed;
-    if(a.hit){a.hitTimer--;if(a.hitTimer<=0){asteroids.splice(i,1);continue;}}
-    if(a.wrong){a.wrongTimer--;if(a.wrongTimer<=0)a.wrong=false;}
-    if(a.y>H+50&&!a.hit){
-      asteroids.splice(i,1);
-      lives=Math.max(0,lives-1);streak=0;combo=1;shakeT=8;
-      burst(a.x,H-20,'#ff6b6b',12);
-      addFloat(a.x,H-60,'MISSED!','#ff6b6b');
-      mistakes.push({code:a.q.code,yours:'(missed)',correct:a.q.ans,lang:a.q.lang});
-      updateHUD();
-      if(lives<=0){endGame();return;}
-      if(currentQ===a.q){
-        const alive=asteroids.find(x=>!x.hit);
-        if(alive){currentQ=alive.q;showChoices(alive.q);}
-        else{currentQ=null;document.getElementById('choiceBtns').innerHTML='';}
+      function getDiffLevel(d) { return d === 'beg' ? 1 : d === 'int' ? 2 : 3; }
+      function getPool() {
+        const dl = getDiffLevel(selectedDiff);
+        let pool = Q.filter(q => q.d === dl);
+        if (selectedLang !== 'all') pool = pool.filter(q => q.lang === selectedLang);
+        if (pool.length === 0) pool = Q.filter(q => q.lang === (selectedLang === 'all' ? Q[0].lang : selectedLang));
+        return pool;
       }
-      continue;
-    }
-    drawAsteroid(a);
-  }
 
-  // ── Update keyword bullets ──
-  for(let i=kwBullets.length-1;i>=0;i--){
-    const b=kwBullets[i];
+      // ── State ──
+      let state = 'idle', mode = 'play';
+      let score = 0, lives = 5, streak = 0, combo = 1, level = 1, highScore = 0;
+      let asteroids = [], kwBullets = [], particles = [], confetti = [], floaters = [], bgParticles = [];
+      let stars = [];
+      let ship = { x: 0, y: 0 };
+      let spawnTimer = 0, currentQ = null;
+      let thrustT = 0, shakeT = 0;
+      let mistakes = [], drillPool = null;
+      let bgT = 0;
 
-    // Update target position as asteroid moves
-    if(b.target && !b.target.hit){
-      ctx.save();
-      ctx.font='600 13px "Share Tech Mono",monospace';
-      const parts=b.target.q.code.split('___');
-      const pre=parts[0];
-      const blankW=Math.max(ctx.measureText(b.text).width,40);
-      const preW=ctx.measureText(pre).width;
-      const postW=ctx.measureText(parts[1]||'').width;
-      const totalW=preW+blankW+postW;
-      const blankRelX=-totalW/2+preW+blankW/2;
-      ctx.restore();
-      b.tx=b.target.x+Math.sin(b.target.wobble)*b.target.wobbleAmt+blankRelX;
-      b.ty=b.target.y;
-    }
-
-    b.t=Math.min(1,b.t+b.speed);
-    // ease in-out
-    const ease=b.t<.5?2*b.t*b.t:1-Math.pow(-2*b.t+2,2)/2;
-    b.x=b.sx+(b.tx-b.sx)*ease;
-    b.y=b.sy+(b.ty-b.sy)*ease;
-
-    if(b.t>=1&&!b.done){
-      b.done=true;
-      if(b.correct){
-        // LAND in slot
-        b.target.slotFilled=true;
-        b.target.slotText=b.text;
-        b.target.hit=true;
-        b.target.hitTimer=35;
-        const pts=100*combo*Math.ceil(level/2);
-        score+=pts; streak++;
-        if(streak%3===0) combo=Math.min(combo+1,8);
-        // CONFETTI
-        spawnConfetti(b.tx,b.ty,b.target.q.col);
-        burst(b.tx,b.ty,'#fff',10);
-        addFloat(b.tx,b.ty-36,'+'+pts+(combo>1?' ×'+combo:''),b.target.q.col);
-        updateHUD();
-        setTimeout(nextQ,700);
-      } else {
-        b.target.wrong=true; b.target.wrongTimer=22;
-        burst(b.tx,b.ty,'#ff6b6b',14);
+      // ── Background renderers ──
+      function initBgParticles() {
+        bgParticles = [];
+        if (selectedBg === 'matrix') {
+          for (let i = 0; i < 60; i++) bgParticles.push({ x: Math.random() * 3000, y: Math.random() * 2000, speed: 1 + Math.random() * 3, char: String.fromCharCode(0x30A0 + Math.random() * 96), life: Math.random() });
+        } else if (selectedBg === 'ocean') {
+          for (let i = 0; i < 8; i++) bgParticles.push({ phase: Math.random() * Math.PI * 2, amp: 20 + Math.random() * 40, speed: 0.3 + Math.random() * 0.4, y: 0.3 + i * 0.08 });
+        } else if (selectedBg === 'aurora') {
+          for (let i = 0; i < 5; i++) bgParticles.push({ phase: Math.random() * Math.PI * 2, speed: 0.2 + Math.random() * 0.3, color: ['#00ff88', '#00cfff', '#a855f7', '#ff6b6b', '#3fb950'][i], y: 0.15 + i * 0.12, amp: 60 + Math.random() * 80 });
+        }
       }
-      kwBullets.splice(i,1);
-      continue;
-    }
 
-    if(!b.done) drawKwBullet(b);
-  }
+      function drawBackground() {
+        bgT += 0.01;
+        switch (selectedBg) {
+          case 'space': drawSpaceBg(); break;
+          case 'highway': drawHighwayBg(); break;
+          case 'ocean': drawOceanBg(); break;
+          case 'matrix': drawMatrixBg(); break;
+          case 'aurora': drawAuroraBg(); break;
+          default: drawSpaceBg();
+        }
+      }
 
-  // Confetti
-  for(let i=confetti.length-1;i>=0;i--){
-    const c=confetti[i];
-    c.x+=c.vx; c.y+=c.vy; c.vy+=0.15; c.vx*=0.99;
-    c.rot+=c.rotV; c.life-=c.decay;
-    if(c.life<=0){confetti.splice(i,1);continue;}
-  }
-  drawConfetti();
+      let stars2 = [];
+      function initStars() {
+        stars2 = [];
+        for (let i = 0; i < 120; i++) stars2.push({ x: Math.random() * 8000, y: Math.random() * 3000, r: Math.random() * 1.5 + 0.2, twinkle: Math.random() * Math.PI * 2, speed: 0.05 + Math.random() * 0.18 });
+      }
+      initStars();
 
-  // Particles
-  for(let i=particles.length-1;i>=0;i--){
-    const p=particles[i];
-    p.x+=p.vx;p.y+=p.vy;p.vy+=.09;p.life-=p.decay;
-    if(p.life<=0){particles.splice(i,1);continue;}
-    ctx.globalAlpha=p.life;
-    ctx.beginPath();ctx.arc(p.x,p.y,p.size*p.life,0,Math.PI*2);ctx.fillStyle=p.col;ctx.fill();
-  }
-  ctx.globalAlpha=1;
+      function drawSpaceBg() {
+        ctx.fillStyle = '#050810'; ctx.fillRect(0, 0, W, H);
+        // nebula
+        const ng = ctx.createRadialGradient(W * .3, H * .4, 0, W * .3, H * .4, W * .5);
+        ng.addColorStop(0, 'rgba(88,166,255,0.025)'); ng.addColorStop(1, 'transparent');
+        ctx.fillStyle = ng; ctx.fillRect(0, 0, W, H);
+        const ng2 = ctx.createRadialGradient(W * .75, H * .3, 0, W * .75, H * .3, W * .4);
+        ng2.addColorStop(0, 'rgba(168,85,247,0.02)'); ng2.addColorStop(1, 'transparent');
+        ctx.fillStyle = ng2; ctx.fillRect(0, 0, W, H);
+        stars2.forEach(s => {
+          s.twinkle += .015; s.y += s.speed; if (s.y > H + 5) s.y = -5;
+          ctx.globalAlpha = .15 + Math.sin(s.twinkle) * .12;
+          ctx.beginPath(); ctx.arc(s.x % W, s.y, s.r, 0, Math.PI * 2); ctx.fillStyle = '#fff'; ctx.fill();
+        });
+        ctx.globalAlpha = 1;
+      }
 
-  // Floaters
-  for(let i=floaters.length-1;i>=0;i--){
-    const f=floaters[i]; f.y+=f.vy; f.life-=.022;
-    if(f.life<=0){floaters.splice(i,1);continue;}
-    ctx.globalAlpha=f.life;
-    ctx.font='700 14px "Share Tech Mono",monospace';
-    ctx.textAlign='center'; ctx.fillStyle=f.col; ctx.fillText(f.text,f.x,f.y);
-  }
-  ctx.globalAlpha=1;
+      let hwLines = [];
+      function initHighway() {
+        hwLines = [];
+        for (let i = 0; i < 12; i++) hwLines.push({ y: Math.random() * H, speed: 2 + Math.random() * 5, len: 40 + Math.random() * 120, lane: Math.random() < 0.5 ? -1 : 1 });
+      }
+      function drawHighwayBg() {
+        // night highway
+        ctx.fillStyle = '#070a07'; ctx.fillRect(0, 0, W, H);
+        // road
+        const cx = W / 2;
+        ctx.fillStyle = '#101510'; ctx.fillRect(cx - W * .22, 0, W * .44, H);
+        ctx.strokeStyle = 'rgba(255,255,255,.04)'; ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(cx - W * .22, 0); ctx.lineTo(cx - W * .22, H); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(cx + W * .22, 0); ctx.lineTo(cx + W * .22, H); ctx.stroke();
+        // center dashes
+        ctx.strokeStyle = 'rgba(227,179,65,.25)'; ctx.lineWidth = 2; ctx.setLineDash([30, 25]);
+        ctx.beginPath(); ctx.moveTo(cx, 0); ctx.lineTo(cx, H); ctx.stroke();
+        ctx.setLineDash([]);
+        // horizon glow
+        const hg = ctx.createLinearGradient(0, H * .45, 0, H * .55);
+        hg.addColorStop(0, 'rgba(255,140,0,.06)'); hg.addColorStop(1, 'transparent');
+        ctx.fillStyle = hg; ctx.fillRect(0, H * .45, W, H * .1);
+        // moving light streaks
+        if (hwLines.length === 0) initHighway();
+        hwLines.forEach(l => {
+          l.y += l.speed; if (l.y > H + l.len) l.y = -l.len;
+          const x = cx + l.lane * (W * .1 + Math.random() * 20);
+          const g = ctx.createLinearGradient(x, l.y, x, l.y + l.len);
+          g.addColorStop(0, 'transparent'); g.addColorStop(0.5, 'rgba(255,200,80,.5)'); g.addColorStop(1, 'transparent');
+          ctx.strokeStyle = g; ctx.lineWidth = 2;
+          ctx.beginPath(); ctx.moveTo(x, l.y); ctx.lineTo(x, l.y + l.len); ctx.stroke();
+        });
+      }
 
-  drawShip();
-  ctx.restore();
-}
+      function drawOceanBg() {
+        ctx.fillStyle = '#020f1a'; ctx.fillRect(0, 0, W, H);
+        // deep glow
+        const dg = ctx.createLinearGradient(0, 0, 0, H);
+        dg.addColorStop(0, 'rgba(0,60,120,.3)'); dg.addColorStop(1, 'rgba(0,20,60,.8)');
+        ctx.fillStyle = dg; ctx.fillRect(0, 0, W, H);
+        // waves
+        bgParticles.forEach((w, i) => {
+          const wy = H * w.y + Math.sin(bgT * w.speed + w.phase) * 20;
+          ctx.beginPath(); ctx.moveTo(0, wy);
+          for (let x = 0; x <= W; x += 8) {
+            const dy = Math.sin(x * 0.012 + bgT * w.speed + w.phase) * w.amp;
+            ctx.lineTo(x, wy + dy);
+          }
+          ctx.lineTo(W, H); ctx.lineTo(0, H); ctx.closePath();
+          ctx.fillStyle = `rgba(0,${60 + i * 20},${120 + i * 15},${0.06 - i * 0.005})`; ctx.fill();
+          ctx.strokeStyle = `rgba(0,150,255,${0.06 + i * 0.01})`; ctx.lineWidth = 1; ctx.stroke();
+        });
+        // bioluminescent particles
+        ctx.globalAlpha = 0.4 + Math.sin(bgT) * 0.2;
+        for (let i = 0; i < 5; i++) {
+          const bx = (bgT * 20 + i * 300) % W; const by = H * 0.5 + Math.sin(bgT + i) * 80;
+          ctx.beginPath(); ctx.arc(bx, by, 2, 0, Math.PI * 2); ctx.fillStyle = '#00cfff'; ctx.fill();
+        }
+        ctx.globalAlpha = 1;
+      }
 
-// ── Game control ──
-function startGame(){
-  score=0;lives=3;streak=0;combo=1;level=1;
-  asteroids=[];kwBullets=[];particles=[];confetti=[];floaters=[];
-  spawnTimer=0;thrustT=0;currentQ=null;mistakes=[];
-  ship.x=W/2;ship.y=H-90;
-  document.getElementById('startScreen').style.display='none';
-  document.getElementById('goScreen').style.display='none';
-  document.getElementById('hud').style.display='flex';
-  document.getElementById('progressWrap').style.display='block';
-  document.getElementById('choiceBar').style.display='flex';
-  const tut=document.getElementById('tutBar');
-  tut.style.opacity='1'; setTimeout(()=>tut.style.opacity='0',3500);
-  state='playing';
-  const a=newAsteroid(); asteroids.push(a); currentQ=a.q; showChoices(a.q);
-  updateHUD();
-}
+      let matrixDrops = [];
+      function initMatrix() { matrixDrops = []; for (let i = 0; i < Math.floor(W / 14); i++) matrixDrops.push({ x: i * 14, y: Math.random() * H, speed: 2 + Math.random() * 5, chars: [] }); }
+      function drawMatrixBg() {
+        ctx.fillStyle = 'rgba(0,0,0,.1)'; ctx.fillRect(0, 0, W, H);
+        if (matrixDrops.length === 0) initMatrix();
+        ctx.font = '12px "Share Tech Mono",monospace';
+        matrixDrops.forEach(d => {
+          d.y += d.speed; if (d.y > H) d.y = 0;
+          const chars = '0123456789ABCDEF<>=(){}[];';
+          const ch = chars[Math.floor(Math.random() * chars.length)];
+          ctx.fillStyle = 'rgba(0,255,80,0.8)'; ctx.fillText(ch, d.x, d.y);
+          ctx.fillStyle = 'rgba(0,255,80,0.15)'; ctx.fillText(ch, d.x, d.y - 16);
+          ctx.fillStyle = 'rgba(0,255,80,0.05)'; ctx.fillText(ch, d.x, d.y - 32);
+        });
+      }
 
-function endGame(){
-  state='over';
-  if(score>highScore) highScore=score;
-  document.getElementById('choiceBtns').innerHTML='';
-  document.getElementById('choiceBar').style.display='none';
-  document.getElementById('hud').style.display='none';
-  document.getElementById('progressWrap').style.display='none';
-  document.getElementById('goStats').textContent='score: '+score.toLocaleString()+'   streak: '+streak+'   level: '+level;
-  document.getElementById('goBest').textContent='best: '+highScore.toLocaleString();
-  const box=document.getElementById('mistakesBox');
-  const langNames={py:'Python',ts:'TypeScript',go:'Go',rs:'Rust',cs:'C#',js:'JS'};
-  if(mistakes.length===0){
-    box.innerHTML='<div style="padding:18px;text-align:center;font-size:12px;color:rgba(255,255,255,.3);letter-spacing:.1em">NO MISTAKES — PERFECT RUN!</div>';
-  } else {
-    box.innerHTML='<div style="padding:7px 14px 5px;font-size:9px;letter-spacing:.16em;color:rgba(255,255,255,.22);border-bottom:1px solid rgba(255,255,255,.05)">MISTAKES — '+mistakes.length+' total</div>'
-      +mistakes.map(m=>`<div class="mrow">
-        <div style="flex:1"><span class="mlabel">${langNames[m.lang]||m.lang}</span>
-        <span style="color:rgba(255,255,255,.55)">${m.code.replace('___','<span style="opacity:.5">___</span>')}</span></div>
-        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:3px">
-          <span><span class="mlabel">you clicked</span><span style="color:#ff6b6b">${m.yours}</span></span>
-          <span><span class="mlabel">correct</span><span style="color:#3fb950">${m.correct}</span></span>
-        </div></div>`).join('');
-  }
-  document.getElementById('goScreen').style.display='flex';
-}
+      function drawAuroraBg() {
+        ctx.fillStyle = '#010510'; ctx.fillRect(0, 0, W, H);
+        stars2.forEach(s => {
+          ctx.globalAlpha = .08 + Math.sin(s.twinkle += .01) * .06;
+          ctx.beginPath(); ctx.arc(s.x % W, s.y % H, s.r, 0, Math.PI * 2); ctx.fillStyle = '#fff'; ctx.fill();
+        });
+        ctx.globalAlpha = 1;
+        bgParticles.forEach(a => {
+          const ay = H * a.y;
+          const g = ctx.createLinearGradient(0, ay - a.amp, 0, ay + a.amp);
+          g.addColorStop(0, 'transparent');
+          g.addColorStop(0.5, a.color + '22');
+          g.addColorStop(1, 'transparent');
+          ctx.beginPath(); ctx.moveTo(0, ay);
+          for (let x = 0; x <= W; x += 6) {
+            const dy = Math.sin(x * 0.008 + bgT * a.speed + a.phase) * a.amp;
+            ctx.lineTo(x, ay + dy);
+          }
+          for (let x = W; x >= 0; x -= 6) {
+            const dy = Math.sin(x * 0.008 + bgT * a.speed + a.phase) * a.amp + 30;
+            ctx.lineTo(x, ay + dy);
+          }
+          ctx.closePath(); ctx.fillStyle = g; ctx.fill();
+        });
+      }
 
-canvas.addEventListener('mousemove',e=>{
-  const r=canvas.getBoundingClientRect();
-  ship.x=Math.max(30,Math.min(W-30,e.clientX-r.left));
-  ship.y=H-90;
-});
-canvas.addEventListener('touchmove',e=>{
-  e.preventDefault();
-  const t=e.touches[0],r=canvas.getBoundingClientRect();
-  ship.x=Math.max(30,Math.min(W-30,t.clientX-r.left));
-},{passive:false});
+      // Start screen bg animation
+      let startDots = [];
+      function initStartDots() {
+        startDots = [];
+        const cols = ['#58a6ff', '#a78bfa', '#3fb950', '#e3b341', '#ff7b72', '#79c0ff', '#d2a8ff'];
+        for (let i = 0; i < 28; i++) startDots.push({ x: Math.random() * W, y: Math.random() * H, vx: (Math.random() - .5) * .4, vy: (Math.random() - .5) * .4, r: 1 + Math.random() * 2.5, col: cols[i % cols.length], tw: Math.random() * Math.PI * 2 });
+      }
+      initStartDots();
+      function drawStartBg() {
+        ctx.fillStyle = '#050810'; ctx.fillRect(0, 0, W, H);
+        const sn = ['fn main()', 'const x:', 'async def', 'WaitGroup', 'Optional', 'yield *', 'impl Trait', 'SELECT *', 'db.find()', 'struct{}'];
+        ctx.font = '11px "Share Tech Mono",monospace'; ctx.textAlign = 'left';
+        sn.forEach((s, i) => {
+          const t = Date.now() / 1000;
+          const x = ((i * W / sn.length) + t * 6 * (i % 2 === 0 ? 1 : -1) + W) % W;
+          const y = 60 + i * 60 + Math.sin(t * .3 + i) * 18;
+          ctx.globalAlpha = 0.035 + Math.sin(t * .4 + i) * .02;
+          ctx.fillStyle = '#fff'; ctx.fillText(s, x, y);
+        });
+        startDots.forEach(p => {
+          p.x += p.vx; p.y += p.vy; p.tw += .02;
+          if (p.x < 0) p.x = W; if (p.x > W) p.x = 0; if (p.y < 0) p.y = H; if (p.y > H) p.y = 0;
+          ctx.globalAlpha = .2 + Math.sin(p.tw) * .15;
+          ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2); ctx.fillStyle = p.col; ctx.fill();
+        });
+        ctx.globalAlpha = 1;
+      }
 
-document.addEventListener('keydown',e=>{
-  if(state!=='playing')return;
-  const btns=[...document.querySelectorAll('.cbtn:not(:disabled)')];
-  const idx=parseInt(e.key)-1;
-  if(idx>=0&&idx<btns.length)btns[idx].click();
-});
+      // ── Asteroid ──
+      function newAsteroid(pool) {
+        const q = (pool || getPool())[Math.floor(Math.random() * (pool || getPool()).length)];
+        const pad = 55;
+        const w = Math.min(W - pad * 2, Math.max(190, q.code.length * 9.5 + 65));
+        const x = pad + Math.random() * (W - pad * 2 - w) + w / 2;
+        const sm = getSpeedMult();
+        return {
+          q, x, y: -48, w, h: 46, speed: (0.42 + Math.random() * .35) * sm,
+          wobble: Math.random() * Math.PI * 2, wobbleAmt: 1.1 + Math.random() * 1.1, wobbleSpeed: 0.013 + Math.random() * .013,
+          hit: false, hitTimer: 0, wrong: false, wrongTimer: 0, slotFilled: false, slotText: ''
+        };
+      }
 
-document.getElementById('startBtn').onclick=startGame;
-document.getElementById('restartBtn').onclick=startGame;
+      // ── Particles / confetti ──
+      function burst(x, y, col, n) {
+        for (let i = 0; i < n; i++) {
+          const a = Math.random() * Math.PI * 2, sp = 1.5 + Math.random() * 4.5;
+          particles.push({ x, y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - 1, life: 1, decay: .028 + Math.random() * .03, size: 2 + Math.random() * 3.5, col });
+        }
+      }
+      function spawnConfetti(x, y, col) {
+        const cols = [col, '#fff', '#e3b341', '#58a6ff', '#3fb950', '#d2a8ff', '#ff7b72'];
+        for (let i = 0; i < 70; i++) {
+          const a = Math.random() * Math.PI * 2, sp = 2 + Math.random() * 8;
+          confetti.push({
+            x, y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - 3.5, life: 1, decay: .01 + Math.random() * .016,
+            w: 4 + Math.random() * 6, h: 3 + Math.random() * 4, rot: Math.random() * Math.PI * 2, rotV: (Math.random() - .5) * .3,
+            col: cols[Math.floor(Math.random() * cols.length)]
+          });
+        }
+      }
+      function addFloat(x, y, text, col) { floaters.push({ x, y, text, col, life: 1, vy: -2 }); }
 
-requestAnimationFrame(loop);
-})();
-</script>
+      // ── Keyword bullet ──
+      function fireKeyword(chosen, target) {
+        ctx.save(); ctx.font = '700 13px "Share Tech Mono",monospace';
+        const parts = target.q.code.split('___'); const pre = parts[0];
+        const bW = Math.max(ctx.measureText(chosen).width, 36);
+        const pW = ctx.measureText(pre).width; const poW = ctx.measureText(parts[1] || '').width;
+        const total = pW + bW + poW; ctx.restore();
+        const blankRelX = -total / 2 + pW + bW / 2;
+        const wx = target.x + Math.sin(target.wobble) * target.wobbleAmt + blankRelX;
+        kwBullets.push({
+          x: ship.x, y: ship.y - 14, tx: wx, ty: target.y, text: chosen, col: target.q.col,
+          correct: chosen === target.q.ans, target, t: 0, speed: 0.048, done: false, sx: ship.x, sy: ship.y - 14
+        });
+      }
+
+      // ── Answer ──
+      function answer(chosen) {
+        if (state !== 'playing' || !currentQ) return;
+        const target = asteroids.find(a => a.q === currentQ && !a.hit);
+        if (!target) return;
+        disableAll();
+        const btns = [...document.querySelectorAll('.cbtn')];
+        const cb = btns.find(b => b.dataset.val === chosen);
+        const rb = btns.find(b => b.dataset.val === currentQ.ans);
+        if (chosen === currentQ.ans) {
+          if (cb) cb.classList.add('correct');
+          fireKeyword(chosen, target); clearLearnHint();
+        } else {
+          if (cb) cb.classList.add('wrong'); if (rb) rb.classList.add('reveal');
+          fireKeyword(chosen, target);
+          mistakes.push({ code: target.q.code, yours: chosen, correct: target.q.ans, lang: target.q.lang });
+          if (mode === 'learn') {
+            showLearnHint('correct: ' + target.q.ans);
+            addFloat(target.x, target.y - 24, 'KEEP GOING!', '#3fb950');
+            setTimeout(nextQ, 1000);
+          } else {
+            streak = 0; combo = 1; lives--; shakeT = 12;
+            addFloat(target.x, target.y - 24, 'WRONG!', '#ff6b6b');
+            burst(ship.x, ship.y, '#ff6b6b', 14); updateHUD();
+            if (lives <= 0) { setTimeout(endGame, 900); return; }
+            setTimeout(nextQ, 950);
+          }
+        }
+      }
+
+      function disableAll() { document.querySelectorAll('.cbtn').forEach(b => b.disabled = true); }
+      function clearLearnHint() { document.getElementById('learnHint').textContent = ''; }
+      function showLearnHint(t) { document.getElementById('learnHint').textContent = t; }
+
+      function nextQ() {
+        clearLearnHint();
+        asteroids = asteroids.filter(a => !a.hit || a.hitTimer > 0);
+        spawnNext();
+      }
+      function spawnNext() {
+        const alive = asteroids.filter(a => !a.hit);
+        if (alive.length === 0) { const a = newAsteroid(); asteroids.push(a); currentQ = a.q; showChoices(a.q); }
+        else { currentQ = alive[0].q; showChoices(alive[0].q); }
+      }
+
+      // ── Choices ──
+      function showChoices(q) {
+        const bar = document.getElementById('choiceBtns'); bar.innerHTML = '';
+        [...q.opts].sort(() => Math.random() - .5).forEach(opt => {
+          const b = document.createElement('button'); b.className = 'cbtn'; b.textContent = opt; b.dataset.val = opt;
+          b.onclick = () => answer(opt); bar.appendChild(b);
+        });
+        const names = { py: 'python', ts: 'typescript', go: 'golang', rs: 'rust', cs: 'c#', js: 'javascript', sql: 'sql', mdb: 'mongodb' };
+        document.getElementById('langPill').textContent = selectedLang === 'all' ? (names[q.lang] || q.lang) : selectedLang;
+      }
+
+      // ── HUD ──
+      function updateHUD() {
+        document.getElementById('scoreVal').textContent = score.toLocaleString();
+        document.getElementById('levelVal').textContent = level;
+        const row = document.getElementById('livesRow'); row.innerHTML = '';
+        for (let i = 0; i < 5; i++) { const h = document.createElement('span'); h.className = 'heart ' + (i < lives ? 'alive' : 'dead'); h.textContent = '♥'; row.appendChild(h); }
+        document.getElementById('streakHud').textContent = streak >= 2 ? 'STREAK ×' + streak : '';
+        const co = document.getElementById('comboHud');
+        if (combo > 1 && mode === 'play') { co.style.display = 'block'; co.textContent = 'COMBO ×' + combo + '!'; } else co.style.display = 'none';
+        document.getElementById('progressFill').style.width = Math.min(100, (score % 500) / 5) + '%';
+        const lb = document.getElementById('levelBadge');
+        lb.textContent = selectedDiff; lb.className = 'lb-' + selectedDiff;
+        const newLevel = Math.floor(score / 500) + 1;
+        if (newLevel > level) { level = newLevel; addFloat(W / 2, H / 2 - 40, 'LEVEL ' + level + '!', '#e3b341'); burst(W / 2, H / 2, '#e3b341', 30); }
+      }
+
+      // ── Draw ship ──
+      function drawShip() {
+        const x = ship.x, y = ship.y; thrustT++;
+        ctx.save(); ctx.translate(x, y);
+        if (thrustT % 3 < 2) {
+          ctx.beginPath(); ctx.moveTo(-7, 14); ctx.lineTo(0, 25 + Math.random() * 10); ctx.lineTo(7, 14); ctx.strokeStyle = '#e3b341'; ctx.lineWidth = 2.5; ctx.stroke();
+          ctx.beginPath(); ctx.moveTo(-4, 14); ctx.lineTo(0, 19 + Math.random() * 6); ctx.lineTo(4, 14); ctx.strokeStyle = '#ff6b6b'; ctx.lineWidth = 1.5; ctx.stroke();
+        }
+        ctx.beginPath(); ctx.moveTo(0, -16); ctx.lineTo(18, 14); ctx.lineTo(10, 8); ctx.lineTo(-10, 8); ctx.lineTo(-18, 14); ctx.closePath();
+        ctx.fillStyle = '#0f1f35'; ctx.fill(); ctx.strokeStyle = '#58a6ff'; ctx.lineWidth = 1.5; ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(0, -10); ctx.lineTo(7, 5); ctx.lineTo(-7, 5); ctx.closePath();
+        ctx.fillStyle = 'rgba(88,166,255,.35)'; ctx.fill();
+        ctx.fillStyle = '#58a6ff'; ctx.beginPath(); ctx.arc(-9, 10, 2.5, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(9, 10, 2.5, 0, Math.PI * 2); ctx.fill();
+        ctx.restore();
+      }
+
+      // ── Draw asteroid ──
+      function drawAsteroid(a) {
+        const wx = a.x + Math.sin(a.wobble) * a.wobbleAmt, wy = a.y, hw = a.w / 2, hh = a.h / 2;
+        ctx.save(); ctx.globalAlpha = a.hit ? Math.max(0, a.hitTimer / 22) : 1;
+        ctx.translate(wx, wy);
+        if (a.wrong) { ctx.shadowColor = '#ff6b6b'; ctx.shadowBlur = 16; }
+        ctx.beginPath(); ctx.roundRect(-hw, -hh, a.w, a.h, 9);
+        ctx.fillStyle = a.hit ? 'rgba(255,107,107,.05)' : 'rgba(6,10,20,.97)'; ctx.fill();
+        ctx.strokeStyle = a.hit ? '#ff6b6b' : a.q.col; ctx.lineWidth = a.hit ? 2 : 1; ctx.stroke();
+        ctx.shadowBlur = 0;
+        const bw = 8; ctx.strokeStyle = a.q.col; ctx.globalAlpha *= .28; ctx.lineWidth = 1;
+        [[- hw + 2, -hh + bw, -hw + 2, -hh + 2, -hw + bw, -hh + 2], [hw - 2, -hh + bw, hw - 2, -hh + 2, hw - bw, -hh + 2],
+        [-hw + 2, hh - bw, -hw + 2, hh - 2, -hw + bw, hh - 2], [hw - 2, hh - bw, hw - 2, hh - 2, hw - bw, hh - 2]].forEach(([x1, y1, x2, y2, x3, y3]) => {
+          ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.lineTo(x3, y3); ctx.stroke();
+        });
+        ctx.globalAlpha = a.hit ? Math.max(0, a.hitTimer / 22) : 1;
+        ctx.font = '600 13px "Share Tech Mono",monospace'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        const parts = a.q.code.split('___'); const pre = parts[0], post = parts[1] || '';
+        const display = a.slotFilled ? a.slotText : '___'; const blankCol = a.slotFilled ? '#3fb950' : a.q.col;
+        const pW = ctx.measureText(pre).width, bW = ctx.measureText(display).width, poW = ctx.measureText(post).width;
+        const total = pW + bW + poW; let cx = -total / 2;
+        ctx.fillStyle = 'rgba(200,215,228,.88)'; ctx.fillText(pre, cx + pW / 2, 0); cx += pW;
+        if (!a.slotFilled) { ctx.fillStyle = 'rgba(88,166,255,.07)'; ctx.strokeStyle = 'rgba(88,166,255,.28)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.roundRect(cx - 4, -10, bW + 8, 20, 4); ctx.fill(); ctx.stroke(); }
+        else { ctx.fillStyle = 'rgba(63,185,80,.1)'; ctx.strokeStyle = 'rgba(63,185,80,.45)'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.roundRect(cx - 6, -12, bW + 12, 24, 5); ctx.fill(); ctx.stroke(); }
+        ctx.fillStyle = blankCol; ctx.fillText(display, cx + bW / 2, 0); cx += bW;
+        ctx.fillStyle = 'rgba(200,215,228,.88)'; ctx.fillText(post, cx + poW / 2, 0);
+        ctx.font = '9px "Share Tech Mono",monospace'; ctx.textAlign = 'right';
+        ctx.fillStyle = 'rgba(255,255,255,.18)'; ctx.fillText(a.q.lang, hw - 5, -hh + 9);
+        ctx.restore();
+      }
+
+      function drawKwBullet(b) {
+        ctx.save(); ctx.globalAlpha = Math.min(1, b.t < .1 ? b.t * 10 : b.t > .88 ? (1 - b.t) / .12 : 1);
+        ctx.beginPath(); ctx.arc(b.x, b.y, 13, 0, Math.PI * 2); ctx.fillStyle = b.col + '1a'; ctx.fill();
+        ctx.font = '700 13px "Share Tech Mono",monospace'; const tw = ctx.measureText(b.text).width;
+        const pw = tw + 18, ph = 26; ctx.beginPath(); ctx.roundRect(b.x - pw / 2, b.y - ph / 2, pw, ph, 6);
+        ctx.fillStyle = 'rgba(6,10,20,.96)'; ctx.fill(); ctx.strokeStyle = b.col; ctx.lineWidth = 1.5; ctx.stroke();
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = b.col; ctx.fillText(b.text, b.x, b.y);
+        ctx.restore();
+      }
+
+      // ── Loop ──
+      function loop() {
+        requestAnimationFrame(loop);
+        if (state === 'idle') { drawStartBg(); return; }
+        let sx = 0, sy = 0;
+        if (shakeT > 0) { sx = (Math.random() - .5) * shakeT * 1.1; sy = (Math.random() - .5) * shakeT * 1.1; shakeT = Math.max(0, shakeT - 1.5); }
+        ctx.save(); ctx.translate(sx, sy);
+        drawBackground();
+        if (state !== 'playing') { ctx.restore(); return; }
+        spawnTimer++;
+        const sm = getSpeedMult();
+        const bi = Math.round(240 - sm * 32);
+        if (spawnTimer > bi && asteroids.filter(a => !a.hit).length < Math.min(3, Math.ceil(level / 2))) {
+          spawnTimer = 0; const a = newAsteroid(); asteroids.push(a);
+          if (!currentQ) { currentQ = a.q; showChoices(a.q); }
+        }
+        for (let i = asteroids.length - 1; i >= 0; i--) {
+          const a = asteroids[i]; a.wobble += a.wobbleSpeed;
+          if (!a.hit) a.y += a.speed;
+          if (a.hit) { a.hitTimer--; if (a.hitTimer <= 0) { asteroids.splice(i, 1); continue; } }
+          if (a.wrong) { a.wrongTimer--; if (a.wrongTimer <= 0) a.wrong = false; }
+          if (a.y > H + 50 && !a.hit) {
+            asteroids.splice(i, 1);
+            if (mode === 'play') {
+              lives = Math.max(0, lives - 1); streak = 0; combo = 1; shakeT = 8;
+              burst(a.x, H - 20, '#ff6b6b', 12);
+              mistakes.push({ code: a.q.code, yours: '(missed)', correct: a.q.ans, lang: a.q.lang });
+              updateHUD(); if (lives <= 0) { endGame(); return; }
+            } else { showLearnHint('missed! correct: ' + a.q.ans); mistakes.push({ code: a.q.code, yours: '(missed)', correct: a.q.ans, lang: a.q.lang }); }
+            addFloat(a.x, H - 60, 'MISSED!', '#ff6b6b');
+            if (currentQ === a.q) { const alive = asteroids.find(x => !x.hit); if (alive) { currentQ = alive.q; showChoices(alive.q); } else { currentQ = null; document.getElementById('choiceBtns').innerHTML = ''; } }
+            continue;
+          }
+          drawAsteroid(a);
+        }
+        for (let i = kwBullets.length - 1; i >= 0; i--) {
+          const b = kwBullets[i];
+          if (b.target && !b.target.hit) {
+            ctx.save(); ctx.font = '600 13px "Share Tech Mono",monospace';
+            const pts = b.target.q.code.split('___'); const bW = Math.max(ctx.measureText(b.text).width, 36);
+            const pW = ctx.measureText(pts[0]).width; const poW = ctx.measureText(pts[1] || '').width;
+            const total = pW + bW + poW; ctx.restore();
+            b.tx = b.target.x + Math.sin(b.target.wobble) * b.target.wobbleAmt + (-total / 2 + pW + bW / 2); b.ty = b.target.y;
+          }
+          b.t = Math.min(1, b.t + b.speed);
+          const e = b.t < .5 ? 2 * b.t * b.t : 1 - Math.pow(-2 * b.t + 2, 2) / 2;
+          b.x = b.sx + (b.tx - b.sx) * e; b.y = b.sy + (b.ty - b.sy) * e;
+          if (b.t >= 1 && !b.done) {
+            b.done = true;
+            if (b.correct) {
+              b.target.slotFilled = true; b.target.slotText = b.text; b.target.hit = true; b.target.hitTimer = 35;
+              const pts = 100 * combo * Math.ceil(level / 2); score += pts; streak++;
+              if (streak % 3 === 0) combo = Math.min(combo + 1, 8);
+              spawnConfetti(b.tx, b.ty, b.target.q.col); burst(b.tx, b.ty, '#fff', 10);
+              addFloat(b.tx, b.ty - 36, '+' + pts + (combo > 1 && mode === 'play' ? ' ×' + combo : ''), b.target.q.col);
+              updateHUD(); setTimeout(nextQ, 700);
+            } else { b.target.wrong = true; b.target.wrongTimer = 22; burst(b.tx, b.ty, '#ff6b6b', 14); }
+            kwBullets.splice(i, 1); continue;
+          }
+          if (!b.done) drawKwBullet(b);
+        }
+        for (let i = confetti.length - 1; i >= 0; i--) {
+          const c = confetti[i]; c.x += c.vx; c.y += c.vy; c.vy += .15; c.vx *= .99; c.rot += c.rotV; c.life -= c.decay;
+          if (c.life <= 0) { confetti.splice(i, 1); continue; }
+          ctx.save(); ctx.globalAlpha = c.life; ctx.translate(c.x, c.y); ctx.rotate(c.rot);
+          ctx.fillStyle = c.col; ctx.fillRect(-c.w / 2, -c.h / 2, c.w, c.h); ctx.restore();
+        }
+        for (let i = particles.length - 1; i >= 0; i--) {
+          const p = particles[i]; p.x += p.vx; p.y += p.vy; p.vy += .09; p.life -= p.decay;
+          if (p.life <= 0) { particles.splice(i, 1); continue; }
+          ctx.globalAlpha = p.life; ctx.beginPath(); ctx.arc(p.x, p.y, p.size * p.life, 0, Math.PI * 2); ctx.fillStyle = p.col; ctx.fill();
+        }
+        ctx.globalAlpha = 1;
+        for (let i = floaters.length - 1; i >= 0; i--) {
+          const f = floaters[i]; f.y += f.vy; f.life -= .022;
+          if (f.life <= 0) { floaters.splice(i, 1); continue; }
+          ctx.globalAlpha = f.life; ctx.font = '700 14px "Share Tech Mono",monospace'; ctx.textAlign = 'center'; ctx.fillStyle = f.col; ctx.fillText(f.text, f.x, f.y);
+        }
+        ctx.globalAlpha = 1; drawShip(); ctx.restore();
+      }
+
+      // ── Game flow ──
+      function startGame(pool) {
+        score = 0; streak = 0; combo = 1; level = 1; lives = 5;
+        asteroids = []; kwBullets = []; particles = []; confetti = []; floaters = [];
+        spawnTimer = 0; thrustT = 0; currentQ = null; mistakes = []; drillPool = pool || null;
+        ship.x = W / 2; ship.y = H - 90; mode = gameMode;
+        initBgParticles(); matrixDrops = []; hwLines = [];
+        document.getElementById('startScreen').style.display = 'none';
+        document.getElementById('goScreen').style.display = 'none';
+        document.getElementById('hud').style.display = 'flex';
+        document.getElementById('progressWrap').style.display = 'block';
+        document.getElementById('choiceBar').style.display = 'flex';
+        document.getElementById('modeTag').textContent = mode === 'learn' ? 'LEARN' : 'PLAY';
+        document.getElementById('modeTag').className = 'modeTag ' + (mode === 'learn' ? 'mode-learn' : 'mode-play');
+        const tut = document.getElementById('tutBar');
+        tut.style.opacity = '1'; setTimeout(() => tut.style.opacity = '0', 3500);
+        state = 'playing';
+        const a = newAsteroid(drillPool); asteroids.push(a); currentQ = a.q; showChoices(a.q); updateHUD();
+      }
+
+      function endGame() {
+        state = 'over'; if (score > highScore) highScore = score;
+        document.getElementById('choiceBtns').innerHTML = '';
+        document.getElementById('choiceBar').style.display = 'none';
+        document.getElementById('hud').style.display = 'none';
+        document.getElementById('progressWrap').style.display = 'none';
+        document.getElementById('goTitle').textContent = mode === 'learn' ? 'NICE WORK!' : 'GAME OVER';
+        document.getElementById('goTitle').style.color = mode === 'learn' ? '#3fb950' : '#ff6b6b';
+        document.getElementById('goStats').textContent = 'score: ' + score.toLocaleString() + '   streak: ' + streak + '   level: ' + level;
+        document.getElementById('goBest').textContent = 'best: ' + highScore.toLocaleString();
+        const box = document.getElementById('mistakesBox');
+        const lnames = { py: 'Python', ts: 'TypeScript', go: 'Go', rs: 'Rust', cs: 'C#', js: 'JS', sql: 'SQL', mdb: 'MongoDB' };
+        if (mistakes.length === 0) {
+          box.innerHTML = '<div style="padding:18px;text-align:center;font-size:12px;color:rgba(255,255,255,.3);letter-spacing:.1em">PERFECT — NO MISTAKES!</div>';
+          document.getElementById('drillBtn').style.display = 'none';
+        } else {
+          box.innerHTML = '<div style="padding:7px 14px 5px;font-size:9px;letter-spacing:.12em;color:rgba(255,255,255,.22);border-bottom:1px solid rgba(255,255,255,.05)">MISTAKES — ' + mistakes.length + '</div>'
+            + mistakes.map(m => `<div class="mrow"><div style="flex:1"><span class="mlabel">${lnames[m.lang] || m.lang}</span><span style="color:rgba(255,255,255,.55)">${m.code.replace('___', '<span style="opacity:.4">___</span>')}</span></div><div style="display:flex;flex-direction:column;align-items:flex-end;gap:3px"><span><span class="mlabel">you</span><span style="color:#ff6b6b">${m.yours}</span></span><span><span class="mlabel">correct</span><span style="color:#3fb950">${m.correct}</span></span></div></div>`).join('');
+          document.getElementById('drillBtn').style.display = 'block';
+        }
+        document.getElementById('goScreen').style.display = 'flex';
+      }
+
+      window.drillMistakes = function () {
+        const wrongCodes = mistakes.map(m => m.code);
+        const pool = Q.filter(q => wrongCodes.includes(q.code));
+        gameMode = 'learn'; startGame(pool.length ? pool : undefined);
+      };
+
+      // ── Input ──
+      canvas.addEventListener('mousemove', e => { const r = canvas.getBoundingClientRect(); ship.x = Math.max(30, Math.min(W - 30, e.clientX - r.left)); ship.y = H - 90; });
+      canvas.addEventListener('touchstart', e => e.preventDefault(), { passive: false });
+      canvas.addEventListener('touchmove', e => { e.preventDefault(); const t = e.touches[0], r = canvas.getBoundingClientRect(); ship.x = Math.max(30, Math.min(W - 30, t.clientX - r.left)); ship.y = H - 90; }, { passive: false });
+      document.addEventListener('keydown', e => {
+        if (state !== 'playing') return;
+        const btns = [...document.querySelectorAll('.cbtn:not(:disabled)')];
+        const idx = parseInt(e.key) - 1; if (idx >= 0 && idx < btns.length) btns[idx].click();
+      });
+      document.getElementById('startBtn').onclick = () => startGame();
+      document.getElementById('restartBtn').onclick = () => { drillPool = null; document.getElementById('goScreen').style.display = 'none'; document.getElementById('startScreen').style.display = 'flex'; state = 'idle'; };
+      requestAnimationFrame(loop);
+    })();
+  </script>
 </body>
+
 </html>
