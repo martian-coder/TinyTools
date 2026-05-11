@@ -13,12 +13,14 @@
 ## ✨ Features
 
 - 🎮 **Full arcade experience** — Canvas-rendered spaceship, asteroids, particles, confetti explosions
-- 💻 **6 languages** — Python, TypeScript, Go, Rust, C#, JavaScript
+- 💻 **9 languages** — Python, TypeScript, Go, Rust, C#, JavaScript, SQL, MongoDB
+- 🌌 **5 Background Themes** — Universe, Highway, Ocean, Matrix, Aurora
+- 🧠 **Play & Learn Modes** — Stress-free learning with revealed answers or classic arcade survival
+- 🛠️ **Drill My Mistakes** — Replay only the questions you missed to master the syntax
 - 🔥 **Combo system** — Chain correct answers for streak multipliers up to 8×
-- ❤️ **Lives & levels** — 3 lives, progressive difficulty, level-ups every 500 points
+- ❤️ **Lives & levels** — 3 lives, progressive difficulty (Beginner/Intermediate/Expert)
 - ⚡ **Speed control** — 5 speed settings from "very slow" to "insane"
 - 🎯 **Keyword bullets** — Your answer literally flies from your ship into the asteroid's blank slot
-- 📊 **Mistake review** — Game over screen shows every wrong answer so you actually learn
 - 🌟 **Zero dependencies** — Single HTML file, no build step, no npm, just open in a browser
 
 ---
@@ -61,6 +63,8 @@ xdg-open codeblaster.html     # Linux
 | Rust | `i32`, `->`, `Display`, `Vec`, `let`, ... | 🔴 Red |
 | C# | `static`, `Delay`, `null`, `record`, `FirstOrDefault`, ... | 🟡 Yellow |
 | JavaScript | `await`, `map`, `const`, `??`, `Promise.all`, `yield`, ... | 🟣 Purple |
+| SQL | `SELECT`, `JOIN`, `GROUP BY`, `HAVING`, `WHERE`, ... | 🟥 Pink |
+| MongoDB | `findOne`, `aggregate`, `updateOne`, `$match`, ... | 🟩 Green |
 
 ---
 
@@ -72,10 +76,10 @@ Single-file, zero-dependency game — everything in one `codeblaster.html`:
 codeblaster.html
 ├── HTML — HUD, start screen, game over screen, choice buttons
 ├── CSS — Dark arcade theme, Orbitron font, neon animations
-└── JavaScript (750 lines)
-    ├── Canvas rendering (ship, asteroids, bullets, particles, stars)
+└── JavaScript (~1600 lines)
+    ├── Canvas rendering (ship, asteroids, bullets, particles, stars, backgrounds)
     ├── Physics (wobble, gravity, easing, collision)
-    ├── Question bank (35+ questions across 6 languages)
+    ├── Question bank (100+ questions across 9 languages)
     ├── Scoring (combos, streaks, levels, high score)
     └── Game state machine (idle → playing → over)
 ```
