@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="./banner.png" alt="WingetDiff Banner" width="100%">
+</p>
+
 # 📊 WingetDiff
 
 > Beautiful terminal diff for `winget export` JSON files — see exactly what's different between two machines in one glance.

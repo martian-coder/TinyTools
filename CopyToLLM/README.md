@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="./banner.png" alt="CopyToLLM Banner" width="100%">
+</p>
+
 # 📋 CopyToLLM
 
 > One hotkey to capture any screen region and paste it directly into ChatGPT, Claude, or Gemini — image + analysis prompt, fully automated.

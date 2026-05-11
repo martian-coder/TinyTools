@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="./banner.png" alt="TinyTools Banner" width="100%">
+</p>
+
 # 🛠️ TinyTools
 
 > A collection of stupid-delightful, zero-dependency tiny tools — built with love, made for an audience of one.

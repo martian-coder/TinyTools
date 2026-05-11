@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="./banner.png" alt="JumpDir Banner" width="100%">
+</p>
+
 # 🚀 JumpDir
 
 > Interactive fuzzy directory navigator — type `j` and teleport anywhere on your filesystem.
