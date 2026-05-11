@@ -291,14 +291,15 @@ def capture_tmux() -> dict:
                 pparts = pline.split("|", 2)
                 if len(pparts) < 3: continue
                 pidx, cwd, cmd = pparts
-                # capture scrollback
+                # capture scrollback — slice by lines not chars to avoid mid-line cuts
                 scrollback = run(["tmux", "capture-pane", "-p", "-S", "-200",
                                   "-t", f"{name}:{widx}.{pidx}"], timeout=2)
+                scrollback = "\n".join(scrollback.splitlines()[-200:])
                 panes.append({
                     "index": pidx,
                     "cwd": cwd,
                     "cmd": cmd,
-                    "scrollback": scrollback[-8000:],  # cap size
+                    "scrollback": scrollback,
                 })
             windows.append({"index": widx, "name": wname, "layout": wlayout, "panes": panes})
         sessions.append({"name": name, "windows": windows})
@@ -316,11 +317,14 @@ def capture_windows() -> dict:
             parts = line.split(None, 7)
             if len(parts) < 8: continue
             wid, desktop, x, y, w, h, host, title = parts
-            windows.append({
-                "id": wid, "desktop": desktop,
-                "x": int(x), "y": int(y), "w": int(w), "h": int(h),
-                "title": title,
-            })
+            try:
+                windows.append({
+                    "id": wid, "desktop": desktop,
+                    "x": int(x), "y": int(y), "w": int(w), "h": int(h),
+                    "title": title,
+                })
+            except ValueError:
+                continue
         return {"backend": "wmctrl", "windows": windows}
     return {"backend": None, "windows": []}
 
@@ -550,23 +554,43 @@ def restore_tmux(snap: dict, confirm=True) -> int:
         windows = sess.get("windows", [])
         if not windows:
             continue
-        first_pane = windows[0]["panes"][0] if windows[0].get("panes") else None
-        cwd = first_pane["cwd"] if first_pane else str(Path.home())
-        subprocess.run(["tmux", "new-session", "-d", "-s", sname, "-c", cwd])
-        for w_i, win in enumerate(windows):
-            for p_i, pane in enumerate(win.get("panes", [])):
-                target = f"{sname}:{w_i}.{p_i}"
-                if w_i == 0 and p_i == 0:
-                    pass  # already created with first cwd
-                elif p_i == 0:
-                    subprocess.run(["tmux", "new-window", "-t", f"{sname}:{w_i}",
-                                    "-c", pane["cwd"], "-n", win.get("name", "")])
-                else:
-                    subprocess.run(["tmux", "split-window", "-t", f"{sname}:{w_i}",
-                                    "-c", pane["cwd"]])
+        # Find first available pane for the initial cwd (safe — windows may have empty panes)
+        first_cwd = str(Path.home())
+        for win in windows:
+            panes = win.get("panes") or []
+            if panes and panes[0].get("cwd"):
+                first_cwd = panes[0]["cwd"]
+                break
+        subprocess.run(["tmux", "new-session", "-d", "-s", sname, "-c", first_cwd],
+                       capture_output=True)
+        first_window = True
+        for win in windows:
+            panes = win.get("panes") or []
+            if not panes:
+                continue
+            if first_window:
+                first_window = False
+                # Window 0 pane 0 already exists from new-session; add extra panes
+                for p_i, pane in enumerate(panes):
+                    if p_i == 0:
+                        continue
+                    subprocess.run(["tmux", "split-window", "-t", sname,
+                                    "-c", pane.get("cwd", first_cwd)],
+                                   capture_output=True)
+            else:
+                wname = win.get("name", "")
+                subprocess.run(["tmux", "new-window", "-t", sname,
+                                "-c", panes[0].get("cwd", first_cwd),
+                                "-n", wname], capture_output=True)
+                for p_i, pane in enumerate(panes):
+                    if p_i == 0:
+                        continue
+                    subprocess.run(["tmux", "split-window", "-t", sname,
+                                    "-c", pane.get("cwd", first_cwd)],
+                                   capture_output=True)
         tprint(GREEN(f"  ✓ restored tmux session: {sname}"))
         restored += 1
-    tprint(DIM(f"  attach with: tmux attach -t <name>"))
+    tprint(DIM("  attach with: tmux attach -t <session-name>"))
     return restored
 
 def restore_browser(snap: dict) -> int:
@@ -834,17 +858,48 @@ def tui():
     _clear()
 
 def _readline() -> str:
-    """Read a line from /dev/tty in cooked mode."""
+    """Read a line directly from /dev/tty — works even when stdin is piped."""
     if sys.platform == "win32":
         return input()
     fd = _tty.fileno()
-    old = termios.tcgetattr(fd)
+    # Capture current attrs then switch to a mode with echo + canonical line editing.
     try:
-        termios.tcsetattr(fd, termios.TCSADRAIN, old)  # ensure cooked
-        line = sys.stdin.readline()
-        return line.rstrip("\n")
+        old = termios.tcgetattr(fd)
+        new = termios.tcgetattr(fd)
+        new[3] |= termios.ECHO | termios.ICANON
+        termios.tcsetattr(fd, termios.TCSADRAIN, new)
     except Exception:
-        return ""
+        old = None
+    buf: list[str] = []
+    try:
+        while True:
+            b = os.read(fd, 1)
+            try:
+                ch = b.decode("utf-8")
+            except UnicodeDecodeError:
+                continue
+            if ch in ("\r", "\n"):
+                _tty.write("\r\n")
+                _tty.flush()
+                break
+            if ch in ("\x7f", "\x08"):
+                if buf:
+                    buf.pop()
+                    _tty.write("\b \b")
+                    _tty.flush()
+            elif ord(ch) >= 32:
+                buf.append(ch)
+                _tty.write(ch)
+                _tty.flush()
+    except Exception:
+        pass
+    finally:
+        if old is not None:
+            try:
+                termios.tcsetattr(fd, termios.TCSADRAIN, old)
+            except Exception:
+                pass
+    return "".join(buf)
 
 # ---------------------------------------------------------------------------
 # CLI commands
@@ -859,15 +914,17 @@ def cmd_save(args):
     counts = {k: len(v) if isinstance(v, list) else (
               len((v or {}).get("sessions", [])) if k == "tmux" else
               len((v or {}).get("windows", [])) if k == "windows" else
-              len((v or {}).get("firefox_tabs", [])) if k == "browser" else
-              ("yes" if (v or {}).get("text") else "no") if k == "clipboard" else "?")
+              len((v or {}).get("firefox_tabs", [])) + len((v or {}).get("chromium_sessions", [])) if k == "browser" else
+              len((v or {}).get("text") or "") if k == "clipboard" else "?")
               for k, v in snap["captures"].items()}
+    clip_chars = counts.get("clipboard", 0)
+    clip_str = f"{clip_chars} chars" if clip_chars else "empty"
     tprint(GREEN(f"✓ snapshot #{sid} saved"))
     tprint(DIM(f"  procs={counts.get('processes', 0)}  "
                f"tmux={counts.get('tmux', 0)}  "
                f"windows={counts.get('windows', 0)}  "
                f"browser_tabs={counts.get('browser', 0)}  "
-               f"clipboard={counts.get('clipboard', 'no')}"))
+               f"clipboard={clip_str}"))
     return 0
 
 def cmd_list(args):
