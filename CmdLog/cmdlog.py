@@ -1,18 +1,18 @@
 #!/usr/bin/env python3
 """
-HistView — Terminal History Viewer
+CmdLog — Terminal History Viewer
 
 No more "what was that command..." moments.
 Browse, search, and understand your entire shell history with full context.
 
 Usage:
-  python3 histview.py                   Interactive TUI
-  python3 histview.py --install bash    Install shell hooks (bash/zsh/fish/pwsh)
-  python3 histview.py --import          Import existing shell history
-  python3 histview.py --record ...      Record a command (called by hooks)
-  python3 histview.py --stats           Quick statistics dump
-  python3 histview.py --search QUERY    Non-interactive search
-  python3 histview.py --export [FILE]   Export history as shell script
+  python3 cmdlog.py                   Interactive TUI
+  python3 cmdlog.py --install bash    Install shell hooks (bash/zsh/fish/pwsh)
+  python3 cmdlog.py --import          Import existing shell history
+  python3 cmdlog.py --record ...      Record a command (called by hooks)
+  python3 cmdlog.py --stats           Quick statistics dump
+  python3 cmdlog.py --search QUERY    Non-interactive search
+  python3 cmdlog.py --export [FILE]   Export history as shell script
 """
 
 import sys, os, re, sqlite3, json, subprocess, hashlib, platform
@@ -86,8 +86,8 @@ def categorize(cmd: str):
     return "misc", "· ", fg(244)
 
 # ─── Database ─────────────────────────────────────────────────────────────────
-DB_DIR  = Path.home() / ".local" / "share" / "histview"
-DB_PATH = DB_DIR / "histview.db"
+DB_DIR  = Path.home() / ".local" / "share" / "cmdlog"
+DB_PATH = DB_DIR / "cmdlog.db"
 
 _SCHEMA = """
 CREATE TABLE IF NOT EXISTS commands (
@@ -219,7 +219,7 @@ def record_command(cmd, cwd, exit_code, duration_ms, git_branch, session_id, out
     if not cmd or not cmd.strip():
         return
     cmd = cmd.strip()
-    if re.match(r"^(python3?\s.*histview\.py|histview\b)", cmd):
+    if re.match(r"^(python3?\s.*cmdlog\.py|cmdlog\b)", cmd):
         return
     h = cmd_hash(cmd)
     cat, _, _ = categorize(cmd)
@@ -236,92 +236,92 @@ def record_command(cmd, cwd, exit_code, duration_ms, git_branch, session_id, out
 
 # ─── Shell hooks ──────────────────────────────────────────────────────────────
 _BASH_HOOK = """\
-# ── HistView Integration ──────────────────────────────────────────────────────
-export HISTVIEW_SESSION="${{HISTVIEW_SESSION:-$(date +%s)-$$}}"
-_hv_start=0; _hv_cmd=""; _hv_branch=""
-_hv_preexec() {{
-    [[ "$BASH_COMMAND" == _hv_* ]] && return
-    _hv_cmd="$BASH_COMMAND"
-    _hv_start=$(date +%s%3N 2>/dev/null || echo 0)
-    _hv_branch=$(git branch --show-current 2>/dev/null)
+# ── CmdLog Integration ──────────────────────────────────────────────────────
+export CMDLOG_SESSION="${{CMDLOG_SESSION:-$(date +%s)-$$}}"
+_cl_start=0; _cl_cmd=""; _cl_branch=""
+_cl_preexec() {{
+    [[ "$BASH_COMMAND" == _cl_* ]] && return
+    _cl_cmd="$BASH_COMMAND"
+    _cl_start=$(date +%s%3N 2>/dev/null || echo 0)
+    _cl_branch=$(git branch --show-current 2>/dev/null)
 }}
-trap '_hv_preexec' DEBUG
-_hv_precmd() {{
+trap '_cl_preexec' DEBUG
+_cl_precmd() {{
     local _ec=$?
-    [[ -z "$_hv_cmd" ]] && return
+    [[ -z "$_cl_cmd" ]] && return
     local _end=$(date +%s%3N 2>/dev/null || echo 0)
-    python3 "{script}" --record --cmd "$_hv_cmd" --cwd "$PWD" \\
-        --exit "$_ec" --duration "$(( _end - _hv_start ))" \\
-        --branch "$_hv_branch" --session "$HISTVIEW_SESSION" &>/dev/null &
-    _hv_cmd=""
+    python3 "{script}" --record --cmd "$_cl_cmd" --cwd "$PWD" \\
+        --exit "$_ec" --duration "$(( _end - _cl_start ))" \\
+        --branch "$_cl_branch" --session "$CMDLOG_SESSION" &>/dev/null &
+    _cl_cmd=""
 }}
-PROMPT_COMMAND="_hv_precmd${{PROMPT_COMMAND:+; $PROMPT_COMMAND}}"
+PROMPT_COMMAND="_cl_precmd${{PROMPT_COMMAND:+; $PROMPT_COMMAND}}"
 # ─────────────────────────────────────────────────────────────────────────────
 """
 
 _ZSH_HOOK = """\
-# ── HistView Integration ──────────────────────────────────────────────────────
-export HISTVIEW_SESSION="${{HISTVIEW_SESSION:-$(date +%s)-$$}}"
-_hv_start=0; _hv_cmd=""
-_hv_preexec() {{
-    _hv_cmd="$1"
-    _hv_start=$(($(date +%s%3N 2>/dev/null || echo 0)))
-    _hv_branch=$(git branch --show-current 2>/dev/null)
+# ── CmdLog Integration ──────────────────────────────────────────────────────
+export CMDLOG_SESSION="${{CMDLOG_SESSION:-$(date +%s)-$$}}"
+_cl_start=0; _cl_cmd=""
+_cl_preexec() {{
+    _cl_cmd="$1"
+    _cl_start=$(($(date +%s%3N 2>/dev/null || echo 0)))
+    _cl_branch=$(git branch --show-current 2>/dev/null)
 }}
-_hv_precmd() {{
+_cl_precmd() {{
     local _ec=$?
-    [[ -z "$_hv_cmd" ]] && return
-    python3 "{script}" --record --cmd "$_hv_cmd" --cwd "$PWD" \\
-        --exit "$_ec" --duration "$(( $(date +%s%3N 2>/dev/null || echo 0) - _hv_start ))" \\
-        --branch "${{_hv_branch:-}}" --session "$HISTVIEW_SESSION" &>/dev/null &
-    _hv_cmd=""
+    [[ -z "$_cl_cmd" ]] && return
+    python3 "{script}" --record --cmd "$_cl_cmd" --cwd "$PWD" \\
+        --exit "$_ec" --duration "$(( $(date +%s%3N 2>/dev/null || echo 0) - _cl_start ))" \\
+        --branch "${{_cl_branch:-}}" --session "$CMDLOG_SESSION" &>/dev/null &
+    _cl_cmd=""
 }}
 autoload -Uz add-zsh-hook
-add-zsh-hook preexec _hv_preexec
-add-zsh-hook precmd  _hv_precmd
+add-zsh-hook preexec _cl_preexec
+add-zsh-hook precmd  _cl_precmd
 # ─────────────────────────────────────────────────────────────────────────────
 """
 
 _FISH_HOOK = """\
-# HistView integration — save as ~/.config/fish/conf.d/histview.fish
-set -x HISTVIEW_SESSION (date +%s)-(echo $fish_pid)
-function _hv_preexec --on-event fish_preexec
-    set -g _hv_cmd $argv[1]
-    set -g _hv_start (date +%s%3N 2>/dev/null; or echo 0)
-    set -g _hv_branch (git branch --show-current 2>/dev/null; or echo "")
+# CmdLog integration — save as ~/.config/fish/conf.d/cmdlog.fish
+set -x CMDLOG_SESSION (date +%s)-(echo $fish_pid)
+function _cl_preexec --on-event fish_preexec
+    set -g _cl_cmd $argv[1]
+    set -g _cl_start (date +%s%3N 2>/dev/null; or echo 0)
+    set -g _cl_branch (git branch --show-current 2>/dev/null; or echo "")
 end
-function _hv_postcmd --on-event fish_postexec
+function _cl_postcmd --on-event fish_postexec
     set -l ec $status
-    test -z "$_hv_cmd"; and return
+    test -z "$_cl_cmd"; and return
     set -l _end (date +%s%3N 2>/dev/null; or echo 0)
-    python3 "{script}" --record --cmd "$_hv_cmd" --cwd (pwd) \\
-        --exit $ec --duration (math $_end - $_hv_start) \\
-        --branch "$_hv_branch" --session "$HISTVIEW_SESSION" &>/dev/null &
-    set -g _hv_cmd ""
+    python3 "{script}" --record --cmd "$_cl_cmd" --cwd (pwd) \\
+        --exit $ec --duration (math $_end - $_cl_start) \\
+        --branch "$_cl_branch" --session "$CMDLOG_SESSION" &>/dev/null &
+    set -g _cl_cmd ""
 end
 """
 
 _PWSH_HOOK = """\
-# HistView integration — add to $PROFILE
-$env:HISTVIEW_SESSION = "$([DateTimeOffset]::UtcNow.ToUnixTimeSeconds())-$PID"
-$_hv_start = 0; $_hv_cmd = ""
-$_hv_orig_prompt = $Function:prompt
+# CmdLog integration — add to $PROFILE
+$env:CMDLOG_SESSION = "$([DateTimeOffset]::UtcNow.ToUnixTimeSeconds())-$PID"
+$_cl_start = 0; $_cl_cmd = ""
+$_cl_orig_prompt = $Function:prompt
 
 function prompt {{
     $ec = $LASTEXITCODE
-    if ($_hv_cmd -and $_hv_cmd -notmatch 'histview') {{
-        $dur = [DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds() - $_hv_start
+    if ($_cl_cmd -and $_cl_cmd -notmatch 'cmdlog') {{
+        $dur = [DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds() - $_cl_start
         $br = (git branch --show-current 2>$null)
-        & python3 "{script}" --record --cmd "$_hv_cmd" --cwd "$PWD" `
-            --exit $ec --duration $dur --branch "$br" --session "$env:HISTVIEW_SESSION" 2>$null
+        & python3 "{script}" --record --cmd "$_cl_cmd" --cwd "$PWD" `
+            --exit $ec --duration $dur --branch "$br" --session "$env:CMDLOG_SESSION" 2>$null
     }}
-    $_hv_cmd = ""
-    & $_hv_orig_prompt
+    $_cl_cmd = ""
+    & $_cl_orig_prompt
 }}
 Set-PSReadLineOption -AddToHistoryHandler {{
     param($cmd)
-    $script:_hv_cmd = $cmd
-    $script:_hv_start = [DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds()
+    $script:_cl_cmd = $cmd
+    $script:_cl_start = [DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds()
     $true
 }}
 """
@@ -330,7 +330,7 @@ def install_hooks(shell: str, script_path: str):
     templates = {
         "bash": (_BASH_HOOK, Path.home() / ".bashrc",    False),
         "zsh":  (_ZSH_HOOK,  Path.home() / ".zshrc",     False),
-        "fish": (_FISH_HOOK,  Path.home() / ".config/fish/conf.d/histview.fish", True),
+        "fish": (_FISH_HOOK,  Path.home() / ".config/fish/conf.d/cmdlog.fish", True),
         "pwsh": (_PWSH_HOOK,  Path.home() / "Documents/PowerShell/Microsoft.PowerShell_profile.ps1", False),
         "powershell": (_PWSH_HOOK, Path.home() / "Documents/WindowsPowerShell/Microsoft.PowerShell_profile.ps1", False),
     }
@@ -340,14 +340,14 @@ def install_hooks(shell: str, script_path: str):
 
     tmpl, target, overwrite = templates[shell]
     snippet = tmpl.format(script=script_path)
-    marker  = "HistView Integration"
+    marker  = "CmdLog Integration"
 
     if overwrite:
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_text(snippet)
         print(f"Installed {shell} hook → {target}")
         if shell == "fish":
-            print("Reload: source ~/.config/fish/conf.d/histview.fish")
+            print("Reload: source ~/.config/fish/conf.d/cmdlog.fish")
         return
 
     existing = target.read_text() if target.exists() else ""
@@ -530,7 +530,7 @@ V_BOOKMARKS = "bookmarks"
 V_HELP      = "help"
 
 # ─── TUI ──────────────────────────────────────────────────────────────────────
-class HistViewTUI:
+class CmdLogTUI:
     def __init__(self):
         self.conn        = get_db()
         self.tty         = _open_tty()
@@ -596,7 +596,7 @@ class HistViewTUI:
             f"{B}{fg(255)}{C_SEL_BG} {n} {R}" if v == self.view else f"{C_DIM}{n}{R}"
             for n, v in tabs
         )
-        self._fill(1, f"{bg(235)} {B}{C_TITLE}HistView{R}  {tab_str}")
+        self._fill(1, f"{bg(235)} {B}{C_TITLE}CmdLog{R}  {tab_str}")
         # search / hint bar
         if self.search_mode:
             bar = f"{bg(234)} {C_KEY}/search:{R} {B}{self.search}{R}█"
@@ -872,7 +872,7 @@ class HistViewTUI:
             ]),
         ]
 
-        hline(f"{B}{C_TITLE}  HistView — Keyboard Reference{R}")
+        hline(f"{B}{C_TITLE}  CmdLog — Keyboard Reference{R}")
         hline()
         for sec, bindings in KEYS:
             hline(f"  {B}{fg(180)}{sec}{R}")
@@ -937,9 +937,9 @@ class HistViewTUI:
         self._reload()
 
     def _act_export(self):
-        out = Path.home() / f"histview_export_{int(time.time())}.sh"
+        out = Path.home() / f"cmdlog_export_{int(time.time())}.sh"
         with out.open("w") as f:
-            f.write("#!/bin/bash\n# HistView export\n\n")
+            f.write("#!/bin/bash\n# CmdLog export\n\n")
             for r in self.rows:
                 ts = datetime.fromtimestamp(r["ts"] / 1000).strftime("%Y-%m-%d %H:%M") if r["ts"] else "?"
                 cwd_c = f"  # {shrink_path(r['cwd'])}" if r["cwd"] else ""
@@ -968,7 +968,7 @@ class HistViewTUI:
             proc.wait()
             exit_code = proc.returncode
         except KeyboardInterrupt:
-            print("\n[HistView] Interrupted")
+            print("\n[CmdLog] Interrupted")
             exit_code = -1
 
         # Persist output preview
@@ -1108,7 +1108,7 @@ def cmd_stats_print():
     conn = get_db()
     s    = get_stats(conn)
     conn.close()
-    print(f"\n{B}HistView — History Stats{R}")
+    print(f"\n{B}CmdLog — History Stats{R}")
     print(f"  Commands  : {s['total']:,}")
     print(f"  Sessions  : {s['sessions']:,}")
     print(f"  Days      : {s['days']:,}")
@@ -1141,9 +1141,9 @@ def cmd_export_print(path: str = None):
     conn = get_db()
     rows = list(fetch_commands(conn, limit=500000))
     conn.close()
-    out  = Path(path) if path else Path.home() / f"histview_export_{int(time.time())}.sh"
+    out  = Path(path) if path else Path.home() / f"cmdlog_export_{int(time.time())}.sh"
     with out.open("w") as f:
-        f.write("#!/bin/bash\n# HistView full export\n# " + datetime.now().isoformat() + "\n\n")
+        f.write("#!/bin/bash\n# CmdLog full export\n# " + datetime.now().isoformat() + "\n\n")
         for r in reversed(rows):
             ts = datetime.fromtimestamp(r["ts"] / 1000).strftime("%Y-%m-%d %H:%M") if r["ts"] else "?"
             cwd_c = f"  # {shrink_path(r['cwd'])}" if r["cwd"] else ""
@@ -1154,20 +1154,20 @@ def cmd_export_print(path: str = None):
 # ─── Main ─────────────────────────────────────────────────────────────────────
 def main():
     ap = argparse.ArgumentParser(
-        prog="histview",
-        description="HistView — Terminal History Viewer",
+        prog="cmdlog",
+        description="CmdLog — Terminal History Viewer",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=textwrap.dedent("""\
         Examples:
-          python3 histview.py                      Interactive TUI
-          python3 histview.py --install bash       Add shell hooks to .bashrc
-          python3 histview.py --install zsh        Add shell hooks to .zshrc
-          python3 histview.py --install fish       Add fish hooks
-          python3 histview.py --install pwsh       Add PowerShell hooks
-          python3 histview.py --import             Import existing history files
-          python3 histview.py --stats              Quick statistics dump
-          python3 histview.py --search docker      Non-interactive search
-          python3 histview.py --export ~/cmds.sh   Export history as shell script
+          python3 cmdlog.py                      Interactive TUI
+          python3 cmdlog.py --install bash       Add shell hooks to .bashrc
+          python3 cmdlog.py --install zsh        Add shell hooks to .zshrc
+          python3 cmdlog.py --install fish       Add fish hooks
+          python3 cmdlog.py --install pwsh       Add PowerShell hooks
+          python3 cmdlog.py --import             Import existing history files
+          python3 cmdlog.py --stats              Quick statistics dump
+          python3 cmdlog.py --search docker      Non-interactive search
+          python3 cmdlog.py --export ~/cmds.sh   Export history as shell script
         """),
     )
     ap.add_argument("--install",   metavar="SHELL",
@@ -1240,10 +1240,10 @@ def main():
         if n == 0:
             print("  (no history files found — run commands and re-open to populate)")
         else:
-            print(f"Imported {n:,} commands. Starting HistView…\n", flush=True)
+            print(f"Imported {n:,} commands. Starting CmdLog…\n", flush=True)
         time.sleep(0.8)
 
-    HistViewTUI().run()
+    CmdLogTUI().run()
 
 
 if __name__ == "__main__":

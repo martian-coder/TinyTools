@@ -1,12 +1,12 @@
 <p align="center">
-  <img src="./hero.png" alt="HistView Banner" width="100%">
+  <img src="./hero.png" alt="CmdLog Banner" width="100%">
 </p>
 
-# HistView — Terminal History Viewer
+# CmdLog — Terminal History Viewer
 
 > No more *"what was that command..."* moments.
 
-HistView makes your shell history **actually useful** — a rich TUI browser with search, categorization, timelines, bookmarks, analytics, and shell hooks that capture exactly where and when each command ran.
+CmdLog makes your shell history **actually useful** — a rich TUI browser with search, categorization, timelines, bookmarks, analytics, and shell hooks that capture exactly where and when each command ran.
 
 ---
 
@@ -29,7 +29,7 @@ No timestamps. No directory. No branch. No idea what it did. No way to find that
 
 ```
 ╔══════════════════════════════════════════════════════════════════════════════╗
-║ HistView  [T]imeline  [S]tats  [B]ookmarks  [?]Help                        ║
+║ CmdLog  [T]imeline  [S]tats  [B]ookmarks  [?]Help                        ║
 ║   /search  [↑↓/jk] navigate  [Y] copy  [R] re-run  [B] bookmark  [q] quit  ║
 ║─────────────────────────────────────────────────────────────────────────────║
 ║ Today                          │ ↔  Command                                 ║
@@ -78,10 +78,10 @@ No timestamps. No directory. No branch. No idea what it did. No way to find that
 
 ```bash
 # Run immediately — auto-imports your existing history
-python3 histview.py
+python3 cmdlog.py
 
 # Then install hooks for richer metadata going forward:
-python3 histview.py --install bash      # or: zsh | fish | pwsh
+python3 cmdlog.py --install bash      # or: zsh | fish | pwsh
 source ~/.bashrc                        # reload shell
 ```
 
@@ -128,18 +128,18 @@ The hooks run **asynchronously** (backgrounded) so they add zero latency to your
 
 ### Bash / Zsh
 ```bash
-python3 histview.py --install bash   # appends to ~/.bashrc
-python3 histview.py --install zsh    # appends to ~/.zshrc
+python3 cmdlog.py --install bash   # appends to ~/.bashrc
+python3 cmdlog.py --install zsh    # appends to ~/.zshrc
 ```
 
 ### Fish
 ```bash
-python3 histview.py --install fish   # writes ~/.config/fish/conf.d/histview.fish
+python3 cmdlog.py --install fish   # writes ~/.config/fish/conf.d/histview.fish
 ```
 
 ### PowerShell
 ```powershell
-python3 histview.py --install pwsh   # appends to $PROFILE
+python3 cmdlog.py --install pwsh   # appends to $PROFILE
 ```
 
 ---
@@ -147,13 +147,13 @@ python3 histview.py --install pwsh   # appends to $PROFILE
 ## CLI Reference
 
 ```bash
-python3 histview.py                    # Interactive TUI (imports history on first run)
-python3 histview.py --import           # Re-import shell history files
-python3 histview.py --stats            # Print statistics to stdout
-python3 histview.py --search QUERY     # Non-interactive search
-python3 histview.py --export           # Export all history as ~/histview_export_*.sh
-python3 histview.py --export FILE.sh   # Export to a specific path
-python3 histview.py --install SHELL    # Install shell hooks (bash/zsh/fish/pwsh)
+python3 cmdlog.py                    # Interactive TUI (imports history on first run)
+python3 cmdlog.py --import           # Re-import shell history files
+python3 cmdlog.py --stats            # Print statistics to stdout
+python3 cmdlog.py --search QUERY     # Non-interactive search
+python3 cmdlog.py --export           # Export all history as ~/cmdlog_export_*.sh
+python3 cmdlog.py --export FILE.sh   # Export to a specific path
+python3 cmdlog.py --install SHELL    # Install shell hooks (bash/zsh/fish/pwsh)
 ```
 
 ---
@@ -163,7 +163,7 @@ python3 histview.py --install SHELL    # Install shell hooks (bash/zsh/fish/pwsh
 History is stored in an SQLite database at:
 
 ```
-~/.local/share/histview/histview.db
+~/.local/share/cmdlog/cmdlog.db
 ```
 
 Schema: `id, cmd, ts, cwd, git_branch, exit_code, duration_ms, session_id, category, bookmarked, note, output_head, source`
