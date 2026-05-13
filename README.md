@@ -13,13 +13,13 @@ Inspired by [Scott Hanselman's TinyToolTown](https://tinytooltown.com) — _"Vib
 ## 🏘️ The Tools
 
 | Tool | What it does | Language | Platform |
-|------|-------------|----------|----------|
+|------|-------------|----------|---------|
 | [**CopyToLLM**](./CopyToLLM/) | Screen capture → clipboard → paste into any AI chat in one hotkey | C# / .NET 9 | Windows |
 | [**WingetDiff**](./WingetDiff/) | Diff two `winget export` JSON files with a gorgeous terminal UI | C# / .NET 8 | Windows |
 | [**JumpDir**](./JumpDir/) | Interactive fuzzy directory navigator for your terminal | Python 3 | Windows / macOS / Linux |
 | [**CodeBlaster**](./CodeBlaster/) | Arcade game — shoot falling code asteroids with the correct keyword | HTML / JS | Any browser |
 | [**SmartRecover**](./SmartRecover/) | When your machine crashes — pick up where you left off. Snapshots tmux / browser / clipboard on a schedule, restores from any past timeline state | Python 3 | Linux |
-| [**HistView**](./HistView/) | Interactive history browser — search, categorize, bookmark and re-run commands with full context (directory, branch, timing, exit code) | Python 3 | Windows / macOS / Linux |
+| [**CmdLog**](./CmdLog/) | Interactive history browser — search, categorize, bookmark and re-run commands with full context (directory, branch, timing, exit code) | Python 3 | Windows / macOS / Linux |
 
 ---
 
@@ -63,11 +63,11 @@ python3 smartrecover.py daemon &   # autosave every 10 min in the background
 python3 smartrecover.py            # browse the timeline — restore tmux, tabs, clipboard
 ```
 
-### HistView
+### CmdLog
 ```bash
-cd HistView
-python3 histview.py                     # auto-imports history, opens interactive TUI
-python3 histview.py --install bash      # install rich shell hooks (one-time setup)
+cd CmdLog
+python3 cmdlog.py                     # auto-imports history, opens interactive TUI
+python3 cmdlog.py --install bash      # install rich shell hooks (one-time setup)
 ```
 
 ---
