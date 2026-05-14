@@ -20,6 +20,7 @@ Inspired by [Scott Hanselman's TinyToolTown](https://tinytooltown.com) — _"Vib
 | [**CodeBlaster**](./CodeBlaster/) | Arcade game — shoot falling code asteroids with the correct keyword | HTML / JS | Any browser |
 | [**SmartRecover**](./SmartRecover/) | When your machine crashes — pick up where you left off. Snapshots tmux / browser / clipboard on a schedule, restores from any past timeline state | Python 3 | Linux |
 | [**CmdLog**](./CmdLog/) | Interactive history browser — search, categorize, bookmark and re-run commands with full context (directory, branch, timing, exit code) | Python 3 | Windows / macOS / Linux |
+| [**MarkdownZipped**](./MarkdownZipped/) | Compress LLM prompts through a 4-stage pipeline (minify → rewrite → dedup → cache) and pack them into a `.mdz` file | Python 3 | Windows / macOS / Linux |
 
 ---
 
@@ -68,6 +69,13 @@ python3 smartrecover.py            # browse the timeline — restore tmux, tabs,
 cd CmdLog
 python3 cmdlog.py                     # auto-imports history, opens interactive TUI
 python3 cmdlog.py --install bash      # install rich shell hooks (one-time setup)
+```
+
+### MarkdownZipped
+```bash
+cd MarkdownZipped
+python3 mdzip.py zip examples/verbose_prompt.xml   # compress -> .mdz
+python3 mdzip.py info examples/verbose_prompt.mdz  # show savings
 ```
 
 ---
