@@ -76,6 +76,7 @@ python3 cmdlog.py --install bash      # install rich shell hooks (one-time setup
 cd MarkdownZipped
 python3 mdzip.py zip examples/verbose_prompt.xml   # compress -> .mdz
 python3 mdzip.py info examples/verbose_prompt.mdz  # show savings
+open web/index.html                                # or use the browser studio (zero install)
 ```
 
 ---

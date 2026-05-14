@@ -21,6 +21,19 @@ The big lever is stage 4 — prompt caching is the single largest cost reduction
 
 ## 🚀 Quick Start
 
+### 🌐 Web app (no install)
+
+```bash
+# Open the studio in your browser — runs entirely client-side, zero backend
+open web/index.html         # macOS
+xdg-open web/index.html     # Linux
+start web/index.html        # Windows
+```
+
+The web UI ports the full pipeline to JavaScript so it runs offline in any modern browser. Paste a prompt, see live token counts per stage, tune the dedup threshold and cache parameters, then download a `.mdz`. Verified to produce byte-identical output to the Python CLI.
+
+### 🐍 Python CLI
+
 ```bash
 # Compress a verbose prompt
 python3 mdzip.py zip examples/verbose_prompt.xml
@@ -137,7 +150,7 @@ print(result.plan.savings(n_calls=10_000))
 ## 🏗️ Architecture
 
 ```
-mdzip.py
+mdzip.py             — Python CLI + library (single file, stdlib only)
 ├── count_tokens()         — heuristic tokenizer (~5% of tiktoken on prose)
 ├── stage1_format()        — XML/JSON/Markdown normalizer
 ├── stage2_linguistic()    — regex filler/verbose-phrase rewriter
@@ -146,9 +159,16 @@ mdzip.py
 ├── compress()             — orchestrator, per-stage token deltas
 ├── write_mdz / read_mdz   — .mdz container codec
 └── main()                 — argparse CLI (zip / unzip / info / version)
+
+web/index.html       — production web app (single file, no build, no backend)
+├── pipeline.js (inlined)  — JS port of all 4 stages, byte-identical output
+├── 3-panel studio UI      — input · live output · before/after diff
+├── pipeline tabs          — click a stage to view its intermediate result
+├── cost calculator        — live $ estimate vs. call volume + model
+└── .mdz download          — saves the compressed container locally
 ```
 
-Everything lives in one file. No package layout, no `pyproject.toml`, no `pip install` — just `python3 mdzip.py`.
+Everything is one Python file and one HTML file. No package layout, no `pyproject.toml`, no `npm install`, no backend. Both the CLI and the web app are pure standard library / browser-native.
 
 ---
 
