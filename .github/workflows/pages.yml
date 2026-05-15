@@ -1,9 +1,10 @@
 name: Deploy MarkdownZipped studio to GitHub Pages
 
 # Publishes MarkdownZipped/web as the site root.
-# One-time manual step (cannot be done from git): in the repo,
-#   Settings -> Pages -> Build and deployment -> Source: "GitHub Actions".
-# After that, every push that touches the web app redeploys automatically.
+# actions/configure-pages with `enablement: true` creates the Pages site
+# automatically the first time this runs (the workflow token carries
+# `pages: write`), so no manual Settings step is needed unless Pages is
+# disabled at the organisation/enterprise level.
 
 on:
   push:
@@ -31,6 +32,11 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Configure / enable GitHub Pages
+        uses: actions/configure-pages@v5
+        with:
+          enablement: true
 
       - name: Assemble site
         run: |
