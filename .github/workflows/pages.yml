@@ -2,18 +2,22 @@ name: Deploy MarkdownZipped studio to GitHub Pages
 
 # Publishes MarkdownZipped/web as the site root.
 #
-# ONE-TIME MANUAL STEP (cannot be scripted — GitHub blocks the Actions
-# token from creating a Pages site):
+# Deploys ONLY from the default branch (main): the github-pages
+# environment's protection rule rejects non-default branches, so a
+# feature-branch trigger would only ever produce red runs.
+#
+# Pages must be enabled once (cannot be scripted — GitHub blocks the
+# Actions token from creating a Pages site):
 #   Repo -> Settings -> Pages -> Build and deployment -> Source:
 #   "GitHub Actions".
-# After that switch is set once, every push that touches the web app
-# redeploys automatically and no further manual action is needed.
+# After that, every push to main that touches the web app redeploys
+# automatically. You can also trigger it manually: Actions -> this
+# workflow -> "Run workflow" -> branch main.
 
 on:
   push:
     branches:
       - main
-      - claude/markdown-zipped-tool-XMBQF
     paths:
       - "MarkdownZipped/web/**"
       - ".github/workflows/pages.yml"
