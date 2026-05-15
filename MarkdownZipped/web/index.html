@@ -1,0 +1,1553 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>MarkdownZipped — prompt compression for LLMs</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,600;9..144,900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f4f1ea;
+    --ink: #14140f;
+    --paper: #fbf8f0;
+    --accent: #ff4d1f;
+    --acid: #d4ff00;
+    --muted: #7a7567;
+    --line: #1c1c17;
+    --grid: rgba(20,20,15,0.06);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    line-height: 1.5;
+    overflow-x: hidden;
+  }
+
+  body::before {
+    content: ""; position: fixed; inset: 0;
+    background-image:
+      linear-gradient(var(--grid) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+    background-size: 32px 32px;
+    pointer-events: none; z-index: 0;
+  }
+
+  body::after {
+    content: ""; position: fixed; inset: 0; pointer-events: none;
+    opacity: 0.4; z-index: 1;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/><feColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.08 0'/></filter><rect width='200' height='200' filter='url(%23n)'/></svg>");
+    mix-blend-mode: multiply;
+  }
+
+  .wrap {
+    position: relative; z-index: 2;
+    max-width: 1400px; margin: 0 auto;
+    padding: 32px 40px 80px;
+  }
+
+  ::selection { background: var(--acid); color: var(--ink); }
+  button { font-family: inherit; }
+
+  /* ============ HEADER ============ */
+  header {
+    display: flex; align-items: flex-end; justify-content: space-between;
+    border-bottom: 1.5px solid var(--ink);
+    padding-bottom: 18px; margin-bottom: 32px;
+    gap: 24px; flex-wrap: wrap;
+  }
+  .brand { display: flex; align-items: baseline; gap: 14px; }
+  .brand-mark {
+    font-family: 'Fraunces', serif; font-weight: 900;
+    font-size: 38px; letter-spacing: -0.04em; line-height: 0.9;
+  }
+  .brand-mark em { font-style: italic; font-weight: 300; color: var(--accent); }
+  .brand-meta {
+    font-size: 10px; text-transform: uppercase; letter-spacing: 0.18em;
+    color: var(--muted); border-left: 1px solid var(--ink);
+    padding-left: 14px; align-self: stretch;
+    display: flex; align-items: center;
+  }
+  .nav { display: flex; gap: 28px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.15em; }
+  .nav span { cursor: pointer; padding-bottom: 4px; position: relative; }
+  .nav span.active { border-bottom: 2px solid var(--accent); }
+  .nav span:hover:not(.active) { color: var(--accent); }
+
+  /* ============ HERO ============ */
+  .hero {
+    display: grid; grid-template-columns: 1.4fr 1fr;
+    gap: 48px; align-items: end;
+    margin-bottom: 40px; padding-bottom: 28px;
+    border-bottom: 1px solid var(--ink);
+  }
+  .hero h1 {
+    font-family: 'Fraunces', serif; font-weight: 300;
+    font-size: clamp(40px, 6.4vw, 84px);
+    line-height: 0.92; letter-spacing: -0.045em;
+  }
+  .hero h1 .strike {
+    text-decoration: line-through; text-decoration-thickness: 4px;
+    text-decoration-color: var(--accent); color: var(--muted); font-style: italic;
+  }
+  .hero h1 em { font-style: italic; font-weight: 600; }
+  .hero-side { border-left: 1px solid var(--ink); padding-left: 24px; }
+  .hero-side p { font-size: 13px; line-height: 1.55; margin-bottom: 14px; }
+  .hero-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 20px; }
+  .stat { border: 1px solid var(--ink); padding: 12px 14px; background: var(--paper); }
+  .stat-num {
+    font-family: 'Fraunces', serif; font-size: 32px; font-weight: 600;
+    line-height: 1; letter-spacing: -0.03em;
+  }
+  .stat-num .acid {
+    background: var(--acid); padding: 0 6px; display: inline-block;
+  }
+  .stat-label {
+    font-size: 9px; text-transform: uppercase; letter-spacing: 0.15em;
+    color: var(--muted); margin-top: 6px;
+  }
+
+  /* ============ TOOLBAR ============ */
+  .toolbar {
+    display: flex; gap: 8px; flex-wrap: wrap;
+    margin-bottom: 16px; align-items: center;
+  }
+  .btn {
+    font-family: 'JetBrains Mono', monospace; font-size: 11px;
+    text-transform: uppercase; letter-spacing: 0.12em;
+    border: 1.5px solid var(--ink); background: var(--paper);
+    color: var(--ink); padding: 8px 14px; cursor: pointer;
+    transition: all 0.15s; font-weight: 500;
+  }
+  .btn:hover { background: var(--ink); color: var(--paper); }
+  .btn.primary { background: var(--ink); color: var(--paper); }
+  .btn.primary:hover { background: var(--accent); border-color: var(--accent); }
+  .btn.acid { background: var(--acid); }
+  .btn.acid:hover { background: var(--ink); color: var(--acid); }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .toolbar-sep { width: 1px; align-self: stretch; background: var(--ink); opacity: 0.2; margin: 0 4px; }
+  .toolbar-chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    border: 1px dashed var(--ink); padding: 6px 10px;
+    font-size: 10px; text-transform: uppercase; letter-spacing: 0.12em; cursor: pointer; user-select: none;
+  }
+  .toolbar-chip input { accent-color: var(--accent); }
+  .toolbar-chip.off { opacity: 0.45; }
+  .toolbar-chip .hint { color: var(--muted); text-transform: none; letter-spacing: 0; font-size: 9px; margin-left: 4px; }
+
+  /* ============ KEY BAR ============ */
+  .keybar {
+    border: 1.5px solid var(--ink); background: var(--paper);
+    margin-bottom: 16px; padding: 16px 18px;
+    display: grid; grid-template-columns: auto 1fr; gap: 14px 24px;
+    align-items: center;
+  }
+  .keybar-title {
+    font-family: 'Fraunces', serif; font-size: 16px; font-weight: 600;
+    letter-spacing: -0.02em; margin-bottom: 8px;
+  }
+  .keybar-modes { display: flex; gap: 8px; flex-wrap: wrap; }
+  .keybar-key { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .keybar-key.off { opacity: 0.4; pointer-events: none; }
+  .keybar-key select, .keybar-key input {
+    font-family: 'JetBrains Mono', monospace; font-size: 11px;
+    border: 1.5px solid var(--ink); background: var(--bg);
+    padding: 8px 10px; color: var(--ink);
+  }
+  .keybar-key input { flex: 1; min-width: 220px; }
+  .keybar-key select { cursor: pointer; }
+  .keybar-status {
+    grid-column: 1 / -1; display: flex; align-items: center; gap: 10px;
+    border-top: 1px dashed var(--ink); padding-top: 10px;
+  }
+  .tsrc {
+    font-size: 9px; text-transform: uppercase; letter-spacing: 0.14em;
+    background: var(--ink); color: var(--paper); padding: 3px 8px;
+  }
+  .tsrc.api { background: var(--acid); color: var(--ink); }
+  .tstatus { font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); }
+  .tstatus.wait { color: var(--ink); }
+  .tstatus.ok   { color: var(--accent); }
+  .tstatus.err  { color: #b3360b; }
+  .keybar-note {
+    grid-column: 1 / -1; font-size: 10px; line-height: 1.5;
+    color: var(--muted); border-top: 1px dashed var(--ink); padding-top: 10px;
+  }
+  .keybar-note code {
+    background: var(--bg); padding: 1px 5px; border: 1px solid var(--grid);
+    font-size: 10px;
+  }
+
+  /* ============ APP WINDOW ============ */
+  .app {
+    border: 1.5px solid var(--ink); background: var(--paper);
+    box-shadow: 12px 12px 0 var(--ink);
+    margin-bottom: 32px;
+  }
+  .app-bar {
+    display: flex; align-items: center; justify-content: space-between;
+    background: var(--ink); color: var(--paper);
+    padding: 10px 16px; border-bottom: 1.5px solid var(--ink); gap: 12px;
+  }
+  .app-dots { display: flex; gap: 6px; }
+  .dot { width: 10px; height: 10px; border-radius: 50%; }
+  .dot.red { background: var(--accent); }
+  .dot.yel { background: var(--acid); }
+  .dot.grn { background: transparent; border: 1px solid rgba(251,248,240,0.4); }
+  .app-title { font-size: 10px; text-transform: uppercase; letter-spacing: 0.2em; }
+  .app-meta { font-size: 10px; color: rgba(251,248,240,0.6); }
+
+  .pipeline {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    border-bottom: 1.5px solid var(--ink);
+  }
+  .stage {
+    padding: 18px 16px; border-right: 1px solid var(--ink);
+    cursor: pointer; position: relative; transition: background 0.2s;
+  }
+  .stage:last-child { border-right: none; }
+  .stage:hover { background: rgba(255,77,31,0.06); }
+  .stage.active { background: var(--ink); color: var(--paper); }
+  .stage.active .stage-num { color: var(--accent); }
+  .stage.disabled { opacity: 0.4; }
+  .stage-num {
+    font-family: 'Fraunces', serif; font-size: 11px;
+    letter-spacing: 0.2em; color: var(--muted); margin-bottom: 4px;
+  }
+  .stage-name {
+    font-family: 'Fraunces', serif; font-size: 22px; font-weight: 600;
+    letter-spacing: -0.02em; margin-bottom: 4px;
+  }
+  .stage-desc { font-size: 10px; color: var(--muted); line-height: 1.4; }
+  .stage.active .stage-desc { color: rgba(251,248,240,0.7); }
+  .stage-save {
+    position: absolute; top: 12px; right: 12px;
+    font-size: 10px; background: var(--acid); color: var(--ink);
+    padding: 2px 6px; font-weight: 700; min-width: 38px; text-align: center;
+  }
+  .stage.active .stage-save { background: var(--accent); color: var(--paper); }
+
+  .app-body {
+    display: grid; grid-template-columns: 1fr 1fr;
+    min-height: 520px;
+  }
+  .panel {
+    padding: 18px 20px; border-right: 1px solid var(--ink);
+    display: flex; flex-direction: column;
+  }
+  .panel:last-child { border-right: none; background: rgba(212,255,0,0.04); }
+  .panel-head {
+    display: flex; justify-content: space-between; align-items: baseline;
+    padding-bottom: 10px; margin-bottom: 12px;
+    border-bottom: 1px dashed var(--ink);
+  }
+  .panel-label {
+    font-size: 10px; text-transform: uppercase; letter-spacing: 0.2em;
+    color: var(--muted);
+  }
+  .panel-tokens {
+    font-family: 'Fraunces', serif; font-size: 18px; font-weight: 600;
+  }
+  .panel-tokens.green { color: var(--accent); }
+
+  textarea.editor, pre.editor {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11.5px; line-height: 1.55; color: var(--ink);
+    background: transparent; border: none; outline: none; resize: none;
+    flex: 1; width: 100%;
+    white-space: pre-wrap; word-wrap: break-word;
+    min-height: 420px;
+  }
+  pre.editor { overflow: auto; }
+  pre.editor .h    { color: var(--accent); font-weight: 700; }
+  pre.editor .sent { background: var(--acid); color: var(--ink); padding: 0 4px; font-weight: 700; }
+  pre.editor .dim  { color: var(--muted); }
+
+  .app-foot {
+    border-top: 1.5px solid var(--ink); background: var(--ink); color: var(--paper);
+    display: grid; grid-template-columns: repeat(5, 1fr);
+    font-size: 10px; text-transform: uppercase; letter-spacing: 0.15em;
+  }
+  .foot-cell {
+    padding: 12px 16px; border-right: 1px solid rgba(251,248,240,0.15);
+    display: flex; justify-content: space-between; align-items: center; gap: 6px;
+  }
+  .foot-cell:last-child { border-right: none; }
+  .foot-cell strong {
+    font-family: 'Fraunces', serif; font-size: 16px; font-weight: 600;
+    text-transform: none; letter-spacing: -0.02em;
+  }
+  .foot-cell strong.green { color: var(--acid); }
+  .foot-cell strong.red   { color: var(--accent); }
+
+  /* ============ SETTINGS PANEL ============ */
+  .settings {
+    display: grid; grid-template-columns: 1.2fr 1fr 1fr;
+    gap: 0; margin-bottom: 48px;
+    border: 1.5px solid var(--ink); background: var(--paper);
+  }
+  .setbox { padding: 20px 22px; border-right: 1px solid var(--ink); }
+  .setbox:last-child { border-right: none; }
+  .setbox h4 {
+    font-family: 'Fraunces', serif; font-size: 18px; font-weight: 600;
+    letter-spacing: -0.02em; margin-bottom: 6px;
+  }
+  .setbox p.sub {
+    font-size: 10px; text-transform: uppercase; letter-spacing: 0.12em;
+    color: var(--muted); margin-bottom: 14px;
+  }
+  .slider-row { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+  .slider-row label {
+    font-size: 11px; min-width: 100px; text-transform: uppercase; letter-spacing: 0.1em;
+  }
+  .slider-row input[type=range] { flex: 1; accent-color: var(--accent); }
+  .slider-row .v {
+    font-family: 'Fraunces', serif; font-size: 15px; font-weight: 600;
+    min-width: 60px; text-align: right;
+  }
+  .calls-presets { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+  .preset {
+    font-size: 10px; padding: 4px 10px; border: 1px solid var(--ink);
+    background: transparent; cursor: pointer; letter-spacing: 0.08em;
+  }
+  .preset:hover, .preset.active { background: var(--ink); color: var(--paper); }
+  .savings-display {
+    margin-top: 14px; padding: 14px;
+    background: var(--bg); border: 1px dashed var(--ink);
+  }
+  .savings-row { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px; }
+  .savings-row:last-child { margin-bottom: 0; }
+  .savings-row .lbl { font-size: 10px; text-transform: uppercase; letter-spacing: 0.12em; color: var(--muted); }
+  .savings-row .val { font-family: 'Fraunces', serif; font-size: 18px; font-weight: 600; letter-spacing: -0.02em; }
+  .savings-row .val.big { font-size: 28px; }
+  .savings-row .val.green { color: var(--accent); }
+  .savings-row .val.acid { background: var(--acid); padding: 0 6px; }
+
+  /* ============ FILE DIAGRAM ============ */
+  .file-section { margin-top: 16px; margin-bottom: 48px; }
+  .section-title {
+    font-family: 'Fraunces', serif; font-size: 36px; font-weight: 300;
+    letter-spacing: -0.03em; margin-bottom: 6px;
+  }
+  .section-title em { font-style: italic; color: var(--accent); font-weight: 600; }
+  .section-sub {
+    font-size: 11px; color: var(--muted); text-transform: uppercase;
+    letter-spacing: 0.15em; margin-bottom: 28px;
+  }
+  .files { display: grid; grid-template-columns: 1fr auto 1fr; gap: 24px; align-items: stretch; }
+  .file {
+    border: 1.5px solid var(--ink); background: var(--paper);
+    display: flex; flex-direction: column; position: relative;
+  }
+  .file-head {
+    padding: 12px 14px; border-bottom: 1px solid var(--ink);
+    display: flex; justify-content: space-between; align-items: center;
+    background: var(--bg);
+  }
+  .file-name { font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 500; }
+  .file-badge {
+    font-size: 9px; padding: 2px 8px; background: var(--ink); color: var(--paper);
+    text-transform: uppercase; letter-spacing: 0.1em;
+  }
+  .file-badge.acid { background: var(--acid); color: var(--ink); }
+  .file-body {
+    padding: 16px; font-family: 'JetBrains Mono', monospace;
+    font-size: 11.5px; line-height: 1.6; flex: 1;
+    white-space: pre-wrap; overflow: auto; max-height: 320px;
+  }
+  .file-foot {
+    border-top: 1px dashed var(--ink); padding: 10px 14px;
+    display: flex; justify-content: space-between;
+    font-size: 10px; text-transform: uppercase; letter-spacing: 0.12em; color: var(--muted);
+  }
+  .file-foot .count {
+    font-family: 'Fraunces', serif; font-size: 18px; font-weight: 600;
+    color: var(--ink); letter-spacing: -0.02em;
+  }
+  .file-foot .count.green { color: var(--accent); }
+  .arrow {
+    align-self: center; display: flex; flex-direction: column;
+    align-items: center; gap: 6px; color: var(--accent);
+  }
+  .arrow-bar {
+    font-family: 'Fraunces', serif; font-size: 36px; font-weight: 900;
+    line-height: 1; color: var(--accent); letter-spacing: -0.05em;
+  }
+  .arrow-label {
+    font-size: 9px; text-transform: uppercase; letter-spacing: 0.18em;
+    color: var(--ink); text-align: center; max-width: 80px; line-height: 1.3;
+  }
+  .arrow-pct {
+    font-family: 'Fraunces', serif; font-size: 22px; font-weight: 600;
+    background: var(--acid); padding: 2px 8px; color: var(--ink);
+  }
+
+  /* ============ TOAST ============ */
+  .toast {
+    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+    background: var(--ink); color: var(--paper); padding: 12px 24px;
+    font-size: 11px; text-transform: uppercase; letter-spacing: 0.15em;
+    border: 1.5px solid var(--ink); box-shadow: 6px 6px 0 var(--accent);
+    z-index: 100; opacity: 0; transition: opacity 0.2s; pointer-events: none;
+  }
+  .toast.show { opacity: 1; }
+
+  /* ============ FOOTER ============ */
+  .footer-note {
+    margin-top: 48px; padding-top: 24px; border-top: 1px solid var(--ink);
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 10px; text-transform: uppercase; letter-spacing: 0.18em;
+    color: var(--muted); flex-wrap: wrap; gap: 12px;
+  }
+  .footer-note a { color: var(--muted); text-decoration: none; }
+  .footer-note a:hover { color: var(--accent); }
+  .footer-note .blob {
+    width: 10px; height: 10px; background: var(--accent); border-radius: 50%;
+    display: inline-block; margin-right: 8px; vertical-align: middle;
+    animation: pulse 1.6s infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(0.8); }
+  }
+
+  /* ============ RESPONSIVE ============ */
+  @media (max-width: 980px) {
+    .wrap { padding: 24px 20px 60px; }
+    .hero { grid-template-columns: 1fr; gap: 24px; }
+    .hero-side { border-left: none; padding-left: 0; border-top: 1px solid var(--ink); padding-top: 18px; }
+    .app-body { grid-template-columns: 1fr; }
+    .panel { border-right: none; border-bottom: 1px solid var(--ink); }
+    .pipeline { grid-template-columns: 1fr 1fr; }
+    .stage:nth-child(2) { border-right: none; }
+    .stage:nth-child(1), .stage:nth-child(2) { border-bottom: 1px solid var(--ink); }
+    .files { grid-template-columns: 1fr; }
+    .arrow { flex-direction: row; }
+    .app-foot { grid-template-columns: 1fr 1fr; }
+    .foot-cell:nth-child(odd) { border-right: 1px solid rgba(251,248,240,0.15); }
+    .foot-cell:nth-child(even) { border-right: none; }
+    .nav { display: none; }
+    .settings { grid-template-columns: 1fr; }
+    .setbox { border-right: none; border-bottom: 1px solid var(--ink); }
+    .setbox:last-child { border-bottom: none; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- HEADER -->
+  <header>
+    <div class="brand">
+      <div class="brand-mark">MD<em>.zipped</em></div>
+      <div class="brand-meta">v0.1 · prompt compression pipeline</div>
+    </div>
+    <nav class="nav">
+      <span class="active" data-nav="studio">Studio</span>
+      <span data-nav="docs">Spec</span>
+      <span data-nav="github">GitHub</span>
+    </nav>
+  </header>
+
+  <!-- HERO -->
+  <section class="hero">
+    <h1>
+      Send <span class="strike">verbose</span><br/>
+      prompts. Pay for <em>signal</em>,<br/>
+      not <em>filler.</em>
+    </h1>
+    <div class="hero-side">
+      <p>A four-stage pipeline that strips format overhead, linguistic bloat, semantic redundancy, and structural waste from anything you feed an LLM.</p>
+      <p style="color:var(--muted);">Paste XML, verbose Markdown, JSON, or raw text. Get back a minified, deduplicated, cache-ready <strong>.mdz</strong>.</p>
+      <div class="hero-stats">
+        <div class="stat">
+          <div class="stat-num"><span class="acid" id="hero-reduction">—</span></div>
+          <div class="stat-label">token reduction</div>
+        </div>
+        <div class="stat">
+          <div class="stat-num" id="hero-savings">—</div>
+          <div class="stat-label">$ saved / 1k calls</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TOOLBAR -->
+  <div class="toolbar" role="toolbar" aria-label="actions">
+    <button class="btn primary" id="btn-compress">▶ Compress</button>
+    <button class="btn" id="btn-sample">Load sample</button>
+    <button class="btn" id="btn-clear">Clear</button>
+    <input type="file" id="file-input" accept=".txt,.md,.xml,.json,.mdz" hidden>
+    <button class="btn" id="btn-upload">Upload file</button>
+    <div class="toolbar-sep"></div>
+    <button class="btn acid" id="btn-download">Download .mdz</button>
+    <button class="btn" id="btn-copy">Copy output</button>
+    <div class="toolbar-sep"></div>
+    <label class="toolbar-chip"><input type="checkbox" id="opt-format" checked> Format</label>
+    <label class="toolbar-chip"><input type="checkbox" id="opt-ling" checked> Linguistic</label>
+    <label class="toolbar-chip"><input type="checkbox" id="opt-sem" checked> Semantic</label>
+    <label class="toolbar-chip"><input type="checkbox" id="opt-cache" checked> Cache</label>
+    <label class="toolbar-chip"><input type="checkbox" id="opt-aggressive"> Aggressive</label>
+  </div>
+
+  <!-- API KEY / TOKEN SOURCE -->
+  <div class="keybar">
+    <div class="keybar-main">
+      <div class="keybar-title">Token counting</div>
+      <div class="keybar-modes">
+        <label class="toolbar-chip"><input type="radio" name="tmode" id="tmode-heur" value="heuristic" checked> Heuristic <span class="hint">offline · instant · ~5%</span></label>
+        <label class="toolbar-chip"><input type="radio" name="tmode" id="tmode-api" value="api"> Anthropic API <span class="hint">exact · your key</span></label>
+      </div>
+    </div>
+    <div class="keybar-key" id="keybar-key">
+      <select id="model-key" aria-label="model">
+        <option value="opus" selected>Claude Opus 4.7</option>
+        <option value="sonnet">Claude Sonnet 4.6</option>
+        <option value="haiku">Claude Haiku 4.5</option>
+      </select>
+      <input type="password" id="api-key" placeholder="sk-ant-… (stored in this browser only)" autocomplete="off" spellcheck="false">
+      <button class="btn" id="btn-key-show" type="button" title="show/hide">👁</button>
+      <button class="btn primary" id="btn-key-save" type="button">Save key</button>
+      <button class="btn" id="btn-key-clear" type="button">Clear</button>
+    </div>
+    <div class="keybar-status">
+      <span class="tsrc" id="token-source">heuristic</span>
+      <span class="tstatus" id="token-status">offline mode — no key needed</span>
+    </div>
+    <div class="keybar-note">
+      Your key never leaves this browser except in direct HTTPS calls to <strong>api.anthropic.com</strong>. It is stored in <code>localStorage</code>, never logged, never sent to any other server. Clear it any time.
+    </div>
+  </div>
+
+  <!-- APP WINDOW -->
+  <div class="app">
+    <div class="app-bar">
+      <div class="app-dots">
+        <span class="dot red"></span>
+        <span class="dot yel"></span>
+        <span class="dot grn"></span>
+      </div>
+      <div class="app-title">md.zipped ▸ studio</div>
+      <div class="app-meta"><span id="app-model">claude-opus-4.7</span> · <span id="app-cache-state">idle</span></div>
+    </div>
+
+    <!-- pipeline stages -->
+    <div class="pipeline" id="pipeline">
+      <div class="stage" data-stage="0">
+        <div class="stage-num">01 / FORMAT</div>
+        <div class="stage-name">Minify</div>
+        <div class="stage-desc">Strip whitespace, tags, indentation</div>
+        <div class="stage-save" id="save-0">—</div>
+      </div>
+      <div class="stage" data-stage="1">
+        <div class="stage-num">02 / LINGUISTIC</div>
+        <div class="stage-name">Compress</div>
+        <div class="stage-desc">Remove filler, hedges, verbose phrases</div>
+        <div class="stage-save" id="save-1">—</div>
+      </div>
+      <div class="stage" data-stage="2">
+        <div class="stage-num">03 / SEMANTIC</div>
+        <div class="stage-name">Dedupe</div>
+        <div class="stage-desc">Drop redundant bullets &amp; sentences</div>
+        <div class="stage-save" id="save-2">—</div>
+      </div>
+      <div class="stage active" data-stage="3">
+        <div class="stage-num">04 / STRUCTURAL</div>
+        <div class="stage-name">Cache</div>
+        <div class="stage-desc">Split static / dynamic, cache plan</div>
+        <div class="stage-save" id="save-3">—</div>
+      </div>
+    </div>
+
+    <!-- panels -->
+    <div class="app-body">
+      <div class="panel">
+        <div class="panel-head">
+          <div class="panel-label">▼ Input · paste / type / upload</div>
+          <div class="panel-tokens" id="tokens-in">0 tok</div>
+        </div>
+        <textarea class="editor" id="input" spellcheck="false" placeholder="Paste a verbose system prompt here...
+
+Mark the per-call dynamic section with the sentinel:
+
+You are a helpful assistant. Be concise.
+- Rule one.
+- Rule two.
+
+&lt;&lt;&lt;USER_INPUT&gt;&gt;&gt;
+{user_message}"></textarea>
+      </div>
+      <div class="panel">
+        <div class="panel-head">
+          <div class="panel-label">▲ Output · <span id="output-label">stage 4 / cache plan</span></div>
+          <div class="panel-tokens green" id="tokens-out">0 tok</div>
+        </div>
+        <pre class="editor" id="output"><span class="dim">// output appears here on compress</span></pre>
+      </div>
+    </div>
+
+    <!-- foot status -->
+    <div class="app-foot">
+      <div class="foot-cell">in <strong id="foot-in">0</strong></div>
+      <div class="foot-cell">out <strong class="green" id="foot-out">0</strong></div>
+      <div class="foot-cell">saved <strong class="green" id="foot-saved">0%</strong></div>
+      <div class="foot-cell">cacheable <strong id="foot-cacheable">—</strong></div>
+      <div class="foot-cell">$ / 1k <strong id="foot-cost">$0.00</strong></div>
+    </div>
+  </div>
+
+  <!-- SETTINGS / COST CALCULATOR -->
+  <div class="settings">
+    <div class="setbox">
+      <h4>Cost calculator</h4>
+      <p class="sub">live billing forecast</p>
+      <div class="slider-row">
+        <label for="calls">Calls / day</label>
+        <input type="range" id="calls" min="10" max="100000" step="10" value="1000">
+        <div class="v" id="calls-v">1,000</div>
+      </div>
+      <div class="calls-presets">
+        <button class="preset" data-calls="100">100</button>
+        <button class="preset active" data-calls="1000">1k</button>
+        <button class="preset" data-calls="10000">10k</button>
+        <button class="preset" data-calls="100000">100k</button>
+      </div>
+      <div class="savings-display">
+        <div class="savings-row">
+          <span class="lbl">baseline (no cache)</span>
+          <span class="val" id="cost-baseline">$0.00</span>
+        </div>
+        <div class="savings-row">
+          <span class="lbl">with .mdz + cache</span>
+          <span class="val green" id="cost-cached">$0.00</span>
+        </div>
+        <div class="savings-row">
+          <span class="lbl">savings</span>
+          <span class="val big acid" id="cost-savings">0%</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="setbox">
+      <h4>Pipeline tuning</h4>
+      <p class="sub">stage parameters</p>
+      <div class="slider-row">
+        <label for="threshold">Dedup threshold</label>
+        <input type="range" id="threshold" min="0.5" max="0.95" step="0.05" value="0.75">
+        <div class="v" id="threshold-v">0.75</div>
+      </div>
+      <div class="slider-row">
+        <label for="min-cache">Min cache tok</label>
+        <input type="range" id="min-cache" min="100" max="4096" step="50" value="1024">
+        <div class="v" id="min-cache-v">1024</div>
+      </div>
+      <div class="slider-row">
+        <label for="ttl">Cache TTL</label>
+        <select id="ttl" style="flex:1;padding:6px;font-family:inherit;font-size:11px;border:1px solid var(--ink);background:var(--paper);">
+          <option value="5m">5 minutes (standard)</option>
+          <option value="1h">1 hour (extended)</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="setbox">
+      <h4>Model &amp; pricing</h4>
+      <p class="sub">per-token cost basis</p>
+      <div class="slider-row">
+        <label for="model">Model</label>
+        <select id="model" style="flex:1;padding:6px;font-family:inherit;font-size:11px;border:1px solid var(--ink);background:var(--paper);">
+          <option value="opus" selected>Claude Opus 4.7</option>
+          <option value="sonnet">Claude Sonnet 4.6</option>
+          <option value="haiku">Claude Haiku 4.5</option>
+        </select>
+      </div>
+      <div class="slider-row">
+        <label>Input</label>
+        <div class="v" id="price-in">$15.00 / Mtok</div>
+      </div>
+      <div class="slider-row">
+        <label>Cache write</label>
+        <div class="v" id="price-cw">$18.75 / Mtok</div>
+      </div>
+      <div class="slider-row">
+        <label>Cache read</label>
+        <div class="v" id="price-cr">$1.50 / Mtok</div>
+      </div>
+      <p class="sub" id="price-date" style="margin-top:10px;margin-bottom:0;">list price · 2026-05</p>
+    </div>
+  </div>
+
+  <!-- FILE TRANSFORMATION DIAGRAM -->
+  <section class="file-section">
+    <h2 class="section-title">What the <em>.mdz</em> file looks like</h2>
+    <div class="section-sub">before → after · human-readable, diff-able, cache-aware</div>
+
+    <div class="files">
+      <div class="file">
+        <div class="file-head">
+          <span class="file-name" id="before-name">prompt.xml</span>
+          <span class="file-badge">before</span>
+        </div>
+        <div class="file-body" id="before-body"><span style="color:var(--muted)">// paste input on the left and click compress</span></div>
+        <div class="file-foot">
+          <span>tokens</span>
+          <span class="count" id="before-count">0</span>
+        </div>
+      </div>
+
+      <div class="arrow">
+        <div class="arrow-bar">▶</div>
+        <div class="arrow-label">4-stage<br/>pipeline</div>
+        <div class="arrow-bar" style="font-size:18px;">▼</div>
+        <div class="arrow-pct" id="arrow-pct">—</div>
+      </div>
+
+      <div class="file">
+        <div class="file-head">
+          <span class="file-name">prompt.mdz</span>
+          <span class="file-badge acid">after</span>
+        </div>
+        <div class="file-body" id="after-body"><span style="color:var(--muted)">// .mdz container appears here</span></div>
+        <div class="file-foot">
+          <span>tokens</span>
+          <span class="count green" id="after-count">0</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <div class="footer-note">
+    <div><span class="blob"></span>Pipeline runs in your browser · API key (if set) is sent only to api.anthropic.com</div>
+    <div>
+      <a href="https://github.com/martian-coder/TinyTools/tree/main/MarkdownZipped" target="_blank" rel="noopener">github</a>
+      &nbsp;·&nbsp;
+      <a href="https://github.com/martian-coder/TinyTools/tree/main/MarkdownZipped#readme" target="_blank" rel="noopener">spec</a>
+      &nbsp;·&nbsp;
+      md.zipped / 2026
+    </div>
+  </div>
+
+</div>
+
+<div class="toast" id="toast">copied</div>
+
+<!-- ============================================================ -->
+<!--   PIPELINE — 4-stage compression, ported from mdzip.py        -->
+<!-- ============================================================ -->
+<script>
+"use strict";
+
+const DYNAMIC_SENTINEL = "<<<USER_INPUT>>>";
+const MDZ_MAGIC = "---mdz v1---";
+
+// ---- pricing table (USD per 1M tokens) -----------------------------
+// Prices are a static reference (no public pricing API exists). The
+// PRICE_DATE label is shown in the UI so the figure is never silently
+// stale. Token COUNTS, by contrast, are pulled live from the Anthropic
+// count_tokens endpoint when an API key is supplied.
+const PRICE_DATE = "2026-05";
+const PRICING = {
+  opus:   { in: 15.00, cw: 18.75, cr: 1.50,  label: "Claude Opus 4.7",   apiId: "claude-opus-4-7" },
+  sonnet: { in:  3.00, cw:  3.75, cr: 0.30,  label: "Claude Sonnet 4.6", apiId: "claude-sonnet-4-6" },
+  haiku:  { in:  0.80, cw:  1.00, cr: 0.08,  label: "Claude Haiku 4.5",  apiId: "claude-haiku-4-5-20251001" },
+};
+
+// ---- live token counting (Anthropic count_tokens) ------------------
+// The heuristic countTokens() below stays the instant, offline default.
+// When the user supplies their own API key it is kept ONLY in this
+// browser (localStorage) and sent ONLY to api.anthropic.com over HTTPS
+// to fetch exact token counts. It is never logged or sent anywhere else.
+const tokenCache = new Map();   // `${model} ${text}` -> int
+let refineSeq = 0;
+
+async function apiCountTokens(text, modelKey) {
+  if (!text) return 0;
+  const cacheKey = modelKey + " " + text;
+  if (tokenCache.has(cacheKey)) return tokenCache.get(cacheKey);
+  if (!state.apiKey) throw new Error("no API key set");
+  const res = await fetch("https://api.anthropic.com/v1/messages/count_tokens", {
+    method: "POST",
+    headers: {
+      "x-api-key": state.apiKey,
+      "anthropic-version": "2023-06-01",
+      "anthropic-dangerous-direct-browser-access": "true",
+      "content-type": "application/json",
+    },
+    body: JSON.stringify({
+      model: PRICING[modelKey].apiId,
+      messages: [{ role: "user", content: text }],
+    }),
+  });
+  if (!res.ok) {
+    let msg = "HTTP " + res.status;
+    try { const j = await res.json(); if (j.error && j.error.message) msg = j.error.message; } catch (e) {}
+    throw new Error(msg);
+  }
+  const data = await res.json();
+  const n = data.input_tokens;
+  tokenCache.set(cacheKey, n);
+  return n;
+}
+
+// ---- token counter (heuristic, ~5% of o200k_base on prose) ---------
+function countTokens(text) {
+  if (!text) return 0;
+  let tokens = 0;
+  const re = /\w+|[^\s\w]/gu;
+  let m;
+  while ((m = re.exec(text)) !== null) {
+    const c = m[0];
+    if (/^[A-Za-z]+$/.test(c))      tokens += Math.max(1, Math.ceil(c.length / 4));
+    else if (/^\d+$/.test(c))       tokens += Math.max(1, Math.ceil(c.length / 3));
+    else                            tokens += 1;
+  }
+  return tokens;
+}
+
+// Effective counts: API numbers if a live refinement has populated them
+// for the current result, otherwise the synchronous heuristic.
+// tokensOut mirrors the CLI (count of the joined compressed text incl.
+// the sentinel marker); staticTok/dynamicTok drive the cache cost model.
+function effectiveCounts(result) {
+  if (result && result.apiCounts) return result.apiCounts;
+  const sTok = countTokens(result.plan.static);
+  const dTok = countTokens(result.plan.dynamic);
+  return { tokensIn: result.tokensIn, tokensOut: result.tokensOut, staticTok: sTok, dynamicTok: dTok, source: "heuristic" };
+}
+
+// ---- stage 1: format minify ----------------------------------------
+function looksLikeJSON(s) {
+  s = s.trim();
+  return (s.startsWith("{") && s.endsWith("}")) ||
+         (s.startsWith("[") && s.endsWith("]"));
+}
+function looksLikeXML(s) {
+  s = s.trimStart();
+  return s.startsWith("<") && s.includes("</");
+}
+
+function xmlToMd(text, depth=0) {
+  const out = [];
+  let pos = 0;
+  text = text.trim();
+  const re = /<([a-zA-Z_][\w-]*)\b[^>]*>([\s\S]*?)<\/\1>/g;
+  let lastEnd = 0;
+  re.lastIndex = 0;
+  let match;
+  while ((match = re.exec(text)) !== null) {
+    const lead = text.slice(lastEnd, match.index).trim();
+    if (lead) out.push(lead);
+    const tag = match[1];
+    let body = match[2].trim();
+    const inner = body.includes("<") ? xmlToMd(body, depth+1) : body;
+    const tagLow = tag.toLowerCase();
+    const pretty = tag.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+    if (tagLow === "item" || tagLow === "li" || tagLow === "bullet") {
+      out.push(`- ${inner}`);
+    } else if (depth === 0) {
+      out.push(`# ${pretty}\n${inner}`);
+    } else {
+      out.push(`## ${pretty}\n${inner}`);
+    }
+    lastEnd = re.lastIndex;
+  }
+  const tail = text.slice(lastEnd).trim();
+  if (tail) out.push(tail);
+  return out.filter(Boolean).join("\n");
+}
+
+function stage1Format(text) {
+  if (text.includes(DYNAMIC_SENTINEL)) {
+    const [head, ...rest] = text.split(DYNAMIC_SENTINEL);
+    const tail = rest.join(DYNAMIC_SENTINEL);
+    return `${stage1Format(head).trimEnd()}\n${DYNAMIC_SENTINEL}\n${tail.trimStart()}`;
+  }
+  let s = text.trim();
+  if (!s) return "";
+
+  if (looksLikeJSON(s)) {
+    try { return JSON.stringify(JSON.parse(s)); } catch (e) {}
+  }
+  if (looksLikeXML(s)) {
+    const conv = xmlToMd(s);
+    if (conv.trim()) s = conv;
+  }
+  // strip leftover self-closing tags
+  s = s.replace(/<[a-zA-Z_][\w-]*\b[^>]*\/>/g, "");
+
+  // collapse blank lines
+  const lines = s.split(/\r?\n/).map(l => l.replace(/\s+$/g, ""));
+  const out = []; let blank = false;
+  for (const ln of lines) {
+    if (ln.trim() === "") {
+      if (!blank && out.length) out.push("");
+      blank = true;
+    } else {
+      out.push(ln); blank = false;
+    }
+  }
+  // squash internal multi-space outside code fences
+  let inCode = false; const final = [];
+  for (const ln of out) {
+    if (ln.trim().startsWith("```")) {
+      inCode = !inCode; final.push(ln.trim()); continue;
+    }
+    if (inCode) final.push(ln);
+    else final.push(ln.replace(/[ \t]{2,}/g, " "));
+  }
+  return final.join("\n").trim();
+}
+
+// ---- stage 2: linguistic compressor --------------------------------
+const DELETE_PATTERNS = [
+  /\bit is important to note that\b/gi,
+  /\bit is important to\b/gi,
+  /\bit should be noted that\b/gi,
+  /\bplease (?:note|be aware|make sure|kindly) that\b/gi,
+  /\bplease (?:note|kindly)\b/gi,
+  /\b(?<![\w-])kindly\b/gi,
+  /\bas (?:you can see|already mentioned|previously stated)\b/gi,
+  /\bneedless to say\b/gi,
+  /\bat the end of the day\b/gi,
+  /\bfor (?:all|the) intents? and purposes\b/gi,
+  /\bin (?:my )?humble opinion\b/gi,
+  /\bwithout further ado\b/gi,
+  /\bgoes without saying\b/gi,
+];
+
+const REPLACE_MAP = [
+  [/\bin order to\b/gi, "to"],
+  [/\bdue to the fact that\b/gi, "because"],
+  [/\bin spite of the fact that\b/gi, "although"],
+  [/\bin the event that\b/gi, "if"],
+  [/\bin the case that\b/gi, "if"],
+  [/\bin the process of\b/gi, "while"],
+  [/\bat this point in time\b/gi, "now"],
+  [/\bat the present time\b/gi, "now"],
+  [/\bin a timely manner\b/gi, "promptly"],
+  [/\bon a regular basis\b/gi, "regularly"],
+  [/\bwith regard to\b/gi, "about"],
+  [/\bwith respect to\b/gi, "about"],
+  [/\bin reference to\b/gi, "about"],
+  [/\ba (?:large|great) number of\b/gi, "many"],
+  [/\ba (?:small )?majority of\b/gi, "most"],
+  [/\bthe majority of\b/gi, "most"],
+  [/\bprior to\b/gi, "before"],
+  [/\bsubsequent to\b/gi, "after"],
+  [/\bin the near future\b/gi, "soon"],
+  [/\bmake (?:a |an )?(?:decision|determination)\b/gi, "decide"],
+  [/\bprovide (?:a |an )?(?:summary|overview) of\b/gi, "summarize"],
+  [/\bgive (?:a |an )?explanation of\b/gi, "explain"],
+  [/\bmake use of\b/gi, "use"],
+  [/\butilize\b/gi, "use"],
+  [/\butilization\b/gi, "use"],
+  [/\bdemonstrate\b/gi, "show"],
+  [/\bdemonstration\b/gi, "demo"],
+  [/\bfacilitate\b/gi, "help"],
+  [/\bcommence\b/gi, "start"],
+  [/\bterminate\b/gi, "end"],
+  [/\bendeavor\b/gi, "try"],
+  [/\bnumerous\b/gi, "many"],
+  [/\bsufficient\b/gi, "enough"],
+  [/\badditional\b/gi, "more"],
+  [/\bapproximately\b/gi, "about"],
+  [/\bnevertheless\b/gi, "still"],
+  [/\bnonetheless\b/gi, "still"],
+  [/\bfurthermore\b/gi, "also"],
+  [/\bin addition\b/gi, "also"],
+  [/\bmoreover\b/gi, "also"],
+  [/\bhowever\b/gi, "but"],
+  [/\btherefore\b/gi, "so"],
+  [/\bconsequently\b/gi, "so"],
+  [/\bthus\b/gi, "so"],
+  [/\bregarding\b/gi, "on"],
+  [/\bconcerning\b/gi, "on"],
+  [/\bperform an analysis of\b/gi, "analyze"],
+  [/\bcarry out\b/gi, "do"],
+  [/\bcome to (?:a |an )?(?:conclusion|agreement)\b/gi, "conclude"],
+];
+
+const HEDGES = [
+  /\bvery\b/gi, /\breally\b/gi, /\bquite\b/gi, /\bbasically\b/gi,
+  /\bessentially\b/gi, /\bactually\b/gi, /\bliterally\b/gi,
+  /\bjust\b/gi, /\bsimply\b/gi, /\bso to speak\b/gi,
+  /\bif you will\b/gi, /\bsort of\b/gi, /\bkind of\b/gi,
+];
+
+function stripFiller(s, aggressive) {
+  for (const p of DELETE_PATTERNS) s = s.replace(p, "");
+  for (const [p, r] of REPLACE_MAP)  s = s.replace(p, r);
+  if (aggressive) for (const p of HEDGES) s = s.replace(p, "");
+  return s;
+}
+
+function tidy(s) {
+  s = s.replace(/[ \t]{2,}/g, " ");
+  s = s.replace(/\s+([,.;:!?])/g, "$1");
+  s = s.replace(/(^|\n)\s*[,;]\s*/g, "$1");
+  s = s.replace(/\n[ \t]+/g, "\n");
+  s = s.replace(/(^|[.!?]\s+|\n)([a-z])/g, (m, p, c) => p + c.toUpperCase());
+  return s.trim();
+}
+
+function stage2Linguistic(text, aggressive) {
+  if (!text) return text;
+  const parts = text.split(/(```[\s\S]*?```)/g);
+  return parts.map((p, i) => {
+    if (i % 2 === 1) return p;
+    const lead  = p.match(/^\s*/)[0];
+    const trail = p.match(/\s*$/)[0];
+    return lead + tidy(stripFiller(p, aggressive)) + trail;
+  }).join("");
+}
+
+// ---- stage 3: semantic dedup ---------------------------------------
+function shingles(s, n=3) {
+  s = s.toLowerCase().replace(/\s+/g, " ").trim();
+  if (s.length <= n) return new Set([s]);
+  const out = new Set();
+  for (let i = 0; i <= s.length - n; i++) out.add(s.slice(i, i+n));
+  return out;
+}
+
+function jaccard(a, b) {
+  if (!a.size || !b.size) return 0;
+  let inter = 0;
+  for (const v of a) if (b.has(v)) inter++;
+  const union = a.size + b.size - inter;
+  return union ? inter / union : 0;
+}
+
+function classify(line) {
+  const s = line.trim();
+  if (!s) return "blank";
+  if (s.startsWith("```")) return "fence";
+  if (s.startsWith("#")) return "header";
+  if (/^[-*+]\s/.test(s) || /^\d+[.)]\s/.test(s)) return "bullet";
+  return "prose";
+}
+
+function stage3Semantic(text, threshold=0.75) {
+  if (!text) return text;
+  const lines = text.split(/\r?\n/);
+  const kept = []; const keptShingles = [];
+  let inCode = false;
+  for (const line of lines) {
+    const k = classify(line);
+    if (k === "fence") { inCode = !inCode; kept.push(line); continue; }
+    if (inCode || k === "header" || k === "blank") { kept.push(line); continue; }
+    const sh = shingles(line);
+    let dup = false;
+    for (const prev of keptShingles) {
+      if (jaccard(sh, prev) >= threshold) { dup = true; break; }
+    }
+    if (dup) continue;
+    kept.push(line); keptShingles.push(sh);
+  }
+  // collapse blanks
+  const out = []; let blank = false;
+  for (const ln of kept) {
+    if (ln.trim() === "") {
+      if (!blank && out.length) out.push("");
+      blank = true;
+    } else { out.push(ln); blank = false; }
+  }
+  return out.join("\n").trim();
+}
+
+// ---- stage 4: cache plan -------------------------------------------
+function stage4Cache(text) {
+  if (text.includes(DYNAMIC_SENTINEL)) {
+    const idx = text.indexOf(DYNAMIC_SENTINEL);
+    return {
+      static:  text.slice(0, idx).trim(),
+      dynamic: text.slice(idx + DYNAMIC_SENTINEL.length).trim(),
+    };
+  }
+  return { static: text.trim(), dynamic: "" };
+}
+
+function computeSavings(plan, minCache, model, nCalls, counts) {
+  const p = PRICING[model];
+  const sTok = counts ? counts.staticTok : countTokens(plan.static);
+  const dTok = counts ? counts.dynamicTok : countTokens(plan.dynamic);
+  const cacheable = sTok >= minCache;
+  const baseline = (sTok + dTok) * nCalls * p.in / 1e6;
+  let cached;
+  if (cacheable && nCalls >= 1) {
+    cached =
+      sTok * p.cw / 1e6 +
+      sTok * (nCalls - 1) * p.cr / 1e6 +
+      dTok * nCalls * p.in / 1e6;
+  } else {
+    cached = baseline;
+  }
+  const pct = baseline === 0 ? 0 : (1 - cached / baseline) * 100;
+  return { sTok, dTok, baseline, cached, pct, cacheable };
+}
+
+// ---- orchestrator --------------------------------------------------
+function compress(text, opts) {
+  const stages = [];
+  let cur = text;
+  const tokIn = countTokens(cur);
+
+  let s0 = cur, t0 = tokIn;
+  if (opts.format) {
+    s0 = stage1Format(cur);
+    stages.push({ name: "format", before: tokIn, after: countTokens(s0), text: s0 });
+    cur = s0; t0 = countTokens(s0);
+  } else {
+    stages.push({ name: "format", before: tokIn, after: tokIn, text: cur });
+  }
+
+  let s1 = cur, t1 = t0;
+  if (opts.linguistic) {
+    s1 = stage2Linguistic(cur, opts.aggressive);
+    stages.push({ name: "linguistic", before: t0, after: countTokens(s1), text: s1 });
+    cur = s1; t1 = countTokens(s1);
+  } else {
+    stages.push({ name: "linguistic", before: t0, after: t0, text: cur });
+  }
+
+  let s2 = cur, t2 = t1;
+  if (opts.semantic) {
+    s2 = stage3Semantic(cur, opts.threshold);
+    stages.push({ name: "semantic", before: t1, after: countTokens(s2), text: s2 });
+    cur = s2; t2 = countTokens(s2);
+  } else {
+    stages.push({ name: "semantic", before: t1, after: t1, text: cur });
+  }
+
+  let plan = { static: cur, dynamic: "" };
+  if (opts.cache) plan = stage4Cache(cur);
+  stages.push({ name: "cache", before: t2, after: countTokens(plan.static + plan.dynamic), text: cur, plan });
+
+  return {
+    original: text,
+    output:   cur,
+    plan,
+    stages,
+    tokensIn:  tokIn,
+    tokensOut: countTokens(cur),
+  };
+}
+
+// ---- .mdz codec ----------------------------------------------------
+function writeMdz(result, opts) {
+  const c = effectiveCounts(result);
+  const sav = computeSavings(result.plan, opts.minCache, opts.model, 1000, c);
+  const lines = [
+    MDZ_MAGIC,
+    `tokens: ${c.tokensOut}`,
+    `original_tokens: ${c.tokensIn}`,
+    `reduction_pct: ${((1 - c.tokensOut / Math.max(1, c.tokensIn)) * 100).toFixed(1)}`,
+    `token_source: ${c.source || (result.apiCounts ? "anthropic-api" : "heuristic")}`,
+    `cache_ttl: ${opts.ttl}`,
+    `cacheable: ${sav.cacheable}`,
+    `savings_pct_1k_calls: ${sav.pct.toFixed(1)}`,
+    "---static---",
+    result.plan.static,
+  ];
+  if (result.plan.dynamic) { lines.push("---dynamic---"); lines.push(result.plan.dynamic); }
+  lines.push("---end---");
+  return lines.join("\n") + "\n";
+}
+
+// ====================================================================
+//   UI WIRING
+// ====================================================================
+const $ = id => document.getElementById(id);
+
+const SAMPLE_INPUT = `<system_prompt>
+  <role>You are a very helpful and really friendly assistant.</role>
+  <instructions>
+    <item>Please note that it is important to provide accurate answers in a timely manner.</item>
+    <item>Kindly utilize the tools provided in order to demonstrate your reasoning.</item>
+    <item>It should be noted that you must basically just give accurate answers promptly.</item>
+    <item>Due to the fact that users are busy, you should provide a summary of long content.</item>
+    <item>With regard to code, please make use of fenced code blocks.</item>
+    <item>In the event that you are uncertain, kindly ask a clarifying question.</item>
+    <item>Furthermore, you should commence each response with a one-sentence overview.</item>
+    <item>Additionally, please terminate responses with a concrete next step.</item>
+  </instructions>
+  <style>
+    <item>Be very concise and really direct.</item>
+    <item>Use bullet points on a regular basis.</item>
+    <item>Avoid hedging or sort of vague language.</item>
+  </style>
+  <examples>
+    <item>If asked "what time is it" — answer with the current time, nothing more.</item>
+    <item>If asked for code — provide minimal working code, then explain.</item>
+  </examples>
+</system_prompt>
+
+<<<USER_INPUT>>>
+{user_message}
+`;
+
+const state = {
+  active: 3,           // active stage tab (output panel mirrors)
+  result: null,
+  opts: {
+    format: true, linguistic: true, semantic: true, cache: true,
+    aggressive: false, threshold: 0.75, minCache: 1024,
+    ttl: "5m", model: "opus",
+  },
+  calls: 1000,
+  apiKey: "",          // user's own key, localStorage only, never logged
+  tokenMode: "heuristic", // "heuristic" | "api"
+};
+
+function fmtMoney(x) {
+  if (x === 0) return "$0.00";
+  if (x < 0.01) return `$${x.toFixed(4)}`;
+  if (x < 1)    return `$${x.toFixed(3)}`;
+  if (x < 100)  return `$${x.toFixed(2)}`;
+  return `$${Math.round(x).toLocaleString()}`;
+}
+function fmtNum(n) { return Number(n).toLocaleString(); }
+
+function highlightMdz(text) {
+  const esc = s => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  return esc(text)
+    .replace(/^(---[\w]+---)$/gm,            '<span class="dim">$1</span>')
+    .replace(/^(# .*)$/gm,                    '<span class="h">$1</span>')
+    .replace(/^(## .*)$/gm,                   '<span class="h">$1</span>')
+    .replace(/(&lt;&lt;&lt;USER_INPUT&gt;&gt;&gt;)/g, '<span class="sent">$1</span>')
+    .replace(/^(tokens|original_tokens|reduction_pct|cache_ttl|cacheable|savings_pct_1k_calls): (.*)$/gm,
+             '<span class="dim">$1:</span> $2');
+}
+
+function renderOutput() {
+  const r = state.result;
+  if (!r) return;
+  const idx = state.active;
+  let body, label;
+  if (idx === 3) {
+    body = writeMdz(r, state.opts);
+    label = "stage 4 / .mdz output";
+  } else {
+    body = r.stages[idx].text;
+    label = `stage ${idx+1} / ${r.stages[idx].name}`;
+  }
+  $("output").innerHTML = highlightMdz(body);
+  $("output-label").textContent = label;
+  let outTok;
+  if (idx === 3) outTok = effectiveCounts(r).tokensOut;
+  else           outTok = countTokens(body);
+  $("tokens-out").textContent = `${fmtNum(outTok)} tok`;
+}
+
+function renderAll() {
+  const text = $("input").value;
+  state.opts.format     = $("opt-format").checked;
+  state.opts.linguistic = $("opt-ling").checked;
+  state.opts.semantic   = $("opt-sem").checked;
+  state.opts.cache      = $("opt-cache").checked;
+  state.opts.aggressive = $("opt-aggressive").checked;
+  state.opts.threshold  = parseFloat($("threshold").value);
+  state.opts.minCache   = parseInt($("min-cache").value, 10);
+  state.opts.ttl        = $("ttl").value;
+  state.opts.model      = $("model").value;
+
+  if (!text.trim()) {
+    $("tokens-in").textContent = "0 tok";
+    $("tokens-out").textContent = "0 tok";
+    $("foot-in").textContent = "0";
+    $("foot-out").textContent = "0";
+    $("foot-saved").textContent = "0%";
+    $("foot-cacheable").textContent = "—";
+    $("foot-cost").textContent = "$0.00";
+    $("hero-reduction").textContent = "—";
+    $("hero-savings").textContent = "—";
+    $("arrow-pct").textContent = "—";
+    $("before-count").textContent = "0";
+    $("after-count").textContent = "0";
+    $("before-body").innerHTML = '<span style="color:var(--muted)">// paste input on the left and click compress</span>';
+    $("after-body").innerHTML  = '<span style="color:var(--muted)">// .mdz container appears here</span>';
+    $("app-cache-state").textContent = "idle";
+    for (let i = 0; i < 4; i++) $("save-"+i).textContent = "—";
+    [0,1,2,3].forEach(i => document.querySelector(`.stage[data-stage="${i}"]`).classList.remove("disabled"));
+    state.result = null;
+    return;
+  }
+
+  const result = compress(text, state.opts);
+  state.result = result;
+
+  paintNumbers(result);
+
+  // before file name based on detected input format
+  let ext = "txt";
+  const t = result.original.trimStart();
+  if (t.startsWith("<")) ext = "xml";
+  else if (t.startsWith("{") || t.startsWith("[")) ext = "json";
+  else if (/^#\s|^-\s|^\*\s/m.test(t)) ext = "md";
+  $("before-name").textContent = `prompt.${ext}`;
+
+  renderOutput();
+
+  // exact, model-accurate counts pulled live from Anthropic when enabled
+  if (state.tokenMode === "api" && state.apiKey) refineWithApi(result);
+}
+
+// Paint every token/cost number from the effective counts (heuristic by
+// default, exact API numbers once a refinement has populated them).
+function paintNumbers(result) {
+  const c = effectiveCounts(result);
+
+  result.stages.forEach((s, i) => {
+    const enabled = [state.opts.format, state.opts.linguistic, state.opts.semantic, state.opts.cache][i];
+    const cell = document.querySelector(`.stage[data-stage="${i}"]`);
+    if (!enabled) {
+      cell.classList.add("disabled");
+      $("save-"+i).textContent = "off";
+      return;
+    }
+    cell.classList.remove("disabled");
+    if (i === 3) {
+      const sav = computeSavings(result.plan, state.opts.minCache, state.opts.model, state.calls, c);
+      $("save-"+i).textContent = sav.cacheable ? `−${sav.pct.toFixed(0)}%` : "—";
+    } else {
+      const pct = s.before === 0 ? 0 : (1 - s.after / s.before) * 100;
+      $("save-"+i).textContent = pct > 0 ? `−${pct.toFixed(0)}%` : "0%";
+    }
+  });
+
+  $("tokens-in").textContent = `${fmtNum(c.tokensIn)} tok`;
+  $("foot-in").textContent   = fmtNum(c.tokensIn);
+  $("foot-out").textContent  = fmtNum(c.tokensOut);
+  const totalPct = c.tokensIn === 0 ? 0 : (1 - c.tokensOut / c.tokensIn) * 100;
+  $("foot-saved").textContent = `${totalPct.toFixed(0)}%`;
+  $("hero-reduction").textContent = `${totalPct.toFixed(0)}%`;
+  $("arrow-pct").textContent = totalPct > 0 ? `−${totalPct.toFixed(0)}%` : "0%";
+
+  const sav = computeSavings(result.plan, state.opts.minCache, state.opts.model, state.calls, c);
+  $("foot-cacheable").textContent = sav.cacheable ? "yes" : "no";
+  $("foot-cost").textContent = fmtMoney(sav.cached);
+  $("hero-savings").textContent = fmtMoney(sav.baseline - sav.cached);
+  $("app-cache-state").textContent = sav.cacheable ? "cached" : "no-cache";
+
+  $("cost-baseline").textContent = fmtMoney(sav.baseline);
+  $("cost-cached").textContent   = fmtMoney(sav.cached);
+  $("cost-savings").textContent  = sav.cacheable ? `${sav.pct.toFixed(0)}%` : `${totalPct.toFixed(0)}%`;
+
+  const esc = s => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  const beforeText = result.original.length > 2000 ? result.original.slice(0, 2000) + "\n…" : result.original;
+  $("before-body").innerHTML = esc(beforeText);
+  $("after-body").innerHTML  = highlightMdz(writeMdz(result, state.opts));
+  $("before-count").textContent = fmtNum(c.tokensIn);
+  $("after-count").textContent  = fmtNum(c.tokensOut);
+
+  const src = result.apiCounts ? "API (exact)" : "heuristic";
+  $("token-source").textContent = src;
+  $("token-source").className = result.apiCounts ? "tsrc api" : "tsrc";
+}
+
+function setTokenStatus(msg, kind) {
+  const el = $("token-status");
+  el.textContent = msg;
+  el.className = "tstatus" + (kind ? " " + kind : "");
+}
+
+async function refineWithApi(result) {
+  const myseq = ++refineSeq;
+  setTokenStatus("counting via Anthropic…", "wait");
+  try {
+    const model = state.opts.model;
+    const [tIn, sTok, dTok] = await Promise.all([
+      apiCountTokens(result.original, model),
+      apiCountTokens(result.plan.static, model),
+      apiCountTokens(result.plan.dynamic, model),
+    ]);
+    if (myseq !== refineSeq || state.result !== result) return; // stale
+    result.apiCounts = {
+      tokensIn: tIn, staticTok: sTok, dynamicTok: dTok,
+      tokensOut: sTok + dTok, source: "anthropic-api",
+    };
+    paintNumbers(result);
+    renderOutput();
+    setTokenStatus(`exact · ${PRICING[model].apiId}`, "ok");
+  } catch (e) {
+    if (myseq !== refineSeq) return;
+    setTokenStatus(`API error: ${e.message} — showing heuristic`, "err");
+  }
+}
+
+function selectStage(i) {
+  state.active = i;
+  document.querySelectorAll(".stage").forEach(s => s.classList.toggle("active", parseInt(s.dataset.stage, 10) === i));
+  renderOutput();
+}
+
+function showToast(msg) {
+  $("toast").textContent = msg;
+  $("toast").classList.add("show");
+  clearTimeout(window.__toast);
+  window.__toast = setTimeout(() => $("toast").classList.remove("show"), 1400);
+}
+
+function updatePricingDisplay() {
+  const p = PRICING[state.opts.model];
+  $("price-in").textContent = `$${p.in.toFixed(2)} / Mtok`;
+  $("price-cw").textContent = `$${p.cw.toFixed(2)} / Mtok`;
+  $("price-cr").textContent = `$${p.cr.toFixed(2)} / Mtok`;
+  $("price-date").textContent = `list price · ${PRICE_DATE}`;
+  $("app-model").textContent = p.apiId;
+}
+
+// single source of truth for model selection (two selectors mirror it)
+function setModel(m) {
+  state.opts.model = m;
+  $("model").value = m;
+  $("model-key").value = m;
+  updatePricingDisplay();
+  renderAll();
+}
+
+function applyTokenMode() {
+  const api = state.tokenMode === "api";
+  $("keybar-key").classList.toggle("off", !api);
+  if (!api) {
+    setTokenStatus("offline mode — no key needed");
+    $("token-source").textContent = "heuristic";
+    $("token-source").className = "tsrc";
+    if (state.result) { delete state.result.apiCounts; paintNumbers(state.result); renderOutput(); }
+  } else if (!state.apiKey) {
+    setTokenStatus("enter your Anthropic key to pull exact counts", "wait");
+  } else {
+    if (state.result) refineWithApi(state.result);
+  }
+}
+
+// ---- bindings ------------------------------------------------------
+let debounce;
+function scheduleRender() {
+  clearTimeout(debounce);
+  debounce = setTimeout(renderAll, 90);
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  $("input").addEventListener("input", scheduleRender);
+  ["opt-format","opt-ling","opt-sem","opt-cache","opt-aggressive"].forEach(id =>
+    $(id).addEventListener("change", renderAll));
+  $("threshold").addEventListener("input", e => { $("threshold-v").textContent = parseFloat(e.target.value).toFixed(2); renderAll(); });
+  $("min-cache").addEventListener("input", e => { $("min-cache-v").textContent = e.target.value; renderAll(); });
+  $("ttl").addEventListener("change", renderAll);
+  $("model").addEventListener("change", e => setModel(e.target.value));
+  $("model-key").addEventListener("change", e => setModel(e.target.value));
+
+  // token mode + API key
+  $("tmode-heur").addEventListener("change", () => { state.tokenMode = "heuristic"; applyTokenMode(); });
+  $("tmode-api").addEventListener("change",  () => { state.tokenMode = "api"; applyTokenMode(); });
+  $("btn-key-show").addEventListener("click", () => {
+    const f = $("api-key");
+    f.type = f.type === "password" ? "text" : "password";
+  });
+  $("btn-key-save").addEventListener("click", () => {
+    const v = $("api-key").value.trim();
+    if (!v) { showToast("enter a key first"); return; }
+    state.apiKey = v;
+    try { localStorage.setItem("mdz_api_key", v); } catch (e) {}
+    tokenCache.clear();
+    $("tmode-api").checked = true; state.tokenMode = "api";
+    showToast("key saved in this browser");
+    applyTokenMode();
+  });
+  $("btn-key-clear").addEventListener("click", () => {
+    state.apiKey = "";
+    $("api-key").value = "";
+    try { localStorage.removeItem("mdz_api_key"); } catch (e) {}
+    tokenCache.clear();
+    $("tmode-heur").checked = true; state.tokenMode = "heuristic";
+    showToast("key cleared");
+    applyTokenMode();
+  });
+
+  $("calls").addEventListener("input", e => {
+    state.calls = parseInt(e.target.value, 10);
+    $("calls-v").textContent = fmtNum(state.calls);
+    document.querySelectorAll(".preset").forEach(p => p.classList.toggle("active", parseInt(p.dataset.calls,10) === state.calls));
+    renderAll();
+  });
+  document.querySelectorAll(".preset").forEach(p => p.addEventListener("click", () => {
+    state.calls = parseInt(p.dataset.calls, 10);
+    $("calls").value = state.calls;
+    $("calls-v").textContent = fmtNum(state.calls);
+    document.querySelectorAll(".preset").forEach(x => x.classList.toggle("active", x === p));
+    renderAll();
+  }));
+
+  document.querySelectorAll(".stage").forEach(s =>
+    s.addEventListener("click", () => selectStage(parseInt(s.dataset.stage, 10))));
+
+  $("btn-compress").addEventListener("click", renderAll);
+  $("btn-sample").addEventListener("click", () => { $("input").value = SAMPLE_INPUT; renderAll(); });
+  $("btn-clear").addEventListener("click", () => { $("input").value = ""; renderAll(); });
+
+  $("btn-upload").addEventListener("click", () => $("file-input").click());
+  $("file-input").addEventListener("change", e => {
+    const f = e.target.files[0]; if (!f) return;
+    const r = new FileReader();
+    r.onload = () => { $("input").value = r.result; renderAll(); showToast(`loaded ${f.name}`); };
+    r.readAsText(f);
+  });
+
+  $("btn-download").addEventListener("click", () => {
+    if (!state.result) { showToast("nothing to download"); return; }
+    const blob = new Blob([writeMdz(state.result, state.opts)], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = "prompt.mdz";
+    document.body.appendChild(a); a.click(); a.remove();
+    URL.revokeObjectURL(url);
+    showToast("downloaded prompt.mdz");
+  });
+
+  $("btn-copy").addEventListener("click", async () => {
+    if (!state.result) { showToast("nothing to copy"); return; }
+    const out = state.active === 3 ? writeMdz(state.result, state.opts) : state.result.stages[state.active].text;
+    try { await navigator.clipboard.writeText(out); showToast("copied to clipboard"); }
+    catch (e) { showToast("copy failed"); }
+  });
+
+  // nav
+  const REPO = "https://github.com/martian-coder/TinyTools/tree/main/MarkdownZipped";
+  document.querySelectorAll(".nav span").forEach(n => n.addEventListener("click", () => {
+    const id = n.dataset.nav;
+    if (id === "github") window.open(REPO, "_blank");
+    if (id === "docs")   window.open(REPO + "#readme", "_blank");
+    if (id === "studio") window.scrollTo({ top: 0, behavior: "smooth" });
+  }));
+
+  // keyboard shortcuts
+  document.addEventListener("keydown", e => {
+    if ((e.metaKey || e.ctrlKey) && e.key === "Enter") { e.preventDefault(); renderAll(); }
+    if ((e.metaKey || e.ctrlKey) && e.key === "s")     { e.preventDefault(); $("btn-download").click(); }
+  });
+
+  // boot — restore a previously saved key (this browser only)
+  try {
+    const saved = localStorage.getItem("mdz_api_key");
+    if (saved) {
+      state.apiKey = saved;
+      $("api-key").value = saved;
+      $("tmode-api").checked = true;
+      state.tokenMode = "api";
+    }
+  } catch (e) {}
+  updatePricingDisplay();
+  applyTokenMode();
+  $("input").value = SAMPLE_INPUT;
+  renderAll();
+});
+</script>
+</body>
+</html>
