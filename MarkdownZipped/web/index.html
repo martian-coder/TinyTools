@@ -416,6 +416,22 @@
     50% { opacity: 0.4; transform: scale(0.8); }
   }
 
+  .credit {
+    margin-top: 20px; text-align: center;
+    font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--muted);
+  }
+  .credit strong {
+    font-family: 'Fraunces', serif; font-weight: 600; font-size: 14px;
+    letter-spacing: -0.01em; text-transform: none; color: var(--ink);
+    background: var(--acid); padding: 1px 8px; margin: 0 4px;
+  }
+  .credit a {
+    color: var(--muted); text-decoration: none; margin-left: 10px;
+    border-bottom: 1px solid var(--ink); padding-bottom: 1px;
+  }
+  .credit a:hover { color: var(--accent); border-color: var(--accent); }
+
   /* ============ RESPONSIVE ============ */
   @media (max-width: 980px) {
     .wrap { padding: 24px 20px 60px; }
@@ -731,6 +747,11 @@ You are a helpful assistant. Be concise.
       &nbsp;·&nbsp;
       md.zipped / 2026
     </div>
+  </div>
+
+  <div class="credit">
+    Developed by <strong>Amit N</strong>
+    <a href="https://github.com/martian-coder" target="_blank" rel="noopener">github.com/martian-coder</a>
   </div>
 
 </div>
