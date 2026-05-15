@@ -138,6 +138,50 @@
   }
   .toolbar-chip input { accent-color: var(--accent); }
   .toolbar-chip.off { opacity: 0.45; }
+  .toolbar-chip .hint { color: var(--muted); text-transform: none; letter-spacing: 0; font-size: 9px; margin-left: 4px; }
+
+  /* ============ KEY BAR ============ */
+  .keybar {
+    border: 1.5px solid var(--ink); background: var(--paper);
+    margin-bottom: 16px; padding: 16px 18px;
+    display: grid; grid-template-columns: auto 1fr; gap: 14px 24px;
+    align-items: center;
+  }
+  .keybar-title {
+    font-family: 'Fraunces', serif; font-size: 16px; font-weight: 600;
+    letter-spacing: -0.02em; margin-bottom: 8px;
+  }
+  .keybar-modes { display: flex; gap: 8px; flex-wrap: wrap; }
+  .keybar-key { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .keybar-key.off { opacity: 0.4; pointer-events: none; }
+  .keybar-key select, .keybar-key input {
+    font-family: 'JetBrains Mono', monospace; font-size: 11px;
+    border: 1.5px solid var(--ink); background: var(--bg);
+    padding: 8px 10px; color: var(--ink);
+  }
+  .keybar-key input { flex: 1; min-width: 220px; }
+  .keybar-key select { cursor: pointer; }
+  .keybar-status {
+    grid-column: 1 / -1; display: flex; align-items: center; gap: 10px;
+    border-top: 1px dashed var(--ink); padding-top: 10px;
+  }
+  .tsrc {
+    font-size: 9px; text-transform: uppercase; letter-spacing: 0.14em;
+    background: var(--ink); color: var(--paper); padding: 3px 8px;
+  }
+  .tsrc.api { background: var(--acid); color: var(--ink); }
+  .tstatus { font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); }
+  .tstatus.wait { color: var(--ink); }
+  .tstatus.ok   { color: var(--accent); }
+  .tstatus.err  { color: #b3360b; }
+  .keybar-note {
+    grid-column: 1 / -1; font-size: 10px; line-height: 1.5;
+    color: var(--muted); border-top: 1px dashed var(--ink); padding-top: 10px;
+  }
+  .keybar-note code {
+    background: var(--bg); padding: 1px 5px; border: 1px solid var(--grid);
+    font-size: 10px;
+  }
 
   /* ============ APP WINDOW ============ */
   .app {
@@ -451,6 +495,35 @@
     <label class="toolbar-chip"><input type="checkbox" id="opt-aggressive"> Aggressive</label>
   </div>
 
+  <!-- API KEY / TOKEN SOURCE -->
+  <div class="keybar">
+    <div class="keybar-main">
+      <div class="keybar-title">Token counting</div>
+      <div class="keybar-modes">
+        <label class="toolbar-chip"><input type="radio" name="tmode" id="tmode-heur" value="heuristic" checked> Heuristic <span class="hint">offline · instant · ~5%</span></label>
+        <label class="toolbar-chip"><input type="radio" name="tmode" id="tmode-api" value="api"> Anthropic API <span class="hint">exact · your key</span></label>
+      </div>
+    </div>
+    <div class="keybar-key" id="keybar-key">
+      <select id="model-key" aria-label="model">
+        <option value="opus" selected>Claude Opus 4.7</option>
+        <option value="sonnet">Claude Sonnet 4.6</option>
+        <option value="haiku">Claude Haiku 4.5</option>
+      </select>
+      <input type="password" id="api-key" placeholder="sk-ant-… (stored in this browser only)" autocomplete="off" spellcheck="false">
+      <button class="btn" id="btn-key-show" type="button" title="show/hide">👁</button>
+      <button class="btn primary" id="btn-key-save" type="button">Save key</button>
+      <button class="btn" id="btn-key-clear" type="button">Clear</button>
+    </div>
+    <div class="keybar-status">
+      <span class="tsrc" id="token-source">heuristic</span>
+      <span class="tstatus" id="token-status">offline mode — no key needed</span>
+    </div>
+    <div class="keybar-note">
+      Your key never leaves this browser except in direct HTTPS calls to <strong>api.anthropic.com</strong>. It is stored in <code>localStorage</code>, never logged, never sent to any other server. Clear it any time.
+    </div>
+  </div>
+
   <!-- APP WINDOW -->
   <div class="app">
     <div class="app-bar">
@@ -605,6 +678,7 @@ You are a helpful assistant. Be concise.
         <label>Cache read</label>
         <div class="v" id="price-cr">$1.50 / Mtok</div>
       </div>
+      <p class="sub" id="price-date" style="margin-top:10px;margin-bottom:0;">list price · 2026-05</p>
     </div>
   </div>
 
@@ -649,11 +723,11 @@ You are a helpful assistant. Be concise.
 
   <!-- FOOTER -->
   <div class="footer-note">
-    <div><span class="blob"></span>Runs entirely in your browser · no data leaves this tab</div>
+    <div><span class="blob"></span>Pipeline runs in your browser · API key (if set) is sent only to api.anthropic.com</div>
     <div>
-      <a href="https://github.com/martian-coder/TinyTools/tree/main/MarkdownZipped" target="_blank">github</a>
+      <a href="https://github.com/martian-coder/TinyTools/tree/main/MarkdownZipped" target="_blank" rel="noopener">github</a>
       &nbsp;·&nbsp;
-      <a href="../README.md">spec</a>
+      <a href="https://github.com/martian-coder/TinyTools/tree/main/MarkdownZipped#readme" target="_blank" rel="noopener">spec</a>
       &nbsp;·&nbsp;
       md.zipped / 2026
     </div>
@@ -673,11 +747,53 @@ const DYNAMIC_SENTINEL = "<<<USER_INPUT>>>";
 const MDZ_MAGIC = "---mdz v1---";
 
 // ---- pricing table (USD per 1M tokens) -----------------------------
+// Prices are a static reference (no public pricing API exists). The
+// PRICE_DATE label is shown in the UI so the figure is never silently
+// stale. Token COUNTS, by contrast, are pulled live from the Anthropic
+// count_tokens endpoint when an API key is supplied.
+const PRICE_DATE = "2026-05";
 const PRICING = {
-  opus:   { in: 15.00, cw: 18.75, cr: 1.50,  label: "Claude Opus 4.7" },
-  sonnet: { in:  3.00, cw:  3.75, cr: 0.30,  label: "Claude Sonnet 4.6" },
-  haiku:  { in:  0.80, cw:  1.00, cr: 0.08,  label: "Claude Haiku 4.5" },
+  opus:   { in: 15.00, cw: 18.75, cr: 1.50,  label: "Claude Opus 4.7",   apiId: "claude-opus-4-7" },
+  sonnet: { in:  3.00, cw:  3.75, cr: 0.30,  label: "Claude Sonnet 4.6", apiId: "claude-sonnet-4-6" },
+  haiku:  { in:  0.80, cw:  1.00, cr: 0.08,  label: "Claude Haiku 4.5",  apiId: "claude-haiku-4-5-20251001" },
 };
+
+// ---- live token counting (Anthropic count_tokens) ------------------
+// The heuristic countTokens() below stays the instant, offline default.
+// When the user supplies their own API key it is kept ONLY in this
+// browser (localStorage) and sent ONLY to api.anthropic.com over HTTPS
+// to fetch exact token counts. It is never logged or sent anywhere else.
+const tokenCache = new Map();   // `${model} ${text}` -> int
+let refineSeq = 0;
+
+async function apiCountTokens(text, modelKey) {
+  if (!text) return 0;
+  const cacheKey = modelKey + " " + text;
+  if (tokenCache.has(cacheKey)) return tokenCache.get(cacheKey);
+  if (!state.apiKey) throw new Error("no API key set");
+  const res = await fetch("https://api.anthropic.com/v1/messages/count_tokens", {
+    method: "POST",
+    headers: {
+      "x-api-key": state.apiKey,
+      "anthropic-version": "2023-06-01",
+      "anthropic-dangerous-direct-browser-access": "true",
+      "content-type": "application/json",
+    },
+    body: JSON.stringify({
+      model: PRICING[modelKey].apiId,
+      messages: [{ role: "user", content: text }],
+    }),
+  });
+  if (!res.ok) {
+    let msg = "HTTP " + res.status;
+    try { const j = await res.json(); if (j.error && j.error.message) msg = j.error.message; } catch (e) {}
+    throw new Error(msg);
+  }
+  const data = await res.json();
+  const n = data.input_tokens;
+  tokenCache.set(cacheKey, n);
+  return n;
+}
 
 // ---- token counter (heuristic, ~5% of o200k_base on prose) ---------
 function countTokens(text) {
@@ -692,6 +808,17 @@ function countTokens(text) {
     else                            tokens += 1;
   }
   return tokens;
+}
+
+// Effective counts: API numbers if a live refinement has populated them
+// for the current result, otherwise the synchronous heuristic.
+// tokensOut mirrors the CLI (count of the joined compressed text incl.
+// the sentinel marker); staticTok/dynamicTok drive the cache cost model.
+function effectiveCounts(result) {
+  if (result && result.apiCounts) return result.apiCounts;
+  const sTok = countTokens(result.plan.static);
+  const dTok = countTokens(result.plan.dynamic);
+  return { tokensIn: result.tokensIn, tokensOut: result.tokensOut, staticTok: sTok, dynamicTok: dTok, source: "heuristic" };
 }
 
 // ---- stage 1: format minify ----------------------------------------
@@ -946,10 +1073,10 @@ function stage4Cache(text) {
   return { static: text.trim(), dynamic: "" };
 }
 
-function computeSavings(plan, minCache, model, nCalls) {
+function computeSavings(plan, minCache, model, nCalls, counts) {
   const p = PRICING[model];
-  const sTok = countTokens(plan.static);
-  const dTok = countTokens(plan.dynamic);
+  const sTok = counts ? counts.staticTok : countTokens(plan.static);
+  const dTok = counts ? counts.dynamicTok : countTokens(plan.dynamic);
   const cacheable = sTok >= minCache;
   const baseline = (sTok + dTok) * nCalls * p.in / 1e6;
   let cached;
@@ -1014,12 +1141,14 @@ function compress(text, opts) {
 
 // ---- .mdz codec ----------------------------------------------------
 function writeMdz(result, opts) {
-  const sav = computeSavings(result.plan, opts.minCache, opts.model, 1000);
+  const c = effectiveCounts(result);
+  const sav = computeSavings(result.plan, opts.minCache, opts.model, 1000, c);
   const lines = [
     MDZ_MAGIC,
-    `tokens: ${result.tokensOut}`,
-    `original_tokens: ${result.tokensIn}`,
-    `reduction_pct: ${((1 - result.tokensOut / Math.max(1, result.tokensIn)) * 100).toFixed(1)}`,
+    `tokens: ${c.tokensOut}`,
+    `original_tokens: ${c.tokensIn}`,
+    `reduction_pct: ${((1 - c.tokensOut / Math.max(1, c.tokensIn)) * 100).toFixed(1)}`,
+    `token_source: ${c.source || (result.apiCounts ? "anthropic-api" : "heuristic")}`,
     `cache_ttl: ${opts.ttl}`,
     `cacheable: ${sav.cacheable}`,
     `savings_pct_1k_calls: ${sav.pct.toFixed(1)}`,
@@ -1072,6 +1201,8 @@ const state = {
     ttl: "5m", model: "opus",
   },
   calls: 1000,
+  apiKey: "",          // user's own key, localStorage only, never logged
+  tokenMode: "heuristic", // "heuristic" | "api"
 };
 
 function fmtMoney(x) {
@@ -1108,7 +1239,10 @@ function renderOutput() {
   }
   $("output").innerHTML = highlightMdz(body);
   $("output-label").textContent = label;
-  $("tokens-out").textContent = `${fmtNum(countTokens(idx === 3 ? r.plan.static + r.plan.dynamic : body))} tok`;
+  let outTok;
+  if (idx === 3) outTok = effectiveCounts(r).tokensOut;
+  else           outTok = countTokens(body);
+  $("tokens-out").textContent = `${fmtNum(outTok)} tok`;
 }
 
 function renderAll() {
@@ -1148,51 +1282,7 @@ function renderAll() {
   const result = compress(text, state.opts);
   state.result = result;
 
-  // pipeline savings chips
-  result.stages.forEach((s, i) => {
-    const enabled = [state.opts.format, state.opts.linguistic, state.opts.semantic, state.opts.cache][i];
-    const cell = document.querySelector(`.stage[data-stage="${i}"]`);
-    if (!enabled) {
-      cell.classList.add("disabled");
-      $("save-"+i).textContent = "off";
-      return;
-    }
-    cell.classList.remove("disabled");
-    if (i === 3) {
-      const sav = computeSavings(result.plan, state.opts.minCache, state.opts.model, state.calls);
-      $("save-"+i).textContent = sav.cacheable ? `−${sav.pct.toFixed(0)}%` : "—";
-    } else {
-      const pct = s.before === 0 ? 0 : (1 - s.after / s.before) * 100;
-      $("save-"+i).textContent = pct > 0 ? `−${pct.toFixed(0)}%` : "0%";
-    }
-  });
-
-  $("tokens-in").textContent = `${fmtNum(result.tokensIn)} tok`;
-  $("foot-in").textContent   = fmtNum(result.tokensIn);
-  $("foot-out").textContent  = fmtNum(result.tokensOut);
-  const totalPct = result.tokensIn === 0 ? 0 : (1 - result.tokensOut / result.tokensIn) * 100;
-  $("foot-saved").textContent = `${totalPct.toFixed(0)}%`;
-  $("hero-reduction").textContent = `${totalPct.toFixed(0)}%`;
-  $("arrow-pct").textContent = totalPct > 0 ? `−${totalPct.toFixed(0)}%` : "0%";
-
-  const sav = computeSavings(result.plan, state.opts.minCache, state.opts.model, state.calls);
-  $("foot-cacheable").textContent = sav.cacheable ? "yes" : "no";
-  $("foot-cost").textContent = fmtMoney(sav.cached);
-  $("hero-savings").textContent = fmtMoney(sav.baseline - sav.cached);
-  $("app-cache-state").textContent = sav.cacheable ? "cached" : "no-cache";
-
-  // cost calculator panel
-  $("cost-baseline").textContent = fmtMoney(sav.baseline);
-  $("cost-cached").textContent   = fmtMoney(sav.cached);
-  $("cost-savings").textContent  = sav.cacheable ? `${sav.pct.toFixed(0)}%` : `${totalPct.toFixed(0)}%`;
-
-  // before / after files
-  const esc = s => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-  const beforeText = result.original.length > 2000 ? result.original.slice(0, 2000) + "\n…" : result.original;
-  $("before-body").innerHTML = esc(beforeText);
-  $("after-body").innerHTML  = highlightMdz(writeMdz(result, state.opts));
-  $("before-count").textContent = fmtNum(result.tokensIn);
-  $("after-count").textContent  = fmtNum(result.tokensOut);
+  paintNumbers(result);
 
   // before file name based on detected input format
   let ext = "txt";
@@ -1203,6 +1293,92 @@ function renderAll() {
   $("before-name").textContent = `prompt.${ext}`;
 
   renderOutput();
+
+  // exact, model-accurate counts pulled live from Anthropic when enabled
+  if (state.tokenMode === "api" && state.apiKey) refineWithApi(result);
+}
+
+// Paint every token/cost number from the effective counts (heuristic by
+// default, exact API numbers once a refinement has populated them).
+function paintNumbers(result) {
+  const c = effectiveCounts(result);
+
+  result.stages.forEach((s, i) => {
+    const enabled = [state.opts.format, state.opts.linguistic, state.opts.semantic, state.opts.cache][i];
+    const cell = document.querySelector(`.stage[data-stage="${i}"]`);
+    if (!enabled) {
+      cell.classList.add("disabled");
+      $("save-"+i).textContent = "off";
+      return;
+    }
+    cell.classList.remove("disabled");
+    if (i === 3) {
+      const sav = computeSavings(result.plan, state.opts.minCache, state.opts.model, state.calls, c);
+      $("save-"+i).textContent = sav.cacheable ? `−${sav.pct.toFixed(0)}%` : "—";
+    } else {
+      const pct = s.before === 0 ? 0 : (1 - s.after / s.before) * 100;
+      $("save-"+i).textContent = pct > 0 ? `−${pct.toFixed(0)}%` : "0%";
+    }
+  });
+
+  $("tokens-in").textContent = `${fmtNum(c.tokensIn)} tok`;
+  $("foot-in").textContent   = fmtNum(c.tokensIn);
+  $("foot-out").textContent  = fmtNum(c.tokensOut);
+  const totalPct = c.tokensIn === 0 ? 0 : (1 - c.tokensOut / c.tokensIn) * 100;
+  $("foot-saved").textContent = `${totalPct.toFixed(0)}%`;
+  $("hero-reduction").textContent = `${totalPct.toFixed(0)}%`;
+  $("arrow-pct").textContent = totalPct > 0 ? `−${totalPct.toFixed(0)}%` : "0%";
+
+  const sav = computeSavings(result.plan, state.opts.minCache, state.opts.model, state.calls, c);
+  $("foot-cacheable").textContent = sav.cacheable ? "yes" : "no";
+  $("foot-cost").textContent = fmtMoney(sav.cached);
+  $("hero-savings").textContent = fmtMoney(sav.baseline - sav.cached);
+  $("app-cache-state").textContent = sav.cacheable ? "cached" : "no-cache";
+
+  $("cost-baseline").textContent = fmtMoney(sav.baseline);
+  $("cost-cached").textContent   = fmtMoney(sav.cached);
+  $("cost-savings").textContent  = sav.cacheable ? `${sav.pct.toFixed(0)}%` : `${totalPct.toFixed(0)}%`;
+
+  const esc = s => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  const beforeText = result.original.length > 2000 ? result.original.slice(0, 2000) + "\n…" : result.original;
+  $("before-body").innerHTML = esc(beforeText);
+  $("after-body").innerHTML  = highlightMdz(writeMdz(result, state.opts));
+  $("before-count").textContent = fmtNum(c.tokensIn);
+  $("after-count").textContent  = fmtNum(c.tokensOut);
+
+  const src = result.apiCounts ? "API (exact)" : "heuristic";
+  $("token-source").textContent = src;
+  $("token-source").className = result.apiCounts ? "tsrc api" : "tsrc";
+}
+
+function setTokenStatus(msg, kind) {
+  const el = $("token-status");
+  el.textContent = msg;
+  el.className = "tstatus" + (kind ? " " + kind : "");
+}
+
+async function refineWithApi(result) {
+  const myseq = ++refineSeq;
+  setTokenStatus("counting via Anthropic…", "wait");
+  try {
+    const model = state.opts.model;
+    const [tIn, sTok, dTok] = await Promise.all([
+      apiCountTokens(result.original, model),
+      apiCountTokens(result.plan.static, model),
+      apiCountTokens(result.plan.dynamic, model),
+    ]);
+    if (myseq !== refineSeq || state.result !== result) return; // stale
+    result.apiCounts = {
+      tokensIn: tIn, staticTok: sTok, dynamicTok: dTok,
+      tokensOut: sTok + dTok, source: "anthropic-api",
+    };
+    paintNumbers(result);
+    renderOutput();
+    setTokenStatus(`exact · ${PRICING[model].apiId}`, "ok");
+  } catch (e) {
+    if (myseq !== refineSeq) return;
+    setTokenStatus(`API error: ${e.message} — showing heuristic`, "err");
+  }
 }
 
 function selectStage(i) {
@@ -1223,7 +1399,32 @@ function updatePricingDisplay() {
   $("price-in").textContent = `$${p.in.toFixed(2)} / Mtok`;
   $("price-cw").textContent = `$${p.cw.toFixed(2)} / Mtok`;
   $("price-cr").textContent = `$${p.cr.toFixed(2)} / Mtok`;
-  $("app-model").textContent = p.label.toLowerCase().replace(/\s+/g, "-");
+  $("price-date").textContent = `list price · ${PRICE_DATE}`;
+  $("app-model").textContent = p.apiId;
+}
+
+// single source of truth for model selection (two selectors mirror it)
+function setModel(m) {
+  state.opts.model = m;
+  $("model").value = m;
+  $("model-key").value = m;
+  updatePricingDisplay();
+  renderAll();
+}
+
+function applyTokenMode() {
+  const api = state.tokenMode === "api";
+  $("keybar-key").classList.toggle("off", !api);
+  if (!api) {
+    setTokenStatus("offline mode — no key needed");
+    $("token-source").textContent = "heuristic";
+    $("token-source").className = "tsrc";
+    if (state.result) { delete state.result.apiCounts; paintNumbers(state.result); renderOutput(); }
+  } else if (!state.apiKey) {
+    setTokenStatus("enter your Anthropic key to pull exact counts", "wait");
+  } else {
+    if (state.result) refineWithApi(state.result);
+  }
 }
 
 // ---- bindings ------------------------------------------------------
@@ -1240,7 +1441,35 @@ document.addEventListener("DOMContentLoaded", () => {
   $("threshold").addEventListener("input", e => { $("threshold-v").textContent = parseFloat(e.target.value).toFixed(2); renderAll(); });
   $("min-cache").addEventListener("input", e => { $("min-cache-v").textContent = e.target.value; renderAll(); });
   $("ttl").addEventListener("change", renderAll);
-  $("model").addEventListener("change", () => { updatePricingDisplay(); renderAll(); });
+  $("model").addEventListener("change", e => setModel(e.target.value));
+  $("model-key").addEventListener("change", e => setModel(e.target.value));
+
+  // token mode + API key
+  $("tmode-heur").addEventListener("change", () => { state.tokenMode = "heuristic"; applyTokenMode(); });
+  $("tmode-api").addEventListener("change",  () => { state.tokenMode = "api"; applyTokenMode(); });
+  $("btn-key-show").addEventListener("click", () => {
+    const f = $("api-key");
+    f.type = f.type === "password" ? "text" : "password";
+  });
+  $("btn-key-save").addEventListener("click", () => {
+    const v = $("api-key").value.trim();
+    if (!v) { showToast("enter a key first"); return; }
+    state.apiKey = v;
+    try { localStorage.setItem("mdz_api_key", v); } catch (e) {}
+    tokenCache.clear();
+    $("tmode-api").checked = true; state.tokenMode = "api";
+    showToast("key saved in this browser");
+    applyTokenMode();
+  });
+  $("btn-key-clear").addEventListener("click", () => {
+    state.apiKey = "";
+    $("api-key").value = "";
+    try { localStorage.removeItem("mdz_api_key"); } catch (e) {}
+    tokenCache.clear();
+    $("tmode-heur").checked = true; state.tokenMode = "heuristic";
+    showToast("key cleared");
+    applyTokenMode();
+  });
 
   $("calls").addEventListener("input", e => {
     state.calls = parseInt(e.target.value, 10);
@@ -1290,10 +1519,11 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   // nav
+  const REPO = "https://github.com/martian-coder/TinyTools/tree/main/MarkdownZipped";
   document.querySelectorAll(".nav span").forEach(n => n.addEventListener("click", () => {
     const id = n.dataset.nav;
-    if (id === "github") window.open("https://github.com/martian-coder/TinyTools/tree/main/MarkdownZipped", "_blank");
-    if (id === "docs")   window.open("../README.md", "_blank");
+    if (id === "github") window.open(REPO, "_blank");
+    if (id === "docs")   window.open(REPO + "#readme", "_blank");
     if (id === "studio") window.scrollTo({ top: 0, behavior: "smooth" });
   }));
 
@@ -1303,8 +1533,18 @@ document.addEventListener("DOMContentLoaded", () => {
     if ((e.metaKey || e.ctrlKey) && e.key === "s")     { e.preventDefault(); $("btn-download").click(); }
   });
 
-  // boot
+  // boot — restore a previously saved key (this browser only)
+  try {
+    const saved = localStorage.getItem("mdz_api_key");
+    if (saved) {
+      state.apiKey = saved;
+      $("api-key").value = saved;
+      $("tmode-api").checked = true;
+      state.tokenMode = "api";
+    }
+  } catch (e) {}
   updatePricingDisplay();
+  applyTokenMode();
   $("input").value = SAMPLE_INPUT;
   renderAll();
 });

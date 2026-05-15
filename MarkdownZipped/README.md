@@ -21,16 +21,29 @@ The big lever is stage 4 — prompt caching is the single largest cost reduction
 
 ## 🚀 Quick Start
 
-### 🌐 Web app (no install)
+### 🌐 Web app
+
+**Live:** `https://martian-coder.github.io/tinytools/` *(after Pages is enabled — see below)*
 
 ```bash
-# Open the studio in your browser — runs entirely client-side, zero backend
+# Or run it locally — pure static file, zero backend
 open web/index.html         # macOS
 xdg-open web/index.html     # Linux
 start web/index.html        # Windows
 ```
 
-The web UI ports the full pipeline to JavaScript so it runs offline in any modern browser. Paste a prompt, see live token counts per stage, tune the dedup threshold and cache parameters, then download a `.mdz`. Verified to produce byte-identical output to the Python CLI.
+The web UI ports the full pipeline to JavaScript so it runs offline in any modern browser. Paste a prompt, see live token counts per stage, tune the dedup threshold and cache parameters, then download a `.mdz`. The heuristic path produces byte-identical output to the Python CLI.
+
+**Token counting — two modes:**
+
+| Mode | Speed | Accuracy | Needs |
+|------|-------|----------|-------|
+| **Heuristic** (default) | instant, offline | ~5% of real tokenizer on prose | nothing |
+| **Anthropic API** | live | exact, model-accurate | your own API key |
+
+Pick a model (Opus / Sonnet / Haiku) and paste your Anthropic key in the **Token counting** bar. The key is stored in this browser's `localStorage` only, is never logged, and is sent **only** in direct HTTPS calls to `api.anthropic.com` (`/v1/messages/count_tokens`). Counts are cached per `(model, text)` so identical text isn't re-billed. Clear the key any time with one click. Prices shown are a dated static reference (no public pricing API exists); token *counts* are pulled live.
+
+**Going live on GitHub Pages:** a workflow at `.github/workflows/pages.yml` deploys `web/` automatically. One manual step that cannot be scripted: in the repo, **Settings → Pages → Build and deployment → Source: "GitHub Actions"**. After that, every push that touches the web app redeploys.
 
 ### 🐍 Python CLI
 

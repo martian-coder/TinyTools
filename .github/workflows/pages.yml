@@ -1,0 +1,58 @@
+name: Deploy MarkdownZipped studio to GitHub Pages
+
+# Publishes MarkdownZipped/web as the site root.
+# One-time manual step (cannot be done from git): in the repo,
+#   Settings -> Pages -> Build and deployment -> Source: "GitHub Actions".
+# After that, every push that touches the web app redeploys automatically.
+
+on:
+  push:
+    branches:
+      - main
+      - claude/markdown-zipped-tool-XMBQF
+    paths:
+      - "MarkdownZipped/web/**"
+      - ".github/workflows/pages.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Never run two deployments at once; let an in-progress one finish.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Assemble site
+        run: |
+          mkdir -p _site
+          cp -r MarkdownZipped/web/. _site/
+          # Friendly 404 -> studio
+          cp MarkdownZipped/web/index.html _site/404.html
+          # Disable Jekyll processing (the site is plain static HTML)
+          touch _site/.nojekyll
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
