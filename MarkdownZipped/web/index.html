@@ -874,7 +874,9 @@ function stage2Linguistic(text, aggressive) {
   const parts = text.split(/(```[\s\S]*?```)/g);
   return parts.map((p, i) => {
     if (i % 2 === 1) return p;
-    return tidy(stripFiller(p, aggressive));
+    const lead  = p.match(/^\s*/)[0];
+    const trail = p.match(/\s*$/)[0];
+    return lead + tidy(stripFiller(p, aggressive)) + trail;
   }).join("");
 }
 
@@ -1186,7 +1188,8 @@ function renderAll() {
 
   // before / after files
   const esc = s => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-  $("before-body").innerHTML = esc(result.original).slice(0, 2000) + (result.original.length > 2000 ? "\n…" : "");
+  const beforeText = result.original.length > 2000 ? result.original.slice(0, 2000) + "\n…" : result.original;
+  $("before-body").innerHTML = esc(beforeText);
   $("after-body").innerHTML  = highlightMdz(writeMdz(result, state.opts));
   $("before-count").textContent = fmtNum(result.tokensIn);
   $("after-count").textContent  = fmtNum(result.tokensOut);

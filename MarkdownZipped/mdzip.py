@@ -286,18 +286,20 @@ def _tidy(text: str) -> str:
 def stage2_linguistic(text: str, aggressive: bool = False) -> str:
     """Regex-only verbose phrase rewriting. No LLM calls, no latency cost.
 
-    Preserves fenced code blocks verbatim.
+    Preserves fenced code blocks verbatim AND preserves the whitespace
+    boundary around them so layout survives rewriting.
     """
     if not text:
         return text
-    # split out code fences so we don't mangle code
     parts = re.split(r"(```.*?```)", text, flags=re.DOTALL)
     out: List[str] = []
     for i, part in enumerate(parts):
         if i % 2 == 1:
             out.append(part)
         else:
-            out.append(_tidy(_strip_filler(part, aggressive)))
+            lead = re.match(r"^\s*", part).group(0)
+            trail = re.search(r"\s*$", part).group(0)
+            out.append(lead + _tidy(_strip_filler(part, aggressive)) + trail)
     return "".join(out)
 
 
