@@ -1,0 +1,64 @@
+<!DOCTYPE html><html lang="en"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Account — MarkdownZipped</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Fraunces:opsz,wght@9..144,300;9..144,600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets.css">
+</head><body><div class="wrap">
+<header class="top"></header>
+<h1>Your account</h1>
+<div class="grid g2">
+  <div class="card">
+    <div class="tag acid" id="planTag">—</div>
+    <h2 style="margin-top:10px">Plan</h2>
+    <p id="planLine" class="muted"></p>
+    <div class="row" style="margin-top:14px">
+      <a class="btn primary" href="/pricing">Upgrade</a>
+    </div>
+  </div>
+  <div class="card">
+    <h2 style="margin-top:0">Saved prompts <span class="muted" id="cap"></span></h2>
+    <form id="sp">
+      <label>Name</label><input name="name" placeholder="my system prompt">
+      <label>Body</label><textarea name="body" placeholder="paste a prompt to store"></textarea>
+      <button class="btn" style="margin-top:10px">Save</button>
+      <span class="err" id="spErr"></span>
+    </form>
+    <table style="margin-top:14px"><tbody id="list"></tbody></table>
+  </div>
+</div>
+<div class="note">Reminder: prompt bodies you save here are stored to power your library across devices. Don't paste secrets you wouldn't want in our database. Your LLM API key is never sent here — it lives only in the studio in your browser.</div>
+<footer><div>md.zipped / 2026</div><div><a href="/studio/">studio</a> · <a href="/">home</a></div></footer>
+</div>
+<script type="module">
+import {api, mountHeader, qs} from "/app.js";
+const user = await mountHeader();
+if(!user){ location.href="/login?next=/account"; }
+if(qs("paid")) document.getElementById("planLine").textContent="Payment received — thank you!";
+
+async function refresh(){
+  const {user:u}=await api("/api/me");
+  document.getElementById("planTag").textContent=u.planName;
+  const until=u.plan_until? new Date(u.plan_until*1000).toISOString().slice(0,10):"no expiry";
+  document.getElementById("planLine").textContent=`${u.planName} · ${u.plan_status} · ${until}`;
+  document.getElementById("cap").textContent=`(${u.limits.savedPrompts.toLocaleString()} max)`;
+  const rows=await api("/api/prompts");
+  document.getElementById("list").innerHTML = rows.map(r=>
+    `<tr><td>${r.name.replace(/[<>&]/g,"")}</td><td class="muted">${r.size}b</td>
+     <td style="text-align:right"><button class="btn sm" data-del="${r.id}">del</button></td></tr>`).join("")
+     || `<tr><td class="muted">none yet</td></tr>`;
+  document.querySelectorAll("[data-del]").forEach(b=>b.onclick=async()=>{
+    await api("/api/prompts/"+b.dataset.del,{method:"DELETE"}); refresh();
+  });
+}
+document.getElementById("sp").onsubmit=async(e)=>{
+  e.preventDefault();
+  const fd=new FormData(e.target);
+  try{
+    await api("/api/prompts",{method:"POST",body:{name:fd.get("name"),body:fd.get("body")}});
+    e.target.reset(); document.getElementById("spErr").textContent=""; refresh();
+  }catch(ex){ document.getElementById("spErr").textContent=ex.message; }
+};
+refresh();
+</script>
+</body></html>

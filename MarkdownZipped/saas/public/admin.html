@@ -1,0 +1,87 @@
+<!DOCTYPE html><html lang="en"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Admin — MarkdownZipped</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Fraunces:opsz,wght@9..144,300;9..144,600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets.css">
+</head><body><div class="wrap">
+<header class="top"></header>
+<h1>Admin</h1>
+
+<div class="grid g4" id="metrics"></div>
+
+<h2>Payment configuration</h2>
+<p class="muted">Write-only. Keys are encrypted at rest and never returned to the browser. Status shows whether each is set.</p>
+<div class="card">
+  <form id="pc" class="grid g2">
+    <div><label>Stripe secret key <span id="s_stripe_secret_key"></span></label><input name="stripe_secret_key" placeholder="sk_live_…"></div>
+    <div><label>Stripe webhook secret <span id="s_stripe_webhook_secret"></span></label><input name="stripe_webhook_secret" placeholder="whsec_…"></div>
+    <div><label>Razorpay key id <span id="s_razorpay_key_id"></span></label><input name="razorpay_key_id" placeholder="rzp_live_…"></div>
+    <div><label>Razorpay key secret <span id="s_razorpay_key_secret"></span></label><input name="razorpay_key_secret"></div>
+    <div><label>Razorpay webhook secret <span id="s_razorpay_webhook_secret"></span></label><input name="razorpay_webhook_secret"></div>
+    <div style="align-self:end"><button class="btn primary">Save config</button> <span class="ok" id="pcMsg"></span></div>
+  </form>
+</div>
+
+<h2>Users</h2>
+<div class="row"><input id="q" placeholder="search email" style="max-width:280px"><button class="btn sm" id="search">Search</button></div>
+<table style="margin-top:12px"><thead><tr><th>id</th><th>email</th><th>role</th><th>plan</th><th>status</th><th>grant</th></tr></thead><tbody id="users"></tbody></table>
+
+<h2>Recent activity</h2>
+<table><thead><tr><th>when</th><th>user</th><th>action</th><th>detail</th></tr></thead><tbody id="audit"></tbody></table>
+
+<footer><div>md.zipped admin / 2026</div><div><a href="/">home</a></div></footer>
+</div>
+<script type="module">
+import {api, mountHeader} from "/app.js";
+const u = await mountHeader();
+if(!u || u.role!=="admin"){ document.querySelector(".wrap").innerHTML="<h1>403</h1><p>Admin only. <a href='/'>home</a></p>"; }
+else {
+  const PLANS=["free","pro","team","enterprise"];
+  async function load(){
+    const m=await api("/api/admin/metrics");
+    document.getElementById("metrics").innerHTML=`
+      <div class="stat"><b>${m.users}</b>users</div>
+      <div class="stat"><b>${m.paid}</b>paying</div>
+      <div class="stat"><b>$${m.mrrUsd}</b>MRR (usd plans)</div>
+      <div class="stat"><b>${m.providers.stripe?"on":"off"}/${m.providers.razorpay?"on":"off"}</b>stripe/razorpay</div>`;
+    const cfg=await api("/api/admin/payment-config");
+    for(const k in cfg){ const s=document.getElementById("s_"+k); if(s){ s.textContent=cfg[k]?"● set":"○ unset"; s.style.color=cfg[k]?"var(--accent)":"var(--muted)"; } }
+    const a=await api("/api/admin/audit");
+    document.getElementById("audit").innerHTML=a.slice(0,40).map(x=>
+      `<tr><td class="muted">${new Date(x.created_at*1000).toISOString().slice(0,19).replace("T"," ")}</td>
+       <td>${x.user_id??"-"}</td><td>${x.action}</td><td class="muted">${(x.detail||"").replace(/[<>]/g,"")}</td></tr>`).join("");
+  }
+  async function loadUsers(){
+    const q=document.getElementById("q").value;
+    const rows=await api("/api/admin/users?q="+encodeURIComponent(q));
+    document.getElementById("users").innerHTML=rows.map(r=>`
+      <tr><td>${r.id}</td><td>${r.email.replace(/[<>&]/g,"")}</td><td>${r.role}</td>
+      <td>${r.plan}</td><td>${r.plan_status}</td>
+      <td class="row">
+        <select data-uid="${r.id}">${PLANS.map(p=>`<option ${p===r.plan?"selected":""}>${p}</option>`).join("")}</select>
+        <button class="btn sm" data-grant="${r.id}">grant</button>
+        <button class="btn sm" data-revoke="${r.id}">revoke</button>
+      </td></tr>`).join("");
+    document.querySelectorAll("[data-grant]").forEach(b=>b.onclick=async()=>{
+      const sel=document.querySelector(`select[data-uid="${b.dataset.grant}"]`);
+      await api("/api/admin/grant",{method:"POST",body:{userId:+b.dataset.grant,plan:sel.value}});
+      loadUsers(); load();
+    });
+    document.querySelectorAll("[data-revoke]").forEach(b=>b.onclick=async()=>{
+      await api("/api/admin/revoke",{method:"POST",body:{userId:+b.dataset.revoke}}); loadUsers(); load();
+    });
+  }
+  document.getElementById("search").onclick=loadUsers;
+  document.getElementById("pc").onsubmit=async(e)=>{
+    e.preventDefault();
+    const fd=new FormData(e.target); const body={};
+    for(const [k,v] of fd) if(v.trim()) body[k]=v.trim();
+    const r=await api("/api/admin/payment-config",{method:"POST",body});
+    document.getElementById("pcMsg").textContent=`saved ${r.updated} field(s)`;
+    e.target.reset(); load();
+  };
+  load(); loadUsers();
+}
+</script>
+</body></html>
