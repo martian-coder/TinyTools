@@ -42,8 +42,6 @@ const SIDEBAR_DEFAULT: &str = "https://claude.ai";
 
 struct ServerHandle {
     running: Arc<AtomicBool>,
-    #[allow(dead_code)]
-    port: u16,
 }
 
 #[derive(Default)]
@@ -164,23 +162,12 @@ fn relayout(app: &AppHandle) {
     }
     let (sidebar_open, dock_open) = {
         let b = app.state::<Browser>();
-        (
-            *b.sidebar_open.lock().unwrap(),
-            *b.dock_open.lock().unwrap(),
-        )
+        (*b.sidebar_open.lock().unwrap(), *b.dock_open.lock().unwrap())
     };
     let body_h = (h - TOOLBAR_H).max(1.0);
-    let dock_h = if dock_open {
-        DOCK_H.min(body_h * 0.6)
-    } else {
-        0.0
-    };
+    let dock_h = if dock_open { DOCK_H.min(body_h * 0.6) } else { 0.0 };
     let avail_h = (body_h - dock_h).max(1.0);
-    let content_w = if sidebar_open {
-        (w - SIDEBAR_W).max(1.0)
-    } else {
-        w
-    };
+    let content_w = if sidebar_open { (w - SIDEBAR_W).max(1.0) } else { w };
 
     if let Some(shell) = app.get_webview("shell") {
         let _ = shell.set_position(LogicalPosition::new(0.0, 0.0));
@@ -429,26 +416,24 @@ fn set_region(app: AppHandle, region: String, proxy: String) {
 
 #[tauri::command]
 fn tor_new_identity() -> Result<String, String> {
-    let mut stream = TcpStream::connect("127.0.0.1:9051")
-        .map_err(|e| format!("Can't reach the Tor control port (9051): {e}. Enable ControlPort 9051 in your torrc."))?;
-    stream
-        .set_read_timeout(Some(Duration::from_secs(4)))
-        .ok();
+    let mut stream = TcpStream::connect("127.0.0.1:9051").map_err(|e| {
+        format!("Can't reach the Tor control port (9051): {e}. Enable ControlPort 9051 in your torrc.")
+    })?;
+    stream.set_read_timeout(Some(Duration::from_secs(4))).ok();
 
-    let mut read_reply = |s: &mut TcpStream| -> Result<String, String> {
+    let read_reply = |s: &mut TcpStream| -> Result<String, String> {
         let mut buf = [0u8; 512];
         let n = s.read(&mut buf).map_err(|e| e.to_string())?;
         Ok(String::from_utf8_lossy(&buf[..n]).to_string())
     };
 
-    // Cookie-less / no-password control ports accept an empty AUTHENTICATE.
     stream
         .write_all(b"AUTHENTICATE \"\"\r\n")
         .map_err(|e| e.to_string())?;
     let auth = read_reply(&mut stream)?;
     if !auth.starts_with("250") {
         return Err(format!(
-            "Tor auth failed: {}. (If your torrc sets a control password, Olus needs cookie-less control.)",
+            "Tor auth failed: {}. (Olus needs a cookie-less control port.)",
             auth.trim()
         ));
     }
@@ -479,7 +464,6 @@ fn toggle_dock(app: AppHandle) {
     emit_tabs(&app);
 }
 
-/// Open the real Chromium DevTools for the content page (console, network, errors).
 #[tauri::command]
 fn open_devtools(app: AppHandle) {
     if let Some(wv) = app.get_webview("content") {
@@ -497,8 +481,6 @@ fn get_cwd(app: AppHandle) -> String {
     cwd.clone()
 }
 
-/// A pragmatic command runner: each call runs in the tracked working directory,
-/// and `cd` updates it (so the terminal feels stateful without a full PTY).
 #[tauri::command]
 fn run_command(app: AppHandle, cmd: String) -> CommandResult {
     let b = app.state::<Browser>();
@@ -508,7 +490,6 @@ fn run_command(app: AppHandle, cmd: String) -> CommandResult {
     }
     let trimmed = cmd.trim().to_string();
 
-    // Handle `cd` ourselves so the directory persists between calls.
     if trimmed == "cd" || trimmed.starts_with("cd ") {
         let target = trimmed[2..].trim();
         let newp = if target.is_empty() {
@@ -523,7 +504,6 @@ fn run_command(app: AppHandle, cmd: String) -> CommandResult {
         };
         return match fs::canonicalize(&newp) {
             Ok(c) if c.is_dir() => {
-                // Strip the Windows \\?\ verbatim prefix for readability.
                 let disp = c.display().to_string();
                 *cwd = disp.trim_start_matches(r"\\?\").to_string();
                 CommandResult {
@@ -563,8 +543,8 @@ fn run_command(app: AppHandle, cmd: String) -> CommandResult {
     }
 }
 
-/// REST client backed by curl (ships with Windows 10+). Returns the raw response
-/// incl. status line and headers (`-i`), so the panel can show everything.
+/// REST client backed by curl (ships with Windows 10+). `-i` includes the
+/// status line and headers so the panel can show everything.
 #[tauri::command]
 fn http_request(method: String, url: String, headers: String, body: String) -> String {
     if url.trim().is_empty() {
@@ -636,7 +616,6 @@ fn handle_conn(mut stream: TcpStream, dir: &Path) {
     if rel.is_empty() {
         rel = "index.html".to_string();
     }
-    // Block path traversal.
     let full = dir.join(&rel);
     let safe = full.starts_with(dir) && !rel.contains("..");
 
@@ -661,7 +640,6 @@ fn handle_conn(mut stream: TcpStream, dir: &Path) {
     let _ = stream.write_all(body);
 }
 
-/// Spin up a tiny static file server (std only — no deps) for local dev.
 #[tauri::command]
 fn serve_start(app: AppHandle, path: String, port: u16) -> Result<String, String> {
     serve_stop(app.clone());
@@ -695,7 +673,7 @@ fn serve_start(app: AppHandle, path: String, port: u16) -> Result<String, String
         }
     });
 
-    *app.state::<Browser>().server.lock().unwrap() = Some(ServerHandle { running, port });
+    *app.state::<Browser>().server.lock().unwrap() = Some(ServerHandle { running });
     Ok(format!("http://127.0.0.1:{port}"))
 }
 
@@ -733,9 +711,9 @@ pub fn run() {
             reload,
             toggle_sidebar,
             set_sidebar_url,
+            set_theme,
             get_settings,
             set_region,
-            set_theme,
             tor_new_identity,
             toggle_dock,
             open_devtools,
