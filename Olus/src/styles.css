@@ -1,0 +1,389 @@
+/* ===== Themes ===== */
+/* Default = light, Claude-clean with a blue accent. */
+:root {
+  --bg: #ffffff;
+  --chrome: #eef1f6;
+  --chrome-2: #e6eaf2;
+  --line: rgba(20, 30, 60, 0.10);
+  --text: #1b1e28;
+  --muted: #6b7280;
+  --accent: #0078d4;
+  --accent-soft: rgba(0, 120, 212, 0.14);
+  --hover: rgba(20, 30, 60, 0.06);
+  --radius: 11px;
+}
+
+[data-theme="dark"] {
+  --bg: #0e0f13;
+  --chrome: #171922;
+  --chrome-2: #1d2030;
+  --line: rgba(255, 255, 255, 0.08);
+  --text: #e7e9f0;
+  --muted: #8b90a3;
+  --accent: #6c8cff;
+  --accent-soft: rgba(108, 140, 255, 0.18);
+  --hover: rgba(255, 255, 255, 0.07);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+  background: transparent;
+  color: var(--text);
+  font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+  font-size: 13px;
+  user-select: none;
+  overflow: hidden;
+}
+
+#chrome {
+  height: 84px;
+  background: linear-gradient(180deg, var(--chrome-2) 0%, var(--chrome) 100%);
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+}
+
+/* ---- tab strip ---- */
+#tabstrip {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+  height: 40px;
+  padding: 6px 8px 0 8px;
+}
+#tabs {
+  display: flex;
+  gap: 4px;
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+#tabs::-webkit-scrollbar {
+  display: none;
+}
+/* Pushes everything after the + button to fill the strip, so the +
+   sits flush against the tabs (Arc/Chrome-style) rather than floating. */
+.strip-spacer {
+  flex: 1 1 auto;
+}
+
+.tab {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 110px;
+  max-width: 210px;
+  height: 34px;
+  padding: 0 10px;
+  border-radius: 9px 9px 0 0;
+  background: transparent;
+  color: var(--muted);
+  cursor: default;
+  transition: background 0.14s ease, color 0.14s ease;
+  white-space: nowrap;
+}
+.tab:hover {
+  background: var(--hover);
+  color: var(--text);
+}
+.tab.active {
+  background: var(--bg);
+  color: var(--text);
+  box-shadow: 0 -2px 0 var(--accent) inset;
+}
+.tab .title {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 12.5px;
+}
+.tab .dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--accent);
+  flex-shrink: 0;
+  opacity: 0.65;
+}
+.tab .close {
+  width: 18px;
+  height: 18px;
+  border-radius: 5px;
+  display: grid;
+  place-items: center;
+  font-size: 15px;
+  line-height: 1;
+  color: var(--muted);
+  opacity: 0;
+  transition: opacity 0.12s, background 0.12s;
+}
+.tab:hover .close {
+  opacity: 1;
+}
+.tab .close:hover {
+  background: var(--hover);
+  color: var(--text);
+}
+
+/* ---- toolbar ---- */
+#toolbar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 44px;
+  padding: 0 10px;
+}
+
+.icon-btn {
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 18px;
+  line-height: 1;
+  cursor: default;
+  transition: background 0.12s, color 0.12s;
+}
+.icon-btn:hover {
+  background: var(--hover);
+  color: var(--text);
+}
+.icon-btn:active {
+  transform: scale(0.94);
+}
+.icon-btn.on {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+#newtab {
+  align-self: center;
+  margin-bottom: 3px;
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--muted);
+  display: grid;
+  place-items: center;
+  cursor: default;
+  transition: background 0.12s, color 0.12s, transform 0.08s;
+}
+#newtab:hover {
+  background: var(--hover);
+  color: var(--text);
+}
+#newtab:active {
+  transform: scale(0.9);
+}
+
+#omnibox {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 34px;
+  padding: 0 14px;
+  border-radius: var(--radius);
+  background: var(--bg);
+  border: 1px solid var(--line);
+  transition: border 0.15s, box-shadow 0.15s;
+}
+#omnibox:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+#lock {
+  font-size: 11px;
+  opacity: 0.5;
+}
+#address {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--text);
+  font-size: 13.5px;
+  user-select: text;
+}
+#address::placeholder {
+  color: var(--muted);
+}
+
+/* ---- pickers ---- */
+.picker {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  height: 34px;
+  padding: 0 6px 0 10px;
+  border-radius: var(--radius);
+  background: var(--bg);
+  border: 1px solid var(--line);
+  flex-shrink: 0;
+}
+.picker-ic {
+  font-size: 12px;
+  opacity: 0.6;
+}
+.picker select {
+  appearance: none;
+  -webkit-appearance: none;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--text);
+  font-size: 12.5px;
+  font-family: inherit;
+  padding-right: 14px;
+  cursor: pointer;
+  background-image: linear-gradient(45deg, transparent 50%, var(--muted) 50%),
+    linear-gradient(135deg, var(--muted) 50%, transparent 50%);
+  background-position: right 4px center, right 0 center;
+  background-size: 5px 5px, 5px 5px;
+  background-repeat: no-repeat;
+}
+.picker select option {
+  background: var(--chrome);
+  color: var(--text);
+}
+
+/* ---- custom proxy modal ---- */
+.modal-wrap {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: grid;
+  place-items: center;
+  z-index: 9999;
+}
+.modal {
+  width: 420px;
+  max-width: 90vw;
+  background: var(--chrome);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 22px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+.modal h3 {
+  font-size: 16px;
+  margin-bottom: 8px;
+}
+.modal p {
+  font-size: 12.5px;
+  color: var(--muted);
+  line-height: 1.5;
+  margin-bottom: 14px;
+}
+.modal code {
+  color: var(--accent);
+  font-size: 12px;
+}
+.modal input {
+  width: 100%;
+  height: 38px;
+  padding: 0 12px;
+  border-radius: 9px;
+  border: 1px solid var(--line);
+  background: var(--bg);
+  color: var(--text);
+  font-size: 13px;
+  outline: none;
+}
+.modal input:focus {
+  border-color: var(--accent);
+}
+.modal-row {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 16px;
+}
+.modal-row button {
+  height: 34px;
+  padding: 0 16px;
+  border: none;
+  border-radius: 9px;
+  background: var(--hover);
+  color: var(--text);
+  font-size: 13px;
+  cursor: pointer;
+}
+.modal-row button.primary {
+  background: var(--accent);
+  color: #fff;
+}
+
+/* ---- dev button (smaller glyph for </>) ---- */
+#dev {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+}
+
+/* ---- region + Tor new-identity ---- */
+.region-wrap {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+#tor-id {
+  width: 30px;
+  height: 30px;
+  font-size: 16px;
+}
+#tor-id.spin svg,
+#tor-id.spin {
+  animation: spin 0.6s ease;
+}
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+.hidden {
+  display: none !important;
+}
+
+/* ---- toast ---- */
+#toast {
+  position: fixed;
+  bottom: 18px;
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  max-width: 70%;
+  padding: 11px 18px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #fff;
+  background: #1f2430;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s, transform 0.2s;
+  z-index: 10000;
+}
+#toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+#toast.ok {
+  background: linear-gradient(135deg, #0a7d4f, #0a8f5b);
+}
+#toast.err {
+  background: linear-gradient(135deg, #b3261e, #d13b30);
+}

@@ -1,0 +1,6 @@
+# On commit-constrained machines, MSVC link.exe loads the PDB engine
+# (mspdbcore.dll) even for tiny crates, and the load fails with
+# LNK1171 (error 1455 = ERROR_COMMITMENT_LIMIT). /DEBUG:NONE skips PDB
+# generation entirely, so no PDB engine is loaded.
+[target.x86_64-pc-windows-msvc]
+rustflags = ["-C", "link-arg=/DEBUG:NONE"]
