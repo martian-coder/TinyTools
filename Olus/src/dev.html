@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Olus Dev</title>
+    <script>
+      document.documentElement.dataset.theme = localStorage.getItem("olus.theme") || "light";
+    </script>
+    <style>
+      :root {
+        --bg: #ffffff; --panel: #f4f6fa; --line: rgba(20,30,60,0.12);
+        --text: #1b1e28; --muted: #6b7280; --accent: #0078d4;
+        --in: #ffffff; --ok: #0a7d4f; --err: #d13b30;
+        --mono: "Cascadia Code", "Consolas", ui-monospace, monospace;
+      }
+      [data-theme="dark"] {
+        --bg: #0f1117; --panel: #161922; --line: rgba(255,255,255,0.10);
+        --text: #e7e9f0; --muted: #8b90a3; --accent: #2b9aef;
+        --in: #0b0d12; --ok: #4ad99a; --err: #ff6b5e;
+      }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { height: 100%; background: var(--bg); color: var(--text);
+        font-family: "Segoe UI", system-ui, sans-serif; font-size: 13px; overflow: hidden; }
+      #dock { display: flex; flex-direction: column; height: 100vh; }
+
+      /* tab bar */
+      #bar { display: flex; align-items: center; gap: 2px; height: 38px; flex-shrink: 0;
+        padding: 0 8px; border-bottom: 1px solid var(--line); background: var(--panel); }
+      .dtab { padding: 7px 14px; border-radius: 8px; color: var(--muted); cursor: default;
+        font-size: 12.5px; font-weight: 500; user-select: none; display: flex; gap: 6px; align-items: center; }
+      .dtab:hover { background: var(--line); color: var(--text); }
+      .dtab.active { background: var(--accent); color: #fff; }
+      .bar-grow { flex: 1; }
+      .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--err); display: none; }
+      .dot.on { display: inline-block; background: var(--ok); }
+
+      /* panes */
+      .pane { flex: 1; display: none; flex-direction: column; min-height: 0; }
+      .pane.active { display: flex; }
+
+      /* console */
+      .center-cta { flex: 1; display: grid; place-items: center; text-align: center; padding: 20px; }
+      .center-cta p { color: var(--muted); max-width: 460px; line-height: 1.6; margin-top: 10px; }
+      .btn { border: none; border-radius: 9px; padding: 10px 18px; font-size: 13px; font-weight: 600;
+        cursor: default; background: var(--accent); color: #fff; }
+      .btn.ghost { background: var(--line); color: var(--text); }
+      .btn:active { transform: scale(0.97); }
+      .row { display: flex; gap: 8px; align-items: center; padding: 8px; border-bottom: 1px solid var(--line);
+        background: var(--panel); flex-shrink: 0; flex-wrap: wrap; }
+      input, textarea, select {
+        background: var(--in); color: var(--text); border: 1px solid var(--line); border-radius: 8px;
+        padding: 8px 10px; font-size: 12.5px; font-family: inherit; outline: none; }
+      input:focus, textarea:focus, select:focus { border-color: var(--accent); }
+      .mono { font-family: var(--mono); }
+      .grow { flex: 1; min-width: 120px; }
+
+      /* terminal */
+      #term-out, #api-out { flex: 1; overflow: auto; padding: 12px 14px; white-space: pre-wrap;
+        word-break: break-word; font-family: var(--mono); font-size: 12.5px; line-height: 1.5; }
+      .t-cmd { color: var(--accent); }
+      .t-err { color: var(--err); }
+      .t-dim { color: var(--muted); }
+      #term-row { display: flex; align-items: center; gap: 8px; padding: 8px; border-top: 1px solid var(--line);
+        background: var(--panel); flex-shrink: 0; }
+      #term-prompt { color: var(--accent); font-family: var(--mono); font-size: 12px; max-width: 280px;
+        overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex-shrink: 0; }
+      #term-in { flex: 1; }
+
+      /* api */
+      #api { gap: 0; }
+      .api-head { display: flex; gap: 8px; padding: 8px; border-bottom: 1px solid var(--line); background: var(--panel); }
+      .api-cols { display: flex; gap: 8px; padding: 8px; border-bottom: 1px solid var(--line); }
+      .api-cols textarea { flex: 1; height: 64px; resize: vertical; }
+      #api-out { background: var(--bg); }
+
+      /* serve */
+      .serve-status { padding: 12px 14px; color: var(--muted); }
+      .serve-status a { color: var(--accent); }
+      .pill { display: inline-block; padding: 3px 9px; border-radius: 999px; font-size: 11px; font-weight: 600; }
+      .pill.live { background: rgba(10,141,91,0.16); color: var(--ok); }
+      .pill.off { background: var(--line); color: var(--muted); }
+    </style>
+  </head>
+  <body>
+    <div id="dock">
+      <div id="bar">
+        <div class="dtab active" data-pane="console">⚙ Console</div>
+        <div class="dtab" data-pane="api">⇄ API</div>
+        <div class="dtab" data-pane="term">▸ Terminal</div>
+        <div class="dtab" data-pane="serve">⊞ Serve <span class="dot" id="serve-dot"></span></div>
+        <div class="bar-grow"></div>
+      </div>
+
+      <!-- Console -->
+      <div class="pane active" id="pane-console">
+        <div class="center-cta">
+          <div>
+            <button class="btn" id="open-dt">Open Chromium DevTools</button>
+            <p>Inspect the page, watch <b>network requests</b>, read <b>console errors</b>, and step
+              through sources — the full DevTools for the current tab.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- API client -->
+      <div class="pane" id="pane-api">
+        <div class="api-head">
+          <select id="api-method" style="width:96px">
+            <option>GET</option><option>POST</option><option>PUT</option>
+            <option>PATCH</option><option>DELETE</option><option>HEAD</option>
+          </select>
+          <input id="api-url" class="grow mono" placeholder="https://api.example.com/endpoint" />
+          <button class="btn" id="api-send">Send</button>
+        </div>
+        <div class="api-cols">
+          <textarea id="api-headers" class="mono" placeholder="Headers, one per line&#10;Authorization: Bearer ...&#10;Content-Type: application/json"></textarea>
+          <textarea id="api-body" class="mono" placeholder="Request body (JSON, form, etc.)"></textarea>
+        </div>
+        <div id="api-out" class="t-dim">Response appears here.</div>
+      </div>
+
+      <!-- Terminal -->
+      <div class="pane" id="pane-term">
+        <div id="term-out" class="t-dim">Olus terminal — runs in your working directory. Try: dir · git status · npm run dev</div>
+        <div id="term-row">
+          <span id="term-prompt">~</span>
+          <input id="term-in" class="mono" placeholder="type a command and press Enter" spellcheck="false" autocomplete="off" />
+        </div>
+      </div>
+
+      <!-- Serve -->
+      <div class="pane" id="pane-serve">
+        <div class="row">
+          <input id="serve-dir" class="grow mono" placeholder="Folder to serve (blank = current dir)" />
+          <input id="serve-port" class="mono" style="width:84px" value="5500" />
+          <button class="btn" id="serve-start">Start</button>
+          <button class="btn ghost" id="serve-stop">Stop</button>
+        </div>
+        <div class="serve-status" id="serve-status">
+          <span class="pill off" id="serve-pill">stopped</span>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      function bootDev(n = 0) {
+        const T = window.__TAURI__;
+        if (T && T.core) return initDev(T.core.invoke);
+        if (n > 150) return;
+        setTimeout(() => bootDev(n + 1), 30);
+      }
+      function initDev(invoke) {
+        const $ = (id) => document.getElementById(id);
+
+        // pane switching
+        document.querySelectorAll(".dtab").forEach((t) => {
+          t.onclick = () => {
+            document.querySelectorAll(".dtab").forEach((x) => x.classList.remove("active"));
+            document.querySelectorAll(".pane").forEach((x) => x.classList.remove("active"));
+            t.classList.add("active");
+            $("pane-" + t.dataset.pane).classList.add("active");
+            if (t.dataset.pane === "term") $("term-in").focus();
+          };
+        });
+
+        // console
+        $("open-dt").onclick = () => invoke("open_devtools");
+
+        // terminal
+        const out = $("term-out");
+        const append = (html) => {
+          out.innerHTML += html;
+          out.scrollTop = out.scrollHeight;
+        };
+        const esc = (s) => s.replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
+        invoke("get_cwd").then((d) => ($("term-prompt").textContent = d));
+        $("term-in").addEventListener("keydown", (e) => {
+          if (e.key !== "Enter") return;
+          const cmd = $("term-in").value.trim();
+          if (!cmd) return;
+          $("term-in").value = "";
+          const prompt = $("term-prompt").textContent;
+          append(`\n<span class="t-dim">${esc(prompt)}&gt;</span> <span class="t-cmd">${esc(cmd)}</span>\n`);
+          if (cmd === "clear" || cmd === "cls") {
+            out.innerHTML = "";
+            return;
+          }
+          invoke("run_command", { cmd }).then((r) => {
+            if (r.stdout) append(esc(r.stdout));
+            if (r.stderr) append(`<span class="t-err">${esc(r.stderr)}</span>`);
+            if (r.code !== 0 && !r.stderr) append(`<span class="t-err">[exit ${r.code}]</span>\n`);
+            $("term-prompt").textContent = r.cwd;
+          });
+        });
+
+        // api
+        $("api-send").onclick = () => {
+          $("api-out").className = "t-dim";
+          $("api-out").textContent = "Sending…";
+          invoke("http_request", {
+            method: $("api-method").value,
+            url: $("api-url").value,
+            headers: $("api-headers").value,
+            body: $("api-body").value,
+          }).then((res) => {
+            $("api-out").className = "";
+            $("api-out").textContent = res;
+          });
+        };
+        $("api-url").addEventListener("keydown", (e) => {
+          if (e.key === "Enter") $("api-send").click();
+        });
+
+        // serve
+        const setServe = (live, url) => {
+          const pill = $("serve-pill");
+          $("serve-dot").classList.toggle("on", live);
+          if (live) {
+            pill.className = "pill live";
+            pill.textContent = "live";
+            $("serve-status").innerHTML =
+              '<span class="pill live">live</span> &nbsp; Serving at ' +
+              `<a id="serve-open">${url}</a> — opens in a new tab`;
+            $("serve-open").onclick = () => invoke("new_tab", { url });
+          } else {
+            $("serve-status").innerHTML = '<span class="pill off">stopped</span>';
+          }
+        };
+        $("serve-start").onclick = () => {
+          const port = parseInt($("serve-port").value, 10) || 5500;
+          invoke("serve_start", { path: $("serve-dir").value, port })
+            .then((url) => setServe(true, url))
+            .catch((err) => {
+              $("serve-status").innerHTML = `<span class="pill off">error</span> &nbsp; ${err}`;
+            });
+        };
+        $("serve-stop").onclick = () => {
+          invoke("serve_stop");
+          setServe(false);
+        };
+      }
+      bootDev();
+    </script>
+  </body>
+</html>

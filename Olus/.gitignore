@@ -1,0 +1,10 @@
+# Rust / Tauri build artifacts
+/src-tauri/target/
+/src-tauri/gen/
+
+# WebView2 data
+*.pdb
+
+# OS cruft
+Thumbs.db
+.DS_Store

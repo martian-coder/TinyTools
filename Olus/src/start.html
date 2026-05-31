@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Olus — Start</title>
+    <script>
+      document.documentElement.dataset.theme = localStorage.getItem("olus.theme") || "light";
+    </script>
+    <style>
+      /* Light (default) — Claude-clean, Microsoft blue */
+      :root {
+        --bg1: #e9f2fb;
+        --bg2: #f7f7f4;
+        --card: #ffffff;
+        --line: rgba(16, 42, 82, 0.10);
+        --text: #1a1a1a;
+        --muted: #5e6470;
+        --accent: #0078d4;
+        --accent2: #00a4ef;
+        --good: #0a7d4f;
+        --shadow: 0 12px 34px rgba(0, 80, 160, 0.10);
+        --serif: ui-serif, Georgia, "Iowan Old Style", "Times New Roman", serif;
+      }
+      [data-theme="dark"] {
+        --bg1: #0e1828;
+        --bg2: #0a0c10;
+        --card: #14171f;
+        --line: rgba(255, 255, 255, 0.09);
+        --text: #eef1f6;
+        --muted: #9aa0ad;
+        --accent: #2b9aef;
+        --accent2: #4cc2ff;
+        --good: #4ad99a;
+        --shadow: 0 16px 44px rgba(0, 0, 0, 0.45);
+      }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body {
+        background: radial-gradient(1100px 560px at 50% -10%, var(--bg1) 0%, var(--bg2) 56%);
+        color: var(--text);
+        font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+        min-height: 100%;
+        -webkit-font-smoothing: antialiased;
+      }
+      .wrap { max-width: 900px; margin: 0 auto; padding: 86px 28px 70px; }
+
+      /* brand */
+      .brand { display: flex; align-items: center; gap: 11px; justify-content: center; margin-bottom: 40px; }
+      .logo {
+        width: 34px; height: 34px; border-radius: 10px;
+        background: radial-gradient(circle at 50% 34%, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0) 58%),
+          linear-gradient(135deg, var(--accent) 0%, var(--accent2) 100%);
+        box-shadow: 0 6px 20px rgba(0, 120, 212, 0.40);
+      }
+      .brand span { font-size: 19px; font-weight: 600; letter-spacing: -0.2px; }
+
+      /* hero — editorial serif, lots of air */
+      .hero { text-align: center; }
+      .hero h1 {
+        font-family: var(--serif);
+        font-weight: 600;
+        font-size: 54px;
+        line-height: 1.05;
+        letter-spacing: -1.5px;
+      }
+      .hero h1 .grad {
+        background: linear-gradient(100deg, var(--accent), var(--accent2));
+        -webkit-background-clip: text; background-clip: text; color: transparent;
+      }
+      .hero p {
+        max-width: 560px; margin: 22px auto 0;
+        color: var(--muted); font-size: 17px; line-height: 1.6;
+      }
+
+      /* search */
+      .search {
+        display: flex; align-items: center; gap: 8px;
+        max-width: 600px; margin: 38px auto 0; height: 58px; padding: 0 8px 0 22px;
+        background: var(--card); border: 1px solid var(--line);
+        border-radius: 30px; box-shadow: var(--shadow);
+        transition: border 0.15s, box-shadow 0.15s;
+      }
+      .search:focus-within { border-color: var(--accent); box-shadow: 0 0 0 4px rgba(0,120,212,0.16), var(--shadow); }
+      .search input { flex: 1; background: transparent; border: none; outline: none; color: var(--text); font-size: 16px; }
+      .search input::placeholder { color: var(--muted); }
+      .search button {
+        height: 42px; padding: 0 22px; border: none; border-radius: 22px;
+        background: linear-gradient(135deg, var(--accent), var(--accent2));
+        color: #fff; font-size: 14.5px; font-weight: 600; cursor: pointer;
+      }
+      .engine-note { text-align: center; color: var(--muted); font-size: 12.5px; margin-top: 12px; }
+
+      .links { display: flex; flex-wrap: wrap; gap: 9px; justify-content: center; margin: 30px auto 0; max-width: 600px; }
+      .links a {
+        text-decoration: none; color: var(--text); font-size: 13px; font-weight: 500;
+        padding: 8px 15px; border-radius: 999px; background: var(--card); border: 1px solid var(--line);
+        transition: transform 0.1s, border 0.12s, color 0.12s;
+      }
+      .links a:hover { transform: translateY(-1px); border-color: var(--accent); color: var(--accent); }
+
+      /* sections */
+      .section-title { text-align: center; margin: 90px 0 6px; font-family: var(--serif); font-weight: 600; font-size: 30px; letter-spacing: -0.6px; }
+      .section-sub { text-align: center; color: var(--muted); margin-bottom: 34px; font-size: 15px; }
+      .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+      @media (max-width: 760px) { .grid { grid-template-columns: 1fr; } .hero h1 { font-size: 40px; } }
+      .feat { background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 24px; box-shadow: var(--shadow); }
+      .feat .ic { font-size: 22px; }
+      .feat h3 { font-size: 15.5px; margin: 12px 0 7px; font-weight: 600; }
+      .feat p { color: var(--muted); font-size: 13.5px; line-height: 1.6; }
+      .feat .star { color: var(--good); font-weight: 700; }
+
+      table { width: 100%; border-collapse: collapse; margin-top: 24px; font-size: 13.5px; background: var(--card); border: 1px solid var(--line); border-radius: 18px; overflow: hidden; box-shadow: var(--shadow); }
+      th, td { text-align: left; padding: 14px 18px; border-bottom: 1px solid var(--line); }
+      tbody tr:last-child td { border-bottom: none; }
+      thead th { color: var(--muted); font-weight: 600; }
+      td.olus { color: var(--text); font-weight: 600; }
+      td.olus::before { content: "✓ "; color: var(--good); }
+      td.them { color: var(--muted); }
+      .col-olus { color: var(--accent); }
+
+      /* credit */
+      .credit {
+        margin: 70px auto 0; max-width: 600px; text-align: center;
+        padding: 26px; border-radius: 18px; border: 1px solid var(--line); background: var(--card); box-shadow: var(--shadow);
+      }
+      .credit .by { font-size: 14px; color: var(--muted); }
+      .credit .name { font-family: var(--serif); font-size: 22px; font-weight: 600; margin: 6px 0 4px; }
+      .credit a { color: var(--accent); text-decoration: none; font-size: 13.5px; font-weight: 500; }
+      .credit a:hover { text-decoration: underline; }
+
+      footer { text-align: center; color: var(--muted); font-size: 12px; margin-top: 30px; }
+      footer b { color: var(--text); }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <div class="brand"><div class="logo"></div><span>Olus</span></div>
+
+      <div class="hero">
+        <h1>Never lose your tabs.<br /><span class="grad">No matter where you browse.</span></h1>
+        <p>A featherweight browser on the real Chromium engine — lighter than Chrome, private by default, and entirely yours to bend.</p>
+      </div>
+
+      <form class="search" onsubmit="return go(event)">
+        <input id="q" placeholder="Search the web or type a URL" spellcheck="false" autocomplete="off" autofocus />
+        <button type="submit">Search</button>
+      </form>
+      <div class="engine-note" id="engine-note">Searching with Google</div>
+
+      <div class="links">
+        <a href="https://github.com">GitHub</a>
+        <a href="https://news.ycombinator.com">Hacker News</a>
+        <a href="https://youtube.com">YouTube</a>
+        <a href="https://reddit.com">Reddit</a>
+        <a href="https://wikipedia.org">Wikipedia</a>
+        <a href="https://maps.google.com">Maps</a>
+        <a href="https://mail.google.com">Gmail</a>
+        <a href="https://claude.ai">Claude</a>
+      </div>
+
+      <div class="section-title">Why Olus</div>
+      <div class="section-sub">The browser most people actually need — without the weight, the tracking, or the lock-in.</div>
+      <div class="grid">
+        <div class="feat"><div class="ic">🗂️</div><h3>Never lose your tabs <span class="star">★</span></h3>
+          <p>Every tab is saved to disk the moment it changes and restored on launch — survives crashes, updates and restarts. Point the session at a synced folder and it follows you across machines.</p></div>
+        <div class="feat"><div class="ic">🪶</div><h3>Featherweight</h3>
+          <p>Built on the system Chromium (WebView2) engine — nothing to bundle. The app is a few megabytes and sips RAM, where Chrome ships a ~150&nbsp;MB engine per install.</p></div>
+        <div class="feat"><div class="ic">🌐</div><h3>Browse from anywhere</h3>
+          <p>Route your traffic through Tor or any country's proxy with one dropdown. Look like you're somewhere else — or stay private — without extensions.</p></div>
+        <div class="feat"><div class="ic">🔑</div><h3>Sign in like normal</h3>
+          <p>Real Chrome user-agent and a persistent profile, so Google, GitHub and the rest let you sign in and stay signed in — no "insecure browser" walls.</p></div>
+        <div class="feat"><div class="ic">✦</div><h3>AI sidebar built in</h3>
+          <p>Pop open an AI assistant next to any page with one click (or Ctrl+J). Ask about what you're reading without leaving the tab.</p></div>
+        <div class="feat"><div class="ic">🎨</div><h3>Themes &amp; yours to bend</h3>
+          <p>A clean Microsoft-blue light theme or a focused dark one — your call. Open and tiny, so a reader mode or ad blocker is a few lines away.</p></div>
+        <div class="feat"><div class="ic">&lt;/&gt;</div><h3>Dev tools built in</h3>
+          <p>A bottom dock with the real Chromium DevTools (console, network, errors), a <b>terminal</b>, a <b>REST/API client</b>, and a one-click <b>localhost server</b> — ship without leaving the browser. (Ctrl+`)</p></div>
+      </div>
+
+      <div class="section-title">Olus vs the rest</div>
+      <table>
+        <thead><tr><th>What matters</th><th class="col-olus">Olus</th><th>Chrome</th><th>Edge / others</th></tr></thead>
+        <tbody>
+          <tr><td>Bundled engine size</td><td class="olus">0 MB (uses system Chromium)</td><td class="them">~150 MB</td><td class="them">~150 MB</td></tr>
+          <tr><td>Idle RAM footprint</td><td class="olus">Low</td><td class="them">High</td><td class="them">High</td></tr>
+          <tr><td>Never lose your tabs</td><td class="olus">On by default, crash-safe</td><td class="them">Needs sign-in</td><td class="them">Needs sign-in</td></tr>
+          <tr><td>Browse via Tor / any country</td><td class="olus">Built-in dropdown</td><td class="them">✗</td><td class="them">✗</td></tr>
+          <tr><td>AI sidebar</td><td class="olus">Built in</td><td class="them">Extension</td><td class="them">Limited</td></tr>
+          <tr><td>Terminal · API client · local server</td><td class="olus">Built-in dev dock</td><td class="them">✗</td><td class="them">✗</td></tr>
+          <tr><td>Tor "New Identity"</td><td class="olus">One click</td><td class="them">✗</td><td class="them">✗</td></tr>
+          <tr><td>Switch search engine instantly</td><td class="olus">Top-bar toggle</td><td class="them">Buried in settings</td><td class="them">Buried in settings</td></tr>
+          <tr><td>Telemetry / account wall</td><td class="olus">None</td><td class="them">Google account</td><td class="them">Microsoft account</td></tr>
+        </tbody>
+      </table>
+
+      <div class="credit">
+        <div class="by">Designed &amp; built by</div>
+        <div class="name">Martian Coders</div>
+        <a href="mailto:martian.coder.x@oluse.io">martian.coder.x@oluse.io</a>
+      </div>
+
+      <footer>Same Chromium rendering you trust — just lighter, freer, and yours.<br />Part of <b>TinyTools</b>.</footer>
+    </div>
+
+    <script>
+      const ENGINES = {
+        google: ["https://www.google.com/search?q=%s", "Google"],
+        duckduckgo: ["https://duckduckgo.com/?q=%s", "DuckDuckGo"],
+        bing: ["https://www.bing.com/search?q=%s", "Bing"],
+        brave: ["https://search.brave.com/search?q=%s", "Brave"],
+        startpage: ["https://www.startpage.com/sp/search?query=%s", "Startpage"],
+        ecosia: ["https://www.ecosia.org/search?q=%s", "Ecosia"],
+      };
+      const engine = () => ENGINES[localStorage.getItem("olus.engine")] || ENGINES.google;
+      document.getElementById("engine-note").textContent = "Searching with " + engine()[1];
+      function go(e) {
+        e.preventDefault();
+        const s = document.getElementById("q").value.trim();
+        if (!s) return false;
+        let url;
+        if (/^https?:\/\//i.test(s)) url = s;
+        else if (/^[^\s/]+\.[^\s/]+/.test(s) && !s.includes(" ")) url = "https://" + s;
+        else url = engine()[0].replace("%s", encodeURIComponent(s));
+        window.location.href = url;
+        return false;
+      }
+    </script>
+  </body>
+</html>

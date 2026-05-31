@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Olus</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div id="chrome">
+      <div id="tabstrip">
+        <div id="tabs"></div>
+        <button id="newtab" title="New tab (Ctrl+T)" aria-label="New tab">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+            <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
+          </svg>
+        </button>
+        <div class="strip-spacer"></div>
+      </div>
+
+      <div id="toolbar">
+        <button id="back" class="icon-btn" title="Back">‹</button>
+        <button id="forward" class="icon-btn" title="Forward">›</button>
+        <button id="reload" class="icon-btn" title="Reload">⟳</button>
+        <button id="home" class="icon-btn" title="Start page">⌂</button>
+
+        <div id="omnibox">
+          <span id="lock">🔒</span>
+          <input
+            id="address"
+            type="text"
+            spellcheck="false"
+            autocomplete="off"
+            placeholder="Search the web or type a URL"
+          />
+        </div>
+
+        <label class="picker" title="Search engine">
+          <span class="picker-ic">🔍</span>
+          <select id="engine">
+            <option value="google">Google</option>
+            <option value="duckduckgo">DuckDuckGo</option>
+            <option value="bing">Bing</option>
+            <option value="brave">Brave</option>
+            <option value="startpage">Startpage</option>
+            <option value="ecosia">Ecosia</option>
+          </select>
+        </label>
+
+        <div class="region-wrap">
+          <label class="picker" title="Connect from (region / Tor)">
+            <span class="picker-ic">🌐</span>
+            <select id="region">
+              <option value="direct">Direct</option>
+              <option value="tor">Tor (local)</option>
+              <option value="custom">Custom proxy…</option>
+            </select>
+          </label>
+          <button id="tor-id" class="icon-btn hidden" title="New Tor identity (fresh circuit)">⟲</button>
+        </div>
+
+        <button id="dev" class="icon-btn" title="Dev tools dock (Ctrl+`)">&lt;/&gt;</button>
+        <button id="ai" class="icon-btn" title="AI sidebar (Ctrl+J)">✦</button>
+        <button id="theme" class="icon-btn" title="Toggle theme">◐</button>
+      </div>
+    </div>
+
+    <div id="toast"></div>
+    <script src="app.js"></script>
+  </body>
+</html>
