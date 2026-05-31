@@ -252,14 +252,16 @@ fn nav_content(app: &AppHandle, url: &str) {
 }
 
 fn emit_tabs(app: &AppHandle) {
-    let payload = {
-        let b = app.state::<Browser>();
-        TabsPayload {
-            tabs: b.tabs.lock().unwrap().clone(),
-            active: *b.active.lock().unwrap(),
-            sidebar_open: *b.sidebar_open.lock().unwrap(),
-            dock_open: *b.dock_open.lock().unwrap(),
-        }
+    let b = app.state::<Browser>();
+    let tabs = b.tabs.lock().unwrap().clone();
+    let active = *b.active.lock().unwrap();
+    let sidebar_open = *b.sidebar_open.lock().unwrap();
+    let dock_open = *b.dock_open.lock().unwrap();
+    let payload = TabsPayload {
+        tabs,
+        active,
+        sidebar_open,
+        dock_open,
     };
     let _ = app.emit("tabs:update", payload);
     save_session(app);
