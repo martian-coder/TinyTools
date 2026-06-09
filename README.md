@@ -22,7 +22,7 @@ Inspired by [Scott Hanselman's TinyToolTown](https://tinytooltown.com) — _"Vib
 | [**CmdLog**](./CmdLog/) | Interactive history browser — search, categorize, bookmark and re-run commands with full context (directory, branch, timing, exit code) | Python 3 | Windows / macOS / Linux |
 | [**MarkdownZipped**](./MarkdownZipped/) | Compress LLM prompts through a 4-stage pipeline (minify → rewrite → dedup → cache) and pack them into a `.mdz` file | Python 3 | Windows / macOS / Linux |
 | [**Olus**](./Olus/) | A featherweight browser — real Chromium via WebView2, never-lose-your-tabs sessions, Tor/proxy region routing, switchable search engine | Rust / Tauri 2 | Windows |
-| [**MeetingCopilot**](./MeetingCopilot/) | On-screen AI copilot — listens to meeting audio, transcribes with local Whisper, streams reply suggestions with Claude in a transparent overlay | Node.js / Electron | Windows / macOS / Linux |
+| [**MeetingCopilot**](./MeetingCopilot/) | On-screen AI copilot — listens to meeting audio, transcribes with local Whisper (any language → English), streams reply suggestions with Claude in a transparent overlay | Node.js / Electron | Windows / macOS / Linux / Android |
 
 ---
 
