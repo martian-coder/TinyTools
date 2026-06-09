@@ -12,6 +12,7 @@ let localConversationHistory = [];
 let currentSystemPrompt = null;
 let isLocalActive = false;
 let externalLlmFn = null;
+let translateMode = true; // translate any language → English by default
 
 // VAD state
 let isSpeaking = false;
@@ -167,8 +168,9 @@ async function transcribeAudio(pcm16kBuffer) {
         // Whisper expects audio at 16kHz which is what we have
         const result = await whisperPipeline(float32Audio, {
             sampling_rate: 16000,
-            language: 'en',
-            task: 'transcribe',
+            ...(translateMode
+                ? { task: 'translate' }                      // any language → English
+                : { task: 'transcribe', language: 'en' }),   // English only
         });
 
         const text = result.text?.trim();
@@ -275,8 +277,9 @@ async function sendToOllama(transcription) {
 
 // ── Public API ──
 
-async function initializeLocalSession(ollamaHost, model, whisperModel, profile, customPrompt) {
-    console.log('[LocalAI] Initializing local session:', { ollamaHost, model, whisperModel, profile });
+async function initializeLocalSession(ollamaHost, model, whisperModel, profile, customPrompt, translate = true) {
+    translateMode = translate;
+    console.log('[LocalAI] Initializing local session:', { ollamaHost, model, whisperModel, profile, translate });
 
     sendToRenderer('session-initializing', true);
 
@@ -366,8 +369,9 @@ function setExternalLlmFn(fn) {
 }
 
 // Initialize Whisper only (no Ollama) — used when an external LLM handles generation
-async function initializeLocalWhisperSession(whisperModel, profile, customPrompt) {
-    console.log('[LocalAI] Initializing whisper-only session:', { whisperModel, profile });
+async function initializeLocalWhisperSession(whisperModel, profile, customPrompt, translate = true) {
+    translateMode = translate;
+    console.log('[LocalAI] Initializing whisper-only session:', { whisperModel, profile, translate });
     sendToRenderer('session-initializing', true);
 
     try {
