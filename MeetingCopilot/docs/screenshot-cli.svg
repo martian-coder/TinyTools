@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="760" height="492" viewBox="0 0 760 492" xmlns="http://www.w3.org/2000/svg">
+
+  <!-- shadow -->
+  <rect x="6" y="8" width="754" height="484" rx="10" fill="#000" opacity="0.4"/>
+
+  <!-- window -->
+  <rect x="0" y="0" width="754" height="484" rx="10" fill="#1c1c1c"/>
+
+  <!-- titlebar -->
+  <rect x="0" y="0" width="754" height="36" rx="10" fill="#2a2a2a"/>
+  <rect x="0" y="26" width="754" height="10" fill="#2a2a2a"/>
+
+  <!-- traffic lights -->
+  <circle cx="22" cy="18" r="6" fill="#ff5f57"/>
+  <circle cx="42" cy="18" r="6" fill="#febc2e"/>
+  <circle cx="62" cy="18" r="6" fill="#28c840"/>
+
+  <!-- titlebar label -->
+  <text x="377" y="23"
+        font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
+        font-size="12" text-anchor="middle" fill="#686868">meeting-copilot — node cli.js</text>
+
+  <!-- ─── content (mono 12.5px, x=24, lh≈20) ─── -->
+
+  <text x="24" y="65"
+        font-family="ui-monospace,'Cascadia Code',Consolas,'Courier New',monospace"
+        font-size="14" font-weight="bold" fill="#e8e8e8">Meeting Copilot</text>
+
+  <text x="24" y="85"
+        font-family="ui-monospace,'Cascadia Code',Consolas,'Courier New',monospace"
+        font-size="12.5" fill="#484848">Model: claude-sonnet-4-6  |  Whisper: Xenova/whisper-small  |  Profile: interview</text>
+
+  <text x="24" y="104"
+        font-family="ui-monospace,'Cascadia Code',Consolas,'Courier New',monospace"
+        font-size="12.5" fill="#484848">Context: "Senior AI Engineer — Stripe LLM platform role, system design focus"</text>
+
+  <text x="24" y="131"
+        font-family="ui-monospace,'Cascadia Code',Consolas,'Courier New',monospace"
+        font-size="12.5" fill="#888">Loading Whisper model (first run downloads ~250 MB)… <tspan fill="#28c840">ready</tspan></text>
+
+  <text x="24" y="151"
+        font-family="ui-monospace,'Cascadia Code',Consolas,'Courier New',monospace"
+        font-size="12.5" fill="#28c840">✓ Claude API ready</text>
+
+  <text x="24" y="169"
+        font-family="ui-monospace,'Cascadia Code',Consolas,'Courier New',monospace"
+        font-size="12.5" fill="#383838">Ctrl+C to quit</text>
+
+  <text x="24" y="195"
+        font-family="ui-monospace,'Cascadia Code',Consolas,'Courier New',monospace"
+        font-size="12.5" fill="#28c840">✓ System audio capture started (macOS)</text>
+
+  <text x="24" y="214"
+        font-family="ui-monospace,'Cascadia Code',Consolas,'Courier New',monospace"
+        font-size="12.5" fill="#383838">Listening…</text>
+
+  <text x="24" y="239"
+        font-family="ui-monospace,'Cascadia Code',Consolas,'Courier New',monospace"
+        font-size="12.5" fill="#2e2e2e">────────────────────────────────────────────────────────────</text>
+
+  <text x="24" y="259"
+        font-family="ui-monospace,'Cascadia Code',Consolas,'Courier New',monospace"
+        font-size="12.5"><tspan fill="#36b6d8">Heard: </tspan><tspan fill="#c8c8c8">"Walk me through how you'd design a low-latency inference API"</tspan></text>
+
+  <text x="24" y="279"
+        font-family="ui-monospace,'Cascadia Code',Consolas,'Courier New',monospace"
+        font-size="12.5" fill="#2e2e2e">────────────────────────────────────────────────────────────</text>
+
+  <text x="24" y="307"
+        font-family="ui-monospace,'Cascadia Code',Consolas,'Courier New',monospace"
+        font-size="12.5" fill="#e0e0e0">I'd structure this in three layers. Model serving first: vLLM or Triton with dynamic</text>
+
+  <text x="24" y="327"
+        font-family="ui-monospace,'Cascadia Code',Consolas,'Courier New',monospace"
+        font-size="12.5" fill="#e0e0e0">batching behind a load balancer, p99 target around 50ms. Add prefix KV-cache reuse</text>
+
+  <text x="24" y="347"
+        font-family="ui-monospace,'Cascadia Code',Consolas,'Courier New',monospace"
+        font-size="12.5" fill="#e0e0e0">for common prompt patterns — that alone cuts TTFT by 40–60% in multi-tenant setups.</text>
+
+  <text x="24" y="367"
+        font-family="ui-monospace,'Cascadia Code',Consolas,'Courier New',monospace"
+        font-size="12.5" fill="#e0e0e0">Then a routing classifier: cheap model handles simple requests and upstacks complex</text>
+
+  <text x="24" y="387"
+        font-family="ui-monospace,'Cascadia Code',Consolas,'Courier New',monospace"
+        font-size="12.5" fill="#e0e0e0">ones to the full model. Keeps cost in check without sacrificing response quality.</text>
+
+  <text x="24" y="414"
+        font-family="ui-monospace,'Cascadia Code',Consolas,'Courier New',monospace"
+        font-size="12.5" fill="#383838">[cache:✓  in:847  out:312]</text>
+
+  <text x="24" y="452"
+        font-family="ui-monospace,'Cascadia Code',Consolas,'Courier New',monospace"
+        font-size="12.5" fill="#383838">Listening…</text>
+
+  <!-- cursor -->
+  <rect x="24" y="460" width="8" height="14" rx="1" fill="#484848"/>
+
+</svg>
