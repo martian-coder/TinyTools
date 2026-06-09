@@ -159,20 +159,7 @@ export class AppHeader extends LitElement {
     }
 
     async _checkForUpdates() {
-        try {
-            const currentVersion = await cheatingDaddy.getVersion();
-            const response = await fetch('https://raw.githubusercontent.com/sohzm/cheating-daddy/refs/heads/master/package.json');
-            if (!response.ok) return;
-
-            const remotePackage = await response.json();
-            const remoteVersion = remotePackage.version;
-
-            if (this._isNewerVersion(remoteVersion, currentVersion)) {
-                this.updateAvailable = true;
-            }
-        } catch (err) {
-            console.log('Update check failed:', err.message);
-        }
+        // no-op — update check removed
     }
 
     _isNewerVersion(remote, current) {
@@ -189,8 +176,7 @@ export class AppHeader extends LitElement {
     }
 
     async _openUpdatePage() {
-        const { ipcRenderer } = require('electron');
-        await ipcRenderer.invoke('open-external', 'https://cheatingdaddy.com');
+        // no-op
     }
 
     disconnectedCallback() {

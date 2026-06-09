@@ -810,7 +810,7 @@ function handleShortcut(shortcutKey) {
 }
 
 // Create reference to the main app element
-const cheatingDaddyApp = document.querySelector('cheating-daddy-app');
+const cheatingDaddyApp = document.querySelector('meeting-copilot-app');
 
 // ============ THEME SYSTEM ============
 const theme = {
