@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="420" height="510" viewBox="0 0 420 510" xmlns="http://www.w3.org/2000/svg">
+
+  <!-- shadow -->
+  <rect x="6" y="8" width="414" height="502" rx="10" fill="#000" opacity="0.5"/>
+
+  <!-- window -->
+  <rect x="0" y="0" width="414" height="502" rx="10" fill="#0d0d0d"/>
+
+  <!-- window border -->
+  <rect x="0" y="0" width="414" height="502" rx="10" fill="none" stroke="#1e1e1e" stroke-width="1"/>
+
+  <!-- ─── HEADER ─── -->
+  <rect x="0" y="0" width="414" height="44" rx="10" fill="#0d0d0d"/>
+  <rect x="0" y="34" width="414" height="10" fill="#0d0d0d"/>
+  <line x1="0" y1="44" x2="414" y2="44" stroke="#1e1e1e" stroke-width="1"/>
+
+  <!-- title -->
+  <text x="16" y="27"
+        font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif"
+        font-size="13" font-weight="500" fill="#e8e8e8">Meeting Copilot</text>
+
+  <!-- timer + status -->
+  <text x="176" y="27"
+        font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif"
+        font-size="12" fill="#555">2m 34s</text>
+
+  <text x="228" y="27"
+        font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif"
+        font-size="12" fill="#444">Listening…</text>
+
+  <!-- Hide button -->
+  <rect x="290" y="13" width="80" height="19" rx="3" fill="none" stroke="#272727" stroke-width="1"/>
+  <text x="330" y="26.5"
+        font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif"
+        font-size="11" font-weight="500" fill="#c0c0c0" text-anchor="middle">Hide  Cmd \</text>
+
+  <!-- Close ×  -->
+  <text x="387" y="28"
+        font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif"
+        font-size="16" fill="#444" text-anchor="middle">×</text>
+
+  <!-- ─── TRANSCRIPT STRIP ─── -->
+  <text x="16" y="66"
+        font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif"
+        font-size="10" fill="#3f7de5" letter-spacing="1">HEARD</text>
+
+  <text x="16" y="84"
+        font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif"
+        font-size="12" fill="#383838" font-style="italic">"…you'd be leading the inference platform team"</text>
+
+  <text x="16" y="102"
+        font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif"
+        font-size="12" fill="#525252" font-style="italic">"walk me through how you'd design a low-latency inference API"</text>
+
+  <!-- divider -->
+  <line x1="16" y1="118" x2="398" y2="118" stroke="#181818" stroke-width="1"/>
+
+  <!-- ─── RESPONSE AREA ─── -->
+  <text x="16" y="148"
+        font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif"
+        font-size="14.5" fill="#e8e8e8">I'd structure this in three layers.</text>
+
+  <text x="16" y="176"
+        font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif"
+        font-size="14.5" fill="#e8e8e8">Model serving first — vLLM or Triton</text>
+  <text x="16" y="200"
+        font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif"
+        font-size="14.5" fill="#e8e8e8">with dynamic batching, p99 target</text>
+  <text x="16" y="224"
+        font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif"
+        font-size="14.5" fill="#e8e8e8">around 50ms.</text>
+
+  <text x="16" y="260"
+        font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif"
+        font-size="14.5" fill="#e8e8e8">Prefix KV-cache reuse cuts TTFT</text>
+  <text x="16" y="284"
+        font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif"
+        font-size="14.5" fill="#e8e8e8">by 40–60% on repeated patterns.</text>
+
+  <text x="16" y="320"
+        font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif"
+        font-size="14.5" fill="#e8e8e8">Routing classifier fans simple</text>
+  <text x="16" y="344"
+        font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif"
+        font-size="14.5" fill="#e8e8e8">requests to a smaller model,</text>
+  <text x="16" y="368"
+        font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif"
+        font-size="14.5" fill="#e8e8e8">complex ones upstack — keeps</text>
+  <text x="16" y="392"
+        font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif"
+        font-size="14.5" fill="#e8e8e8">cost in check.</text>
+
+  <!-- streaming cursor -->
+  <rect x="16" y="406" width="10" height="16" rx="1" fill="#3f7de5" opacity="0.75"/>
+
+  <!-- ─── FOOTER STATS ─── -->
+  <line x1="16" y1="462" x2="398" y2="462" stroke="#141414" stroke-width="1"/>
+  <text x="16" y="480"
+        font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif"
+        font-size="11" fill="#333">[cache:✓  in:847  out:312]</text>
+
+</svg>
