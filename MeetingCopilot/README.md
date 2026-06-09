@@ -1,6 +1,16 @@
 # Meeting Copilot
 
-A personal AI assistant that sits as a transparent overlay during Zoom/Teams calls. It listens to the other person, transcribes their speech locally (Whisper), and streams a suggested reply from Claude the moment they pause.
+A personal AI assistant that sits as a transparent overlay during Zoom/Teams calls. It listens to the other person, transcribes their speech locally with Whisper, and streams a suggested reply from Claude the moment they pause.
+
+## 🌍 Multilingual — the standout feature
+
+**The other person can speak any language. You always see English.**
+
+Chinese, French, Hindi, Arabic, Spanish, Japanese, German — or any of the ~100 languages Whisper understands — Meeting Copilot transcribes and translates to English in real time. No translation API, no extra cost, no added latency. Whisper's built-in `translate` task does speech recognition and English translation in a single pass.
+
+This is on by default. Toggle it off in the setup screen for English-only meetings.
+
+---
 
 ## Overlay (Electron desktop app)
 
@@ -10,26 +20,30 @@ A personal AI assistant that sits as a transparent overlay during Zoom/Teams cal
 
 ![CLI](./docs/screenshot-cli.svg)
 
+---
+
 ## How it works
 
 1. Before the meeting: paste context (agenda, your role, talking points) into the text area
 2. Start session — the overlay appears
-3. The other person speaks → Whisper transcribes → Claude streams a suggested reply
+3. The other person speaks → Whisper transcribes (+ translates to English if needed) → Claude streams a suggested reply
 4. Glance at the overlay, adapt, keep talking
 
-Context is sent once as a **cached system prompt** — only the live transcript is sent on each turn, so latency and cost stay low.
+Context is sent once as a **cached system prompt** — only the live transcript changes per API call, so latency and cost stay low.
+
+---
 
 ## Setup
 
 ### 1. Install
 
-```
+```bash
 cd MeetingCopilot
 npm install
 npm start
 ```
 
-Requires Node 18+ and a working Electron environment.
+Requires Node 18+.
 
 ### 2. macOS — system audio
 
@@ -37,11 +51,24 @@ The first run will ask for Screen Recording permission. Grant it in System Prefe
 
 ### 3. Windows — system audio
 
-Uses `getDisplayMedia` with loopback audio. When prompted to share a screen, select the window/screen you want to capture audio from.
+Uses ffmpeg WASAPI loopback. Install once:
+```
+winget install Gyan.FFmpeg
+```
 
-### 4. Claude API key
+### 4. Linux — system audio
 
-Get one at [console.anthropic.com](https://console.anthropic.com/settings/keys). Paste it in the Meeting Copilot window and choose a model (Sonnet 4.6 is recommended).
+```bash
+apt install pulseaudio-utils
+pactl list sources short        # find your monitor source
+# then set --loopback <name> in CLI, or use mic
+```
+
+### 5. Claude API key
+
+Get one at [console.anthropic.com](https://console.anthropic.com/settings/keys). Paste it into the setup screen and pick a model (Sonnet 4.6 recommended).
+
+---
 
 ## Modes
 
@@ -49,15 +76,44 @@ Get one at [console.anthropic.com](https://console.anthropic.com/settings/keys).
 |------|-------------|
 | **Claude API** (default) | Claude API + local Whisper transcription |
 | **Local AI** | Ollama LLM + local Whisper transcription |
-| **Gemini BYOK** | Gemini Live API + Groq (bring your own keys) |
+| **Gemini BYOK** | Gemini Live API (bring your own keys) |
+
+---
+
+## CLI
+
+Run the full pipeline directly from terminal — no Electron needed:
+
+```bash
+# Default: any language → English
+node cli.js --key sk-ant-... --context "Senior AI Engineer, Stripe interview"
+
+# Web overlay on your phone/tablet (same WiFi)
+node cli.js --key sk-ant-... --serve
+
+# English-only mode (skip translation step)
+node cli.js --key sk-ant-... --lang en
+
+# All options
+node cli.js start --help
+```
+
+**Platform audio:**
+- macOS: system audio (Teams/Zoom output) by default
+- Windows: ffmpeg WASAPI loopback (`winget install Gyan.FFmpeg`)
+- Linux: `--loopback <pulse-monitor-device>` for system audio, or `--mic`
+- Android/Termux: `--mic` + `--serve` to view on phone
+
+---
 
 ## Quick demo (no microphone needed)
 
 1. Start in Claude API mode with your key
-2. Leave the context textarea as-is or paste some context
-3. Click **Start Session**
-4. Type a question in the bottom text bar and press Enter
-5. Claude's suggested reply streams in the overlay
+2. Click **Start Session**
+3. Type a question in the bottom text bar and press Enter
+4. Claude's suggested reply streams in the overlay
+
+---
 
 ## Keyboard shortcuts
 
@@ -67,7 +123,9 @@ Get one at [console.anthropic.com](https://console.anthropic.com/settings/keys).
 | `Cmd/Ctrl+M` | Toggle click-through |
 | `Cmd/Ctrl+Enter` | Analyze screen |
 | `Cmd/Ctrl+[` / `]` | Previous/next response |
-| `Cmd/Ctrl+Shift+E` | Emergency hide + quit |
+| `Cmd/Ctrl+Shift+Up/Down` | Scroll response |
+
+---
 
 ## License
 
