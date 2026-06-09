@@ -2,6 +2,14 @@
 
 A personal AI assistant that sits as a transparent overlay during Zoom/Teams calls. It listens to the other person, transcribes their speech locally (Whisper), and streams a suggested reply from Claude the moment they pause.
 
+## Overlay (Electron desktop app)
+
+![Overlay UI](./docs/screenshot-ui.svg)
+
+## CLI (terminal)
+
+![CLI](./docs/screenshot-cli.svg)
+
 ## How it works
 
 1. Before the meeting: paste context (agenda, your role, talking points) into the text area
