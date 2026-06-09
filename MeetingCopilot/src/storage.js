@@ -33,6 +33,7 @@ const DEFAULT_PREFERENCES = {
     ollamaModel: 'llama3.1',
     whisperModel: 'Xenova/whisper-small',
     anthropicModel: 'claude-sonnet-4-6',
+    translateToEnglish: true,
 };
 
 const DEFAULT_KEYBINDS = null; // null means use system defaults

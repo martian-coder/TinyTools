@@ -41,6 +41,7 @@ program
     .option('--mic',                       'Capture microphone (default on non-macOS; forced on Android/Termux)')
     .option('--loopback <device>',         'Linux PulseAudio/PipeWire monitor source for system audio (e.g. alsa_output.pci.analog-stereo.monitor)')
     .option('--serve [port]',              'Serve a live web overlay on <port> (default 3001) — open on Android/tablet browser')
+    .option('--lang <code>',               'Force a specific language for transcription, e.g. en, fr, zh (disables auto-translate)')
     .action(run);
 
 program.parse();
@@ -188,7 +189,13 @@ async function run(opts) {
     // Load Whisper
     process.stdout.write('Loading Whisper model (first run downloads ~250 MB)… ');
     const pipe = await loadWhisper(opts.whisper);
+    if (opts.lang) pipe._lang = opts.lang; // store for transcribe()
     console.log(green('ready'));
+    if (opts.lang) {
+        console.log(dim(`Language locked: ${opts.lang} (transcribe only, no translation)`));
+    } else {
+        console.log(dim('Multilingual mode: any language → English'));
+    }
 
     // Claude client + system prompt
     const Anthropic = require('@anthropic-ai/sdk');
@@ -274,7 +281,12 @@ async function transcribe(pipe, pcm16kBuffer) {
         const samples = pcm16kBuffer.length / 2;
         const f32 = new Float32Array(samples);
         for (let i = 0; i < samples; i++) f32[i] = pcm16kBuffer.readInt16LE(i * 2) / 32768;
-        const result = await pipe(f32, { sampling_rate: 16000, language: 'en', task: 'transcribe' });
+        // No language forced → translate task: any language in, English out.
+        // --lang set → transcribe in that language without translation.
+        const taskOpts = pipe._lang
+            ? { task: 'transcribe', language: pipe._lang }
+            : { task: 'translate' };
+        const result = await pipe(f32, { sampling_rate: 16000, ...taskOpts });
         return result.text?.trim() ?? '';
     } catch {
         return '';

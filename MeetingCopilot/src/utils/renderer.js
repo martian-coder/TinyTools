@@ -159,8 +159,9 @@ async function initializeLocal(profile = 'interview') {
     const ollamaModel = prefs.ollamaModel || 'llama3.1';
     const whisperModel = prefs.whisperModel || 'Xenova/whisper-small';
     const customPrompt = prefs.customPrompt || '';
+    const translate = prefs.translateToEnglish !== false; // default true
 
-    const success = await ipcRenderer.invoke('initialize-local', ollamaHost, ollamaModel, whisperModel, profile, customPrompt);
+    const success = await ipcRenderer.invoke('initialize-local', ollamaHost, ollamaModel, whisperModel, profile, customPrompt, translate);
     if (success) {
         cheatingDaddy.setStatus('Local AI Live');
         return true;
@@ -177,9 +178,10 @@ async function initializeAnthropic(profile = 'interview') {
     const model = prefs.anthropicModel || 'claude-sonnet-4-6';
     const whisperModel = prefs.whisperModel || 'Xenova/whisper-small';
     const customPrompt = prefs.customPrompt || '';
+    const translate = prefs.translateToEnglish !== false; // default true
 
     const success = await ipcRenderer.invoke(
-        'initialize-anthropic', apiKey, model, whisperModel, profile, customPrompt
+        'initialize-anthropic', apiKey, model, whisperModel, profile, customPrompt, translate
     );
     if (success) {
         cheatingDaddy.setStatus('Claude Live — Listening...');
