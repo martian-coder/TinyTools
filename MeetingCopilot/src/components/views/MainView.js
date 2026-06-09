@@ -170,6 +170,18 @@ export class MainView extends LitElement {
             color: var(--text-muted);
         }
 
+        .toggle-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+        }
+
+        .toggle-label {
+            font-size: var(--font-size-sm);
+            color: var(--text-primary);
+        }
+
         .form-hint a, .form-hint span.link {
             color: var(--accent);
             text-decoration: none;
@@ -503,6 +515,7 @@ export class MainView extends LitElement {
         _anthropicKey: { state: true },
         _anthropicModel: { state: true },
         _customContext: { state: true },
+        _translateToEnglish: { state: true },
     };
 
     constructor() {
@@ -528,6 +541,7 @@ export class MainView extends LitElement {
         this._anthropicKey = '';
         this._anthropicModel = 'claude-sonnet-4-6';
         this._customContext = '';
+        this._translateToEnglish = true;
 
         this._animId = null;
         this._time = 0;
@@ -567,6 +581,7 @@ export class MainView extends LitElement {
             this._anthropicKey = creds.anthropicApiKey || '';
             this._anthropicModel = prefs.anthropicModel || 'claude-sonnet-4-6';
             this._customContext = prefs.customPrompt || '';
+            this._translateToEnglish = prefs.translateToEnglish !== false;
 
             this.requestUpdate();
         } catch (e) {
@@ -777,6 +792,12 @@ export class MainView extends LitElement {
         this.requestUpdate();
     }
 
+    async _saveTranslateToEnglish(val) {
+        this._translateToEnglish = val;
+        await cheatingDaddy.storage.updatePreference('translateToEnglish', val);
+        this.requestUpdate();
+    }
+
     _handleProfileChange(e) {
         this.onProfileChange(e.target.value);
     }
@@ -872,6 +893,18 @@ export class MainView extends LitElement {
                     <option value="Xenova/whisper-medium" ?selected=${this._whisperModel === 'Xenova/whisper-medium'}>Medium (most accurate, slowest)</option>
                 </select>
                 <div class="form-hint">${this.whisperDownloading ? 'Downloading model...' : 'Downloaded automatically on first use'}</div>
+            </div>
+
+            <div class="form-group">
+                <label class="toggle-row">
+                    <input
+                        type="checkbox"
+                        .checked=${this._translateToEnglish}
+                        @change=${e => this._saveTranslateToEnglish(e.target.checked)}
+                    />
+                    <span class="toggle-label">Translate to English (multilingual)</span>
+                </label>
+                <div class="form-hint">On: speaker can use any language — output is always English. Off: English only.</div>
             </div>
 
             ${this._renderStartButton()}

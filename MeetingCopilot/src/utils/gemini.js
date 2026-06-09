@@ -872,16 +872,16 @@ function setupGeminiIpcHandlers(geminiSessionRef) {
         return false;
     });
 
-    ipcMain.handle('initialize-local', async (event, ollamaHost, ollamaModel, whisperModel, profile, customPrompt) => {
+    ipcMain.handle('initialize-local', async (event, ollamaHost, ollamaModel, whisperModel, profile, customPrompt, translate = true) => {
         currentProviderMode = 'local';
-        const success = await getLocalAi().initializeLocalSession(ollamaHost, ollamaModel, whisperModel, profile, customPrompt);
+        const success = await getLocalAi().initializeLocalSession(ollamaHost, ollamaModel, whisperModel, profile, customPrompt, translate);
         if (!success) {
             currentProviderMode = 'byok';
         }
         return success;
     });
 
-    ipcMain.handle('initialize-anthropic', async (event, apiKey, model, whisperModel, profile, customPrompt) => {
+    ipcMain.handle('initialize-anthropic', async (event, apiKey, model, whisperModel, profile, customPrompt, translate = true) => {
         currentProviderMode = 'anthropic';
         try {
             const { getSystemPrompt } = require('./prompts');
@@ -889,7 +889,7 @@ function setupGeminiIpcHandlers(geminiSessionRef) {
 
             getAnthropic().initializeAnthropicProvider(apiKey, model, systemPrompt);
 
-            const success = await getLocalAi().initializeLocalWhisperSession(whisperModel, profile, customPrompt);
+            const success = await getLocalAi().initializeLocalWhisperSession(whisperModel, profile, customPrompt, translate);
             if (!success) {
                 currentProviderMode = 'byok';
                 return false;
