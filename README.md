@@ -22,6 +22,7 @@ Inspired by [Scott Hanselman's TinyToolTown](https://tinytooltown.com) — _"Vib
 | [**CmdLog**](./CmdLog/) | Interactive history browser — search, categorize, bookmark and re-run commands with full context (directory, branch, timing, exit code) | Python 3 | Windows / macOS / Linux |
 | [**MarkdownZipped**](./MarkdownZipped/) | Compress LLM prompts through a 4-stage pipeline (minify → rewrite → dedup → cache) and pack them into a `.mdz` file | Python 3 | Windows / macOS / Linux |
 | [**Olus**](./Olus/) | A featherweight browser — real Chromium via WebView2, never-lose-your-tabs sessions, Tor/proxy region routing, switchable search engine | Rust / Tauri 2 | Windows |
+| [**MeetingCopilot**](./MeetingCopilot/) | On-screen AI copilot — listens to meeting audio, transcribes with local Whisper, streams reply suggestions with Claude in a transparent overlay | Node.js / Electron | Windows / macOS / Linux |
 
 ---
 
@@ -78,6 +79,22 @@ cd MarkdownZipped
 python3 mdzip.py zip examples/verbose_prompt.xml   # compress -> .mdz
 python3 mdzip.py info examples/verbose_prompt.mdz  # show savings
 open web/index.html                                # or use the browser studio (zero install)
+```
+
+### MeetingCopilot
+```bash
+cd MeetingCopilot
+npm install
+
+# Desktop overlay (Electron)
+ANTHROPIC_API_KEY=sk-ant-... npm start
+
+# CLI — terminal only
+node cli.js --key sk-ant-... --context "context about the meeting"
+
+# CLI with web overlay — open on phone/tablet (same WiFi)
+node cli.js --key sk-ant-... --serve
+# → Open http://<your-ip>:3001 on any device
 ```
 
 ---
