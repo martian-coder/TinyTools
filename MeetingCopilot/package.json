@@ -4,6 +4,9 @@
     "version": "1.0.0",
     "description": "AI meeting assistant — Claude + Whisper, transparent overlay",
     "main": "src/index.js",
+    "bin": {
+        "meeting-copilot": "./cli.js"
+    },
     "scripts": {
         "start": "electron-forge start",
         "package": "electron-forge package",
@@ -24,6 +27,7 @@
     "license": "GPL-3.0",
     "dependencies": {
         "@anthropic-ai/sdk": "^0.55.0",
+        "commander": "^12.1.0",
         "@google/genai": "^1.2.0",
         "@huggingface/transformers": "^3.8.1",
         "electron-squirrel-startup": "^1.0.1",
