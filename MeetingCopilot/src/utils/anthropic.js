@@ -7,6 +7,19 @@ let conversationHistory = [];
 let currentSystemPrompt = null;
 let isActive = false;
 
+function isContentFilterError(err) {
+    const msg = (err.message || '').toLowerCase();
+    const status = err.status || err.status_code || 0;
+    return (
+        msg.includes('content filtering') ||
+        msg.includes('output blocked') ||
+        msg.includes('safety') ||
+        msg.includes('policy') ||
+        msg.includes('violat') ||
+        status === 400
+    );
+}
+
 async function initializeAnthropicProvider(apiKey, model, systemPrompt) {
     anthropicClient = new Anthropic({ apiKey });
     anthropicModel = model || 'claude-sonnet-4-6';
@@ -68,8 +81,15 @@ async function sendToAnthropic(transcription) {
 
         sendToRenderer('update-status', 'Listening...');
     } catch (error) {
-        console.error('[Anthropic] Error:', error);
-        sendToRenderer('update-status', 'Claude error: ' + error.message);
+        console.error('[Anthropic] Error:', error.message);
+        // Always remove the triggering user turn from history so it doesn't
+        // cause every subsequent request to fail too.
+        if (conversationHistory.length > 0 &&
+            conversationHistory[conversationHistory.length - 1].role === 'user') {
+            conversationHistory.pop();
+        }
+        // Silently resume — don't alarm the user for filtered turns.
+        sendToRenderer('update-status', 'Listening...');
     }
 }
 
@@ -138,6 +158,10 @@ async function sendAnthropicImage(base64Data, prompt) {
         return { success: true, text: fullText, model: anthropicModel };
     } catch (error) {
         console.error('[Anthropic] Image error:', error);
+        if (isContentFilterError(error)) {
+            sendToRenderer('update-status', 'Listening...');
+            return { success: false, error: 'Content filtered' };
+        }
         sendToRenderer('update-status', 'Claude error: ' + error.message);
         return { success: false, error: error.message };
     }
