@@ -1,3 +1,5 @@
+'use strict';
+
 const Anthropic = require('@anthropic-ai/sdk');
 const { sendToRenderer, initializeNewSession, saveConversationTurn } = require('./gemini');
 
@@ -7,27 +9,23 @@ let conversationHistory = [];
 let currentSystemPrompt = null;
 let isActive = false;
 
-function isContentFilterError(err) {
-    const msg = (err.message || '').toLowerCase();
-    const status = err.status || err.status_code || 0;
-    return (
-        msg.includes('content filtering') ||
-        msg.includes('output blocked') ||
-        msg.includes('safety') ||
-        msg.includes('policy') ||
-        msg.includes('violat') ||
-        status === 400
-    );
+// ── Helpers ────────────────────────────────────────────────────────────────
+
+function resumeListening() {
+    sendToRenderer('update-status', 'Listening...');
 }
 
-async function initializeAnthropicProvider(apiKey, model, systemPrompt) {
-    anthropicClient = new Anthropic({ apiKey });
-    anthropicModel = model || 'claude-sonnet-4-6';
-    currentSystemPrompt = systemPrompt || 'You are a helpful meeting assistant.';
-    conversationHistory = [];
-    isActive = true;
-    console.log('[Anthropic] Provider initialized with model:', anthropicModel);
+// Pop the last user turn so a blocked message doesn't taint future requests.
+function dropLastUserTurn() {
+    if (
+        conversationHistory.length > 0 &&
+        conversationHistory[conversationHistory.length - 1].role === 'user'
+    ) {
+        conversationHistory.pop();
+    }
 }
+
+// ── Core generation ────────────────────────────────────────────────────────
 
 async function sendToAnthropic(transcription) {
     if (!anthropicClient || !isActive) {
@@ -45,8 +43,9 @@ async function sendToAnthropic(transcription) {
 
     sendToRenderer('update-status', 'Generating response...');
 
+    let stream;
     try {
-        const stream = anthropicClient.messages.stream({
+        stream = anthropicClient.messages.stream({
             model: anthropicModel,
             max_tokens: 1024,
             system: [
@@ -58,39 +57,68 @@ async function sendToAnthropic(transcription) {
             ],
             messages: conversationHistory,
         });
+    } catch (err) {
+        console.error('[Anthropic] Failed to create stream:', err.message);
+        dropLastUserTurn();
+        resumeListening();
+        return;
+    }
 
-        let fullText = '';
-        let isFirst = true;
+    let fullText = '';
+    let isFirst = true;
 
+    try {
         for await (const event of stream) {
-            if (event.type === 'content_block_delta' && event.delta.type === 'text_delta') {
+            if (
+                event.type === 'content_block_delta' &&
+                event.delta.type === 'text_delta'
+            ) {
                 fullText += event.delta.text;
                 sendToRenderer(isFirst ? 'new-response' : 'update-response', fullText);
                 isFirst = false;
             }
         }
+    } catch (err) {
+        console.error('[Anthropic] Stream error:', err.message);
+        dropLastUserTurn();
+        resumeListening();
+        return;
+    }
 
+    try {
         const finalMsg = await stream.finalMessage();
         const cached = finalMsg.usage?.cache_read_input_tokens || 0;
         if (cached > 0) console.log('[Anthropic] Cache hit tokens:', cached);
-
-        if (fullText.trim()) {
-            conversationHistory.push({ role: 'assistant', content: fullText.trim() });
-            saveConversationTurn(transcription, fullText);
+    } catch (err) {
+        // finalMessage() can throw on filtered responses — the streamed text
+        // is still valid if we got any, so only bail if we have nothing.
+        console.error('[Anthropic] finalMessage error:', err.message);
+        if (!fullText.trim()) {
+            dropLastUserTurn();
+            resumeListening();
+            return;
         }
-
-        sendToRenderer('update-status', 'Listening...');
-    } catch (error) {
-        console.error('[Anthropic] Error:', error.message);
-        // Always remove the triggering user turn from history so it doesn't
-        // cause every subsequent request to fail too.
-        if (conversationHistory.length > 0 &&
-            conversationHistory[conversationHistory.length - 1].role === 'user') {
-            conversationHistory.pop();
-        }
-        // Silently resume — don't alarm the user for filtered turns.
-        sendToRenderer('update-status', 'Listening...');
     }
+
+    if (fullText.trim()) {
+        conversationHistory.push({ role: 'assistant', content: fullText.trim() });
+        saveConversationTurn(transcription, fullText);
+    } else {
+        dropLastUserTurn();
+    }
+
+    resumeListening();
+}
+
+// ── Public API ─────────────────────────────────────────────────────────────
+
+async function initializeAnthropicProvider(apiKey, model, systemPrompt) {
+    anthropicClient = new Anthropic({ apiKey });
+    anthropicModel = model || 'claude-opus-4-8';
+    currentSystemPrompt = systemPrompt || 'You are a helpful meeting assistant.';
+    conversationHistory = [];
+    isActive = true;
+    console.log('[Anthropic] Provider initialized with model:', anthropicModel);
 }
 
 async function sendAnthropicText(text) {
@@ -100,8 +128,10 @@ async function sendAnthropicText(text) {
     try {
         await sendToAnthropic(text);
         return { success: true };
-    } catch (error) {
-        return { success: false, error: error.message };
+    } catch (err) {
+        dropLastUserTurn();
+        resumeListening();
+        return { success: false, error: err.message };
     }
 }
 
@@ -111,8 +141,10 @@ async function sendAnthropicImage(base64Data, prompt) {
     }
 
     sendToRenderer('update-status', 'Analyzing image...');
+
+    let stream;
     try {
-        const stream = anthropicClient.messages.stream({
+        stream = anthropicClient.messages.stream({
             model: anthropicModel,
             max_tokens: 1024,
             system: [
@@ -129,42 +161,54 @@ async function sendAnthropicImage(base64Data, prompt) {
                     content: [
                         {
                             type: 'image',
-                            source: { type: 'base64', media_type: 'image/jpeg', data: base64Data },
+                            source: {
+                                type: 'base64',
+                                media_type: 'image/jpeg',
+                                data: base64Data,
+                            },
                         },
-                        { type: 'text', text: prompt || 'Analyze this screen and suggest what to say.' },
+                        {
+                            type: 'text',
+                            text: prompt || 'Describe what is on screen and suggest what to say.',
+                        },
                     ],
                 },
             ],
         });
+    } catch (err) {
+        console.error('[Anthropic] Image stream create error:', err.message);
+        resumeListening();
+        return { success: false, error: err.message };
+    }
 
-        let fullText = '';
-        let isFirst = true;
+    let fullText = '';
+    let isFirst = true;
 
+    try {
         for await (const event of stream) {
-            if (event.type === 'content_block_delta' && event.delta.type === 'text_delta') {
+            if (
+                event.type === 'content_block_delta' &&
+                event.delta.type === 'text_delta'
+            ) {
                 fullText += event.delta.text;
                 sendToRenderer(isFirst ? 'new-response' : 'update-response', fullText);
                 isFirst = false;
             }
         }
-
-        if (fullText.trim()) {
-            conversationHistory.push({ role: 'user', content: prompt });
-            conversationHistory.push({ role: 'assistant', content: fullText.trim() });
-            saveConversationTurn(prompt, fullText);
-        }
-
-        sendToRenderer('update-status', 'Listening...');
-        return { success: true, text: fullText, model: anthropicModel };
-    } catch (error) {
-        console.error('[Anthropic] Image error:', error);
-        if (isContentFilterError(error)) {
-            sendToRenderer('update-status', 'Listening...');
-            return { success: false, error: 'Content filtered' };
-        }
-        sendToRenderer('update-status', 'Claude error: ' + error.message);
-        return { success: false, error: error.message };
+    } catch (err) {
+        console.error('[Anthropic] Image stream error:', err.message);
+        resumeListening();
+        return { success: false, error: err.message };
     }
+
+    if (fullText.trim()) {
+        conversationHistory.push({ role: 'user', content: prompt });
+        conversationHistory.push({ role: 'assistant', content: fullText.trim() });
+        saveConversationTurn(prompt, fullText);
+    }
+
+    resumeListening();
+    return { success: true, text: fullText, model: anthropicModel };
 }
 
 function closeAnthropicProvider() {
