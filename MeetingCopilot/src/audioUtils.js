@@ -1,135 +1,102 @@
-const fs = require('fs');
-const path = require('path');
+'use strict';
 
-// Convert raw PCM to WAV format for easier playback and verification
-function pcmToWav(pcmBuffer, outputPath, sampleRate = 24000, channels = 1, bitDepth = 16) {
-    const byteRate = sampleRate * channels * (bitDepth / 8);
-    const blockAlign = channels * (bitDepth / 8);
-    const dataSize = pcmBuffer.length;
+// PCM utility functions — 16-bit signed LE throughout.
 
-    // Create WAV header
-    const header = Buffer.alloc(44);
-
-    // "RIFF" chunk descriptor
-    header.write('RIFF', 0);
-    header.writeUInt32LE(dataSize + 36, 4); // File size - 8
-    header.write('WAVE', 8);
-
-    // "fmt " sub-chunk
-    header.write('fmt ', 12);
-    header.writeUInt32LE(16, 16); // Subchunk1Size (16 for PCM)
-    header.writeUInt16LE(1, 20); // AudioFormat (1 for PCM)
-    header.writeUInt16LE(channels, 22); // NumChannels
-    header.writeUInt32LE(sampleRate, 24); // SampleRate
-    header.writeUInt32LE(byteRate, 28); // ByteRate
-    header.writeUInt16LE(blockAlign, 32); // BlockAlign
-    header.writeUInt16LE(bitDepth, 34); // BitsPerSample
-
-    // "data" sub-chunk
-    header.write('data', 36);
-    header.writeUInt32LE(dataSize, 40); // Subchunk2Size
-
-    // Combine header and PCM data
-    const wavBuffer = Buffer.concat([header, pcmBuffer]);
-
-    // Write to file
-    fs.writeFileSync(outputPath, wavBuffer);
-
-    return outputPath;
+/**
+ * Stereo Int16LE → mono Int16LE by averaging both channels.
+ * More faithful than dropping one channel (avoids DC offset asymmetry).
+ */
+function stereoToMono(stereo) {
+    const samples = Math.floor(stereo.length / 4);
+    const mono = Buffer.allocUnsafe(samples * 2);
+    for (let i = 0; i < samples; i++) {
+        const L = stereo.readInt16LE(i * 4);
+        const R = stereo.readInt16LE(i * 4 + 2);
+        mono.writeInt16LE(Math.round((L + R) / 2), i * 2);
+    }
+    return mono;
 }
 
-// Analyze audio buffer for debugging
-function analyzeAudioBuffer(buffer, label = 'Audio') {
-    const int16Array = new Int16Array(buffer.buffer, buffer.byteOffset, buffer.length / 2);
+/**
+ * Linear interpolation resample for Int16LE PCM.
+ * Works well for small ratio changes (e.g. 24 kHz → 16 kHz).
+ * Maintains a remainder buffer between calls so you can stream it.
+ */
+class PCMResampler {
+    constructor(inRate, outRate) {
+        this.ratio = outRate / inRate;
+        this._remainder = Buffer.alloc(0);
+    }
 
-    let minValue = 32767;
-    let maxValue = -32768;
-    let avgValue = 0;
-    let rmsValue = 0;
-    let silentSamples = 0;
+    process(input) {
+        const combined = Buffer.concat([this._remainder, input]);
+        const inSamples = Math.floor(combined.length / 2);
+        const outSamples = Math.floor(inSamples * this.ratio);
+        const out = Buffer.allocUnsafe(outSamples * 2);
 
-    for (let i = 0; i < int16Array.length; i++) {
-        const sample = int16Array[i];
-        minValue = Math.min(minValue, sample);
-        maxValue = Math.max(maxValue, sample);
-        avgValue += sample;
-        rmsValue += sample * sample;
-
-        if (Math.abs(sample) < 100) {
-            silentSamples++;
+        for (let i = 0; i < outSamples; i++) {
+            const srcPos = i / this.ratio;
+            const srcIdx = Math.floor(srcPos);
+            const frac = srcPos - srcIdx;
+            const s0 = combined.readInt16LE(srcIdx * 2);
+            const s1 = srcIdx + 1 < inSamples ? combined.readInt16LE((srcIdx + 1) * 2) : s0;
+            out.writeInt16LE(Math.round(s0 + frac * (s1 - s0)), i * 2);
         }
+
+        const consumed = Math.ceil(outSamples / this.ratio);
+        this._remainder = consumed * 2 < combined.length
+            ? combined.slice(consumed * 2)
+            : Buffer.alloc(0);
+
+        return out;
     }
 
-    avgValue /= int16Array.length;
-    rmsValue = Math.sqrt(rmsValue / int16Array.length);
-
-    const silencePercentage = (silentSamples / int16Array.length) * 100;
-
-    console.log(`${label} Analysis:`);
-    console.log(`  Samples: ${int16Array.length}`);
-    console.log(`  Min: ${minValue}, Max: ${maxValue}`);
-    console.log(`  Average: ${avgValue.toFixed(2)}`);
-    console.log(`  RMS: ${rmsValue.toFixed(2)}`);
-    console.log(`  Silence: ${silencePercentage.toFixed(1)}%`);
-    console.log(`  Dynamic Range: ${20 * Math.log10(maxValue / (rmsValue || 1))} dB`);
-
-    return {
-        minValue,
-        maxValue,
-        avgValue,
-        rmsValue,
-        silencePercentage,
-        sampleCount: int16Array.length,
-    };
-}
-
-// Save audio buffer with metadata for debugging
-function saveDebugAudio(buffer, type, timestamp = Date.now()) {
-    const homeDir = require('os').homedir();
-    const debugDir = path.join(homeDir, 'meeting-copilot-debug');
-
-    if (!fs.existsSync(debugDir)) {
-        fs.mkdirSync(debugDir, { recursive: true });
+    reset() {
+        this._remainder = Buffer.alloc(0);
     }
-
-    const pcmPath = path.join(debugDir, `${type}_${timestamp}.pcm`);
-    const wavPath = path.join(debugDir, `${type}_${timestamp}.wav`);
-    const metaPath = path.join(debugDir, `${type}_${timestamp}.json`);
-
-    // Save raw PCM
-    fs.writeFileSync(pcmPath, buffer);
-
-    // Convert to WAV for easy playback
-    pcmToWav(buffer, wavPath);
-
-    // Analyze and save metadata
-    const analysis = analyzeAudioBuffer(buffer, type);
-    fs.writeFileSync(
-        metaPath,
-        JSON.stringify(
-            {
-                timestamp,
-                type,
-                bufferSize: buffer.length,
-                analysis,
-                format: {
-                    sampleRate: 24000,
-                    channels: 1,
-                    bitDepth: 16,
-                },
-            },
-            null,
-            2
-        )
-    );
-
-    console.log(`Debug audio saved: ${wavPath}`);
-
-    return { pcmPath, wavPath, metaPath };
 }
 
-module.exports = {
-    pcmToWav,
-    analyzeAudioBuffer,
-    saveDebugAudio,
-};
+/** RMS energy of an Int16LE buffer, normalised to 0-1. */
+function rms(buf) {
+    const n = Math.floor(buf.length / 2);
+    if (n === 0) return 0;
+    let sum = 0;
+    for (let i = 0; i < n; i++) {
+        const s = buf.readInt16LE(i * 2) / 32768;
+        sum += s * s;
+    }
+    return Math.sqrt(sum / n);
+}
+
+/** Convert an Int16LE buffer to Float32Array in [-1, 1]. */
+function toFloat32(pcm16) {
+    const n = Math.floor(pcm16.length / 2);
+    const f32 = new Float32Array(n);
+    for (let i = 0; i < n; i++) {
+        f32[i] = pcm16.readInt16LE(i * 2) / 32768;
+    }
+    return f32;
+}
+
+/** Write a minimal WAV file. Useful for debug playback. */
+function toWav(pcm16, sampleRate = 16000, channels = 1) {
+    const byteRate = sampleRate * channels * 2;
+    const buf = Buffer.allocUnsafe(44 + pcm16.length);
+    buf.write('RIFF', 0);
+    buf.writeUInt32LE(36 + pcm16.length, 4);
+    buf.write('WAVE', 8);
+    buf.write('fmt ', 12);
+    buf.writeUInt32LE(16, 16);
+    buf.writeUInt16LE(1, 20);       // PCM
+    buf.writeUInt16LE(channels, 22);
+    buf.writeUInt32LE(sampleRate, 24);
+    buf.writeUInt32LE(byteRate, 28);
+    buf.writeUInt16LE(channels * 2, 32);
+    buf.writeUInt16LE(16, 34);
+    buf.write('data', 36);
+    buf.writeUInt32LE(pcm16.length, 40);
+    pcm16.copy(buf, 44);
+    return buf;
+}
+
+module.exports = { stereoToMono, PCMResampler, rms, toFloat32, toWav };

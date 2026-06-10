@@ -12,7 +12,8 @@
         "package": "electron-forge package",
         "make": "electron-forge make",
         "publish": "electron-forge publish",
-        "lint": "echo \"No linting configured\""
+        "lint": "echo \"No linting configured\"",
+        "build:swift": "swiftc src/assets/SystemAudioCapture.swift -o src/assets/SystemAudioCapture -framework ScreenCaptureKit -framework Foundation -framework CoreMedia -framework CoreAudio"
     },
     "keywords": [
         "meeting copilot",
@@ -31,7 +32,9 @@
         "@google/genai": "^1.2.0",
         "@huggingface/transformers": "^3.8.1",
         "electron-squirrel-startup": "^1.0.1",
+        "ffmpeg-static": "^5.2.0",
         "ollama": "^0.6.3",
+        "onnxruntime-node": "^1.20.1",
         "ws": "^8.19.0"
     },
     "devDependencies": {
