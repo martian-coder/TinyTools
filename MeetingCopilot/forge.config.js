@@ -4,9 +4,12 @@ const { FuseV1Options, FuseVersion } = require('@electron/fuses');
 module.exports = {
     packagerConfig: {
         asar: {
-            unpack: '**/{onnxruntime-node,onnxruntime-common,@huggingface/transformers,sharp,@img}/**',
+            // Native .node binaries and large model-loading libs must live outside the asar archive
+            // so the OS can dlopen/mmap them directly.
+            unpack: '**/{onnxruntime-node,onnxruntime-common,@huggingface/transformers,ffmpeg-static,sharp,@img}/**',
         },
-        extraResource: ['./src/assets/SystemAudioDump'],
+        // SystemAudioCapture is our own Swift binary compiled from src/assets/SystemAudioCapture.swift
+        extraResource: ['./src/assets/SystemAudioCapture'],
         name: 'Meeting Copilot',
         icon: 'src/assets/logo',
         // use `security find-identity -v -p codesigning` to find your identity
