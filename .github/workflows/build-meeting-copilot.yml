@@ -1,0 +1,145 @@
+name: Build Meeting Copilot
+
+# Builds Windows (.exe), macOS (.dmg), and Linux (.AppImage) installers.
+# Every push to main uploads installers as workflow artifacts.
+# Tagging a release (v1.2.3) also attaches them to a GitHub Release.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'MeetingCopilot/**'
+      - '.github/workflows/build-meeting-copilot.yml'
+    tags: ['v*']
+  workflow_dispatch:
+
+jobs:
+  # ── Windows ──────────────────────────────────────────────────────────────
+  build-windows:
+    name: Windows installer (.exe)
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: MeetingCopilot/package-lock.json
+
+      - name: Install dependencies
+        working-directory: MeetingCopilot
+        run: npm ci
+
+      - name: Build
+        working-directory: MeetingCopilot
+        run: npm run make -- --platform win32 --arch x64
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: MeetingCopilot-Windows
+          path: MeetingCopilot/out/make/squirrel.windows/x64/MeetingCopilotSetup.exe
+          if-no-files-found: error
+
+  # ── macOS ─────────────────────────────────────────────────────────────────
+  build-macos:
+    name: macOS installer (.dmg)
+    runs-on: macos-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: MeetingCopilot/package-lock.json
+
+      - name: Install dependencies
+        working-directory: MeetingCopilot
+        run: npm ci
+
+      - name: Build
+        working-directory: MeetingCopilot
+        run: npm run make -- --platform darwin --arch x64
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: MeetingCopilot-macOS
+          path: MeetingCopilot/out/make/*.dmg
+          if-no-files-found: error
+
+  # ── Linux ─────────────────────────────────────────────────────────────────
+  build-linux:
+    name: Linux installer (.AppImage)
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: MeetingCopilot/package-lock.json
+
+      - name: Install dependencies
+        working-directory: MeetingCopilot
+        run: npm ci
+
+      - name: Build
+        working-directory: MeetingCopilot
+        run: npm run make -- --platform linux --arch x64
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: MeetingCopilot-Linux
+          path: MeetingCopilot/out/make/**/*.AppImage
+          if-no-files-found: error
+
+  # ── GitHub Release (tags only) ────────────────────────────────────────────
+  release:
+    name: Publish GitHub Release
+    needs: [build-windows, build-macos, build-linux]
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: dist/
+
+      - name: Create release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: Meeting Copilot ${{ github.ref_name }}
+          body: |
+            ## Meeting Copilot ${{ github.ref_name }}
+
+            ### Download
+
+            | Platform | File |
+            |----------|------|
+            | Windows | `MeetingCopilotSetup.exe` — double-click to install |
+            | macOS | `.dmg` — drag to Applications |
+            | Linux | `.AppImage` — `chmod +x` then run |
+
+            ### First run
+            The Whisper speech model (~250 MB) downloads automatically on first session start and is cached locally after that.
+
+            ### Requirements
+            - Anthropic API key — [get one here](https://console.anthropic.com/settings/keys)
+          files: |
+            dist/MeetingCopilot-Windows/MeetingCopilotSetup.exe
+            dist/MeetingCopilot-macOS/*.dmg
+            dist/MeetingCopilot-Linux/**/*.AppImage
+          draft: false
+          prerelease: false
