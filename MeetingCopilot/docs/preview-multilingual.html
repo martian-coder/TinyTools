@@ -219,8 +219,11 @@ html,body{width:100%;height:100%;overflow:hidden;font-family:var(--font);}
 .cop-send svg{width:12px;height:12px;fill:none;stroke:#fff;stroke-width:2.3;stroke-linecap:round;stroke-linejoin:round;}
 
 /* scrollbar */
-::-webkit-scrollbar{width:3px;}
-::-webkit-scrollbar-thumb{background:rgba(0,0,0,.15);border-radius:3px;}
+::-webkit-scrollbar{width:4px;}
+::-webkit-scrollbar-track{background:rgba(0,0,0,.04);border-radius:4px;}
+::-webkit-scrollbar-thumb{background:rgba(0,0,0,.18);border-radius:4px;}
+::-webkit-scrollbar-thumb:hover{background:rgba(0,0,0,.3);}
+.cop-history{scrollbar-gutter:stable;}
 
 /* start overlay */
 .start-overlay{position:absolute;inset:0;background:rgba(0,0,0,.72);display:flex;align-items:center;justify-content:center;z-index:200;backdrop-filter:blur(5px);}
@@ -440,6 +443,7 @@ function setShowTrans(val, btn){
   btn.classList.add('active');
   document.querySelectorAll('.ch-heard-trans').forEach(el=>{
     el.style.display=showTranslation?'flex':'none';
+    if(showTranslation) el.style.opacity='1';
   });
 }
 
@@ -548,7 +552,9 @@ function toggleCopilotSession(){
 
 function scheduleNext(){
   if(!sessionOn) return;
-  autoPlay=setTimeout(()=>playTurn(turns[turnIdx % turns.length]), turnIdx===0?1400:3600);
+  // 2s first turn, 9-11s between subsequent turns (natural meeting pace)
+  const delay = turnIdx===0 ? 2000 : 9000 + Math.random()*2000;
+  autoPlay=setTimeout(()=>playTurn(turns[turnIdx % turns.length]), delay);
 }
 function clearSpeaking(){
   document.querySelectorAll('.speaker-tile,.side-tile').forEach(t=>t.classList.remove('speaking'));
@@ -562,58 +568,92 @@ function playTurn(turn){
   if(empty) empty.remove();
 
   const hist=document.getElementById('copHistory');
+  const isEnglish = turn.lang==='en';
 
-  // heard block
+  // Build heard block — original text streams in like live transcription
   const heardDiv=document.createElement('div');
   heardDiv.className='ch-heard';
-  const isEnglish = turn.lang==='en';
+  const transId='tr-'+turnIdx+'-'+Date.now();
   heardDiv.innerHTML=`
     <div class="ch-heard-meta">
       <span class="ch-flag">${turn.flag}</span>
       <span>${turn.speakerName}</span>
       <span class="ch-lang-badge ${turn.lang}">${turn.langLabel}</span>
     </div>
-    <div class="ch-heard-orig">${turn.original}</div>
-    ${!isEnglish ? `<div class="ch-heard-trans" style="display:${showTranslation?'flex':'none'}">
+    <div class="ch-heard-orig" id="orig-${transId}"></div>
+    ${!isEnglish ? `<div class="ch-heard-trans" id="trans-${transId}" style="display:none">
       <span class="ch-heard-trans-label">EN&nbsp;→</span>
       <span>${turn.translation}</span>
     </div>` : ''}`;
   hist.appendChild(heardDiv);
   scrollHist();
 
-  // suggestion after pause
-  setTimeout(()=>{
-    const uid='s-'+turnIdx+'-'+Date.now();
-    const sugDiv=document.createElement('div');
-    sugDiv.className='ch-suggestion';
-    sugDiv.innerHTML=`
-      <div class="ch-sug-label">
-        <svg width="9" height="9" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-        Suggested response
-      </div>
-      <div class="ch-sug-text" id="${uid}">
-        <div class="cop-typing"><span></span><span></span><span></span></div>
-      </div>`;
-    hist.appendChild(sugDiv);
-    scrollHist();
+  // Stream heard text slowly (live transcription feel: ~55ms per char, 1-2 chars at a time)
+  const origEl = document.getElementById('orig-'+transId);
+  const transEl = document.getElementById('trans-'+transId);
+  let i=0;
+  const speechLen = turn.original.length;
+  // pace: finish speaking in ~2.5–4s depending on length
+  const msPerChar = Math.max(30, Math.min(70, 3500 / speechLen));
 
-    setTimeout(()=>{
-      streamInto(uid, turn.suggestion, ()=>{
-        clearSpeaking();
-        turnIdx++;
-        scheduleNext();
-      });
-    }, 700);
-  }, 800);
+  const speechIv = setInterval(()=>{
+    i = Math.min(i+2, speechLen);
+    origEl.textContent = turn.original.slice(0,i) + (i<speechLen ? '▎' : '');
+    scrollHist();
+    if(i >= speechLen){
+      clearInterval(speechIv);
+      origEl.textContent = turn.original;
+
+      // After speech ends: show translation, then AI thinks, then responds
+      const afterSpeech = ()=>{
+        const uid='s-'+turnIdx+'-'+Date.now();
+        const sugDiv=document.createElement('div');
+        sugDiv.className='ch-suggestion';
+        sugDiv.innerHTML=`
+          <div class="ch-sug-label">
+            <svg width="9" height="9" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            Suggested response
+          </div>
+          <div class="ch-sug-text" id="${uid}">
+            <div class="cop-typing"><span></span><span></span><span></span></div>
+          </div>`;
+        hist.appendChild(sugDiv);
+        scrollHist();
+        // AI responds fast after ~900ms "thinking"
+        setTimeout(()=>{
+          streamInto(uid, turn.suggestion, ()=>{
+            clearSpeaking();
+            turnIdx++;
+            scheduleNext();
+          });
+        }, 900);
+      };
+
+      if(transEl && showTranslation){
+        // Fade translation in after 400ms, then show suggestion
+        setTimeout(()=>{
+          transEl.style.display='flex';
+          transEl.style.opacity='0';
+          transEl.style.transition='opacity .4s';
+          requestAnimationFrame(()=>{ transEl.style.opacity='1'; });
+          scrollHist();
+          setTimeout(afterSpeech, 600);
+        }, 400);
+      } else {
+        setTimeout(afterSpeech, 600);
+      }
+    }
+  }, msPerChar);
 }
 
+// AI response streams fast (token-stream feel)
 function streamInto(id, text, done){
   const el=document.getElementById(id);
   if(!el)return;
   el.innerHTML='';
   let i=0;
   const iv=setInterval(()=>{
-    i=Math.min(i+4,text.length);
+    i=Math.min(i+5,text.length);
     el.innerHTML=md(text.slice(0,i))+'<span class="cursor"></span>';
     scrollHist();
     if(i>=text.length){
@@ -621,11 +661,17 @@ function streamInto(id, text, done){
       el.innerHTML=md(text);
       if(done)done();
     }
-  },22);
+  },18);
 }
 
 function md(t){return t.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>');}
-function scrollHist(){const h=document.getElementById('copHistory');h.scrollTop=h.scrollHeight;}
+
+// Smart scroll: auto-scroll only if user is near the bottom
+function scrollHist(){
+  const h=document.getElementById('copHistory');
+  const nearBottom = h.scrollHeight - h.scrollTop - h.clientHeight < 60;
+  if(nearBottom) h.scrollTop=h.scrollHeight;
+}
 
 function sendManual(){
   const inp=document.getElementById('copInput');
