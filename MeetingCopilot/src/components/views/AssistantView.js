@@ -345,7 +345,7 @@ export class AssistantView extends LitElement {
         super();
         this.responses = [];
         this.currentResponseIndex = -1;
-        this.selectedProfile = 'interview';
+        this.selectedProfile = 'meeting';
         this.onSendText = () => {};
         this.isAnalyzing = false;
         this._animFrame = null;
@@ -354,12 +354,10 @@ export class AssistantView extends LitElement {
 
     getProfileNames() {
         return {
-            interview: 'Job Interview',
-            sales: 'Sales Call',
             meeting: 'Business Meeting',
+            sales: 'Sales Call',
             presentation: 'Presentation',
-            negotiation: 'Negotiation',
-            exam: 'Exam Assistant',
+            general: 'General',
         };
     }
 

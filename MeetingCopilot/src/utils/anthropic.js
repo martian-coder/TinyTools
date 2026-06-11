@@ -169,7 +169,7 @@ async function sendAnthropicImage(base64Data, prompt) {
                         },
                         {
                             type: 'text',
-                            text: prompt || 'Describe what is on screen and suggest what to say.',
+                            text: prompt || 'Describe what is visible on screen and provide a concise, professional summary relevant to the current meeting context.',
                         },
                     ],
                 },

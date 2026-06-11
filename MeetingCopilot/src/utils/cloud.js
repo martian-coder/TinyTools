@@ -51,7 +51,7 @@ function connectCloud(token, profile, userContext) {
             // Send config immediately after open
             const config = JSON.stringify({
                 type: 'set_config',
-                profile: profile || 'interview',
+                profile: profile || 'meeting',
                 user_context: userContext || ''
             });
             cloudWs.send(config);

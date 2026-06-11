@@ -522,7 +522,7 @@ export class MainView extends LitElement {
         super();
         this.onStart = () => {};
         this.onExternalLink = () => {};
-        this.selectedProfile = 'interview';
+        this.selectedProfile = 'meeting';
         this.onProfileChange = () => {};
         this.isInitializing = false;
         this.whisperDownloading = false;
@@ -555,21 +555,21 @@ export class MainView extends LitElement {
     async _loadFromStorage() {
         try {
             const [prefs, creds] = await Promise.all([
-                cheatingDaddy.storage.getPreferences(),
-                cheatingDaddy.storage.getCredentials().catch(() => ({})),
+                copilot.storage.getPreferences(),
+                copilot.storage.getCredentials().catch(() => ({})),
             ]);
 
             const storedMode = prefs.providerMode || 'byok';
             this._mode = storedMode === 'cloud' ? 'byok' : storedMode;
 
             if (storedMode === 'cloud') {
-                await cheatingDaddy.storage.updatePreference('providerMode', this._mode);
+                await copilot.storage.updatePreference('providerMode', this._mode);
             }
 
             // Load keys
             this._token = creds.cloudToken || '';
-            this._geminiKey = await cheatingDaddy.storage.getApiKey().catch(() => '') || '';
-            this._groqKey = await cheatingDaddy.storage.getGroqApiKey().catch(() => '') || '';
+            this._geminiKey = await copilot.storage.getApiKey().catch(() => '') || '';
+            this._groqKey = await copilot.storage.getGroqApiKey().catch(() => '') || '';
             this._openaiKey = creds.openaiKey || '';
 
             // Load local AI settings
@@ -716,7 +716,7 @@ export class MainView extends LitElement {
         this._mode = mode;
         this._tokenError = false;
         this._keyError = false;
-        await cheatingDaddy.storage.updatePreference('providerMode', mode);
+        await copilot.storage.updatePreference('providerMode', mode);
         this.requestUpdate();
     }
 
@@ -724,8 +724,8 @@ export class MainView extends LitElement {
         this._token = val;
         this._tokenError = false;
         try {
-            const creds = await cheatingDaddy.storage.getCredentials().catch(() => ({}));
-            await cheatingDaddy.storage.setCredentials({ ...creds, cloudToken: val });
+            const creds = await copilot.storage.getCredentials().catch(() => ({}));
+            await copilot.storage.setCredentials({ ...creds, cloudToken: val });
         } catch (e) {}
         this.requestUpdate();
     }
@@ -733,40 +733,40 @@ export class MainView extends LitElement {
     async _saveGeminiKey(val) {
         this._geminiKey = val;
         this._keyError = false;
-        await cheatingDaddy.storage.setApiKey(val);
+        await copilot.storage.setApiKey(val);
         this.requestUpdate();
     }
 
     async _saveGroqKey(val) {
         this._groqKey = val;
-        await cheatingDaddy.storage.setGroqApiKey(val);
+        await copilot.storage.setGroqApiKey(val);
         this.requestUpdate();
     }
 
     async _saveOpenaiKey(val) {
         this._openaiKey = val;
         try {
-            const creds = await cheatingDaddy.storage.getCredentials().catch(() => ({}));
-            await cheatingDaddy.storage.setCredentials({ ...creds, openaiKey: val });
+            const creds = await copilot.storage.getCredentials().catch(() => ({}));
+            await copilot.storage.setCredentials({ ...creds, openaiKey: val });
         } catch (e) {}
         this.requestUpdate();
     }
 
     async _saveOllamaHost(val) {
         this._ollamaHost = val;
-        await cheatingDaddy.storage.updatePreference('ollamaHost', val);
+        await copilot.storage.updatePreference('ollamaHost', val);
         this.requestUpdate();
     }
 
     async _saveOllamaModel(val) {
         this._ollamaModel = val;
-        await cheatingDaddy.storage.updatePreference('ollamaModel', val);
+        await copilot.storage.updatePreference('ollamaModel', val);
         this.requestUpdate();
     }
 
     async _saveWhisperModel(val) {
         this._whisperModel = val;
-        await cheatingDaddy.storage.updatePreference('whisperModel', val);
+        await copilot.storage.updatePreference('whisperModel', val);
         this.requestUpdate();
     }
 
@@ -774,21 +774,21 @@ export class MainView extends LitElement {
         this._anthropicKey = val;
         this._keyError = false;
         try {
-            const creds = await cheatingDaddy.storage.getCredentials().catch(() => ({}));
-            await cheatingDaddy.storage.setCredentials({ ...creds, anthropicApiKey: val });
+            const creds = await copilot.storage.getCredentials().catch(() => ({}));
+            await copilot.storage.setCredentials({ ...creds, anthropicApiKey: val });
         } catch (e) {}
         this.requestUpdate();
     }
 
     async _saveAnthropicModel(val) {
         this._anthropicModel = val;
-        await cheatingDaddy.storage.updatePreference('anthropicModel', val);
+        await copilot.storage.updatePreference('anthropicModel', val);
         this.requestUpdate();
     }
 
     async _saveCustomContext(val) {
         this._customContext = val;
-        await cheatingDaddy.storage.updatePreference('customPrompt', val);
+        await copilot.storage.updatePreference('customPrompt', val);
         this.requestUpdate();
     }
 

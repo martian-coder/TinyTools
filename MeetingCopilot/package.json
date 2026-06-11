@@ -25,7 +25,7 @@
     "author": {
         "name": "amit"
     },
-    "license": "GPL-3.0",
+    "license": "BUSL-1.1",
     "dependencies": {
         "@anthropic-ai/sdk": "^0.55.0",
         "commander": "^12.1.0",

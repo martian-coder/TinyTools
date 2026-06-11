@@ -20,7 +20,7 @@ const DEFAULT_CREDENTIALS = {
 const DEFAULT_PREFERENCES = {
     customPrompt: '',
     providerMode: 'anthropic',
-    selectedProfile: 'interview',
+    selectedProfile: 'meeting',
     selectedLanguage: 'en-US',
     selectedScreenshotInterval: '5',
     selectedImageQuality: 'medium',

@@ -1,7 +1,7 @@
 const { GoogleGenAI, Modality } = require('@google/genai');
 const { BrowserWindow, ipcMain } = require('electron');
 const { spawn } = require('child_process');
-const { AudioCapture } = require('../audio');
+const { saveDebugAudio } = require('../audioUtils');
 const { getSystemPrompt } = require('./prompts');
 const { getAvailableModel, incrementLimitCount, getApiKey, getGroqApiKey, incrementCharUsage, getModelForToday } = require('../storage');
 const { connectCloud, sendCloudAudio, sendCloudText, sendCloudImage, closeCloud, isCloudActive, setOnTurnComplete } = require('./cloud');
@@ -40,7 +40,7 @@ function formatSpeakerResults(results) {
     let text = '';
     for (const result of results) {
         if (result.transcript && result.speakerId) {
-            const speakerLabel = result.speakerId === 1 ? 'Interviewer' : 'Candidate';
+            const speakerLabel = result.speakerId === 1 ? 'Speaker' : 'You';
             text += `[${speakerLabel}]: ${result.transcript}\n`;
         }
     }
@@ -76,7 +76,7 @@ function buildContextMessage() {
     if (validTurns.length === 0) return null;
 
     const contextLines = validTurns.map(turn =>
-        `[Interviewer]: ${turn.transcription.trim()}\n[Your answer]: ${turn.ai_response.trim()}`
+        `[Speaker]: ${turn.transcription.trim()}\n[Your response]: ${turn.ai_response.trim()}`
     );
 
     return `Session reconnected. Here's the conversation so far:\n\n${contextLines.join('\n\n')}\n\nContinue from here.`;
@@ -434,7 +434,7 @@ async function sendToGemma(transcription) {
     }
 }
 
-async function initializeGeminiSession(apiKey, customPrompt = '', profile = 'interview', language = 'en-US', isReconnect = false) {
+async function initializeGeminiSession(apiKey, customPrompt = '', profile = 'meeting', language = 'en-US', isReconnect = false) {
     if (isInitializingSession) {
         console.log('Session initialization already in progress');
         return false;
@@ -625,55 +625,147 @@ async function attemptReconnect() {
     return false;
 }
 
-// ── System audio capture (Gemini / cloud path) ────────────────────────────
-// Uses our own AudioCapture module (ffmpeg-static).
-// The local/anthropic path manages audio through its own AudioPipeline instead.
+function killExistingSystemAudioDump() {
+    return new Promise(resolve => {
+        console.log('Checking for existing SystemAudioDump processes...');
 
-let systemAudioCapture = null;
+        // Kill any existing SystemAudioDump processes
+        const killProc = spawn('pkill', ['-f', 'SystemAudioDump'], {
+            stdio: 'ignore',
+        });
 
-async function startSystemAudioCapture(geminiSessionRef) {
-    if (systemAudioCapture) stopMacOSAudioCapture();
+        killProc.on('close', code => {
+            if (code === 0) {
+                console.log('Killed existing SystemAudioDump processes');
+            } else {
+                console.log('No existing SystemAudioDump processes found');
+            }
+            resolve();
+        });
 
-    console.log('[Gemini] Starting system audio capture via AudioCapture');
+        killProc.on('error', err => {
+            console.log('Error checking for existing processes (this is normal):', err.message);
+            resolve();
+        });
 
-    systemAudioCapture = new AudioCapture({ source: 'system', sampleRate: 16000, channels: 1 });
+        // Timeout after 2 seconds
+        setTimeout(() => {
+            killProc.kill();
+            resolve();
+        }, 2000);
+    });
+}
 
-    systemAudioCapture.on('data', pcmMono16k => {
-        if (currentProviderMode === 'cloud') {
-            sendCloudAudio(pcmMono16k);
-        } else if (currentProviderMode === 'local' || currentProviderMode === 'anthropic') {
-            // These modes own their audio pipeline — ignore here.
-        } else {
-            // Gemini Live path: upsample 16kHz → 24kHz on the fly
-            const base64Data = pcmMono16k.toString('base64');
-            sendAudioToGemini(base64Data, geminiSessionRef);
+async function startMacOSAudioCapture(geminiSessionRef) {
+    if (process.platform !== 'darwin') return false;
+
+    // Kill any existing SystemAudioDump processes first
+    await killExistingSystemAudioDump();
+
+    console.log('Starting macOS audio capture with SystemAudioDump...');
+
+    const { app } = require('electron');
+    const path = require('path');
+
+    let systemAudioPath;
+    if (app.isPackaged) {
+        systemAudioPath = path.join(process.resourcesPath, 'SystemAudioDump');
+    } else {
+        systemAudioPath = path.join(__dirname, '../assets', 'SystemAudioDump');
+    }
+
+    console.log('SystemAudioDump path:', systemAudioPath);
+
+    const spawnOptions = {
+        stdio: ['ignore', 'pipe', 'pipe'],
+        env: {
+            ...process.env,
+        },
+    };
+
+    systemAudioProc = spawn(systemAudioPath, [], spawnOptions);
+
+    if (!systemAudioProc.pid) {
+        console.error('Failed to start SystemAudioDump');
+        return false;
+    }
+
+    console.log('SystemAudioDump started with PID:', systemAudioProc.pid);
+
+    const CHUNK_DURATION = 0.1;
+    const SAMPLE_RATE = 24000;
+    const BYTES_PER_SAMPLE = 2;
+    const CHANNELS = 2;
+    const CHUNK_SIZE = SAMPLE_RATE * BYTES_PER_SAMPLE * CHANNELS * CHUNK_DURATION;
+
+    let audioBuffer = Buffer.alloc(0);
+
+    systemAudioProc.stdout.on('data', data => {
+        audioBuffer = Buffer.concat([audioBuffer, data]);
+
+        while (audioBuffer.length >= CHUNK_SIZE) {
+            const chunk = audioBuffer.slice(0, CHUNK_SIZE);
+            audioBuffer = audioBuffer.slice(CHUNK_SIZE);
+
+            const monoChunk = CHANNELS === 2 ? convertStereoToMono(chunk) : chunk;
+
+            if (currentProviderMode === 'cloud') {
+                sendCloudAudio(monoChunk);
+            } else if (currentProviderMode === 'local' || currentProviderMode === 'anthropic') {
+                getLocalAi().processLocalAudio(monoChunk);
+            } else {
+                const base64Data = monoChunk.toString('base64');
+                sendAudioToGemini(base64Data, geminiSessionRef);
+            }
+
+            if (process.env.DEBUG_AUDIO) {
+                console.log(`Processed audio chunk: ${chunk.length} bytes`);
+                saveDebugAudio(monoChunk, 'system_audio');
+            }
+        }
+
+        const maxBufferSize = SAMPLE_RATE * BYTES_PER_SAMPLE * 1;
+        if (audioBuffer.length > maxBufferSize) {
+            audioBuffer = audioBuffer.slice(-maxBufferSize);
         }
     });
 
-    systemAudioCapture.on('error', err => {
-        console.error('[Gemini] AudioCapture error:', err.message);
-        sendToRenderer('update-status', 'Audio capture error: ' + err.message);
+    systemAudioProc.stderr.on('data', data => {
+        console.error('SystemAudioDump stderr:', data.toString());
     });
 
-    systemAudioCapture.on('close', () => {
-        console.log('[Gemini] AudioCapture closed');
-        systemAudioCapture = null;
+    systemAudioProc.on('close', code => {
+        console.log('SystemAudioDump process closed with code:', code);
+        systemAudioProc = null;
     });
 
-    systemAudioCapture.start();
+    systemAudioProc.on('error', err => {
+        console.error('SystemAudioDump process error:', err);
+        systemAudioProc = null;
+    });
+
     return true;
 }
 
-// Kept as the canonical stop function; called from index.js and IPC handlers.
-function stopMacOSAudioCapture() {
-    if (systemAudioCapture) {
-        systemAudioCapture.stop();
-        systemAudioCapture = null;
+function convertStereoToMono(stereoBuffer) {
+    const samples = stereoBuffer.length / 4;
+    const monoBuffer = Buffer.alloc(samples * 2);
+
+    for (let i = 0; i < samples; i++) {
+        const leftSample = stereoBuffer.readInt16LE(i * 4);
+        monoBuffer.writeInt16LE(leftSample, i * 2);
     }
+
+    return monoBuffer;
 }
 
-// Legacy alias used in some call sites
-const startMacOSAudioCapture = startSystemAudioCapture;
+function stopMacOSAudioCapture() {
+    if (systemAudioProc) {
+        console.log('Stopping SystemAudioDump...');
+        systemAudioProc.kill('SIGTERM');
+        systemAudioProc = null;
+    }
+}
 
 async function sendAudioToGemini(base64Data, geminiSessionRef) {
     if (!geminiSessionRef.current) return;
@@ -770,7 +862,7 @@ function setupGeminiIpcHandlers(geminiSessionRef) {
         }
     });
 
-    ipcMain.handle('initialize-gemini', async (event, apiKey, customPrompt, profile = 'interview', language = 'en-US') => {
+    ipcMain.handle('initialize-gemini', async (event, apiKey, customPrompt, profile = 'meeting', language = 'en-US') => {
         currentProviderMode = 'byok';
         const session = await initializeGeminiSession(apiKey, customPrompt, profile, language);
         if (session) {
@@ -1070,23 +1162,11 @@ function setupGeminiIpcHandlers(geminiSessionRef) {
     ipcMain.handle('update-google-search-setting', async (event, enabled) => {
         try {
             console.log('Google Search setting updated to:', enabled);
+            // The setting is already saved in localStorage by the renderer
+            // This is just for logging/confirmation
             return { success: true };
         } catch (error) {
             console.error('Error updating Google Search setting:', error);
-            return { success: false, error: error.message };
-        }
-    });
-
-    // Manual force-generate hotkey — flush whatever the pipeline has buffered
-    // without waiting for the speaker to pause.
-    ipcMain.handle('force-generate', async event => {
-        try {
-            if (currentProviderMode === 'local' || currentProviderMode === 'anthropic') {
-                getLocalAi().forceFlush();
-            }
-            return { success: true };
-        } catch (error) {
-            console.error('Error in force-generate:', error);
             return { success: false, error: error.message };
         }
     });
@@ -1100,7 +1180,9 @@ module.exports = {
     initializeNewSession,
     saveConversationTurn,
     getCurrentSessionData,
+    killExistingSystemAudioDump,
     startMacOSAudioCapture,
+    convertStereoToMono,
     stopMacOSAudioCapture,
     sendAudioToGemini,
     sendImageToGeminiHttp,

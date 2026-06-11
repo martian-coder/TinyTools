@@ -140,20 +140,20 @@ function arrayBufferToBase64(buffer) {
     return btoa(binary);
 }
 
-async function initializeGemini(profile = 'interview', language = 'en-US') {
+async function initializeGemini(profile = 'meeting', language = 'en-US') {
     const apiKey = await storage.getApiKey();
     if (apiKey) {
         const prefs = await storage.getPreferences();
         const success = await ipcRenderer.invoke('initialize-gemini', apiKey, prefs.customPrompt || '', profile, language);
         if (success) {
-            cheatingDaddy.setStatus('Live');
+            copilot.setStatus('Live');
         } else {
-            cheatingDaddy.setStatus('error');
+            copilot.setStatus('error');
         }
     }
 }
 
-async function initializeLocal(profile = 'interview') {
+async function initializeLocal(profile = 'meeting') {
     const prefs = await storage.getPreferences();
     const ollamaHost = prefs.ollamaHost || 'http://127.0.0.1:11434';
     const ollamaModel = prefs.ollamaModel || 'llama3.1';
@@ -163,15 +163,15 @@ async function initializeLocal(profile = 'interview') {
 
     const success = await ipcRenderer.invoke('initialize-local', ollamaHost, ollamaModel, whisperModel, profile, customPrompt, translate);
     if (success) {
-        cheatingDaddy.setStatus('Local AI Live');
+        copilot.setStatus('Local AI Live');
         return true;
     } else {
-        cheatingDaddy.setStatus('error');
+        copilot.setStatus('error');
         return false;
     }
 }
 
-async function initializeAnthropic(profile = 'interview') {
+async function initializeAnthropic(profile = 'meeting') {
     const prefs = await storage.getPreferences();
     const creds = await storage.getCredentials();
     const apiKey = creds.anthropicApiKey || '';
@@ -184,29 +184,29 @@ async function initializeAnthropic(profile = 'interview') {
         'initialize-anthropic', apiKey, model, whisperModel, profile, customPrompt, translate
     );
     if (success) {
-        cheatingDaddy.setStatus('Claude Live — Listening...');
+        copilot.setStatus('Claude Live — Listening...');
         return true;
     } else {
-        cheatingDaddy.setStatus('error');
+        copilot.setStatus('error');
         return false;
     }
 }
 
-async function initializeCloud(profile = 'interview') {
+async function initializeCloud(profile = 'meeting') {
     const creds = await storage.getCredentials();
     const token = creds.cloudToken;
     if (!token || !token.trim()) {
-        cheatingDaddy.setStatus('error');
+        copilot.setStatus('error');
         return false;
     }
 
     const prefs = await storage.getPreferences();
     const success = await ipcRenderer.invoke('initialize-cloud', token, profile, prefs.customPrompt || '');
     if (success) {
-        cheatingDaddy.setStatus('Live');
+        copilot.setStatus('Live');
         return true;
     } else {
-        cheatingDaddy.setStatus('error');
+        copilot.setStatus('error');
         return false;
     }
 }
@@ -214,13 +214,13 @@ async function initializeCloud(profile = 'interview') {
 // Listen for status updates
 ipcRenderer.on('update-status', (event, status) => {
     console.log('Status update:', status);
-    cheatingDaddy.setStatus(status);
+    copilot.setStatus(status);
 });
 
 // Listen for live transcript updates (from Whisper VAD)
 ipcRenderer.on('transcript-update', (event, transcript) => {
-    if (cheatingDaddyApp && cheatingDaddyApp.addTranscript) {
-        cheatingDaddyApp.addTranscript(transcript);
+    if (copilotApp && copilotApp.addTranscript) {
+        copilotApp.addTranscript(transcript);
     }
 });
 
@@ -390,7 +390,7 @@ async function startCapture(screenshotIntervalSeconds = 5, imageQuality = 'mediu
         console.log('Manual mode enabled - screenshots will be captured on demand only');
     } catch (err) {
         console.error('Error starting capture:', err);
-        cheatingDaddy.setStatus('error');
+        copilot.setStatus('error');
     }
 }
 
@@ -579,10 +579,10 @@ async function captureScreenshot(imageQuality = 'medium', isManual = false) {
     );
 }
 
-const MANUAL_SCREENSHOT_PROMPT = `Help me on this page, give me the answer no bs, complete answer.
-So if its a code question, give me the approach in few bullet points, then the entire code. Also if theres anything else i need to know, tell me.
-If its a question about the website, give me the answer no bs, complete answer.
-If its a mcq question, give me the answer no bs, complete answer.`;
+const MANUAL_SCREENSHOT_PROMPT = `You are a professional meeting assistant. Analyze what is visible on screen and provide a concise, relevant talking point or summary that would be useful in a professional conversation.
+If there is code or technical content, provide a clear explanation with key points.
+If there is a document or presentation, summarize the key information.
+Keep the response focused and professional.`;
 
 async function captureManualScreenshot(imageQuality = null) {
     console.log('Manual screenshot triggered');
@@ -677,7 +677,7 @@ async function captureManualScreenshot(imageQuality = null) {
                     // Response already displayed via streaming events (new-response/update-response)
                 } else {
                     console.error('Failed to get image response:', result.error);
-                    cheatingDaddy.addNewResponse(`Error: ${result.error}`);
+                    copilot.addNewResponse(`Error: ${result.error}`);
                 }
             };
             reader.readAsDataURL(blob);
@@ -800,11 +800,11 @@ ipcRenderer.on('clear-sensitive-data', async () => {
 
 // Handle shortcuts based on current view
 function handleShortcut(shortcutKey) {
-    const currentView = cheatingDaddy.getCurrentView();
+    const currentView = copilot.getCurrentView();
 
     if (shortcutKey === 'ctrl+enter' || shortcutKey === 'cmd+enter') {
         if (currentView === 'main') {
-            cheatingDaddy.element().handleStart();
+            copilot.element().handleStart();
         } else {
             captureManualScreenshot();
         }
@@ -812,7 +812,7 @@ function handleShortcut(shortcutKey) {
 }
 
 // Create reference to the main app element
-const cheatingDaddyApp = document.querySelector('meeting-copilot-app');
+const copilotApp = document.querySelector('meeting-copilot-app');
 
 // ============ THEME SYSTEM ============
 const theme = {
@@ -1036,23 +1036,23 @@ const theme = {
     }
 };
 
-// Consolidated cheatingDaddy object - all functions in one place
-const cheatingDaddy = {
+// Consolidated copilot object - all functions in one place
+const copilot = {
     // App version
     getVersion: async () => ipcRenderer.invoke('get-app-version'),
 
     // Element access
-    element: () => cheatingDaddyApp,
-    e: () => cheatingDaddyApp,
+    element: () => copilotApp,
+    e: () => copilotApp,
 
     // App state functions - access properties directly from the app element
-    getCurrentView: () => cheatingDaddyApp.currentView,
-    getLayoutMode: () => cheatingDaddyApp.layoutMode,
+    getCurrentView: () => copilotApp.currentView,
+    getLayoutMode: () => copilotApp.layoutMode,
 
     // Status and response functions
-    setStatus: text => cheatingDaddyApp.setStatus(text),
-    addNewResponse: response => cheatingDaddyApp.addNewResponse(response),
-    updateCurrentResponse: response => cheatingDaddyApp.updateCurrentResponse(response),
+    setStatus: text => copilotApp.setStatus(text),
+    addNewResponse: response => copilotApp.addNewResponse(response),
+    updateCurrentResponse: response => copilotApp.updateCurrentResponse(response),
 
     // Core functionality
     initializeGemini,
@@ -1079,7 +1079,7 @@ const cheatingDaddy = {
 };
 
 // Make it globally available
-window.cheatingDaddy = cheatingDaddy;
+window.copilot = copilot;
 
 // Load theme after DOM is ready
 if (document.readyState === 'loading') {

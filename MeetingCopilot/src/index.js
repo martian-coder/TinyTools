@@ -6,6 +6,7 @@ const { app, BrowserWindow, shell, ipcMain } = require('electron');
 const { createWindow, updateGlobalShortcuts } = require('./utils/window');
 const { setupGeminiIpcHandlers, stopMacOSAudioCapture, sendToRenderer } = require('./utils/gemini');
 const storage = require('./storage');
+const trial = require('./trial');
 
 const geminiSessionRef = { current: null };
 let mainWindow = null;
@@ -18,6 +19,7 @@ function createMainWindow() {
 app.whenReady().then(async () => {
     // Initialize storage (checks version, resets if needed)
     storage.initializeStorage();
+    trial.initTrial();
 
     // Trigger screen recording permission prompt on macOS if not already granted
     if (process.platform === 'darwin') {
@@ -296,4 +298,6 @@ function setupGeneralIpcHandlers() {
     ipcMain.on('log-message', (event, msg) => {
         console.log(msg);
     });
+
+    ipcMain.handle('trial:get-status', () => trial.getStatus());
 }
