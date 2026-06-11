@@ -142,4 +142,4 @@ node cli.js start --help
 
 Meeting Copilot runs free for 25 days. After that a licence is required.
 
-Source is available under the [Business Source License 1.1](./LICENSE). It converts to GPL-2.0+ on 2029-01-01.
+Source is available under the [Business Source License 1.1](./LICENSE). The source becomes fully open on 2029-01-01.

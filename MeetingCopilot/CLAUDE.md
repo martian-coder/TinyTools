@@ -27,7 +27,7 @@ Both repos were evaluated across four axes:
 | LLM | `gemini.js` (Gemini Live streaming), `cloud.js` (Groq), `localai.js` (Ollama via `ollama` npm, streaming). Three files, each self-contained. |
 | Overlay | Electron `BrowserWindow`: `transparent`, `alwaysOnTop`, `frame:false`, `setContentProtection(true)`, `setIgnoreMouseEvents()` toggle, `setVisibleOnAllWorkspaces`. Clean and minimal. |
 | Runtime deps | **5** (`@google/genai`, `@huggingface/transformers`, `ollama`, `ws`, `electron-squirrel-startup`) |
-| License | GPL-3.0 |
+| License | BUSL-1.1 |
 
 #### Glass (`pickle-com/glass`)
 
@@ -38,7 +38,7 @@ Both repos were evaluated across four axes:
 | LLM | `createStreamingLLM()` factory — supports OpenAI, Anthropic, Gemini, Ollama. Well-abstracted but wrapped in a Next.js/Firebase service layer. |
 | Overlay | Electron + **Next.js** + **Firebase** (runtime dependency). Firebase is in `dependencies`, not `devDependencies` — required at runtime. |
 | Runtime deps | **19+** including `firebase`, `firebase-admin`, `express`, Anthropic SDK, OpenAI SDK, Next.js |
-| License | GPL-3.0 |
+| License | BUSL-1.1 |
 
 #### Why cheating-daddy wins
 
@@ -98,4 +98,4 @@ Selection via a `config.json` (or `.env`): `{ llm: "anthropic" | "ollama", stt: 
 - **Prompt caching** on the static context block is the single biggest latency/cost win for the Anthropic path — make sure it's actually applied, not just intended.
 - **Permissions:** macOS needs Screen Recording + Microphone permissions for system-audio capture; surface a clear setup step if missing.
 - Work in small commits. After each phase, summarize what changed and how to test it.
-- **Base repo location:** `sohzm/cheating-daddy` (GPL-3.0). The fork will live at `MeetingCopilot/` in this repo.
+- **Base repo location:** `sohzm/cheating-daddy` (BUSL-1.1). The fork will live at `MeetingCopilot/` in this repo.
