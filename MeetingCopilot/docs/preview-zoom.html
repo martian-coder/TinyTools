@@ -1,0 +1,763 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Meeting Copilot — Live Demo</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+:root{
+  --font:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  --zoom-bg:#1C1C1C;
+  --zoom-tile:#2D2D2D;
+  --zoom-bar:#242424;
+  --zoom-border:#3A3A3A;
+  --zoom-text:#F0F0F0;
+  --zoom-muted:#A0A0A0;
+  --zoom-blue:#0E71EB;
+  --zoom-red:#E8453C;
+  --cop-bg:rgba(255,255,255,0.92);
+  --cop-border:rgba(0,0,0,0.1);
+  --cop-accent:#2563EB;
+  --cop-accent-soft:#EFF4FF;
+  --cop-text:#0D1117;
+  --cop-muted:#6B7280;
+  --cop-green:#16A34A;
+  --cop-shadow:0 20px 60px rgba(0,0,0,0.35),0 8px 24px rgba(0,0,0,0.2);
+}
+
+html,body{width:100%;height:100%;overflow:hidden;font-family:var(--font);}
+
+/* ── Zoom shell ── */
+.zoom{
+  width:100vw;height:100vh;
+  background:var(--zoom-bg);
+  display:flex;flex-direction:column;
+  position:relative;overflow:hidden;
+}
+
+/* top bar */
+.zoom-topbar{
+  height:40px;
+  background:var(--zoom-bar);
+  border-bottom:1px solid var(--zoom-border);
+  display:flex;align-items:center;
+  padding:0 16px;gap:12px;
+  flex-shrink:0;z-index:1;
+}
+.zoom-logo{
+  display:flex;align-items:center;gap:6px;
+  font-size:13px;font-weight:700;color:var(--zoom-text);
+}
+.zoom-logo-icon{
+  width:22px;height:22px;background:var(--zoom-blue);
+  border-radius:5px;display:flex;align-items:center;justify-content:center;
+}
+.zoom-logo-icon svg{width:14px;height:14px;fill:#fff;}
+.zoom-meeting-name{font-size:12px;font-weight:500;color:var(--zoom-text);}
+.zoom-timer{
+  font-size:11.5px;color:var(--zoom-muted);
+  font-variant-numeric:tabular-nums;margin-left:4px;
+}
+.zoom-secure{
+  margin-left:auto;display:flex;align-items:center;gap:4px;
+  font-size:11px;color:#22C55E;
+}
+.zoom-view-btn{
+  background:#3A3A3A;border:none;border-radius:4px;
+  padding:3px 10px;font-size:11px;color:var(--zoom-text);
+  cursor:pointer;font-family:var(--font);
+}
+
+/* main area */
+.zoom-main{
+  flex:1;display:flex;gap:2px;padding:8px;overflow:hidden;
+}
+
+/* speaker tile */
+.speaker-tile{
+  flex:1;background:var(--zoom-tile);
+  border-radius:10px;overflow:hidden;
+  position:relative;display:flex;align-items:center;justify-content:center;
+  border:2px solid transparent;transition:border-color .3s;
+}
+.speaker-tile.speaking{border-color:#22C55E;}
+
+.tile-bg{
+  width:100%;height:100%;position:absolute;top:0;left:0;
+  background:linear-gradient(135deg,#2a2a3a 0%,#1a1a2e 100%);
+}
+.tile-avatar{
+  width:80px;height:80px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:30px;font-weight:700;color:#fff;
+  position:relative;z-index:1;
+  box-shadow:0 4px 20px rgba(0,0,0,0.4);
+}
+.tile-name{
+  position:absolute;bottom:10px;left:12px;
+  background:rgba(0,0,0,0.6);color:#fff;
+  font-size:12px;font-weight:500;padding:3px 8px;border-radius:5px;
+  display:flex;align-items:center;gap:5px;
+}
+.tile-mic{width:12px;height:12px;opacity:.6;}
+.tile-mic.muted{color:#E8453C;opacity:1;}
+.tile-hd{
+  position:absolute;bottom:10px;right:12px;
+  background:rgba(0,0,0,0.5);color:var(--zoom-muted);
+  font-size:10px;font-weight:600;padding:2px 5px;border-radius:3px;
+}
+
+/* side panel */
+.side-panel{
+  width:160px;display:flex;flex-direction:column;gap:2px;
+}
+.side-tile{
+  flex:1;background:var(--zoom-tile);border-radius:8px;
+  position:relative;display:flex;align-items:center;justify-content:center;
+  overflow:hidden;border:1.5px solid transparent;transition:border-color .3s;min-height:0;
+}
+.side-tile.speaking{border-color:#22C55E;}
+.side-tile .tile-avatar{width:42px;height:42px;font-size:16px;}
+.side-tile .tile-name{font-size:10px;padding:2px 6px;}
+.side-tile .tile-bg{background:linear-gradient(135deg,#1e2a3a 0%,#0d1b2e 100%);}
+.side-tile:nth-child(2) .tile-bg{background:linear-gradient(135deg,#2a1e3a 0%,#1b0d2e 100%);}
+.side-tile:nth-child(3) .tile-bg{background:linear-gradient(135deg,#1e3a2a 0%,#0d2e1b 100%);}
+
+/* bottom toolbar */
+.zoom-toolbar{
+  height:68px;
+  background:var(--zoom-bar);
+  border-top:1px solid var(--zoom-border);
+  display:flex;align-items:center;justify-content:center;
+  gap:4px;padding:0 20px;flex-shrink:0;
+}
+.ztool{
+  display:flex;flex-direction:column;align-items:center;
+  gap:3px;padding:6px 10px;border-radius:8px;
+  cursor:pointer;transition:background .15s;min-width:56px;
+}
+.ztool:hover{background:rgba(255,255,255,.06);}
+.ztool-icon{
+  width:32px;height:32px;border-radius:50%;
+  background:#3A3A3A;display:flex;align-items:center;justify-content:center;
+}
+.ztool-icon.red{background:var(--zoom-red);}
+.ztool-icon svg{width:16px;height:16px;fill:none;stroke:#fff;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+.ztool-label{font-size:10px;color:var(--zoom-muted);font-weight:500;}
+.ztool.muted .ztool-icon{background:#555;}
+.zoom-end-btn{
+  margin-left:auto;
+  height:36px;padding:0 18px;
+  background:var(--zoom-red);color:#fff;
+  border:none;border-radius:8px;
+  font-family:var(--font);font-size:13px;font-weight:600;
+  cursor:pointer;display:flex;align-items:center;gap:6px;
+}
+.zoom-participants-badge{
+  position:absolute;top:-4px;right:-4px;
+  width:16px;height:16px;background:var(--zoom-red);
+  border-radius:50%;font-size:9px;color:#fff;font-weight:700;
+  display:flex;align-items:center;justify-content:center;
+}
+
+/* ── Copilot overlay ── */
+.copilot{
+  position:absolute;
+  top:56px;right:16px;
+  width:300px;
+  background:var(--cop-bg);
+  backdrop-filter:blur(28px) saturate(180%);
+  -webkit-backdrop-filter:blur(28px) saturate(180%);
+  border:1px solid var(--cop-border);
+  border-radius:14px;
+  box-shadow:var(--cop-shadow);
+  overflow:hidden;
+  z-index:100;
+  display:flex;flex-direction:column;
+  transition:height .25s ease, opacity .2s;
+  font-family:var(--font);
+  user-select:none;
+}
+.copilot.collapsed{height:44px;}
+
+/* drag handle */
+.cop-header{
+  height:44px;
+  display:flex;align-items:center;
+  padding:0 10px 0 12px;gap:8px;
+  background:rgba(255,255,255,0.6);
+  border-bottom:1px solid rgba(0,0,0,.06);
+  cursor:grab;flex-shrink:0;
+}
+.cop-header:active{cursor:grabbing;}
+.cop-logo{
+  width:22px;height:22px;background:var(--cop-accent);
+  border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0;
+}
+.cop-logo svg{width:13px;height:13px;fill:none;stroke:#fff;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;}
+.cop-title{font-size:12.5px;font-weight:700;color:var(--cop-text);letter-spacing:.01em;}
+.cop-live{
+  display:flex;align-items:center;gap:4px;
+  background:#F0FDF4;border:1px solid #BBF7D0;
+  border-radius:20px;padding:2px 7px;
+  font-size:10px;font-weight:700;color:#15803D;letter-spacing:.05em;
+}
+.live-dot{
+  width:6px;height:6px;border-radius:50%;background:#22C55E;
+  animation:pulse-g 1.4s ease-in-out infinite;
+}
+@keyframes pulse-g{0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(34,197,94,.4)}50%{opacity:.8;box-shadow:0 0 0 4px rgba(34,197,94,0)}}
+.cop-btn{
+  width:24px;height:24px;border-radius:6px;
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;color:var(--cop-muted);transition:background .15s,color .15s;
+  flex-shrink:0;font-size:13px;line-height:1;
+}
+.cop-btn:hover{background:rgba(0,0,0,.06);color:var(--cop-text);}
+.cop-spacer{flex:1;}
+
+/* body */
+.cop-body{flex:1;overflow:hidden;display:flex;flex-direction:column;}
+
+.cop-transcript{
+  padding:10px 12px 6px;
+  font-size:11.5px;color:var(--cop-muted);
+  font-style:italic;line-height:1.45;
+  border-bottom:1px solid rgba(0,0,0,.05);
+  display:flex;gap:6px;
+}
+.cop-transcript-label{
+  font-size:9.5px;font-weight:700;letter-spacing:.07em;
+  text-transform:uppercase;color:rgba(0,0,0,.25);flex-shrink:0;padding-top:1px;
+}
+
+.cop-response{
+  flex:1;padding:10px 12px;
+  font-size:12.5px;color:var(--cop-text);
+  line-height:1.6;overflow-y:auto;min-height:80px;max-height:180px;
+}
+.cop-response strong{color:var(--cop-accent);font-weight:600;}
+.cop-response .cursor{
+  display:inline-block;width:2px;height:13px;background:var(--cop-accent);
+  margin-left:2px;vertical-align:text-bottom;
+  animation:blink .65s step-end infinite;
+}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+.cop-empty{
+  color:rgba(0,0,0,.25);font-style:italic;font-size:12px;
+  display:flex;align-items:center;gap:5px;padding:4px 0;
+}
+
+.cop-footer{
+  padding:8px 12px;
+  border-top:1px solid rgba(0,0,0,.06);
+  display:flex;align-items:center;gap:6px;
+  background:rgba(255,255,255,0.4);
+  flex-shrink:0;
+}
+.cop-input{
+  flex:1;height:28px;
+  border:1.5px solid rgba(0,0,0,.12);
+  border-radius:7px;padding:0 9px;
+  font-family:var(--font);font-size:11.5px;
+  background:rgba(255,255,255,.8);color:var(--cop-text);
+  outline:none;transition:border-color .15s;
+}
+.cop-input:focus{border-color:var(--cop-accent);background:#fff;}
+.cop-input::placeholder{color:rgba(0,0,0,.3);}
+.cop-send{
+  width:28px;height:28px;flex-shrink:0;
+  border:none;border-radius:7px;
+  background:var(--cop-accent);
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;transition:background .15s,transform .1s;
+}
+.cop-send:hover{background:#1D4ED8;}
+.cop-send:active{transform:scale(.92);}
+.cop-send svg{width:12px;height:12px;fill:none;stroke:#fff;stroke-width:2.3;stroke-linecap:round;stroke-linejoin:round;}
+
+/* scrollbar */
+::-webkit-scrollbar{width:3px;}
+::-webkit-scrollbar-thumb{background:rgba(0,0,0,.15);border-radius:3px;}
+
+/* start overlay */
+.start-overlay{
+  position:absolute;inset:0;background:rgba(0,0,0,.7);
+  display:flex;align-items:center;justify-content:center;
+  z-index:200;backdrop-filter:blur(4px);
+  flex-direction:column;gap:16px;
+}
+.start-card{
+  background:#fff;border-radius:16px;
+  padding:28px 32px;
+  display:flex;flex-direction:column;align-items:center;
+  gap:14px;text-align:center;
+  box-shadow:0 24px 64px rgba(0,0,0,.4);
+  max-width:340px;
+}
+.start-card-logo{
+  width:48px;height:48px;background:var(--cop-accent);
+  border-radius:14px;display:flex;align-items:center;justify-content:center;
+}
+.start-card-logo svg{width:26px;height:26px;fill:none;stroke:#fff;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+.start-card h2{font-size:17px;font-weight:700;color:#0D1117;}
+.start-card p{font-size:13px;color:#6B7280;line-height:1.5;}
+.start-card-btn{
+  width:100%;height:42px;border:none;border-radius:10px;
+  background:var(--cop-accent);color:#fff;
+  font-family:var(--font);font-size:14px;font-weight:600;
+  cursor:pointer;transition:background .15s,transform .1s;
+  display:flex;align-items:center;justify-content:center;gap:7px;
+}
+.start-card-btn:hover{background:#1D4ED8;}
+.start-card-btn:active{transform:scale(.98);}
+.start-card-hint{font-size:11px;color:#9CA3AF;}
+
+/* ── zoom timer (in meeting) ── */
+.zoom-rec{
+  position:absolute;top:52px;left:16px;
+  background:rgba(0,0,0,.6);color:#fff;
+  font-size:11.5px;font-weight:600;
+  padding:4px 10px;border-radius:6px;
+  display:flex;align-items:center;gap:6px;z-index:5;
+  display:none;
+}
+.rec-dot{width:7px;height:7px;border-radius:50%;background:#E8453C;animation:pulse-r 1.2s ease-in-out infinite;}
+@keyframes pulse-r{0%,100%{opacity:1}50%{opacity:.4}}
+
+/* notification */
+.notif{
+  position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(12px);
+  background:#1C1C1C;color:#fff;
+  padding:9px 18px;border-radius:20px;
+  font-size:12.5px;font-weight:500;
+  box-shadow:0 8px 24px rgba(0,0,0,.4);
+  opacity:0;transition:opacity .2s,transform .2s;
+  pointer-events:none;z-index:999;white-space:nowrap;
+}
+.notif.show{opacity:1;transform:translateX(-50%) translateY(0);}
+</style>
+</head>
+<body>
+
+<!-- ══════════ ZOOM SHELL ══════════ -->
+<div class="zoom" id="zoom">
+
+  <!-- Top bar -->
+  <div class="zoom-topbar">
+    <div class="zoom-logo">
+      <div class="zoom-logo-icon">
+        <svg viewBox="0 0 24 24"><path d="M15 10l4.5-3v10L15 14v-4zm-11 7h9a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2z"/></svg>
+      </div>
+      <span>Zoom</span>
+    </div>
+    <span class="zoom-meeting-name">Q3 Roadmap Review</span>
+    <span class="zoom-timer" id="zoomTimer">00:00</span>
+    <span class="zoom-secure">
+      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      Secure
+    </span>
+    <button class="zoom-view-btn">Speaker</button>
+    <button class="zoom-view-btn">Gallery</button>
+  </div>
+
+  <!-- Main tiles -->
+  <div class="zoom-main">
+
+    <!-- Main speaker -->
+    <div class="speaker-tile" id="mainTile">
+      <div class="tile-bg"></div>
+      <div class="tile-avatar" style="background:linear-gradient(135deg,#4F46E5,#7C3AED)">SR</div>
+      <div class="tile-name">
+        <svg class="tile-mic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/></svg>
+        Sarah Reynolds
+      </div>
+      <div class="tile-hd">HD</div>
+    </div>
+
+    <!-- Side panel -->
+    <div class="side-panel">
+      <div class="side-tile" id="tile-you">
+        <div class="tile-bg"></div>
+        <div class="tile-avatar" style="background:linear-gradient(135deg,#0EA5E9,#2563EB)">You</div>
+        <div class="tile-name">
+          <svg class="tile-mic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/></svg>
+          You
+        </div>
+      </div>
+      <div class="side-tile" id="tile-mk">
+        <div class="tile-bg"></div>
+        <div class="tile-avatar" style="background:linear-gradient(135deg,#D97706,#DC2626)">MK</div>
+        <div class="tile-name">
+          <svg class="tile-mic muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="1" y1="1" x2="23" y2="23"/><path d="M9 9v3a3 3 0 0 0 5.12 2.12M15 9.34V4a3 3 0 0 0-5.94-.6"/><path d="M17 16.95A7 7 0 0 1 5 12v-2m14 0v2a7 7 0 0 1-.11 1.23"/><line x1="12" y1="19" x2="12" y2="23"/></svg>
+          Mike K.
+        </div>
+      </div>
+      <div class="side-tile" id="tile-ap">
+        <div class="tile-bg"></div>
+        <div class="tile-avatar" style="background:linear-gradient(135deg,#059669,#0EA5E9)">AP</div>
+        <div class="tile-name">
+          <svg class="tile-mic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/></svg>
+          Anika P.
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Bottom toolbar -->
+  <div class="zoom-toolbar">
+    <div class="ztool" id="muteBtn" onclick="toggleMute()">
+      <div class="ztool-icon" id="muteIcon">
+        <svg id="micSvg" viewBox="0 0 24 24"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/></svg>
+      </div>
+      <span class="ztool-label" id="muteLabel">Mute</span>
+    </div>
+    <div class="ztool" onclick="notify('Camera toggled')">
+      <div class="ztool-icon">
+        <svg viewBox="0 0 24 24"><path d="M15 10l4.5-3v10L15 14v-4zm-11 7h9a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2z"/></svg>
+      </div>
+      <span class="ztool-label">Stop Video</span>
+    </div>
+    <div class="ztool" onclick="notify('Security options')">
+      <div class="ztool-icon">
+        <svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      </div>
+      <span class="ztool-label">Security</span>
+    </div>
+    <div class="ztool" onclick="notify('Participants: 4')">
+      <div class="ztool-icon" style="position:relative;">
+        <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        <div class="zoom-participants-badge">4</div>
+      </div>
+      <span class="ztool-label">Participants</span>
+    </div>
+    <div class="ztool" onclick="notify('Chat opened')">
+      <div class="ztool-icon">
+        <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      </div>
+      <span class="ztool-label">Chat</span>
+    </div>
+    <div class="ztool" onclick="notify('Share screen')">
+      <div class="ztool-icon">
+        <svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+      </div>
+      <span class="ztool-label">Share Screen</span>
+    </div>
+    <div class="ztool" onclick="notify('👍 Reaction sent')">
+      <div class="ztool-icon">
+        <svg viewBox="0 0 24 24"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg>
+      </div>
+      <span class="ztool-label">Reactions</span>
+    </div>
+    <div class="ztool" onclick="notify('More options')">
+      <div class="ztool-icon">
+        <svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.5" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"/><circle cx="19" cy="12" r="1.5" fill="currentColor" stroke="none"/></svg>
+      </div>
+      <span class="ztool-label">More</span>
+    </div>
+    <button class="zoom-end-btn" onclick="notify('Ending meeting…')">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h18"/><rect x="3" y="4" width="18" height="18" rx="2"/></svg>
+      End
+    </button>
+  </div>
+
+  <!-- Recording badge -->
+  <div class="zoom-rec" id="recBadge">
+    <div class="rec-dot"></div>
+    <span id="recTimer">00:00</span>
+  </div>
+
+
+  <!-- ══════════ COPILOT OVERLAY ══════════ -->
+  <div class="copilot" id="copilot">
+
+    <div class="cop-header" id="copHeader">
+      <div class="cop-logo">
+        <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      </div>
+      <span class="cop-title">Copilot</span>
+      <div class="cop-live" id="copLive" style="display:none">
+        <div class="live-dot"></div>
+        LIVE
+      </div>
+      <div class="cop-spacer"></div>
+      <div class="cop-btn" id="collapseBtn" onclick="toggleCollapse()" title="Collapse">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
+      </div>
+      <div class="cop-btn" onclick="toggleCopilotSession()" id="sessionToggleBtn" title="Start session">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" id="sessionIcon"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+      </div>
+    </div>
+
+    <div class="cop-body" id="copBody">
+      <div class="cop-transcript" id="copTranscript" style="display:none">
+        <span class="cop-transcript-label">Heard</span>
+        <span id="transcriptText">…</span>
+      </div>
+
+      <div class="cop-response" id="copResponse">
+        <div class="cop-empty">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          Waiting for session to start…
+        </div>
+      </div>
+
+      <div class="cop-footer">
+        <input class="cop-input" id="copInput" placeholder="Ask manually…" onkeydown="handleCopKey(event)"/>
+        <button class="cop-send" onclick="sendManual()">
+          <svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+        </button>
+      </div>
+    </div>
+
+  </div>
+
+
+  <!-- ══════════ START SCREEN ══════════ -->
+  <div class="start-overlay" id="startOverlay">
+    <div class="start-card">
+      <div class="start-card-logo">
+        <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      </div>
+      <h2>Meeting Copilot</h2>
+      <p>AI-powered suggestions, live — floating invisibly over your calls. Start a session to see it in action.</p>
+      <button class="start-card-btn" onclick="startDemo()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        Start Demo Session
+      </button>
+      <span class="start-card-hint">⌘↵ to start / stop &nbsp;·&nbsp; ⌘⇧H to hide</span>
+    </div>
+  </div>
+
+</div>
+
+<div class="notif" id="notif"></div>
+
+<script>
+// ── Drag ──
+(function(){
+  const el = document.getElementById('copilot');
+  const handle = document.getElementById('copHeader');
+  let ox=0,oy=0,ix=0,iy=0,dragging=false;
+  handle.addEventListener('mousedown',e=>{
+    if(e.target.closest('.cop-btn'))return;
+    dragging=true;
+    const r=el.getBoundingClientRect();
+    ix=e.clientX-r.left; iy=e.clientY-r.top;
+    document.body.style.userSelect='none';
+  });
+  document.addEventListener('mousemove',e=>{
+    if(!dragging)return;
+    let x=e.clientX-ix, y=e.clientY-iy;
+    x=Math.max(0,Math.min(window.innerWidth-el.offsetWidth,x));
+    y=Math.max(0,Math.min(window.innerHeight-el.offsetHeight,y));
+    el.style.left=x+'px'; el.style.top=y+'px';
+    el.style.right='auto';
+  });
+  document.addEventListener('mouseup',()=>{dragging=false;document.body.style.userSelect='';});
+})();
+
+// ── Collapse ──
+let collapsed=false;
+function toggleCollapse(){
+  collapsed=!collapsed;
+  const cop=document.getElementById('copilot');
+  const body=document.getElementById('copBody');
+  const btn=document.getElementById('collapseBtn');
+  if(collapsed){
+    cop.style.height='44px'; body.style.display='none';
+    btn.innerHTML='<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>';
+  } else {
+    cop.style.height=''; body.style.display='flex';
+    btn.innerHTML='<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>';
+  }
+}
+
+// ── Mute ──
+let muted=false;
+function toggleMute(){
+  muted=!muted;
+  const icon=document.getElementById('muteIcon');
+  const label=document.getElementById('muteLabel');
+  const tile=document.getElementById('tile-you');
+  if(muted){
+    icon.classList.add('red');
+    label.textContent='Unmute';
+    tile.querySelector('.tile-mic').classList.add('muted');
+    tile.querySelector('.tile-mic').innerHTML='<line x1="1" y1="1" x2="23" y2="23"/><path d="M9 9v3a3 3 0 0 0 5.12 2.12M15 9.34V4a3 3 0 0 0-5.94-.6"/><path d="M17 16.95A7 7 0 0 1 5 12v-2m14 0v2a7 7 0 0 1-.11 1.23"/><line x1="12" y1="19" x2="12" y2="23"/>';
+  } else {
+    icon.classList.remove('red');
+    label.textContent='Mute';
+    tile.querySelector('.tile-mic').classList.remove('muted');
+    tile.querySelector('.tile-mic').innerHTML='<path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/>';
+  }
+}
+
+// ── Meeting timer ──
+let meetSec=0, meetTimer=null;
+function startMeetTimer(){
+  meetTimer=setInterval(()=>{
+    meetSec++;
+    const m=String(Math.floor(meetSec/60)).padStart(2,'0');
+    const s=String(meetSec%60).padStart(2,'0');
+    document.getElementById('zoomTimer').textContent=m+':'+s;
+    document.getElementById('recTimer').textContent=m+':'+s;
+  },1000);
+}
+
+// ── Demo conversations ──
+const turns = [
+  {
+    speaker:"Sarah Reynolds",
+    tile:"mainTile",
+    heard:"Can you walk us through the Q3 numbers and where we stand against target?",
+    response:"We're at **83% of target** — $2.4M of a $2.9M goal. The gap is in enterprise: two deals slipped to Q4. SMB and mid-market are both **at or above plan**. We expect to close the gap with the two deals landing in July."
+  },
+  {
+    speaker:"Anika P.",
+    tile:"tile-ap",
+    heard:"What's the auth migration status — are we still on track for June 20th?",
+    response:"**On track for June 20th.** JWT implementation is complete, Redis caching is live and cut P99 by **60ms**. Final step is load-testing the new endpoints — that's Friday. No blockers."
+  },
+  {
+    speaker:"Sarah Reynolds",
+    tile:"mainTile",
+    heard:"And the infra budget request — what exactly are we asking for?",
+    response:"**$8,000 total:** $5k compute, $2k storage, $1k monitoring tooling. That puts Q3 infra at $23k — **12% under the original $26k allocation**. Clean ask with clear ROI from the latency gains."
+  },
+  {
+    speaker:"Anika P.",
+    tile:"tile-ap",
+    heard:"Any risks we should flag before the board meeting next week?",
+    response:"One dependency: **CDN contract renewal** is still open with the vendor. If it slips past June 30th, we need a 30-day bridge at ~$400 extra. I'll follow up with procurement today and have a status by EOD."
+  },
+  {
+    speaker:"Sarah Reynolds",
+    tile:"mainTile",
+    heard:"Good. What are the next steps and who owns what going into next sprint?",
+    response:"Three owners: **You** — load test sign-off by Friday. **Mike** — procurement follow-up on CDN contract today. **Anika** — board deck numbers updated by Monday EOD. Next checkpoint: **Thursday standup** to confirm everything is green."
+  }
+];
+
+let turnIdx=0, sessionOn=false, autoPlay=null;
+
+function startDemo(){
+  document.getElementById('startOverlay').style.display='none';
+  document.getElementById('recBadge').style.display='flex';
+  startMeetTimer();
+  notify('Meeting started — Q3 Roadmap Review');
+  setTimeout(()=>{ startCopilotSession(); }, 1200);
+}
+
+function startCopilotSession(){
+  sessionOn=true;
+  document.getElementById('copLive').style.display='flex';
+  document.getElementById('copTranscript').style.display='flex';
+  document.getElementById('sessionIcon').innerHTML='<rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/>';
+  document.getElementById('copResponse').innerHTML='<div style="font-size:11.5px;color:var(--cop-muted);font-style:italic">Listening for speech…</div>';
+  if(collapsed) toggleCollapse();
+  notify('Copilot active');
+  scheduleNext();
+}
+
+function stopCopilotSession(){
+  sessionOn=false;
+  clearTimeout(autoPlay);
+  document.getElementById('copLive').style.display='none';
+  document.getElementById('copTranscript').style.display='none';
+  document.getElementById('sessionIcon').innerHTML='<polygon points="5 3 19 12 5 21 5 3"/>';
+  document.getElementById('copResponse').innerHTML='<div class="cop-empty"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Session stopped.</div>';
+  document.getElementById('transcriptText').textContent='…';
+  clearSpeaking();
+  notify('Copilot stopped');
+}
+
+function toggleCopilotSession(){
+  if(sessionOn) stopCopilotSession();
+  else startCopilotSession();
+}
+
+function scheduleNext(){
+  if(!sessionOn) return;
+  const delay = turnIdx===0 ? 1200 : 3200;
+  autoPlay=setTimeout(()=>playTurn(turns[turnIdx % turns.length]), delay);
+}
+
+function clearSpeaking(){
+  document.querySelectorAll('.speaker-tile,.side-tile').forEach(t=>t.classList.remove('speaking'));
+}
+
+function playTurn(turn){
+  // highlight speaker tile
+  clearSpeaking();
+  document.getElementById(turn.tile).classList.add('speaking');
+  document.getElementById('transcriptText').textContent=turn.heard;
+
+  // update copilot transcript
+  const tEl=document.getElementById('copTranscript');
+  tEl.style.display='flex';
+
+  // Short pause then stream response
+  setTimeout(()=>{
+    streamResponse(turn.response, ()=>{
+      clearSpeaking();
+      turnIdx++;
+      scheduleNext();
+    });
+  }, 900);
+}
+
+function streamResponse(text, done){
+  const el=document.getElementById('copResponse');
+  el.innerHTML='';
+  let i=0;
+  const interval=setInterval(()=>{
+    i=Math.min(i+4, text.length);
+    const partial=text.slice(0,i);
+    el.innerHTML=partial.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')+'<span class="cursor"></span>';
+    el.scrollTop=el.scrollHeight;
+    if(i>=text.length){
+      clearInterval(interval);
+      el.innerHTML=text.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>');
+      if(done) done();
+    }
+  }, 22);
+}
+
+// ── Manual send ──
+function handleCopKey(e){ if(e.key==='Enter') sendManual(); }
+function sendManual(){
+  const inp=document.getElementById('copInput');
+  const text=inp.value.trim(); if(!text) return;
+  inp.value='';
+  document.getElementById('transcriptText').textContent='[You] '+text;
+  if(!sessionOn){ startCopilotSession(); clearTimeout(autoPlay); }
+  streamResponse("Noted — **\""+text.slice(0,40)+"\"**. To address this directly: the key consideration is alignment on priorities and timeline. I'd suggest we confirm the owner and a concrete deadline before moving on, so there's no ambiguity heading into next sprint.");
+}
+
+// ── Keyboard ──
+document.addEventListener('keydown',e=>{
+  if((e.metaKey||e.ctrlKey)&&e.key==='Enter'){ e.preventDefault(); toggleCopilotSession(); }
+  if((e.metaKey||e.ctrlKey)&&e.shiftKey&&e.key==='H'){
+    const cop=document.getElementById('copilot');
+    cop.style.opacity=cop.style.opacity==='0'?'1':'0';
+    cop.style.pointerEvents=cop.style.opacity==='0'?'none':'all';
+    notify(cop.style.opacity==='0'?'Overlay hidden':'Overlay shown');
+  }
+  if((e.metaKey||e.ctrlKey)&&e.shiftKey&&e.key==='F'){
+    if(sessionOn){ clearTimeout(autoPlay); playTurn(turns[turnIdx % turns.length]); }
+  }
+});
+
+// ── Toast ──
+function notify(msg){
+  const n=document.getElementById('notif');
+  n.textContent=msg; n.classList.add('show');
+  setTimeout(()=>n.classList.remove('show'),2200);
+}
+</script>
+</body>
+</html>
