@@ -8,7 +8,7 @@ import { OnboardingView } from '../views/OnboardingView.js';
 import { AICustomizeView } from '../views/AICustomizeView.js';
 import { FeedbackView } from '../views/FeedbackView.js';
 
-export class CheatingDaddyApp extends LitElement {
+export class MeetingCopilotApp extends LitElement {
     static styles = css`
         * {
             box-sizing: border-box;
@@ -373,7 +373,7 @@ export class CheatingDaddyApp extends LitElement {
         this.startTime = null;
         this.isRecording = false;
         this.sessionActive = false;
-        this.selectedProfile = 'interview';
+        this.selectedProfile = 'meeting';
         this.selectedLanguage = 'en-US';
         this.selectedScreenshotInterval = '5';
         this.selectedImageQuality = 'medium';
@@ -403,7 +403,7 @@ export class CheatingDaddyApp extends LitElement {
 
     async _checkForUpdates() {
         try {
-            this._localVersion = await cheatingDaddy.getVersion();
+            this._localVersion = await copilot.getVersion();
             this.requestUpdate();
         } catch (e) {
             // silently ignore
@@ -413,12 +413,12 @@ export class CheatingDaddyApp extends LitElement {
     async _loadFromStorage() {
         try {
             const [config, prefs] = await Promise.all([
-                cheatingDaddy.storage.getConfig(),
-                cheatingDaddy.storage.getPreferences()
+                copilot.storage.getConfig(),
+                copilot.storage.getPreferences()
             ]);
 
             this.currentView = config.onboarded ? 'main' : 'onboarding';
-            this.selectedProfile = prefs.selectedProfile || 'interview';
+            this.selectedProfile = prefs.selectedProfile || 'meeting';
             this.selectedLanguage = prefs.selectedLanguage || 'en-US';
             this.selectedScreenshotInterval = prefs.selectedScreenshotInterval || '5';
             this.selectedImageQuality = prefs.selectedImageQuality || 'medium';
@@ -525,7 +525,7 @@ export class CheatingDaddyApp extends LitElement {
 
     async handleClose() {
         if (this.currentView === 'assistant') {
-            cheatingDaddy.stopCapture();
+            copilot.stopCapture();
             if (window.require) {
                 const { ipcRenderer } = window.require('electron');
                 await ipcRenderer.invoke('close-session');
@@ -558,11 +558,11 @@ export class CheatingDaddyApp extends LitElement {
     // ── Session start ──
 
     async handleStart() {
-        const prefs = await cheatingDaddy.storage.getPreferences();
+        const prefs = await copilot.storage.getPreferences();
         const providerMode = prefs.providerMode === 'cloud' ? 'byok' : (prefs.providerMode || 'byok');
 
         if (providerMode === 'anthropic') {
-            const success = await cheatingDaddy.initializeAnthropic(this.selectedProfile);
+            const success = await copilot.initializeAnthropic(this.selectedProfile);
             if (!success) {
                 const mainView = this.shadowRoot.querySelector('main-view');
                 if (mainView && mainView.triggerApiKeyError) {
@@ -571,7 +571,7 @@ export class CheatingDaddyApp extends LitElement {
                 return;
             }
         } else if (providerMode === 'cloud') {
-            const creds = await cheatingDaddy.storage.getCredentials();
+            const creds = await copilot.storage.getCredentials();
             if (!creds.cloudToken || creds.cloudToken.trim() === '') {
                 const mainView = this.shadowRoot.querySelector('main-view');
                 if (mainView && mainView.triggerApiKeyError) {
@@ -580,7 +580,7 @@ export class CheatingDaddyApp extends LitElement {
                 return;
             }
 
-            const success = await cheatingDaddy.initializeCloud(this.selectedProfile);
+            const success = await copilot.initializeCloud(this.selectedProfile);
             if (!success) {
                 const mainView = this.shadowRoot.querySelector('main-view');
                 if (mainView && mainView.triggerApiKeyError) {
@@ -589,7 +589,7 @@ export class CheatingDaddyApp extends LitElement {
                 return;
             }
         } else if (providerMode === 'local') {
-            const success = await cheatingDaddy.initializeLocal(this.selectedProfile);
+            const success = await copilot.initializeLocal(this.selectedProfile);
             if (!success) {
                 const mainView = this.shadowRoot.querySelector('main-view');
                 if (mainView && mainView.triggerApiKeyError) {
@@ -598,7 +598,7 @@ export class CheatingDaddyApp extends LitElement {
                 return;
             }
         } else {
-            const apiKey = await cheatingDaddy.storage.getApiKey();
+            const apiKey = await copilot.storage.getApiKey();
             if (!apiKey || apiKey === '') {
                 const mainView = this.shadowRoot.querySelector('main-view');
                 if (mainView && mainView.triggerApiKeyError) {
@@ -607,10 +607,10 @@ export class CheatingDaddyApp extends LitElement {
                 return;
             }
 
-            await cheatingDaddy.initializeGemini(this.selectedProfile, this.selectedLanguage);
+            await copilot.initializeGemini(this.selectedProfile, this.selectedLanguage);
         }
 
-        cheatingDaddy.startCapture(this.selectedScreenshotInterval, this.selectedImageQuality);
+        copilot.startCapture(this.selectedScreenshotInterval, this.selectedImageQuality);
         this.responses = [];
         this.currentResponseIndex = -1;
         this._transcriptLines = [];
@@ -638,27 +638,27 @@ export class CheatingDaddyApp extends LitElement {
 
     async handleProfileChange(profile) {
         this.selectedProfile = profile;
-        await cheatingDaddy.storage.updatePreference('selectedProfile', profile);
+        await copilot.storage.updatePreference('selectedProfile', profile);
     }
 
     async handleLanguageChange(language) {
         this.selectedLanguage = language;
-        await cheatingDaddy.storage.updatePreference('selectedLanguage', language);
+        await copilot.storage.updatePreference('selectedLanguage', language);
     }
 
     async handleScreenshotIntervalChange(interval) {
         this.selectedScreenshotInterval = interval;
-        await cheatingDaddy.storage.updatePreference('selectedScreenshotInterval', interval);
+        await copilot.storage.updatePreference('selectedScreenshotInterval', interval);
     }
 
     async handleImageQualityChange(quality) {
         this.selectedImageQuality = quality;
-        await cheatingDaddy.storage.updatePreference('selectedImageQuality', quality);
+        await copilot.storage.updatePreference('selectedImageQuality', quality);
     }
 
     async handleLayoutModeChange(layoutMode) {
         this.layoutMode = layoutMode;
-        await cheatingDaddy.storage.updateConfig('layout', layoutMode);
+        await copilot.storage.updateConfig('layout', layoutMode);
         this.requestUpdate();
     }
 
@@ -670,7 +670,7 @@ export class CheatingDaddyApp extends LitElement {
     }
 
     async handleSendText(message) {
-        const result = await window.cheatingDaddy.sendTextMessage(message);
+        const result = await window.copilot.sendTextMessage(message);
         if (!result.success) {
             this.setStatus('Error sending message: ' + result.error);
         } else {
@@ -828,12 +828,10 @@ export class CheatingDaddyApp extends LitElement {
         if (!this._isLiveMode()) return '';
 
         const profileLabels = {
-            interview: 'Interview',
-            sales: 'Sales Call',
             meeting: 'Meeting',
+            sales: 'Sales Call',
             presentation: 'Presentation',
-            negotiation: 'Negotiation',
-            exam: 'Exam',
+            general: 'General',
         };
 
         return html`
@@ -892,4 +890,4 @@ export class CheatingDaddyApp extends LitElement {
     }
 }
 
-customElements.define('meeting-copilot-app', CheatingDaddyApp);
+customElements.define('meeting-copilot-app', MeetingCopilotApp);

@@ -40,7 +40,7 @@ function formatSpeakerResults(results) {
     let text = '';
     for (const result of results) {
         if (result.transcript && result.speakerId) {
-            const speakerLabel = result.speakerId === 1 ? 'Interviewer' : 'Candidate';
+            const speakerLabel = result.speakerId === 1 ? 'Speaker' : 'You';
             text += `[${speakerLabel}]: ${result.transcript}\n`;
         }
     }
@@ -76,7 +76,7 @@ function buildContextMessage() {
     if (validTurns.length === 0) return null;
 
     const contextLines = validTurns.map(turn =>
-        `[Interviewer]: ${turn.transcription.trim()}\n[Your answer]: ${turn.ai_response.trim()}`
+        `[Speaker]: ${turn.transcription.trim()}\n[Your response]: ${turn.ai_response.trim()}`
     );
 
     return `Session reconnected. Here's the conversation so far:\n\n${contextLines.join('\n\n')}\n\nContinue from here.`;
@@ -434,7 +434,7 @@ async function sendToGemma(transcription) {
     }
 }
 
-async function initializeGeminiSession(apiKey, customPrompt = '', profile = 'interview', language = 'en-US', isReconnect = false) {
+async function initializeGeminiSession(apiKey, customPrompt = '', profile = 'meeting', language = 'en-US', isReconnect = false) {
     if (isInitializingSession) {
         console.log('Session initialization already in progress');
         return false;
@@ -862,7 +862,7 @@ function setupGeminiIpcHandlers(geminiSessionRef) {
         }
     });
 
-    ipcMain.handle('initialize-gemini', async (event, apiKey, customPrompt, profile = 'interview', language = 'en-US') => {
+    ipcMain.handle('initialize-gemini', async (event, apiKey, customPrompt, profile = 'meeting', language = 'en-US') => {
         currentProviderMode = 'byok';
         const session = await initializeGeminiSession(apiKey, customPrompt, profile, language);
         if (session) {

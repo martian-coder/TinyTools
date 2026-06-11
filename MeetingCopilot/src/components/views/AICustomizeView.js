@@ -43,7 +43,7 @@ export class AICustomizeView extends LitElement {
 
     constructor() {
         super();
-        this.selectedProfile = 'interview';
+        this.selectedProfile = 'meeting';
         this.onProfileChange = () => {};
         this._context = '';
         this._loadFromStorage();
@@ -51,7 +51,7 @@ export class AICustomizeView extends LitElement {
 
     async _loadFromStorage() {
         try {
-            const prefs = await cheatingDaddy.storage.getPreferences();
+            const prefs = await copilot.storage.getPreferences();
             this._context = prefs.customPrompt || '';
             this.requestUpdate();
         } catch (error) {
@@ -65,29 +65,25 @@ export class AICustomizeView extends LitElement {
 
     async _saveContext(val) {
         this._context = val;
-        await cheatingDaddy.storage.updatePreference('customPrompt', val);
+        await copilot.storage.updatePreference('customPrompt', val);
     }
 
     _getProfileName(profile) {
         const names = {
-            interview: 'Job Interview',
-            sales: 'Sales Call',
             meeting: 'Business Meeting',
+            sales: 'Sales Call',
             presentation: 'Presentation',
-            negotiation: 'Negotiation',
-            exam: 'Exam Assistant',
+            general: 'General',
         };
         return names[profile] || profile;
     }
 
     render() {
         const profiles = [
-            { value: 'interview', label: 'Job Interview' },
-            { value: 'sales', label: 'Sales Call' },
             { value: 'meeting', label: 'Business Meeting' },
+            { value: 'sales', label: 'Sales Call' },
             { value: 'presentation', label: 'Presentation' },
-            { value: 'negotiation', label: 'Negotiation' },
-            { value: 'exam', label: 'Exam Assistant' },
+            { value: 'general', label: 'General' },
         ];
 
         return html`
