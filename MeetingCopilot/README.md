@@ -1,6 +1,6 @@
 # Meeting Copilot
 
-A personal AI assistant that sits as a transparent overlay during Zoom/Teams calls. It listens to the other person, transcribes their speech locally with Whisper, and streams a suggested reply from Claude the moment they pause.
+A personal AI meeting assistant that sits as a transparent overlay during Zoom/Teams calls. It listens to the other speaker, transcribes their speech locally with Whisper, and streams a concise talking point from Claude the moment they pause — so you always have something clear and confident to say.
 
 ## 🌍 Multilingual — the standout feature
 
@@ -86,7 +86,7 @@ Run the full pipeline directly from terminal — no Electron needed:
 
 ```bash
 # Default: any language → English
-node cli.js --key sk-ant-... --context "Senior AI Engineer, Stripe interview"
+node cli.js --key sk-ant-... --context "Q4 planning meeting — budget review, roadmap sign-off"
 
 # Web overlay on your phone/tablet (same WiFi)
 node cli.js --key sk-ant-... --serve
@@ -127,6 +127,19 @@ node cli.js start --help
 
 ---
 
-## License
+## Profiles
 
-GPL-3.0
+| Profile | Best for |
+|---------|---------|
+| **Meeting** (default) | Team meetings, standups, discussions |
+| **Sales** | Client calls, business development |
+| **Presentation** | Pitches, demos, public talks |
+| **General** | Any professional conversation |
+
+---
+
+## Trial & License
+
+Meeting Copilot runs free for 25 days. After that a licence is required.
+
+Source is available under the [Business Source License 1.1](./LICENSE). It converts to GPL-2.0+ on 2029-01-01.
