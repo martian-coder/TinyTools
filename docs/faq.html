@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MeetBrief FAQ — Common Questions About the AI Meeting Copilot</title>
+<meta name="description" content="Answers to the most common questions about MeetBrief: which meeting apps it works with, API costs, privacy, multilingual support, licensing, and how to get started.">
+<meta property="og:title" content="MeetBrief FAQ — AI Meeting Copilot Questions Answered">
+<meta property="og:description" content="Does MeetBrief work with Zoom? How much does it cost? Is it private? All answered here.">
+<meta property="og:type" content="website">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<nav>
+  <div class="nav-inner">
+    <a href="index.html" class="nav-logo">
+      <div class="nav-logo-mark">MB</div>
+      MeetBrief
+    </a>
+    <ul class="nav-links">
+      <li><a href="features.html">Features</a></li>
+      <li><a href="how-it-works.html">How it works</a></li>
+      <li><a href="install.html">Setup</a></li>
+      <li><a href="privacy.html">Privacy</a></li>
+      <li><a href="faq.html" class="active">FAQ</a></li>
+    </ul>
+    <div class="nav-cta">
+      <a href="https://github.com/martian-coder/TinyTools" target="_blank" class="btn btn-ghost">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/></svg>
+        GitHub
+      </a>
+      <a href="install.html" class="btn btn-primary">Get Started</a>
+    </div>
+  </div>
+</nav>
+
+<section class="page-hero">
+  <div class="container">
+    <div class="page-breadcrumb"><a href="index.html">MeetBrief</a> / FAQ</div>
+    <h1 class="fade-up">Common questions,<br><span class="grad-text">straight answers</span></h1>
+    <p class="page-sub fade-up fade-up-delay-1">Everything you need to know before installing. If your question isn't here, email <a href="mailto:martian.coders.x@gmail.com">martian.coders.x@gmail.com</a>.</p>
+  </div>
+</section>
+
+<section style="padding-top:0;">
+  <div class="container">
+    <div class="faq-wrap">
+
+      <!-- COMPATIBILITY -->
+      <div class="faq-category fade-up">Compatibility</div>
+
+      <div class="faq-list fade-up fade-up-delay-1">
+        <div class="faq-item">
+          <div class="faq-q" onclick="toggleFaq(this)">
+            Does it work with Zoom, Teams, and Google Meet?
+            <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+          <div class="faq-a">Yes. MeetBrief captures system audio — whatever is playing through your speakers or headphones. This means it works with any meeting app: Zoom, Microsoft Teams, Google Meet, Webex, Slack huddles, Discord, phone calls through speakers, or any other audio source. No app integration required.</div>
+        </div>
+
+        <div class="faq-item">
+          <div class="faq-q" onclick="toggleFaq(this)">
+            What operating systems are supported?
+            <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+          <div class="faq-a"><strong>macOS</strong> (Apple Silicon and Intel) is best supported. System audio capture uses a native subprocess. Screen Recording permission is required. <strong>Windows</strong> works via WASAPI loopback audio capture. <strong>Linux</strong> works with microphone input by default; system audio capture requires a PulseAudio loopback module (<code>pactl load-module module-loopback</code>).</div>
+        </div>
+
+        <div class="faq-item">
+          <div class="faq-q" onclick="toggleFaq(this)">
+            Does it only listen to the other person, or can it capture me too?
+            <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+          <div class="faq-a">By default MeetBrief captures system audio (speaker output) — which is the remote participant's voice, not yours. This is intentional: you want suggestions for responding to what <em>they</em> said, not transcription of your own words. Microphone input can be enabled in settings, but the default is system audio only.</div>
+        </div>
+
+        <div class="faq-item">
+          <div class="faq-q" onclick="toggleFaq(this)">
+            Can I use it in in-person meetings or phone calls?
+            <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+          <div class="faq-a">Yes. If you enable microphone input, MeetBrief can transcribe voices from the room or a speakerphone. For phone calls played through speakers, system audio capture picks it up automatically. The quality depends on ambient noise — a quiet room with a good microphone works well.</div>
+        </div>
+      </div>
+
+      <!-- COST -->
+      <div class="faq-category fade-up" style="margin-top:36px;">Pricing & Cost</div>
+
+      <div class="faq-list fade-up fade-up-delay-1">
+        <div class="faq-item">
+          <div class="faq-q" onclick="toggleFaq(this)">
+            How much does MeetBrief cost?
+            <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+          <div class="faq-a">MeetBrief includes a <strong>25-day free trial</strong> with no limitations. After the trial, a one-time license is required. Email <a href="mailto:martian.coders.x@gmail.com">martian.coders.x@gmail.com</a> with the subject "MeetBrief License" to get a key. You'll receive a <code>MEET-XXXX-XXXX-XXXX</code> format license key to enter directly in the app.</div>
+        </div>
+
+        <div class="faq-item">
+          <div class="faq-q" onclick="toggleFaq(this)">
+            What are the ongoing API costs?
+            <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+          <div class="faq-a">API costs depend on your provider and usage. With Anthropic Claude and prompt caching enabled, a one-hour meeting typically costs <strong>under $0.10</strong> in API calls. Without caching it would be approximately $0.50–$0.80. With Ollama (fully local), there is no per-call cost beyond electricity and compute.</div>
+        </div>
+
+        <div class="faq-item">
+          <div class="faq-q" onclick="toggleFaq(this)">
+            Can I use it without an Anthropic account?
+            <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+          <div class="faq-a">Yes. Set <code>LLM_PROVIDER=ollama</code> in your <code>.env</code> and run any model locally via Ollama. No API key needed and no per-call cost. You'll need a reasonably capable GPU or Apple Silicon CPU for acceptable latency — smaller models like Mistral 7B or Llama 3.1 8B work well on modern hardware.</div>
+        </div>
+      </div>
+
+      <!-- PRIVACY -->
+      <div class="faq-category fade-up" id="privacy" style="margin-top:36px;">Privacy</div>
+
+      <div class="faq-list fade-up fade-up-delay-1">
+        <div class="faq-item">
+          <div class="faq-q" onclick="toggleFaq(this)">
+            Does MeetBrief record or store my meetings?
+            <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+          <div class="faq-a">Audio is never recorded or written to disk during a session — it's processed in memory by Whisper and discarded after transcription. If you enable Session History in settings, the text transcript and AI suggestions are saved locally to your <code>userData</code> folder. Nothing is ever uploaded to any server.</div>
+        </div>
+
+        <div class="faq-item">
+          <div class="faq-q" onclick="toggleFaq(this)">
+            Does my API key leave my machine?
+            <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+          <div class="faq-a">Your API key is sent only to <code>api.anthropic.com</code> — the official Anthropic API endpoint — in the Authorization header of HTTPS requests. It is never sent to any MeetBrief endpoint (there isn't one). It is stored locally and not included in any other outbound traffic.</div>
+        </div>
+
+        <div class="faq-item">
+          <div class="faq-q" onclick="toggleFaq(this)">
+            Will the other person know I'm using MeetBrief?
+            <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+          <div class="faq-a">MeetBrief makes no attempt to be stealthy — that's an explicit non-goal. The overlay is visible on your screen. Whether the other person can see it depends entirely on your screen sharing settings. If you're not sharing your screen, they won't see the overlay. If you are sharing, they may see it.</div>
+        </div>
+
+        <div class="faq-item">
+          <div class="faq-q" onclick="toggleFaq(this)">
+            Does the app send usage analytics or crash reports?
+            <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+          <div class="faq-a">No. MeetBrief contains no analytics SDK, no crash reporter (like Sentry or Crashlytics), and no usage telemetry. The app makes no background network calls. You can verify this by inspecting the source code and searching for <code>fetch(</code> or <code>axios</code> calls.</div>
+        </div>
+      </div>
+
+      <!-- FEATURES -->
+      <div class="faq-category fade-up" style="margin-top:36px;">Features & Usage</div>
+
+      <div class="faq-list fade-up fade-up-delay-1">
+        <div class="faq-item">
+          <div class="faq-q" onclick="toggleFaq(this)">
+            What languages does it support?
+            <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+          <div class="faq-a">Whisper supports 99 languages for transcription. With the <em>translate</em> task enabled (the default), speech in any language is automatically converted to English text before being sent to the LLM. The AI response is always in English. This means you can use MeetBrief for multilingual meetings — a French speaker, a Mandarin speaker, and an Arabic speaker can all be transcribed and responded to from a single session.</div>
+        </div>
+
+        <div class="faq-item">
+          <div class="faq-q" onclick="toggleFaq(this)">
+            How do I control when a suggestion is generated?
+            <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+          <div class="faq-a">By default, suggestions are triggered automatically when Silero VAD detects approximately 1 second of silence after speech — meaning the other person has finished their turn. You can also force-generate at any time using the configurable hotkey (press it while they're still speaking if you want an early suggestion, or press it again to regenerate). The auto-trigger can be disabled in settings.</div>
+        </div>
+
+        <div class="faq-item">
+          <div class="faq-q" onclick="toggleFaq(this)">
+            How good are the AI suggestions?
+            <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+          <div class="faq-a">Quality depends heavily on the context you load before the meeting. A detailed system prompt — including your role, objectives, the other party's likely concerns, and key talking points — produces much better suggestions than a blank or sparse context. Think of it like briefing a very smart assistant before a call. With good context and Claude, suggestions are typically relevant and usable within 1–2 seconds of the speaker finishing.</div>
+        </div>
+
+        <div class="faq-item">
+          <div class="faq-q" onclick="toggleFaq(this)">
+            Can I adjust the overlay position and appearance?
+            <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+          <div class="faq-a">Yes. The overlay position, size, and opacity are adjustable in settings. It defaults to the bottom-right corner of your screen at medium opacity. You can move it to any screen position and control whether it auto-hides when not showing new content.</div>
+        </div>
+
+        <div class="faq-item">
+          <div class="faq-q" onclick="toggleFaq(this)">
+            Does it work during screen sharing?
+            <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+          <div class="faq-a">Yes, it continues capturing and generating suggestions during screen sharing. Whether the overlay is visible in your screen share depends on your meeting app and settings. In Zoom for example, you can share a specific window instead of your full desktop to exclude the overlay from what others see.</div>
+        </div>
+      </div>
+
+      <!-- LICENSE -->
+      <div class="faq-category fade-up" style="margin-top:36px;">Trial & Licensing</div>
+
+      <div class="faq-list fade-up fade-up-delay-1">
+        <div class="faq-item">
+          <div class="faq-q" onclick="toggleFaq(this)">
+            How long is the free trial?
+            <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+          <div class="faq-a">The trial is <strong>25 calendar days</strong> from first installation. All features are fully available during the trial with no limitations. After 25 days, the app shows a lock screen until a license key is entered. The trial timer is based on the installation date and cannot be reset by reinstalling.</div>
+        </div>
+
+        <div class="faq-item">
+          <div class="faq-q" onclick="toggleFaq(this)">
+            How do I get a license after the trial expires?
+            <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+          <div class="faq-a">Email <a href="mailto:martian.coders.x@gmail.com">martian.coders.x@gmail.com</a> with the subject "MeetBrief License". You'll receive a license key in the format <code>MEET-XXXX-XXXX-XXXX</code>. Enter it in the text field on the trial-expired screen and click Activate — the app will reload immediately.</div>
+        </div>
+
+        <div class="faq-item">
+          <div class="faq-q" onclick="toggleFaq(this)">
+            Is a license tied to a single machine?
+            <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+          <div class="faq-a">License keys are for personal use — one person, reasonable number of machines. There's no technical enforcement of machine limits. If you need a key for a team or enterprise deployment, email to discuss terms.</div>
+        </div>
+      </div>
+
+    </div><!-- end faq-wrap -->
+
+    <div style="margin-top:64px; text-align:center;" class="fade-up">
+      <p style="font-size:15px; color:var(--text2); margin-bottom:20px;">Still have a question?</p>
+      <a href="mailto:martian.coders.x@gmail.com" class="btn btn-primary">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+        Email martian.coders.x@gmail.com
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta-section" style="border-top:1px solid var(--border);">
+  <div class="cta-glow"></div>
+  <div class="container">
+    <h2 class="fade-up">Ready to start?</h2>
+    <p class="fade-up fade-up-delay-1">25 days free. No account. No signup. Clone and run.</p>
+    <div class="cta-actions">
+      <a href="install.html" class="btn btn-primary fade-up fade-up-delay-2">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2M7 11l5 5 5-5m-5-7v12"/></svg>
+        Install MeetBrief
+      </a>
+      <a href="features.html" class="btn btn-ghost fade-up fade-up-delay-3">Explore features →</a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="container">
+    <div class="footer-inner">
+      <a href="index.html" class="footer-logo"><div class="footer-logo-mark">MB</div>MeetBrief</a>
+      <ul class="footer-links">
+        <li><a href="features.html">Features</a></li>
+        <li><a href="how-it-works.html">How it works</a></li>
+        <li><a href="install.html">Setup</a></li>
+        <li><a href="privacy.html">Privacy</a></li>
+        <li><a href="faq.html">FAQ</a></li>
+        <li><a href="https://github.com/martian-coder/TinyTools/tree/main/MeetingCopilot" target="_blank">GitHub</a></li>
+        <li><a href="mailto:martian.coders.x@gmail.com">Contact</a></li>
+      </ul>
+      <div class="footer-right">Built with Electron · Anthropic Claude · Whisper</div>
+    </div>
+  </div>
+</footer>
+
+<script>
+const observer = new IntersectionObserver(
+  entries => entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); }),
+  { threshold: 0.08, rootMargin: '0px 0px -40px 0px' }
+);
+document.querySelectorAll('.fade-up').forEach(el => observer.observe(el));
+
+function toggleFaq(el) {
+  const item = el.closest('.faq-item');
+  const isOpen = item.classList.contains('open');
+  document.querySelectorAll('.faq-item.open').forEach(i => i.classList.remove('open'));
+  if (!isOpen) item.classList.add('open');
+}
+</script>
+</body>
+</html>

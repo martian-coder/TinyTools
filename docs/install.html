@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Install MeetBrief — Setup Guide for macOS, Windows & Linux</title>
+<meta name="description" content="Install and run MeetBrief in minutes. Clone the repo, install dependencies, configure your API key, and launch with npm start. Works on macOS, Windows, and Linux.">
+<meta property="og:title" content="Install MeetBrief — AI Meeting Copilot Setup Guide">
+<meta property="og:description" content="Step-by-step installation guide for MeetBrief. Node.js 18+ and an Anthropic or Ollama API key are all you need.">
+<meta property="og:type" content="website">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<style>
+.platform-tabs {
+  display: flex; gap: 8px; margin-bottom: 24px;
+}
+.ptab {
+  padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 500;
+  cursor: pointer; border: 1px solid var(--border); background: var(--bg2);
+  color: var(--text2); transition: all 0.15s; font-family: var(--font);
+}
+.ptab:hover { color: var(--text); border-color: var(--border2); }
+.ptab.active { background: rgba(79,121,245,0.12); border-color: rgba(79,121,245,0.3); color: var(--blue2); }
+.platform-note { display: none; }
+.platform-note.visible { display: block; }
+.platform-note {
+  padding: 14px 16px; border-radius: 10px; font-size: 13px; color: var(--text2); line-height: 1.7;
+  margin-bottom: 16px;
+}
+.platform-note.macos { background: rgba(52,211,153,0.06); border: 1px solid rgba(52,211,153,0.15); }
+.platform-note.windows { background: rgba(79,121,245,0.06); border: 1px solid rgba(79,121,245,0.15); }
+.platform-note.linux { background: rgba(245,166,35,0.06); border: 1px solid rgba(245,166,35,0.15); }
+.prereq-list { display: flex; flex-direction: column; gap: 10px; margin: 24px 0; }
+.prereq-item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 14px 16px; background: var(--bg2); border: 1px solid var(--border);
+  border-radius: 10px; font-size: 13px;
+}
+.prereq-item .pi-icon { font-size: 18px; flex-shrink: 0; }
+.prereq-item strong { color: var(--text); display: block; margin-bottom: 2px; }
+.prereq-item span { color: var(--text2); }
+.env-table { width: 100%; border-collapse: collapse; margin-top: 16px; }
+.env-table th {
+  text-align: left; padding: 10px 14px; font-size: 11px; font-weight: 600;
+  color: var(--text3); text-transform: uppercase; letter-spacing: 0.6px;
+  border-bottom: 1px solid var(--border); background: var(--bg3);
+}
+.env-table td {
+  padding: 11px 14px; font-size: 13px; border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+.env-table tr:last-child td { border-bottom: none; }
+.env-table .key { font-family: var(--mono); color: var(--blue2); font-size: 12px; }
+.env-table .val { color: var(--text2); }
+.env-table .desc { color: var(--text3); font-size: 12px; }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-inner">
+    <a href="index.html" class="nav-logo">
+      <div class="nav-logo-mark">MB</div>
+      MeetBrief
+    </a>
+    <ul class="nav-links">
+      <li><a href="features.html">Features</a></li>
+      <li><a href="how-it-works.html">How it works</a></li>
+      <li><a href="install.html" class="active">Setup</a></li>
+      <li><a href="privacy.html">Privacy</a></li>
+      <li><a href="faq.html">FAQ</a></li>
+    </ul>
+    <div class="nav-cta">
+      <a href="https://github.com/martian-coder/TinyTools" target="_blank" class="btn btn-ghost">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/></svg>
+        GitHub
+      </a>
+      <a href="install.html" class="btn btn-primary">Get Started</a>
+    </div>
+  </div>
+</nav>
+
+<section class="page-hero">
+  <div class="container">
+    <div class="page-breadcrumb"><a href="index.html">MeetBrief</a> / Setup</div>
+    <h1 class="fade-up">Up and running<br><span class="grad-text">in under 5 minutes</span></h1>
+    <p class="page-sub fade-up fade-up-delay-1">MeetBrief is an Electron app. If you have Node.js and an API key, you're ready. No installers, no accounts, no signup — just clone and run.</p>
+    <div class="fade-up fade-up-delay-2" style="display:flex; gap:8px; justify-content:center; flex-wrap:wrap;">
+      <span style="padding:5px 12px; background:rgba(52,211,153,0.1); border:1px solid rgba(52,211,153,0.2); border-radius:99px; font-size:12px; color:var(--green);">🍎 macOS</span>
+      <span style="padding:5px 12px; background:rgba(79,121,245,0.1); border:1px solid rgba(79,121,245,0.2); border-radius:99px; font-size:12px; color:var(--blue2);">🪟 Windows</span>
+      <span style="padding:5px 12px; background:rgba(245,166,35,0.1); border:1px solid rgba(245,166,35,0.2); border-radius:99px; font-size:12px; color:var(--amber);">🐧 Linux</span>
+    </div>
+  </div>
+</section>
+
+<section style="padding-top:0;">
+  <div class="container">
+
+    <!-- PREREQUISITES -->
+    <div class="section-eyebrow fade-up">Step 1</div>
+    <h2 class="section-headline fade-up fade-up-delay-1">Prerequisites</h2>
+
+    <div class="prereq-list fade-up fade-up-delay-2">
+      <div class="prereq-item">
+        <div class="pi-icon">⬢</div>
+        <div>
+          <strong>Node.js 18 or newer</strong>
+          <span>Download from <a href="https://nodejs.org" target="_blank">nodejs.org</a> or install via <code>nvm</code>. Run <code>node --version</code> to check.</span>
+        </div>
+      </div>
+      <div class="prereq-item">
+        <div class="pi-icon">📦</div>
+        <div>
+          <strong>npm (comes with Node)</strong>
+          <span>No separate installation needed — npm is bundled with every Node.js release.</span>
+        </div>
+      </div>
+      <div class="prereq-item">
+        <div class="pi-icon">🔑</div>
+        <div>
+          <strong>API key (Anthropic or Ollama)</strong>
+          <span>For Claude: get an API key at console.anthropic.com. For fully local use, install <a href="https://ollama.ai" target="_blank">Ollama</a> and pull a model. No key needed for Ollama.</span>
+        </div>
+      </div>
+      <div class="prereq-item">
+        <div class="pi-icon">🍎</div>
+        <div>
+          <strong>macOS: Screen Recording permission</strong>
+          <span>System audio capture requires Screen Recording access. On first launch, MeetBrief will prompt for it automatically via System Preferences → Privacy & Security.</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- CLONE -->
+    <div style="margin-top:64px;">
+      <div class="section-eyebrow fade-up">Step 2</div>
+      <h2 class="section-headline fade-up fade-up-delay-1">Clone and install</h2>
+      <p class="section-sub fade-up fade-up-delay-2">MeetBrief lives in the <code>MeetingCopilot/</code> directory of the TinyTools repository.</p>
+
+      <div class="setup-grid fade-up fade-up-delay-2">
+        <div class="setup-steps">
+          <div class="setup-step">
+            <div class="setup-step-num">1</div>
+            <div class="setup-step-content">
+              <h4>Clone the repository</h4>
+              <p>The <code>MeetingCopilot/</code> subfolder contains the full Electron app. You only need this subfolder.</p>
+            </div>
+          </div>
+          <div class="setup-step">
+            <div class="setup-step-num">2</div>
+            <div class="setup-step-content">
+              <h4>Enter the directory</h4>
+              <p>Navigate into <code>MeetingCopilot/</code> — this is where <code>package.json</code> and the Electron entry point live.</p>
+            </div>
+          </div>
+          <div class="setup-step">
+            <div class="setup-step-num">3</div>
+            <div class="setup-step-content">
+              <h4>Install dependencies</h4>
+              <p>npm will fetch Electron, <code>@huggingface/transformers</code>, and other runtime dependencies.</p>
+            </div>
+          </div>
+        </div>
+        <div>
+          <div class="code-block">
+            <div class="code-block-header">
+              <span class="code-block-title">terminal</span>
+              <button class="copy-btn" onclick="copyCode(this,'clone-code')">Copy</button>
+            </div>
+            <pre id="clone-code"><span class="h"># Clone the full repo</span>
+<span class="p">git clone https://github.com/martian-coder/TinyTools.git</span>
+
+<span class="h"># Enter the app directory</span>
+<span class="k">cd</span> TinyTools/MeetingCopilot
+
+<span class="h"># Install all dependencies</span>
+<span class="p">npm install</span></pre>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ENV CONFIG -->
+    <div style="margin-top:64px;">
+      <div class="section-eyebrow fade-up">Step 3</div>
+      <h2 class="section-headline fade-up fade-up-delay-1">Configure your provider</h2>
+      <p class="section-sub fade-up fade-up-delay-2">Create a <code>.env</code> file in <code>MeetingCopilot/</code> and set your provider and API key. Your key stays on your machine — it is never sent to MeetBrief.</p>
+
+      <div class="platform-tabs fade-up fade-up-delay-1">
+        <button class="ptab active" onclick="showPlatform('anthropic',this)">Using Claude (Anthropic)</button>
+        <button class="ptab" onclick="showPlatform('ollama',this)">Using Ollama (local)</button>
+      </div>
+
+      <div id="anthropic-note" class="platform-note macos visible fade-up fade-up-delay-2">
+        <strong style="color:var(--green);">Claude setup:</strong> Get your API key at <strong>console.anthropic.com</strong> → API Keys. Paste it below. Your key is billed per-token directly by Anthropic — typically under $0.10/hour of meeting time with prompt caching enabled.
+      </div>
+      <div id="ollama-note" class="platform-note linux fade-up fade-up-delay-2">
+        <strong style="color:var(--amber);">Ollama setup:</strong> Install Ollama from <strong>ollama.ai</strong>, then run <code>ollama pull llama3.1</code> (or any model). No API key needed. Latency depends on your hardware — a mid-range GPU gives good results.
+      </div>
+
+      <div class="code-block fade-up fade-up-delay-2" id="env-anthropic">
+        <div class="code-block-header">
+          <span class="code-block-title">.env (Claude)</span>
+          <button class="copy-btn" onclick="copyCode(this,'env-claude')">Copy</button>
+        </div>
+        <pre id="env-claude"><span class="h"># LLM provider: anthropic | ollama</span>
+<span class="v">LLM_PROVIDER</span>=<span class="s">anthropic</span>
+
+<span class="h"># Your Anthropic API key</span>
+<span class="v">ANTHROPIC_API_KEY</span>=<span class="s">sk-ant-api03-...</span>
+
+<span class="h"># Whisper model size: tiny | small | medium</span>
+<span class="h"># whisper-small is recommended (good speed/accuracy balance)</span>
+<span class="v">WHISPER_MODEL</span>=<span class="s">Xenova/whisper-small</span></pre>
+      </div>
+
+      <div class="code-block fade-up fade-up-delay-2" id="env-ollama" style="display:none;">
+        <div class="code-block-header">
+          <span class="code-block-title">.env (Ollama)</span>
+          <button class="copy-btn" onclick="copyCode(this,'env-ollama-code')">Copy</button>
+        </div>
+        <pre id="env-ollama-code"><span class="h"># LLM provider: anthropic | ollama</span>
+<span class="v">LLM_PROVIDER</span>=<span class="s">ollama</span>
+
+<span class="h"># Ollama model name (must be pulled first)</span>
+<span class="v">OLLAMA_MODEL</span>=<span class="s">llama3.1</span>
+
+<span class="h"># Whisper model size</span>
+<span class="v">WHISPER_MODEL</span>=<span class="s">Xenova/whisper-small</span></pre>
+      </div>
+
+      <div class="env-note fade-up fade-up-delay-3">
+        <strong>Your API key stays on your machine.</strong> It is sent directly from your machine to Anthropic (or your local Ollama instance). It never passes through MeetBrief infrastructure — there is none.
+      </div>
+    </div>
+
+    <!-- FULL ENV REFERENCE -->
+    <div style="margin-top:48px;" class="fade-up">
+      <h3 style="font-size:1rem; margin-bottom:16px; color:var(--text);">Full .env reference</h3>
+      <div class="code-block">
+        <table class="env-table">
+          <thead>
+            <tr><th>Variable</th><th>Values</th><th>Description</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="key">LLM_PROVIDER</td>
+              <td class="val"><code>anthropic</code> | <code>ollama</code></td>
+              <td class="desc">Which LLM backend to use</td>
+            </tr>
+            <tr>
+              <td class="key">ANTHROPIC_API_KEY</td>
+              <td class="val"><code>sk-ant-...</code></td>
+              <td class="desc">Anthropic API key (required when using Claude)</td>
+            </tr>
+            <tr>
+              <td class="key">OLLAMA_MODEL</td>
+              <td class="val"><code>llama3.1</code>, <code>mistral</code>, …</td>
+              <td class="desc">Model name to use with Ollama</td>
+            </tr>
+            <tr>
+              <td class="key">WHISPER_MODEL</td>
+              <td class="val"><code>Xenova/whisper-tiny</code><br><code>Xenova/whisper-small</code><br><code>Xenova/whisper-medium</code></td>
+              <td class="desc">Whisper model size. Small is recommended. Larger = more accurate but slower.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- LAUNCH -->
+    <div style="margin-top:64px;">
+      <div class="section-eyebrow fade-up">Step 4</div>
+      <h2 class="section-headline fade-up fade-up-delay-1">Launch MeetBrief</h2>
+      <p class="section-sub fade-up fade-up-delay-2">Once dependencies are installed and <code>.env</code> is configured, you're ready to start.</p>
+
+      <div class="setup-grid fade-up fade-up-delay-2">
+        <div class="setup-steps">
+          <div class="setup-step">
+            <div class="setup-step-num">1</div>
+            <div class="setup-step-content">
+              <h4>First run — Whisper download</h4>
+              <p>On the very first launch, MeetBrief will download the Whisper model (~250MB for small) and cache it locally. This is a one-time operation.</p>
+            </div>
+          </div>
+          <div class="setup-step">
+            <div class="setup-step-num">2</div>
+            <div class="setup-step-content">
+              <h4>Grant permissions (macOS)</h4>
+              <p>macOS will prompt for Screen Recording permission. Grant it — this is required for system audio capture to work. You can verify it in System Settings → Privacy & Security → Screen Recording.</p>
+            </div>
+          </div>
+          <div class="setup-step">
+            <div class="setup-step-num">3</div>
+            <div class="setup-step-content">
+              <h4>Load context, start session</h4>
+              <p>Paste your meeting context into the text area, choose your provider, and click Start Session. Join your meeting — MeetBrief will begin listening.</p>
+            </div>
+          </div>
+        </div>
+        <div>
+          <div class="code-block">
+            <div class="code-block-header">
+              <span class="code-block-title">terminal</span>
+              <button class="copy-btn" onclick="copyCode(this,'run-code')">Copy</button>
+            </div>
+            <pre id="run-code"><span class="h"># Start MeetBrief</span>
+<span class="p">npm start</span>
+
+<span class="h"># The app window will open.</span>
+<span class="h"># On first run, Whisper downloads (~250MB).</span>
+<span class="h"># Accept the Screen Recording prompt on macOS.</span></pre>
+          </div>
+
+          <div class="env-note" style="margin-top:16px;">
+            <strong>25-day free trial.</strong> No account or signup required. After the trial period, email <a href="mailto:martian.coders.x@gmail.com" style="color:var(--amber);">martian.coders.x@gmail.com</a> for a license key. Enter it directly in the app.
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- TROUBLESHOOTING -->
+<section style="background:var(--bg2); border-top:1px solid var(--border);">
+  <div class="container">
+    <div class="section-eyebrow fade-up">Troubleshooting</div>
+    <h2 class="section-headline fade-up fade-up-delay-1">Common issues</h2>
+
+    <div class="faq-wrap">
+      <div class="faq-list fade-up fade-up-delay-2">
+        <div class="faq-item">
+          <div class="faq-q" onclick="toggleFaq(this)">
+            No system audio is being captured
+            <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+          <div class="faq-a"><strong>macOS:</strong> Check System Settings → Privacy & Security → Screen Recording and ensure MeetBrief is listed and enabled. You may need to restart the app after granting permission. <strong>Windows:</strong> Ensure the default playback device is set correctly. <strong>Linux:</strong> System audio requires a PulseAudio loopback module. Run <code>pactl load-module module-loopback</code> to test.</div>
+        </div>
+        <div class="faq-item">
+          <div class="faq-q" onclick="toggleFaq(this)">
+            API calls fail with an authentication error
+            <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+          <div class="faq-a">Check that your <code>ANTHROPIC_API_KEY</code> in <code>.env</code> is correct and starts with <code>sk-ant-</code>. Make sure you're in the <code>MeetingCopilot/</code> directory when running <code>npm start</code> (the <code>.env</code> file must be in that directory).</div>
+        </div>
+        <div class="faq-item">
+          <div class="faq-q" onclick="toggleFaq(this)">
+            Whisper download fails or hangs
+            <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+          <div class="faq-a">The model downloads from Hugging Face CDN (~250MB for whisper-small). If it fails, check your internet connection and try again. The model is cached in <code>~/.cache/meetbrief/</code> after the first successful download. Switching to <code>WHISPER_MODEL=Xenova/whisper-tiny</code> in your <code>.env</code> downloads a smaller model (~75MB).</div>
+        </div>
+        <div class="faq-item">
+          <div class="faq-q" onclick="toggleFaq(this)">
+            Ollama not connecting
+            <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+          <div class="faq-a">Ensure Ollama is running (<code>ollama serve</code>) and accessible at <code>http://localhost:11434</code>. Verify your model is pulled: <code>ollama list</code>. The model name in <code>OLLAMA_MODEL</code> must exactly match the name shown by <code>ollama list</code>.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta-section">
+  <div class="cta-glow"></div>
+  <div class="container">
+    <h2 class="fade-up">Questions before you install?</h2>
+    <p class="fade-up fade-up-delay-1">Check the FAQ or reach out — happy to help you get set up.</p>
+    <div class="cta-actions">
+      <a href="faq.html" class="btn btn-primary fade-up fade-up-delay-2">View FAQ</a>
+      <a href="mailto:martian.coders.x@gmail.com" class="btn btn-ghost fade-up fade-up-delay-3">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+        Email support
+      </a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="container">
+    <div class="footer-inner">
+      <a href="index.html" class="footer-logo"><div class="footer-logo-mark">MB</div>MeetBrief</a>
+      <ul class="footer-links">
+        <li><a href="features.html">Features</a></li>
+        <li><a href="how-it-works.html">How it works</a></li>
+        <li><a href="install.html">Setup</a></li>
+        <li><a href="privacy.html">Privacy</a></li>
+        <li><a href="faq.html">FAQ</a></li>
+        <li><a href="https://github.com/martian-coder/TinyTools/tree/main/MeetingCopilot" target="_blank">GitHub</a></li>
+        <li><a href="mailto:martian.coders.x@gmail.com">Contact</a></li>
+      </ul>
+      <div class="footer-right">Built with Electron · Anthropic Claude · Whisper</div>
+    </div>
+  </div>
+</footer>
+
+<script>
+const observer = new IntersectionObserver(
+  entries => entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); }),
+  { threshold: 0.08, rootMargin: '0px 0px -40px 0px' }
+);
+document.querySelectorAll('.fade-up').forEach(el => observer.observe(el));
+
+function toggleFaq(el) {
+  const item = el.closest('.faq-item');
+  const isOpen = item.classList.contains('open');
+  document.querySelectorAll('.faq-item.open').forEach(i => i.classList.remove('open'));
+  if (!isOpen) item.classList.add('open');
+}
+
+function copyCode(btn, id) {
+  const el = document.getElementById(id);
+  const text = el.textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    btn.textContent = 'Copied!'; btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 2000);
+  });
+}
+
+function showPlatform(platform, btn) {
+  document.querySelectorAll('.ptab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.platform-note').forEach(n => n.classList.remove('visible'));
+  document.getElementById(platform + '-note').classList.add('visible');
+  document.getElementById('env-anthropic').style.display = platform === 'anthropic' ? 'block' : 'none';
+  document.getElementById('env-ollama').style.display = platform === 'ollama' ? 'block' : 'none';
+}
+</script>
+</body>
+</html>

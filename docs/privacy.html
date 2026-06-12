@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MeetBrief Privacy — 100% Local, No Cloud, Your API Key</title>
+<meta name="description" content="MeetBrief processes all audio on your machine. Your API key goes directly to Anthropic — never through MeetBrief. No servers, no analytics, no telemetry. Inspect the source yourself.">
+<meta property="og:title" content="MeetBrief Privacy — Local AI Meeting Tool With No Backend">
+<meta property="og:description" content="No MeetBrief servers. Audio stays on your machine. API key sent directly to your provider. Zero analytics, zero telemetry. Fully open source.">
+<meta property="og:type" content="website">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<style>
+.privacy-detail-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 48px;
+}
+.privacy-detail-card {
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: var(--radius-lg); padding: 32px;
+}
+.privacy-detail-card h3 { font-size: 1.05rem; margin-bottom: 12px; }
+.privacy-detail-card p { font-size: 13.5px; }
+.privacy-detail-card ul { list-style: none; margin-top: 12px; display: flex; flex-direction: column; gap: 8px; }
+.privacy-detail-card li {
+  display: flex; gap: 10px; font-size: 13px; color: var(--text2); line-height: 1.6;
+}
+.privacy-detail-card li::before {
+  content: '✓'; color: var(--green); font-weight: 700; flex-shrink: 0; margin-top: 1px;
+}
+.privacy-detail-card li.bad::before { content: '✗'; color: var(--red); }
+
+.data-flow {
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: var(--radius-lg); padding: 32px; margin: 48px 0;
+}
+.data-flow h3 { font-size: 1rem; margin-bottom: 24px; color: var(--text); }
+.data-flow-row {
+  display: flex; align-items: flex-start; gap: 16px;
+  padding: 12px 0; border-bottom: 1px solid var(--border);
+}
+.data-flow-row:last-child { border-bottom: none; }
+.df-icon {
+  width: 32px; height: 32px; border-radius: 8px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center; font-size: 14px;
+}
+.df-icon.green { background: rgba(52,211,153,0.1); }
+.df-icon.red { background: rgba(245,101,101,0.1); }
+.df-content strong { font-size: 13px; color: var(--text); display: block; margin-bottom: 3px; }
+.df-content span { font-size: 12.5px; color: var(--text3); line-height: 1.55; }
+
+.trust-pills {
+  display: flex; gap: 10px; flex-wrap: wrap; margin: 32px 0;
+}
+.trust-pill {
+  padding: 8px 16px; border-radius: 99px; font-size: 12px; font-weight: 500;
+  display: flex; align-items: center; gap: 6px;
+}
+.trust-pill.green { background: rgba(52,211,153,0.1); border: 1px solid rgba(52,211,153,0.2); color: var(--green); }
+.trust-pill.blue  { background: rgba(79,121,245,0.1); border: 1px solid rgba(79,121,245,0.2); color: var(--blue2); }
+.trust-pill.amber { background: rgba(245,166,35,0.1); border: 1px solid rgba(245,166,35,0.2); color: var(--amber); }
+
+@media (max-width: 768px) {
+  .privacy-detail-grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-inner">
+    <a href="index.html" class="nav-logo">
+      <div class="nav-logo-mark">MB</div>
+      MeetBrief
+    </a>
+    <ul class="nav-links">
+      <li><a href="features.html">Features</a></li>
+      <li><a href="how-it-works.html">How it works</a></li>
+      <li><a href="install.html">Setup</a></li>
+      <li><a href="privacy.html" class="active">Privacy</a></li>
+      <li><a href="faq.html">FAQ</a></li>
+    </ul>
+    <div class="nav-cta">
+      <a href="https://github.com/martian-coder/TinyTools" target="_blank" class="btn btn-ghost">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/></svg>
+        GitHub
+      </a>
+      <a href="install.html" class="btn btn-primary">Get Started</a>
+    </div>
+  </div>
+</nav>
+
+<section class="page-hero">
+  <div class="container">
+    <div class="page-breadcrumb"><a href="index.html">MeetBrief</a> / Privacy</div>
+    <h1 class="fade-up">Built for people who<br><span class="grad-text">take privacy seriously</span></h1>
+    <p class="page-sub fade-up fade-up-delay-1">MeetBrief was designed with one rule: your data never touches our infrastructure. There is no MeetBrief infrastructure. Audio stays on your machine, API keys go directly to your provider, and there's no backend to receive anything.</p>
+    <div class="trust-pills fade-up fade-up-delay-2">
+      <span class="trust-pill green">✓ No MeetBrief servers</span>
+      <span class="trust-pill green">✓ Audio stays on-device</span>
+      <span class="trust-pill blue">✓ Your API key, your billing</span>
+      <span class="trust-pill amber">✓ Open source — inspect the code</span>
+    </div>
+  </div>
+</section>
+
+<!-- MAIN PRIVACY CARDS -->
+<section style="padding-top:0;">
+  <div class="container">
+    <div class="privacy-grid fade-up fade-up-delay-1">
+      <div class="privacy-card">
+        <div class="privacy-icon">🔑</div>
+        <h3>Your API key, forever yours</h3>
+        <p>You bring your own Anthropic or other provider API key. It is stored locally in your app's config directory and sent <strong>directly from your machine to the provider</strong>. MeetBrief reads it, uses it, and never sends it anywhere else.</p>
+      </div>
+      <div class="privacy-card">
+        <div class="privacy-icon">🖥️</div>
+        <h3>Audio processed on-device</h3>
+        <p>All audio capture and transcription runs on your machine via local Whisper. Your microphone and speaker audio <strong>never leaves your computer</strong> — not even to a relay server. The only network call is your prompt going to your chosen LLM API.</p>
+      </div>
+      <div class="privacy-card">
+        <div class="privacy-icon">🚫</div>
+        <h3>Zero recording by us</h3>
+        <p>MeetBrief has no backend, no analytics, no telemetry. <strong>There is no server to receive data.</strong> The app is fully self-contained. You can verify this by inspecting the source code on GitHub — every network call is visible.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- DATA FLOW -->
+<section style="padding-top:48px; padding-bottom:64px;">
+  <div class="container">
+    <div class="section-eyebrow fade-up">Data flow</div>
+    <h2 class="section-headline fade-up fade-up-delay-1">Exactly what goes where</h2>
+    <p class="section-sub fade-up fade-up-delay-2">A complete picture of every piece of data MeetBrief handles and where it travels.</p>
+
+    <div class="data-flow fade-up fade-up-delay-2">
+      <h3>What MeetBrief sends — and doesn't send</h3>
+
+      <div class="data-flow-row">
+        <div class="df-icon green">✓</div>
+        <div class="df-content">
+          <strong>Meeting transcript → your chosen LLM (Claude API or local Ollama)</strong>
+          <span>The live transcript of what was said in your meeting is sent to your LLM provider for processing. For Claude: this goes directly from your machine to api.anthropic.com over HTTPS, authenticated with your own API key, billed to your own account. For Ollama: this goes to localhost — it never leaves your machine at all.</span>
+        </div>
+      </div>
+
+      <div class="data-flow-row">
+        <div class="df-icon green">✓</div>
+        <div class="df-content">
+          <strong>Whisper model downloaded once from Hugging Face CDN</strong>
+          <span>On first launch, MeetBrief downloads the Whisper model weights (~250MB) from Hugging Face's CDN. This is a standard model weights download over HTTPS. After download, the model runs entirely locally — no further network calls for transcription.</span>
+        </div>
+      </div>
+
+      <div class="data-flow-row">
+        <div class="df-icon red">✗</div>
+        <div class="df-content">
+          <strong>Audio data → MeetBrief servers (does not happen)</strong>
+          <span>Audio captured from your speakers or microphone is processed entirely on-device by Whisper. It is never sent to any server — not Anthropic's, not MeetBrief's (there are none). The raw audio never leaves your machine.</span>
+        </div>
+      </div>
+
+      <div class="data-flow-row">
+        <div class="df-icon red">✗</div>
+        <div class="df-content">
+          <strong>API key → MeetBrief servers (does not happen)</strong>
+          <span>Your Anthropic API key is stored in your local app data directory. It is read by MeetBrief only to authenticate requests to api.anthropic.com on your behalf. It is never included in any outbound request to a MeetBrief endpoint.</span>
+        </div>
+      </div>
+
+      <div class="data-flow-row">
+        <div class="df-icon red">✗</div>
+        <div class="df-content">
+          <strong>Analytics or telemetry → any server (does not happen)</strong>
+          <span>MeetBrief contains no analytics SDK, no crash reporter, no usage telemetry. There are no background pings, version checks, or heartbeats. The app makes no network calls except the ones you explicitly trigger (LLM API calls and the one-time Whisper download).</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TECHNICAL DETAIL -->
+<section style="background:var(--bg2); border-top:1px solid var(--border); border-bottom:1px solid var(--border);">
+  <div class="container">
+    <div class="section-eyebrow fade-up">Technical details</div>
+    <h2 class="section-headline fade-up fade-up-delay-1">How the isolation is enforced</h2>
+
+    <div class="privacy-detail-grid">
+      <div class="privacy-detail-card fade-up fade-up-delay-1">
+        <h3>API key storage</h3>
+        <p>Your API key is stored in Electron's <code>userData</code> directory on your local filesystem — the same location as app preferences and session history. It is read from disk at startup and used directly for API calls. It is never written to any cloud sync location.</p>
+        <ul>
+          <li>Stored in local <code>userData</code> config</li>
+          <li>Never included in any request to meetbrief.io or any third-party</li>
+          <li>Only sent to <code>api.anthropic.com</code> (or <code>localhost:11434</code> for Ollama)</li>
+        </ul>
+      </div>
+
+      <div class="privacy-detail-card fade-up fade-up-delay-2">
+        <h3>Audio pipeline</h3>
+        <p>System audio is captured as raw PCM via a native subprocess (macOS) or OS loopback API. It is downsampled, chunked to 100ms frames, and processed entirely in-process by Silero VAD and Whisper. The raw audio buffers are kept in memory and discarded after transcription.</p>
+        <ul>
+          <li>No audio written to disk during sessions</li>
+          <li>No audio sent over any network socket</li>
+          <li>Whisper runs via <code>@huggingface/transformers</code> in-process</li>
+        </ul>
+      </div>
+
+      <div class="privacy-detail-card fade-up fade-up-delay-1">
+        <h3>LLM API calls</h3>
+        <p>Each API call contains your system prompt (meeting context) and the current transcript window — no device identifiers, no IP addresses beyond what's implicit in the HTTPS connection. Anthropic's API privacy policy applies to that data.</p>
+        <ul>
+          <li>Calls go directly machine → api.anthropic.com</li>
+          <li>No proxy, no relay, no MeetBrief server in the path</li>
+          <li>Standard HTTPS — TLS encrypted in transit</li>
+        </ul>
+      </div>
+
+      <div class="privacy-detail-card fade-up fade-up-delay-2">
+        <h3>Session history</h3>
+        <p>If you enable session saving, transcripts and AI responses are written to your local <code>userData</code> directory. They are never uploaded anywhere. You can delete sessions from the History panel, or wipe all data from Settings → Clear All Data.</p>
+        <ul>
+          <li>Saved locally in <code>userData/sessions/</code></li>
+          <li>Never synced or uploaded</li>
+          <li>Fully deletable at any time from within the app</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- VERIFY YOURSELF -->
+<section>
+  <div class="container">
+    <div class="section-eyebrow fade-up">Open source</div>
+    <h2 class="section-headline fade-up fade-up-delay-1">Don't take our word for it</h2>
+    <p class="section-sub fade-up fade-up-delay-2">Every line of MeetBrief is available on GitHub. The network calls are in <code>src/utils/gemini.js</code> and <code>src/utils/cloud.js</code>. The audio pipeline is in <code>src/audio/</code>. The storage layer is in <code>src/storage.js</code>.</p>
+
+    <div class="callout fade-up fade-up-delay-2">
+      <strong>Grep for <code>fetch(</code>, <code>axios(</code>, <code>https.request(</code>, or <code>ws://</code></strong> in the source to see every outbound network call. You'll find exactly three categories: the Anthropic API call (optional, uses your key), the Ollama localhost call (optional, stays local), and the Hugging Face model download (one-time, public weights only).
+    </div>
+
+    <div style="margin-top:32px; display:flex; gap:12px; flex-wrap:wrap;" class="fade-up fade-up-delay-2">
+      <a href="https://github.com/martian-coder/TinyTools/tree/main/MeetingCopilot" target="_blank" class="btn btn-primary">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/></svg>
+        Inspect source on GitHub
+      </a>
+      <a href="faq.html#privacy" class="btn btn-ghost">Privacy FAQ →</a>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta-section" style="border-top:1px solid var(--border);">
+  <div class="cta-glow"></div>
+  <div class="container">
+    <h2 class="fade-up">Ready to start privately?</h2>
+    <p class="fade-up fade-up-delay-1">25-day free trial. No account. No servers. No surprises.</p>
+    <div class="cta-actions">
+      <a href="install.html" class="btn btn-primary fade-up fade-up-delay-2">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2M7 11l5 5 5-5m-5-7v12"/></svg>
+        Install MeetBrief
+      </a>
+      <a href="faq.html" class="btn btn-ghost fade-up fade-up-delay-3">Read the FAQ →</a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="container">
+    <div class="footer-inner">
+      <a href="index.html" class="footer-logo"><div class="footer-logo-mark">MB</div>MeetBrief</a>
+      <ul class="footer-links">
+        <li><a href="features.html">Features</a></li>
+        <li><a href="how-it-works.html">How it works</a></li>
+        <li><a href="install.html">Setup</a></li>
+        <li><a href="privacy.html">Privacy</a></li>
+        <li><a href="faq.html">FAQ</a></li>
+        <li><a href="https://github.com/martian-coder/TinyTools/tree/main/MeetingCopilot" target="_blank">GitHub</a></li>
+        <li><a href="mailto:martian.coders.x@gmail.com">Contact</a></li>
+      </ul>
+      <div class="footer-right">Built with Electron · Anthropic Claude · Whisper</div>
+    </div>
+  </div>
+</footer>
+
+<script>
+const observer = new IntersectionObserver(
+  entries => entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); }),
+  { threshold: 0.08, rootMargin: '0px 0px -40px 0px' }
+);
+document.querySelectorAll('.fade-up').forEach(el => observer.observe(el));
+</script>
+</body>
+</html>
