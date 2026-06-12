@@ -794,7 +794,7 @@ export class MainView extends LitElement {
 
     async _saveTranslateToEnglish(val) {
         this._translateToEnglish = val;
-        await cheatingDaddy.storage.updatePreference('translateToEnglish', val);
+        await copilot.storage.updatePreference('translateToEnglish', val);
         this.requestUpdate();
     }
 

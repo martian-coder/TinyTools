@@ -31,7 +31,8 @@ function connectCloud(token, profile, userContext) {
     audioChunkCount = 0;
 
     return new Promise((resolve, reject) => {
-        const url = `wss://api.cheatingdaddy.com/ws?token=${encodeURIComponent(token)}`;
+        const cloudEndpoint = process.env.COPILOT_CLOUD_WS_URL || 'wss://cloud.example.com/ws';
+        const url = `${cloudEndpoint}?token=${encodeURIComponent(token)}`;
         console.log('[Cloud] Connecting to', url);
 
         cloudWs = new WebSocket(url);
