@@ -3,9 +3,13 @@
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
+const crypto = require('crypto');
 
 const TRIAL_DAYS = 25;
 const TRIAL_MS = TRIAL_DAYS * 24 * 60 * 60 * 1000;
+const _LS = 'mb_k9x2_v1'; // license secret
+
+// ── File paths ────────────────────────────────────────────────────────────────
 
 function trialFiles() {
     const { app } = require('electron');
@@ -14,6 +18,13 @@ function trialFiles() {
         path.join(os.homedir(), '.meetbrief', '.t'),
     ];
 }
+
+function licenseFile() {
+    const { app } = require('electron');
+    return path.join(app.getPath('userData'), '.license.json');
+}
+
+// ── Trial ─────────────────────────────────────────────────────────────────────
 
 function initTrial() {
     const now = Date.now();
@@ -27,16 +38,58 @@ function initTrial() {
     }
 }
 
-function getStatus() {
-    let installedAt = null;
+// ── License ───────────────────────────────────────────────────────────────────
 
+function validateLicense(key) {
+    const m = String(key).trim().toUpperCase()
+        .match(/^MEET-([A-F0-9]{4})-([A-F0-9]{4})-([A-F0-9]{4})$/);
+    if (!m) return false;
+    const expected = crypto.createHmac('sha256', _LS)
+        .update(m[1] + m[2])
+        .digest('hex').slice(0, 4).toUpperCase();
+    return m[3] === expected;
+}
+
+function hasLicense() {
+    try {
+        const fp = licenseFile();
+        if (!fs.existsSync(fp)) return false;
+        const data = JSON.parse(fs.readFileSync(fp, 'utf8'));
+        return !!(data.key && validateLicense(data.key));
+    } catch {
+        return false;
+    }
+}
+
+function activateLicense(key) {
+    if (!validateLicense(key)) return false;
+    try {
+        fs.writeFileSync(
+            licenseFile(),
+            JSON.stringify({ key: String(key).trim().toUpperCase(), activatedAt: Date.now() }),
+            'utf8'
+        );
+        return true;
+    } catch {
+        return false;
+    }
+}
+
+// ── Status (used by main process + renderer via IPC) ──────────────────────────
+
+function getStatus() {
+    if (hasLicense()) {
+        return { active: true, expired: false, daysRemaining: 999, licensed: true };
+    }
+
+    let installedAt = null;
     for (const fp of trialFiles()) {
         try {
             if (fs.existsSync(fp)) {
                 const data = JSON.parse(fs.readFileSync(fp, 'utf8'));
                 const ts = data.i || data.installedAt;
                 if (ts && (installedAt === null || ts < installedAt)) {
-                    installedAt = ts; // always honour the earliest date found
+                    installedAt = ts;
                 }
             }
         } catch {}
@@ -44,7 +97,7 @@ function getStatus() {
 
     if (installedAt === null) {
         initTrial();
-        return { active: true, expired: false, daysRemaining: TRIAL_DAYS };
+        return { active: true, expired: false, daysRemaining: TRIAL_DAYS, licensed: false };
     }
 
     const elapsed = Date.now() - installedAt;
@@ -54,7 +107,8 @@ function getStatus() {
         active: daysRemaining > 0,
         expired: daysRemaining === 0,
         daysRemaining,
+        licensed: false,
     };
 }
 
-module.exports = { initTrial, getStatus, TRIAL_DAYS };
+module.exports = { initTrial, getStatus, activateLicense, validateLicense, TRIAL_DAYS };

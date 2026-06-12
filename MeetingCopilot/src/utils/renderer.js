@@ -1070,6 +1070,7 @@ const copilot = {
     // Trial API
     trial: {
         getStatus: async () => ipcRenderer.invoke('trial:get-status'),
+        activateLicense: async (key) => ipcRenderer.invoke('trial:activate-license', key),
     },
 
     // Theme API
