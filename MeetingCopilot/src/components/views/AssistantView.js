@@ -13,79 +13,143 @@ export class AssistantView extends LitElement {
             cursor: default;
         }
 
-        /* ── Response area ── */
+        /* ── Chat history ── */
 
-        .response-container {
+        .chat-history {
             flex: 1;
             overflow-y: auto;
-            font-size: var(--response-font-size, 15px);
-            line-height: var(--line-height);
-            background: var(--bg-app);
-            padding: var(--space-sm) var(--space-md);
+            padding: var(--space-md);
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
             scroll-behavior: smooth;
-            user-select: text;
-            cursor: text;
+            background: var(--bg-app);
+        }
+
+        .ch-empty {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-muted);
+            font-size: var(--font-size-sm);
+            font-style: italic;
+            text-align: center;
+            padding: var(--space-md);
+        }
+
+        .ch-turn {
+            display: flex;
+            flex-direction: column;
+            gap: 7px;
+            animation: chFadeIn 0.22s ease-out;
+        }
+
+        @keyframes chFadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        .ch-heard {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .ch-heard-label {
+            font-size: 9.5px;
+            font-weight: 700;
+            letter-spacing: 0.07em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            padding-left: 2px;
+        }
+
+        .ch-heard-text {
+            font-size: var(--font-size-sm);
+            color: var(--text-secondary);
+            font-style: italic;
+            background: var(--bg-surface);
+            border-left: 2px solid var(--border-strong);
+            border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+            padding: 5px 9px;
+            line-height: 1.45;
+        }
+
+        .ch-suggestion {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+
+        .ch-sug-label {
+            font-size: 9.5px;
+            font-weight: 700;
+            letter-spacing: 0.07em;
+            text-transform: uppercase;
+            color: var(--accent);
+            opacity: 0.8;
+            padding-left: 2px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .ch-sug-text {
+            font-size: var(--response-font-size, 14px);
+            line-height: var(--line-height);
             color: var(--text-primary);
-        }
-
-        .response-container * {
+            background: var(--bg-surface);
+            border-left: 2.5px solid var(--accent);
+            border-radius: 0 var(--radius-md) var(--radius-md) 0;
+            padding: 7px 10px;
             user-select: text;
             cursor: text;
         }
 
-        .response-container a {
-            cursor: pointer;
-        }
+        .ch-sug-text * { user-select: text; cursor: text; }
+        .ch-sug-text a { cursor: pointer; }
 
-        .response-container [data-word] {
-            display: inline-block;
-        }
+        /* ── Markdown inside suggestion ── */
 
-        /* ── Markdown ── */
-
-        .response-container h1,
-        .response-container h2,
-        .response-container h3,
-        .response-container h4,
-        .response-container h5,
-        .response-container h6 {
+        .ch-sug-text h1,
+        .ch-sug-text h2,
+        .ch-sug-text h3,
+        .ch-sug-text h4,
+        .ch-sug-text h5,
+        .ch-sug-text h6 {
             margin: 1em 0 0.5em 0;
             color: var(--text-primary);
             font-weight: var(--font-weight-semibold);
         }
 
-        .response-container h1 { font-size: 1.5em; }
-        .response-container h2 { font-size: 1.3em; }
-        .response-container h3 { font-size: 1.15em; }
-        .response-container h4 { font-size: 1.05em; }
-        .response-container h5,
-        .response-container h6 { font-size: 1em; }
+        .ch-sug-text h1 { font-size: 1.5em; }
+        .ch-sug-text h2 { font-size: 1.3em; }
+        .ch-sug-text h3 { font-size: 1.15em; }
+        .ch-sug-text h4 { font-size: 1.05em; }
 
-        .response-container p {
-            margin: 0.6em 0;
-            color: var(--text-primary);
-        }
+        .ch-sug-text p { margin: 0.5em 0; color: var(--text-primary); }
+        .ch-sug-text p:first-child { margin-top: 0; }
+        .ch-sug-text p:last-child  { margin-bottom: 0; }
 
-        .response-container ul,
-        .response-container ol {
-            margin: 0.6em 0;
+        .ch-sug-text ul,
+        .ch-sug-text ol {
+            margin: 0.5em 0;
             padding-left: 1.5em;
             color: var(--text-primary);
         }
 
-        .response-container li {
-            margin: 0.3em 0;
-        }
+        .ch-sug-text li { margin: 0.25em 0; }
 
-        .response-container blockquote {
+        .ch-sug-text blockquote {
             margin: 0.8em 0;
             padding: 0.5em 1em;
             border-left: 2px solid var(--border-strong);
-            background: var(--bg-surface);
+            background: var(--bg-elevated);
             border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
         }
 
-        .response-container code {
+        .ch-sug-text code {
             background: var(--bg-elevated);
             padding: 0.15em 0.4em;
             border-radius: var(--radius-sm);
@@ -93,8 +157,8 @@ export class AssistantView extends LitElement {
             font-size: 0.85em;
         }
 
-        .response-container pre {
-            background: var(--bg-surface);
+        .ch-sug-text pre {
+            background: var(--bg-elevated);
             border: 1px solid var(--border);
             border-radius: var(--radius-md);
             padding: var(--space-md);
@@ -102,109 +166,42 @@ export class AssistantView extends LitElement {
             margin: 0.8em 0;
         }
 
-        .response-container pre code {
-            background: none;
-            padding: 0;
-        }
+        .ch-sug-text pre code { background: none; padding: 0; }
 
-        .response-container a {
+        .ch-sug-text a {
             color: var(--accent);
             text-decoration: underline;
             text-underline-offset: 2px;
         }
 
-        .response-container strong,
-        .response-container b {
-            font-weight: var(--font-weight-semibold);
-        }
+        .ch-sug-text strong,
+        .ch-sug-text b { font-weight: var(--font-weight-semibold); }
 
-        .response-container hr {
+        .ch-sug-text hr {
             border: none;
             border-top: 1px solid var(--border);
-            margin: 1.5em 0;
+            margin: 1em 0;
         }
 
-        .response-container table {
-            border-collapse: collapse;
-            width: 100%;
-            margin: 0.8em 0;
-        }
+        .ch-sug-text table { border-collapse: collapse; width: 100%; margin: 0.6em 0; }
 
-        .response-container th,
-        .response-container td {
+        .ch-sug-text th,
+        .ch-sug-text td {
             border: 1px solid var(--border);
             padding: var(--space-sm);
             text-align: left;
         }
 
-        .response-container th {
-            background: var(--bg-surface);
-            font-weight: var(--font-weight-semibold);
-        }
+        .ch-sug-text th { background: var(--bg-elevated); font-weight: var(--font-weight-semibold); }
 
-        .response-container::-webkit-scrollbar {
-            width: 6px;
-        }
+        .chat-history::-webkit-scrollbar { width: 4px; }
+        .chat-history::-webkit-scrollbar-track { background: transparent; }
+        .chat-history::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 3px; }
+        .chat-history::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
 
-        .response-container::-webkit-scrollbar-track {
-            background: transparent;
-        }
+        /* ── Transcript strip (kept for compat, hidden when history active) ── */
 
-        .response-container::-webkit-scrollbar-thumb {
-            background: var(--border-strong);
-            border-radius: 3px;
-        }
-
-        .response-container::-webkit-scrollbar-thumb:hover {
-            background: #444444;
-        }
-
-        /* ── Response navigation strip ── */
-
-        .response-nav {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: var(--space-sm);
-            padding: var(--space-xs) var(--space-md);
-            border-top: 1px solid var(--border);
-            background: var(--bg-app);
-        }
-
-        .nav-btn {
-            background: none;
-            border: none;
-            color: var(--text-muted);
-            cursor: pointer;
-            padding: var(--space-xs);
-            border-radius: var(--radius-sm);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: color var(--transition);
-        }
-
-        .nav-btn:hover:not(:disabled) {
-            color: var(--text-primary);
-        }
-
-        .nav-btn:disabled {
-            opacity: 0.25;
-            cursor: default;
-        }
-
-        .nav-btn svg {
-            width: 14px;
-            height: 14px;
-        }
-
-        .response-counter {
-            font-size: var(--font-size-xs);
-            color: var(--text-muted);
-            font-family: var(--font-mono);
-            min-width: 40px;
-            text-align: center;
-        }
+        .transcript-strip { display: none; }
 
         /* ── Bottom input bar ── */
 
@@ -339,6 +336,7 @@ export class AssistantView extends LitElement {
         shouldAnimateResponse: { type: Boolean },
         isAnalyzing: { type: Boolean, state: true },
         transcriptLines: { type: Array },
+        _turnTranscripts: { state: true },
     };
 
     constructor() {
@@ -350,6 +348,8 @@ export class AssistantView extends LitElement {
         this.isAnalyzing = false;
         this._animFrame = null;
         this.transcriptLines = [];
+        this._turnTranscripts = [];
+        this._renderedCount = 0;
     }
 
     getProfileNames() {
@@ -649,31 +649,40 @@ export class AssistantView extends LitElement {
     }
 
     scrollToBottom() {
-        setTimeout(() => {
-            const container = this.shadowRoot.querySelector('.response-container');
-            if (container) {
-                container.scrollTop = container.scrollHeight;
-            }
-        }, 0);
+        const h = this.shadowRoot?.querySelector('.chat-history');
+        if (!h) return;
+        const nearBottom = h.scrollHeight - h.scrollTop - h.clientHeight < 100;
+        if (nearBottom) h.scrollTop = h.scrollHeight;
     }
 
     firstUpdated() {
         super.firstUpdated();
-        this.updateResponseContent();
+        this._syncHistory();
     }
 
     updated(changedProperties) {
         super.updated(changedProperties);
-        if (changedProperties.has('responses') || changedProperties.has('currentResponseIndex')) {
-            this.updateResponseContent();
+
+        if (changedProperties.has('responses')) {
+            const prev = changedProperties.get('responses') || [];
+            // Capture current transcript when a new response turn starts
+            if (this.responses.length > prev.length) {
+                const t = this.transcriptLines?.length > 0
+                    ? this.transcriptLines[this.transcriptLines.length - 1]
+                    : '';
+                this._turnTranscripts = [...this._turnTranscripts, t];
+            }
+            this._syncHistory();
+        }
+
+        if (changedProperties.has('transcriptLines') && this.responses.length > 0) {
+            // Update the latest turn's heard text if transcript changes mid-stream
+            this._updateLatestTranscript();
         }
 
         if (changedProperties.has('isAnalyzing')) {
-            if (this.isAnalyzing) {
-                this._startWaveformAnimation();
-            } else {
-                this._stopWaveformAnimation();
-            }
+            if (this.isAnalyzing) this._startWaveformAnimation();
+            else this._stopWaveformAnimation();
         }
 
         if (changedProperties.has('responses') && this.isAnalyzing) {
@@ -683,45 +692,63 @@ export class AssistantView extends LitElement {
         }
     }
 
-    updateResponseContent() {
-        const container = this.shadowRoot.querySelector('#responseContainer');
-        if (container) {
-            const currentResponse = this.getCurrentResponse();
-            const renderedResponse = this.renderMarkdown(currentResponse);
-            container.innerHTML = renderedResponse;
-            if (this.shouldAnimateResponse) {
-                this.dispatchEvent(new CustomEvent('response-animation-complete', { bubbles: true, composed: true }));
-            }
+    _syncHistory() {
+        const container = this.shadowRoot?.querySelector('#chatHistory');
+        if (!container) return;
+
+        // Append any new turns
+        for (let i = this._renderedCount; i < this.responses.length; i++) {
+            const transcript = this._turnTranscripts[i] || '';
+            const turn = document.createElement('div');
+            turn.className = 'ch-turn';
+            turn.innerHTML = `
+                ${transcript ? `
+                    <div class="ch-heard">
+                        <div class="ch-heard-label">Speaker</div>
+                        <div class="ch-heard-text" id="ch-heard-${i}">${transcript}</div>
+                    </div>` : ''}
+                <div class="ch-suggestion">
+                    <div class="ch-sug-label">
+                        <svg width="9" height="9" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                        Suggested response
+                    </div>
+                    <div class="ch-sug-text" id="ch-resp-${i}"></div>
+                </div>`;
+            container.appendChild(turn);
+            this._renderedCount++;
+        }
+
+        // Update all response contents (streaming: only last matters for perf)
+        for (let i = 0; i < this.responses.length; i++) {
+            const el = container.querySelector(`#ch-resp-${i}`);
+            if (el) el.innerHTML = this.renderMarkdown(this.responses[i] || '');
+        }
+
+        if (this.shouldAnimateResponse) {
+            this.dispatchEvent(new CustomEvent('response-animation-complete', { bubbles: true, composed: true }));
+        }
+
+        this.scrollToBottom();
+    }
+
+    _updateLatestTranscript() {
+        const container = this.shadowRoot?.querySelector('#chatHistory');
+        if (!container || this.responses.length === 0) return;
+        const idx = this.responses.length - 1;
+        const el = container.querySelector(`#ch-heard-${idx}`);
+        if (el && this.transcriptLines?.length > 0) {
+            el.textContent = this.transcriptLines[this.transcriptLines.length - 1];
         }
     }
 
     render() {
-        const hasMultipleResponses = this.responses.length > 1;
-
+        const profileName = this.getProfileNames()[this.selectedProfile] || 'session';
         return html`
-            ${this.transcriptLines && this.transcriptLines.length > 0 ? html`
-                <div class="transcript-strip">
-                    <div class="transcript-label">Heard</div>
-                    ${this.transcriptLines.slice(-3).map(t => html`<div class="transcript-line">${t}</div>`)}
-                </div>
-            ` : ''}
-            <div class="response-container" id="responseContainer"></div>
-
-            ${hasMultipleResponses ? html`
-                <div class="response-nav">
-                    <button class="nav-btn" @click=${this.navigateToPreviousResponse} ?disabled=${this.currentResponseIndex <= 0} title="Previous response">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                            <path fill-rule="evenodd" d="M11.78 5.22a.75.75 0 0 1 0 1.06L8.06 10l3.72 3.72a.75.75 0 1 1-1.06 1.06l-4.25-4.25a.75.75 0 0 1 0-1.06l4.25-4.25a.75.75 0 0 1 1.06 0Z" clip-rule="evenodd" />
-                        </svg>
-                    </button>
-                    <span class="response-counter">${this.currentResponseIndex + 1} of ${this.responses.length}</span>
-                    <button class="nav-btn" @click=${this.navigateToNextResponse} ?disabled=${this.currentResponseIndex >= this.responses.length - 1} title="Next response">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                            <path fill-rule="evenodd" d="M8.22 5.22a.75.75 0 0 1 1.06 0l4.25 4.25a.75.75 0 0 1 0 1.06l-4.25 4.25a.75.75 0 0 1-1.06-1.06L11.94 10 8.22 6.28a.75.75 0 0 1 0-1.06Z" clip-rule="evenodd" />
-                        </svg>
-                    </button>
-                </div>
-            ` : ''}
+            <div class="chat-history" id="chatHistory">
+                ${this.responses.length === 0 ? html`
+                    <div class="ch-empty">Listening to your ${profileName}…</div>
+                ` : ''}
+            </div>
 
             <div class="input-bar">
                 <div class="input-bar-inner">

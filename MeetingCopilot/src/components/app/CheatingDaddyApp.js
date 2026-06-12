@@ -364,6 +364,7 @@ export class MeetingCopilotApp extends LitElement {
         _updateAvailable: { state: true },
         _whisperDownloading: { state: true },
         _transcriptLines: { state: true },
+        _pendingTranscript: { state: true },
     };
 
     constructor() {
@@ -391,6 +392,7 @@ export class MeetingCopilotApp extends LitElement {
         this._whisperDownloading = false;
         this._localVersion = '';
         this._transcriptLines = [];
+        this._pendingTranscript = '';
 
         this._loadFromStorage();
         this._checkForUpdates();
@@ -398,6 +400,7 @@ export class MeetingCopilotApp extends LitElement {
 
     addTranscript(text) {
         this._transcriptLines = [...this._transcriptLines.slice(-9), text];
+        this._pendingTranscript = text;
         this.requestUpdate();
     }
 
@@ -614,6 +617,7 @@ export class MeetingCopilotApp extends LitElement {
         this.responses = [];
         this.currentResponseIndex = -1;
         this._transcriptLines = [];
+        this._pendingTranscript = '';
         this.startTime = Date.now();
         this.sessionActive = true;
         this.currentView = 'assistant';
