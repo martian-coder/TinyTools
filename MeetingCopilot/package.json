@@ -1,11 +1,11 @@
 {
-    "name": "meeting-copilot",
-    "productName": "Meeting Copilot",
+    "name": "meetbrief",
+    "productName": "MeetBrief",
     "version": "1.0.0",
     "description": "AI meeting assistant — Claude + Whisper, transparent overlay",
     "main": "src/index.js",
     "bin": {
-        "meeting-copilot": "./cli.js"
+        "meetbrief": "./cli.js"
     },
     "scripts": {
         "start": "electron-forge start",

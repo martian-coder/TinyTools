@@ -812,7 +812,7 @@ function handleShortcut(shortcutKey) {
 }
 
 // Create reference to the main app element
-const copilotApp = document.querySelector('meeting-copilot-app');
+const copilotApp = document.querySelector('meet-brief-app');
 
 // ============ THEME SYSTEM ============
 const theme = {
@@ -1066,6 +1066,11 @@ const copilot = {
 
     // Storage API
     storage,
+
+    // Trial API
+    trial: {
+        getStatus: async () => ipcRenderer.invoke('trial:get-status'),
+    },
 
     // Theme API
     theme,
