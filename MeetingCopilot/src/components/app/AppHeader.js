@@ -228,15 +228,15 @@ export class AppHeader extends LitElement {
 
     getViewTitle() {
         const titles = {
-            onboarding: 'Welcome to Meeting Copilot',
-            main: 'Meeting Copilot',
+            onboarding: 'Welcome to MeetBrief',
+            main: 'MeetBrief',
             customize: 'Customize',
             help: 'Help & Shortcuts',
             history: 'Conversation History',
             advanced: 'Advanced Tools',
-            assistant: 'Meeting Copilot',
+            assistant: 'MeetBrief',
         };
-        return titles[this.currentView] || 'Meeting Copilot';
+        return titles[this.currentView] || 'MeetBrief';
     }
 
     getElapsedTime() {

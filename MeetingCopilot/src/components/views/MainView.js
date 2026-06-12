@@ -794,7 +794,7 @@ export class MainView extends LitElement {
 
     async _saveTranslateToEnglish(val) {
         this._translateToEnglish = val;
-        await cheatingDaddy.storage.updatePreference('translateToEnglish', val);
+        await copilot.storage.updatePreference('translateToEnglish', val);
         this.requestUpdate();
     }
 
@@ -1058,14 +1058,14 @@ export class MainView extends LitElement {
         return html`
             <div class="form-wrapper">
                 ${this._mode === 'anthropic' ? html`
-                    <div class="page-title">Meeting Copilot <span class="mode-suffix">Claude</span></div>
+                    <div class="page-title">MeetBrief <span class="mode-suffix">Claude</span></div>
                 ` : this._mode === 'local' ? html`
                     <div class="title-row">
-                        <div class="page-title">Meeting Copilot <span class="mode-suffix">Local AI</span></div>
+                        <div class="page-title">MeetBrief <span class="mode-suffix">Local AI</span></div>
                         <button class="help-btn" @click=${() => { this._showLocalHelp = !this._showLocalHelp; }}>${this._showLocalHelp ? closeIcon : helpIcon}</button>
                     </div>
                 ` : html`
-                    <div class="page-title">Meeting Copilot <span class="mode-suffix">BYOK</span></div>
+                    <div class="page-title">MeetBrief <span class="mode-suffix">BYOK</span></div>
                 `}
                 <div class="page-subtitle">
                     ${this._mode === 'anthropic' ? 'Claude API + local Whisper transcription' :

@@ -1,5 +1,5 @@
 // Main app components
-export { MeetingCopilotApp } from './app/MeetingCopilotApp.js';
+export { MeetBriefApp } from './app/MeetBriefApp.js';
 export { AppHeader } from './app/AppHeader.js';
 
 // View components
@@ -10,3 +10,4 @@ export { HistoryView } from './views/HistoryView.js';
 export { AssistantView } from './views/AssistantView.js';
 export { OnboardingView } from './views/OnboardingView.js';
 export { AdvancedView } from './views/AdvancedView.js';
+export { TrialExpiredView } from './views/TrialExpiredView.js';

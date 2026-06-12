@@ -7,7 +7,7 @@ module.exports = {
             unpack: '**/{onnxruntime-node,onnxruntime-common,@huggingface/transformers,ffmpeg-static,sharp,@img}/**',
         },
         extraResource: ['./src/assets/SystemAudioCapture'],
-        name: 'Meeting Copilot',
+        name: 'MeetBrief',
         icon: 'src/assets/logo',
     },
     rebuildConfig: {},
@@ -15,9 +15,9 @@ module.exports = {
         {
             name: '@electron-forge/maker-squirrel',
             config: {
-                name: 'meeting-copilot',
-                productName: 'Meeting Copilot',
-                shortcutName: 'Meeting Copilot',
+                name: 'meetbrief',
+                productName: 'MeetBrief',
+                shortcutName: 'MeetBrief',
                 createDesktopShortcut: true,
                 createStartMenuShortcut: true,
             },
@@ -31,8 +31,8 @@ module.exports = {
             platforms: ['linux'],
             config: {
                 options: {
-                    name: 'Meeting Copilot',
-                    productName: 'Meeting Copilot',
+                    name: 'MeetBrief',
+                    productName: 'MeetBrief',
                     genericName: 'AI Assistant',
                     description: 'AI assistant for professional meetings',
                     categories: ['Development', 'Office'],

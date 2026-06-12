@@ -300,4 +300,5 @@ function setupGeneralIpcHandlers() {
     });
 
     ipcMain.handle('trial:get-status', () => trial.getStatus());
+    ipcMain.handle('trial:activate-license', (_, key) => trial.activateLicense(key));
 }

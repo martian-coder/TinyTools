@@ -7,8 +7,9 @@ import { AssistantView } from '../views/AssistantView.js';
 import { OnboardingView } from '../views/OnboardingView.js';
 import { AICustomizeView } from '../views/AICustomizeView.js';
 import { FeedbackView } from '../views/FeedbackView.js';
+import { TrialExpiredView } from '../views/TrialExpiredView.js';
 
-export class MeetingCopilotApp extends LitElement {
+export class MeetBriefApp extends LitElement {
     static styles = css`
         * {
             box-sizing: border-box;
@@ -341,6 +342,18 @@ export class MeetingCopilotApp extends LitElement {
         ::-webkit-scrollbar-thumb:hover {
             background: #444444;
         }
+
+        .trial-banner {
+            margin: 0 var(--space-sm) var(--space-xs);
+            padding: var(--space-xs) var(--space-md);
+            background: rgba(212, 160, 23, 0.08);
+            border: 1px solid rgba(212, 160, 23, 0.2);
+            border-radius: var(--radius-md);
+            font-size: var(--font-size-xs);
+            color: var(--warning, #D4A017);
+            text-align: center;
+            cursor: default;
+        }
     `;
 
     static properties = {
@@ -365,6 +378,7 @@ export class MeetingCopilotApp extends LitElement {
         _whisperDownloading: { state: true },
         _transcriptLines: { state: true },
         _pendingTranscript: { state: true },
+        _trialDaysLeft: { state: true },
     };
 
     constructor() {
@@ -393,6 +407,7 @@ export class MeetingCopilotApp extends LitElement {
         this._localVersion = '';
         this._transcriptLines = [];
         this._pendingTranscript = '';
+        this._trialDaysLeft = null;
 
         this._loadFromStorage();
         this._checkForUpdates();
@@ -415,12 +430,19 @@ export class MeetingCopilotApp extends LitElement {
 
     async _loadFromStorage() {
         try {
-            const [config, prefs] = await Promise.all([
+            const [config, prefs, trialStatus] = await Promise.all([
                 copilot.storage.getConfig(),
-                copilot.storage.getPreferences()
+                copilot.storage.getPreferences(),
+                copilot.trial.getStatus(),
             ]);
 
-            this.currentView = config.onboarded ? 'main' : 'onboarding';
+            this._trialDaysLeft = trialStatus.daysRemaining;
+
+            if (trialStatus.expired) {
+                this.currentView = 'trial-expired';
+            } else {
+                this.currentView = config.onboarded ? 'main' : 'onboarding';
+            }
             this.selectedProfile = prefs.selectedProfile || 'meeting';
             this.selectedLanguage = prefs.selectedLanguage || 'en-US';
             this.selectedScreenshotInterval = prefs.selectedScreenshotInterval || '5';
@@ -782,6 +804,9 @@ export class MeetingCopilotApp extends LitElement {
                     ></assistant-view>
                 `;
 
+            case 'trial-expired':
+                return html`<trial-expired-view></trial-expired-view>`;
+
             default:
                 return html`<div>Unknown view: ${this.currentView}</div>`;
         }
@@ -800,8 +825,11 @@ export class MeetingCopilotApp extends LitElement {
         return html`
             <div class="sidebar ${this._isLiveMode() ? 'hidden' : ''}">
                 <div class="sidebar-brand">
-                    <h1>Meeting Copilot</h1>
+                    <h1>MeetBrief</h1>
                 </div>
+                ${this._trialDaysLeft !== null && this._trialDaysLeft > 0 && this._trialDaysLeft <= 5 ? html`
+                    <div class="trial-banner">${this._trialDaysLeft} day${this._trialDaysLeft === 1 ? '' : 's'} left in trial</div>
+                ` : ''}
                 <nav class="sidebar-nav">
                     ${items.map(item => html`
                         <button
@@ -894,4 +922,4 @@ export class MeetingCopilotApp extends LitElement {
     }
 }
 
-customElements.define('meeting-copilot-app', MeetingCopilotApp);
+customElements.define('meet-brief-app', MeetBriefApp);

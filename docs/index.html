@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MeetBrief — Real-Time AI Co-Pilot for Every Meeting</title>
+<meta name="description" content="MeetBrief listens to live conversations, transcribes speech on-device, and streams AI-suggested replies to a floating overlay. 100% local. Your API key. 25-day free trial.">
+<meta property="og:title" content="MeetBrief — Real-Time AI Co-Pilot for Every Meeting">
+<meta property="og:description" content="AI-powered meeting assistant. Real-time Whisper transcription, streaming Claude replies, transparent overlay. Fully local, no cloud required.">
+<meta property="og:type" content="website">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<nav>
+  <div class="nav-inner">
+    <a href="index.html" class="nav-logo">
+      <div class="nav-logo-mark">MB</div>
+      MeetBrief
+    </a>
+    <ul class="nav-links">
+      <li><a href="features.html">Features</a></li>
+      <li><a href="how-it-works.html">How it works</a></li>
+      <li><a href="install.html">Setup</a></li>
+      <li><a href="privacy.html">Privacy</a></li>
+      <li><a href="faq.html">FAQ</a></li>
+    </ul>
+    <div class="nav-cta">
+      <a href="https://github.com/martian-coder/TinyTools" target="_blank" class="btn btn-ghost">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/></svg>
+        GitHub
+      </a>
+      <a href="install.html" class="btn btn-primary">Get Started</a>
+    </div>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero" id="home">
+  <div class="hero-glow"></div>
+  <div class="hero-grid"></div>
+  <div class="container">
+    <div class="hero-inner">
+      <div class="hero-text">
+        <div class="hero-badge fade-up">
+          <div class="hero-badge-dot"></div>
+          Real-time AI assistance
+        </div>
+        <h1 class="hero-title fade-up fade-up-delay-1">
+          The AI that<br>
+          <em class="grad-text">briefs you live,</em><br>
+          in every meeting
+        </h1>
+        <p class="hero-sub fade-up fade-up-delay-2">
+          MeetBrief listens to the conversation, transcribes speech in real time, and streams
+          AI-suggested replies to a floating overlay — so you stay sharp and present while
+          the model has your back.
+        </p>
+        <div class="hero-actions fade-up fade-up-delay-3">
+          <a href="install.html" class="btn btn-primary">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2M7 11l5 5 5-5m-5-7v12"/></svg>
+            Download & Install
+          </a>
+          <a href="https://github.com/martian-coder/TinyTools/tree/main/MeetingCopilot" target="_blank" class="btn btn-ghost">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/></svg>
+            View Source
+          </a>
+        </div>
+        <div class="hero-meta fade-up fade-up-delay-4">
+          <div class="hero-meta-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            100% local
+          </div>
+          <div class="hero-meta-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            25-day free trial
+          </div>
+          <div class="hero-meta-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+            macOS · Windows · Linux
+          </div>
+        </div>
+      </div>
+
+      <div class="mockup-wrap fade-up fade-up-delay-2">
+        <div class="mockup">
+          <div class="mockup-bar">
+            <div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div>
+            <div class="mockup-bar-title">MeetBrief</div>
+          </div>
+          <div class="mockup-body" style="position:relative;">
+            <div class="m-sidebar">
+              <div class="m-brand">MeetBrief</div>
+              <div class="m-nav-item active"><div class="m-nav-dot"></div> Home</div>
+              <div class="m-nav-item"><div class="m-nav-dot"></div> AI Settings</div>
+              <div class="m-nav-item"><div class="m-nav-dot"></div> History</div>
+              <div class="m-nav-item"><div class="m-nav-dot"></div> Settings</div>
+            </div>
+            <div class="m-content">
+              <div>
+                <div class="m-label">Meeting context</div>
+                <div class="m-textarea">
+                  <div class="m-textarea-text">Q3 pipeline review. My role: account exec.<br>Goal: get commitment on enterprise tier.</div>
+                </div>
+              </div>
+              <div>
+                <div class="m-label">AI Provider</div>
+                <div class="m-select"><span>Claude (Anthropic)</span><span style="color:var(--text3)">▾</span></div>
+              </div>
+              <div class="m-start">▶ Start Session</div>
+            </div>
+            <div class="m-overlay">
+              <div class="m-overlay-head">
+                <div class="m-overlay-title">MEETBRIEF</div>
+                <div class="m-overlay-status"><div class="m-overlay-status-dot"></div>LIVE</div>
+              </div>
+              <div class="m-overlay-body">
+                <div class="m-heard">"...the pricing concern is still a blocker for the team."</div>
+                <div class="m-suggestion">Totally understand — that's common at this stage. Our enterprise tier comes with a dedicated CSM and a 30-day ROI guarantee.<div class="m-cursor"></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- STRIP -->
+<div class="strip">
+  <div class="strip-inner">
+    <div class="strip-item"><span>🤖</span> Anthropic Claude</div>
+    <div class="strip-sep"></div>
+    <div class="strip-item"><span>🦙</span> Ollama (local)</div>
+    <div class="strip-sep"></div>
+    <div class="strip-item"><span>🎙️</span> Whisper transcription</div>
+    <div class="strip-sep"></div>
+    <div class="strip-item"><span>⚡</span> Silero VAD</div>
+    <div class="strip-sep"></div>
+    <div class="strip-item"><span>🔒</span> Zero cloud dependency</div>
+    <div class="strip-sep"></div>
+    <div class="strip-item"><span>🖥️</span> Electron · macOS · Windows · Linux</div>
+  </div>
+</div>
+
+<!-- FEATURES TEASER -->
+<section id="features">
+  <div class="container">
+    <div class="section-eyebrow fade-up">Capabilities</div>
+    <h2 class="section-headline fade-up fade-up-delay-1">Everything you need to<br>never be caught off guard</h2>
+    <p class="section-sub fade-up fade-up-delay-2">Built for people who want to stay fully present in conversations while having an AI quietly ready with the right words.</p>
+
+    <div class="bento">
+      <div class="bento-card wide fade-up fade-up-delay-1">
+        <div class="bento-icon blue">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+        </div>
+        <h3>Real-time transcription — hands free</h3>
+        <p>Whisper runs locally, capturing system audio and transcribing each turn with no cloud API call. A rolling 30-second window is maintained automatically.</p>
+      </div>
+      <div class="bento-card fade-up fade-up-delay-2">
+        <div class="bento-icon violet">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        </div>
+        <h3>AI replies streamed instantly</h3>
+        <p>When the speaker pauses, the LLM fires. Responses stream token-by-token so the first words appear in under a second. No waiting — just glancing.</p>
+      </div>
+      <div class="bento-card fade-up fade-up-delay-3">
+        <div class="bento-icon green">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+        </div>
+        <h3>Transparent always-on-top overlay</h3>
+        <p>A frameless, click-through window floats above every app. Toggle visibility or click-through mode with a hotkey while you speak.</p>
+      </div>
+    </div>
+
+    <div style="margin-top:32px; text-align:center;" class="fade-up fade-up-delay-3">
+      <a href="features.html" class="btn btn-ghost">
+        View all features
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section class="hiw-section" id="how-it-works">
+  <div class="container">
+    <div style="text-align:center; margin-bottom:0;">
+      <div class="section-eyebrow fade-up">Workflow</div>
+      <h2 class="section-headline fade-up fade-up-delay-1">Three steps from context to<br>confident reply</h2>
+    </div>
+  </div>
+  <div class="container" style="padding-top:56px;">
+    <div class="steps">
+      <div class="step fade-up fade-up-delay-1">
+        <div class="step-num active">1</div>
+        <h3>Load your context</h3>
+        <p>Paste your agenda, role, and objectives before the meeting. This becomes the cached system prompt — the AI knows the full picture before anyone speaks.</p>
+      </div>
+      <div class="step fade-up fade-up-delay-2">
+        <div class="step-num">2</div>
+        <h3>Start listening</h3>
+        <p>Click Start. MeetBrief captures system audio, runs Silero VAD to detect speech boundaries, and transcribes each turn locally with Whisper.</p>
+      </div>
+      <div class="step fade-up fade-up-delay-3">
+        <div class="step-num">3</div>
+        <h3>Reply with confidence</h3>
+        <p>When they pause, the LLM fires. A suggested reply streams to the overlay in under two seconds. Glance, adapt, and say it. Or use the hotkey for on-demand generation.</p>
+      </div>
+    </div>
+    <div style="margin-top:32px; text-align:center;" class="fade-up fade-up-delay-3">
+      <a href="how-it-works.html" class="btn btn-ghost">
+        Learn how it works technically
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta-section">
+  <div class="cta-glow"></div>
+  <div class="container">
+    <h2 class="fade-up">Ready to try it?</h2>
+    <p class="fade-up fade-up-delay-1">25 days free. No account. No signup. Just clone, configure, and go.</p>
+    <div class="cta-actions">
+      <a href="install.html" class="btn btn-primary fade-up fade-up-delay-2">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2M7 11l5 5 5-5m-5-7v12"/></svg>
+        Install MeetBrief
+      </a>
+      <a href="https://github.com/martian-coder/TinyTools/tree/main/MeetingCopilot" target="_blank" class="btn btn-ghost fade-up fade-up-delay-3">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/></svg>
+        View on GitHub
+      </a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="container">
+    <div class="footer-inner">
+      <a href="index.html" class="footer-logo"><div class="footer-logo-mark">MB</div>MeetBrief</a>
+      <ul class="footer-links">
+        <li><a href="features.html">Features</a></li>
+        <li><a href="how-it-works.html">How it works</a></li>
+        <li><a href="install.html">Setup</a></li>
+        <li><a href="privacy.html">Privacy</a></li>
+        <li><a href="faq.html">FAQ</a></li>
+        <li><a href="https://github.com/martian-coder/TinyTools/tree/main/MeetingCopilot" target="_blank">GitHub</a></li>
+        <li><a href="mailto:martian.coders.x@gmail.com">Contact</a></li>
+      </ul>
+      <div class="footer-right">Built with Electron · Anthropic Claude · Whisper</div>
+    </div>
+  </div>
+</footer>
+
+<script>
+const observer = new IntersectionObserver(
+  entries => entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); }),
+  { threshold: 0.08, rootMargin: '0px 0px -40px 0px' }
+);
+document.querySelectorAll('.fade-up').forEach(el => observer.observe(el));
+</script>
+</body>
+</html>

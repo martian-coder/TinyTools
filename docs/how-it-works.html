@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>How MeetBrief Works — Whisper STT, Silero VAD & Streaming AI Replies</title>
+<meta name="description" content="How MeetBrief works: system audio captured locally, Whisper transcribes speech on-device, Silero VAD detects turn boundaries, Claude streams a suggested reply in under 2 seconds.">
+<meta property="og:title" content="How MeetBrief Works — Local AI Meeting Assistant Architecture">
+<meta property="og:description" content="System audio → Silero VAD → local Whisper transcription → Claude streaming response. End-to-end local pipeline with no relay servers.">
+<meta property="og:type" content="website">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<style>
+/* Architecture flow diagram */
+.arch-flow {
+  display: flex; align-items: center; gap: 0; margin: 48px 0;
+  flex-wrap: wrap; justify-content: center;
+}
+.arch-node {
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: 12px; padding: 20px 24px; text-align: center;
+  min-width: 130px; position: relative;
+}
+.arch-node:hover { border-color: var(--border2); }
+.arch-node-icon { font-size: 24px; margin-bottom: 8px; }
+.arch-node-label { font-size: 12px; font-weight: 600; color: var(--text); }
+.arch-node-sub { font-size: 11px; color: var(--text3); margin-top: 3px; }
+.arch-arrow {
+  width: 40px; height: 2px; background: var(--border2);
+  position: relative; flex-shrink: 0;
+}
+.arch-arrow::after {
+  content: ''; position: absolute; right: -5px; top: -4px;
+  border: 5px solid transparent; border-left-color: var(--border2);
+}
+.arch-node.highlight { border-color: rgba(79,121,245,0.3); background: rgba(79,121,245,0.06); }
+.arch-node.highlight .arch-node-label { color: var(--blue2); }
+
+.latency-bar {
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: 12px; padding: 24px 28px; margin-top: 32px;
+}
+.latency-row {
+  display: flex; align-items: center; gap: 16px;
+  padding: 10px 0; border-bottom: 1px solid var(--border);
+}
+.latency-row:last-child { border-bottom: none; }
+.latency-label { font-size: 13px; color: var(--text2); min-width: 200px; }
+.latency-track { flex: 1; height: 6px; background: var(--bg3); border-radius: 3px; overflow: hidden; }
+.latency-fill { height: 100%; border-radius: 3px; }
+.latency-fill.blue { background: var(--blue); }
+.latency-fill.green { background: var(--green); }
+.latency-fill.violet { background: var(--violet); }
+.latency-value { font-size: 12px; color: var(--text3); font-family: var(--mono); min-width: 60px; text-align: right; }
+
+.step-detail {
+  display: grid; grid-template-columns: auto 1fr; gap: 24px 32px;
+  align-items: start; margin: 16px 0;
+}
+.step-num-lg {
+  width: 64px; height: 64px; border-radius: 50%; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22px; font-weight: 800; color: var(--text);
+  background: var(--bg3); border: 1px solid var(--border2);
+}
+.step-num-lg.active {
+  background: var(--grad); border: none;
+  box-shadow: 0 0 28px rgba(79,121,245,0.35);
+  color: #fff;
+}
+.step-content h3 { font-size: 1.2rem; margin-bottom: 12px; }
+.step-content p  { font-size: 14px; margin-bottom: 12px; }
+.step-divider { grid-column: 1 / -1; height: 1px; background: var(--border); margin: 24px 0 8px; }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-inner">
+    <a href="index.html" class="nav-logo">
+      <div class="nav-logo-mark">MB</div>
+      MeetBrief
+    </a>
+    <ul class="nav-links">
+      <li><a href="features.html">Features</a></li>
+      <li><a href="how-it-works.html" class="active">How it works</a></li>
+      <li><a href="install.html">Setup</a></li>
+      <li><a href="privacy.html">Privacy</a></li>
+      <li><a href="faq.html">FAQ</a></li>
+    </ul>
+    <div class="nav-cta">
+      <a href="https://github.com/martian-coder/TinyTools" target="_blank" class="btn btn-ghost">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/></svg>
+        GitHub
+      </a>
+      <a href="install.html" class="btn btn-primary">Get Started</a>
+    </div>
+  </div>
+</nav>
+
+<section class="page-hero">
+  <div class="container">
+    <div class="page-breadcrumb"><a href="index.html">MeetBrief</a> / How it works</div>
+    <h1 class="fade-up">From spoken word to<br><span class="grad-text">AI reply in under 2 seconds</span></h1>
+    <p class="page-sub fade-up fade-up-delay-1">A fully local pipeline: system audio captured on-device, transcribed by Whisper, turn-segmented by VAD, then sent to your chosen LLM. The response streams token-by-token to the overlay before you've finished listening.</p>
+  </div>
+</section>
+
+<!-- ARCHITECTURE FLOW -->
+<section style="padding-top:0; padding-bottom:64px;">
+  <div class="container">
+    <div class="section-eyebrow fade-up">Architecture</div>
+    <h2 class="section-headline fade-up fade-up-delay-1">The signal chain</h2>
+    <p class="section-sub fade-up fade-up-delay-2">Every step runs on your machine or goes directly to the API you configured. There are no intermediaries.</p>
+
+    <div class="arch-flow fade-up fade-up-delay-2">
+      <div class="arch-node">
+        <div class="arch-node-icon">🎙️</div>
+        <div class="arch-node-label">System Audio</div>
+        <div class="arch-node-sub">100ms chunks</div>
+      </div>
+      <div class="arch-arrow"></div>
+      <div class="arch-node">
+        <div class="arch-node-icon">⚡</div>
+        <div class="arch-node-label">Silero VAD</div>
+        <div class="arch-node-sub">Turn detection</div>
+      </div>
+      <div class="arch-arrow"></div>
+      <div class="arch-node">
+        <div class="arch-node-icon">📝</div>
+        <div class="arch-node-label">Whisper STT</div>
+        <div class="arch-node-sub">On-device</div>
+      </div>
+      <div class="arch-arrow"></div>
+      <div class="arch-node highlight">
+        <div class="arch-node-icon">🤖</div>
+        <div class="arch-node-label">LLM (Claude / Ollama)</div>
+        <div class="arch-node-sub">Your API key</div>
+      </div>
+      <div class="arch-arrow"></div>
+      <div class="arch-node">
+        <div class="arch-node-icon">💬</div>
+        <div class="arch-node-label">Overlay</div>
+        <div class="arch-node-sub">Streamed reply</div>
+      </div>
+    </div>
+
+    <div class="latency-bar fade-up fade-up-delay-3">
+      <div style="font-size:12px; font-weight:600; color:var(--text3); text-transform:uppercase; letter-spacing:0.8px; margin-bottom:16px;">Typical latency breakdown (Claude + local Whisper)</div>
+      <div class="latency-row">
+        <div class="latency-label">System audio capture</div>
+        <div class="latency-track"><div class="latency-fill blue" style="width:5%"></div></div>
+        <div class="latency-value">~100ms</div>
+      </div>
+      <div class="latency-row">
+        <div class="latency-label">Silero VAD (silence detection)</div>
+        <div class="latency-track"><div class="latency-fill green" style="width:50%"></div></div>
+        <div class="latency-value">~1000ms</div>
+      </div>
+      <div class="latency-row">
+        <div class="latency-label">Whisper transcription (small)</div>
+        <div class="latency-track"><div class="latency-fill green" style="width:20%"></div></div>
+        <div class="latency-value">~300ms</div>
+      </div>
+      <div class="latency-row">
+        <div class="latency-label">LLM time-to-first-token (Claude)</div>
+        <div class="latency-track"><div class="latency-fill violet" style="width:40%"></div></div>
+        <div class="latency-value">~800ms</div>
+      </div>
+      <div class="latency-row" style="border-top:1px solid var(--border2); margin-top:4px; padding-top:14px;">
+        <div class="latency-label"><strong style="color:var(--text);">First words visible</strong></div>
+        <div class="latency-track"><div class="latency-fill" style="width:100%; background: var(--grad);"></div></div>
+        <div class="latency-value" style="color:var(--blue2); font-weight:600;">~2.2s</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- DETAILED STEPS -->
+<section class="hiw-section">
+  <div class="container">
+    <div class="section-eyebrow fade-up">Step by step</div>
+    <h2 class="section-headline fade-up fade-up-delay-1">The complete workflow</h2>
+
+    <div style="margin-top:56px;">
+
+      <div class="step-detail fade-up fade-up-delay-1">
+        <div class="step-num-lg active">1</div>
+        <div class="step-content">
+          <h3>Load your meeting context</h3>
+          <p>Before the meeting starts, paste your agenda, your role, the other participants, your key objectives, and any important background into the context panel. This text becomes the <strong>cached system prompt</strong> for every AI call during the session.</p>
+          <p>Thanks to Anthropic's prompt caching, this context is uploaded once and stored server-side for up to 5 minutes. Subsequent calls reuse the cached prefix, cutting input token cost by ~90% and reducing time-to-first-token significantly.</p>
+          <p>With Ollama, the system prompt is simply prepended to every request — no caching overhead, but no cost either.</p>
+        </div>
+        <div class="step-divider"></div>
+      </div>
+
+      <div class="step-detail fade-up fade-up-delay-1">
+        <div class="step-num-lg">2</div>
+        <div class="step-content">
+          <h3>Capture system audio</h3>
+          <p>When you click Start Session, MeetBrief begins capturing <strong>system audio</strong> — what's playing through your speakers or headphones. On macOS it uses a native subprocess that dumps PCM audio as a raw stream. On Windows, WASAPI loopback capture is used. Linux uses the microphone by default (with system audio possible via PulseAudio loopback).</p>
+          <p>Audio is captured as stereo PCM, mixed to mono, and chunked into ~100ms frames ready for the VAD pipeline.</p>
+        </div>
+        <div class="step-divider"></div>
+      </div>
+
+      <div class="step-detail fade-up fade-up-delay-1">
+        <div class="step-num-lg">3</div>
+        <div class="step-content">
+          <h3>Detect speech turns with Silero VAD</h3>
+          <p>Each audio chunk is passed through <strong>Silero VAD</strong> (Voice Activity Detector), a lightweight neural model that runs in-process. It outputs a confidence score indicating whether the chunk contains speech.</p>
+          <p>MeetBrief accumulates spoken chunks into a buffer. When VAD detects <strong>~1 second of sustained silence</strong> after a speech segment, it marks the end of a turn and triggers transcription. This prevents mid-sentence interruptions and avoids generating replies while someone is still talking.</p>
+        </div>
+        <div class="step-divider"></div>
+      </div>
+
+      <div class="step-detail fade-up fade-up-delay-1">
+        <div class="step-num-lg">4</div>
+        <div class="step-content">
+          <h3>Transcribe with local Whisper</h3>
+          <p>The accumulated speech buffer is sent to <strong>Whisper</strong>, running entirely on your machine via <code>@huggingface/transformers</code>. The model converts the audio segment to text. With the <em>translate</em> task enabled (default), speech in any language is automatically output as English text — so the LLM always receives English regardless of the meeting's language.</p>
+          <p>MeetBrief maintains a <strong>rolling 30-second transcript window</strong>. Older turns are summarised and prepended as context rather than dropped entirely — ensuring the AI has the full narrative arc without exceeding the LLM's context window.</p>
+        </div>
+        <div class="step-divider"></div>
+      </div>
+
+      <div class="step-detail fade-up fade-up-delay-1">
+        <div class="step-num-lg active">5</div>
+        <div class="step-content">
+          <h3>Stream the AI reply to the overlay</h3>
+          <p>The transcript window is appended as the user message, combined with your pre-loaded system prompt, and sent to the LLM. The response is streamed <strong>token by token</strong> directly to the floating overlay window.</p>
+          <p>The overlay displays the reply as it streams — typically the first words appear within 800ms of the API call. You can read the beginning of the response while the rest is still generating.</p>
+          <p>The overlay is a frameless, always-on-top Electron <code>BrowserWindow</code> with <code>transparent: true</code> and <code>setIgnoreMouseEvents(true)</code> — it floats above any app (Zoom, Teams, Meet) without interfering with clicks.</p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- PROMPT CACHING CALLOUT -->
+<section style="padding-top:64px; padding-bottom:64px;">
+  <div class="container">
+    <div class="section-eyebrow fade-up">Cost efficiency</div>
+    <h2 class="section-headline fade-up fade-up-delay-1">Prompt caching keeps API costs low</h2>
+
+    <div class="callout fade-up fade-up-delay-2">
+      <strong>Why this matters:</strong> In a 60-minute meeting, MeetBrief may make 30–50 API calls. Without caching, the large system prompt (your meeting context) is re-sent and re-billed on every call. With Anthropic's prompt caching, the static context is billed at 10% of the normal input cost after the first cache write — saving ~90% on input tokens for every subsequent call in the session.
+    </div>
+
+    <div class="info-grid fade-up fade-up-delay-2">
+      <div class="info-card">
+        <h3>Static context → system prompt (cached)</h3>
+        <p>Your agenda, role, objectives, and background are stored in a <code>cache_control: ephemeral</code> content block. Once uploaded, Anthropic keeps it warm for up to 5 minutes and reuses it on subsequent requests.</p>
+      </div>
+      <div class="info-card">
+        <h3>Live transcript → user message (not cached)</h3>
+        <p>The rolling transcript window changes every turn, so it's sent fresh each time. Only the dynamic part pays full input token cost — which is typically much shorter than the static context.</p>
+      </div>
+      <div class="info-card">
+        <h3>Typical cost per hour (Claude)</h3>
+        <p>With a 2,000-token context and prompt caching active, a one-hour meeting with 40 AI calls typically costs under <strong>$0.10</strong>. Without caching it would be ~$0.80.</p>
+      </div>
+      <div class="info-card">
+        <h3>Ollama — zero per-call cost</h3>
+        <p>Switching to <code>LLM_PROVIDER=ollama</code> uses your local hardware. No API key, no per-call billing. Latency depends on your GPU/CPU. A mid-range M2 MacBook handles small models comfortably.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PROVIDERS -->
+<section style="background:var(--bg2); border-top:1px solid var(--border); border-bottom:1px solid var(--border); padding-top:64px; padding-bottom:64px;">
+  <div class="container">
+    <div class="section-eyebrow fade-up">Providers</div>
+    <h2 class="section-headline fade-up fade-up-delay-1">Choose your stack</h2>
+
+    <div class="providers-grid">
+      <div class="provider-card fade-up fade-up-delay-1">
+        <div class="provider-logo anthropic">C</div>
+        <h3>Anthropic Claude</h3>
+        <p>Highest quality replies. Fastest time-to-first-token with prompt caching. Requires an Anthropic API key. Recommended for most users. Set <code>LLM_PROVIDER=anthropic</code>.</p>
+      </div>
+      <div class="provider-card fade-up fade-up-delay-2">
+        <div class="provider-logo ollama">🦙</div>
+        <h3>Ollama (local)</h3>
+        <p>Runs on <code>localhost:11434</code>. Zero API cost, fully offline. Best for privacy-sensitive environments. Quality and latency depend on the model and your hardware. Set <code>LLM_PROVIDER=ollama</code>.</p>
+      </div>
+      <div class="provider-card fade-up fade-up-delay-3">
+        <div class="provider-logo whisper">W</div>
+        <h3>Whisper STT</h3>
+        <p>Always runs locally — no external STT service. Choose between <code>whisper-tiny</code> (fast, lower accuracy) or <code>whisper-small</code> (recommended balance) via the <code>WHISPER_MODEL</code> env var.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta-section">
+  <div class="cta-glow"></div>
+  <div class="container">
+    <h2 class="fade-up">See it for yourself</h2>
+    <p class="fade-up fade-up-delay-1">The best way to understand the pipeline is to run it. 25-day free trial, no signup.</p>
+    <div class="cta-actions">
+      <a href="install.html" class="btn btn-primary fade-up fade-up-delay-2">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2M7 11l5 5 5-5m-5-7v12"/></svg>
+        Install MeetBrief
+      </a>
+      <a href="features.html" class="btn btn-ghost fade-up fade-up-delay-3">View all features →</a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="container">
+    <div class="footer-inner">
+      <a href="index.html" class="footer-logo"><div class="footer-logo-mark">MB</div>MeetBrief</a>
+      <ul class="footer-links">
+        <li><a href="features.html">Features</a></li>
+        <li><a href="how-it-works.html">How it works</a></li>
+        <li><a href="install.html">Setup</a></li>
+        <li><a href="privacy.html">Privacy</a></li>
+        <li><a href="faq.html">FAQ</a></li>
+        <li><a href="https://github.com/martian-coder/TinyTools/tree/main/MeetingCopilot" target="_blank">GitHub</a></li>
+        <li><a href="mailto:martian.coders.x@gmail.com">Contact</a></li>
+      </ul>
+      <div class="footer-right">Built with Electron · Anthropic Claude · Whisper</div>
+    </div>
+  </div>
+</footer>
+
+<script>
+const observer = new IntersectionObserver(
+  entries => entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); }),
+  { threshold: 0.08, rootMargin: '0px 0px -40px 0px' }
+);
+document.querySelectorAll('.fade-up').forEach(el => observer.observe(el));
+</script>
+</body>
+</html>

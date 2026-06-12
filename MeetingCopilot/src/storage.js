@@ -48,11 +48,11 @@ function getConfigDir() {
     let configDir;
 
     if (platform === 'win32') {
-        configDir = path.join(os.homedir(), 'AppData', 'Roaming', 'meeting-copilot-config');
+        configDir = path.join(os.homedir(), 'AppData', 'Roaming', 'meetbrief-config');
     } else if (platform === 'darwin') {
-        configDir = path.join(os.homedir(), 'Library', 'Application Support', 'meeting-copilot-config');
+        configDir = path.join(os.homedir(), 'Library', 'Application Support', 'meetbrief-config');
     } else {
-        configDir = path.join(os.homedir(), '.config', 'meeting-copilot-config');
+        configDir = path.join(os.homedir(), '.config', 'meetbrief-config');
     }
 
     return configDir;

@@ -7,7 +7,7 @@ const MODEL_URL = 'https://github.com/snakers4/silero-vad/raw/v5.1.2/src/silero_
 const MODEL_FILENAME = 'silero_vad_v5.onnx';
 
 function getModelPath() {
-    const dir = path.join(os.homedir(), '.cache', 'meeting-copilot');
+    const dir = path.join(os.homedir(), '.cache', 'meetbrief');
     return path.join(dir, MODEL_FILENAME);
 }
 
