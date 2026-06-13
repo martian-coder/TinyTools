@@ -253,99 +253,77 @@ function getTodayDateString() {
     return now.toISOString().split('T')[0]; // YYYY-MM-DD
 }
 
-function getTodayLimits() {
-    const limits = getLimits();
+function defaultGroqLimits() {
+    return {
+        'qwen3-32b': { chars: 0, limit: 1500000 },
+        'gpt-oss-120b': { chars: 0, limit: 600000 },
+        'gpt-oss-20b': { chars: 0, limit: 600000 },
+        'kimi-k2-instruct': { chars: 0, limit: 600000 }
+    };
+}
+
+function defaultGeminiLimits() {
+    return { 'gemma-4-26b-a4b-it': { chars: 0 } };
+}
+
+// Drops stale days, finds-or-creates today's entry, and backfills any missing
+// fields — all in-place on `limits`. Callers persist with a single setLimits()
+// so reads and writes never interleave across helpers.
+function ensureTodayEntry(limits) {
     const today = getTodayDateString();
+    limits.data = limits.data.filter(entry => entry.date === today);
 
-    // Find today's entry
-    const todayEntry = limits.data.find(entry => entry.date === today);
-
-    if (todayEntry) {
-        // ensure new fields exist
-        if(!todayEntry.groq) {
-            todayEntry.groq = {
-                'qwen3-32b': { chars: 0, limit: 1500000 },
-                'gpt-oss-120b': { chars: 0, limit: 600000 },
-                'gpt-oss-20b': { chars: 0, limit: 600000 },
-                'kimi-k2-instruct': { chars: 0, limit: 600000 }
-            };
-        }
-        if(!todayEntry.gemini) {
-            todayEntry.gemini = {
-                'gemma-4-26b-a4b-it': { chars: 0 }
-            };
-        }
-        setLimits(limits);
-        return todayEntry;
+    let entry = limits.data.find(entry => entry.date === today);
+    if (!entry) {
+        entry = {
+            date: today,
+            flash: { count: 0 },
+            flashLite: { count: 0 },
+            groq: defaultGroqLimits(),
+            gemini: defaultGeminiLimits()
+        };
+        limits.data.push(entry);
+        return entry;
     }
 
-    // No entry for today - clean old entries and create new one
-    limits.data = limits.data.filter(entry => entry.date === today);
-    const newEntry = {
-        date: today,
-        flash: { count: 0 },
-        flashLite: { count: 0 },
-        groq: {
-            'qwen3-32b': { chars: 0, limit: 1500000 },
-            'gpt-oss-120b': { chars: 0, limit: 600000 },
-            'gpt-oss-20b': { chars: 0, limit: 600000 },
-            'kimi-k2-instruct': { chars: 0, limit: 600000 }
-        },
-        gemini: {
-            'gemma-4-26b-a4b-it': { chars: 0 }
-        }
-    };
-    limits.data.push(newEntry);
-    setLimits(limits);
+    if (!entry.flash) entry.flash = { count: 0 };
+    if (!entry.flashLite) entry.flashLite = { count: 0 };
+    if (!entry.groq) entry.groq = defaultGroqLimits();
+    if (!entry.gemini) entry.gemini = defaultGeminiLimits();
+    return entry;
+}
 
-    return newEntry;
+function getTodayLimits() {
+    const limits = getLimits();
+    const entry = ensureTodayEntry(limits);
+    setLimits(limits);
+    return entry;
 }
 
 function incrementLimitCount(model) {
     const limits = getLimits();
-    const today = getTodayDateString();
+    const entry = ensureTodayEntry(limits);
 
-    // Find or create today's entry
-    let todayEntry = limits.data.find(entry => entry.date === today);
-
-    if (!todayEntry) {
-        // Clean old entries and create new one
-        limits.data = [];
-        todayEntry = {
-            date: today,
-            flash: { count: 0 },
-            flashLite: { count: 0 }
-        };
-        limits.data.push(todayEntry);
-    } else {
-        // Clean old entries, keep only today
-        limits.data = limits.data.filter(entry => entry.date === today);
-    }
-
-    // Increment the appropriate model count
     if (model === 'gemini-2.5-flash') {
-        todayEntry.flash.count++;
+        entry.flash.count++;
     } else if (model === 'gemini-2.5-flash-lite') {
-        todayEntry.flashLite.count++;
+        entry.flashLite.count++;
     }
 
     setLimits(limits);
-    return todayEntry;
+    return entry;
 }
 
 function incrementCharUsage(provider, model, charCount) {
-    getTodayLimits();
-
     const limits = getLimits();
-    const today = getTodayDateString();
-    const todayEntry = limits.data.find(entry => entry.date === today);
+    const entry = ensureTodayEntry(limits);
 
-    if(todayEntry[provider] && todayEntry[provider][model]) {
-        todayEntry[provider][model].chars += charCount;
-        setLimits(limits);
+    if (entry[provider] && entry[provider][model]) {
+        entry[provider][model].chars += charCount;
     }
 
-    return todayEntry;
+    setLimits(limits);
+    return entry;
 }
 
 function getAvailableModel() {

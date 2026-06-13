@@ -1,7 +1,7 @@
 'use strict';
 
-const SileroVAD = require('./SileroVAD');
-const AudioCapture = require('./AudioCapture');
-const AudioPipeline = require('./AudioPipeline');
+const { SileroVAD, getModelPath } = require('./SileroVAD');
+const { AudioCapture, CHUNK_BYTES } = require('./AudioCapture');
+const { AudioPipeline } = require('./AudioPipeline');
 
-module.exports = { SileroVAD, AudioCapture, AudioPipeline };
+module.exports = { SileroVAD, getModelPath, AudioCapture, CHUNK_BYTES, AudioPipeline };

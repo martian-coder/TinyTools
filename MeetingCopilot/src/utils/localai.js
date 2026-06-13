@@ -336,14 +336,9 @@ async function sendLocalImage(base64Data, prompt) {
     }
 }
 
-// processLocalAudio kept as a no-op for backward compatibility with any
-// remaining call sites — the AudioPipeline now owns audio capture directly.
-function processLocalAudio() {}
-
 module.exports = {
     initializeLocalSession,
     initializeLocalWhisperSession,
-    processLocalAudio,
     closeLocalSession,
     isLocalSessionActive,
     setExternalLlmFn,

@@ -11,29 +11,54 @@ function getModelPath() {
     return path.join(dir, MODEL_FILENAME);
 }
 
+const REDIRECT_CODES = new Set([301, 302, 303, 307, 308]);
+const MAX_REDIRECTS = 5;
+// Silero v5 ONNX is ~2.2 MB; anything much smaller is an error/redirect page.
+const MIN_MODEL_BYTES = 1024 * 1024;
+
+// Follows the full GitHub redirect chain (github.com → CDN → object store).
+// The original single-hop handler wrote the second redirect's HTML body into
+// the model file, corrupting it and crashing onnxruntime on first run.
+function fetchFollowingRedirects(url, file, redirectsLeft, resolve, reject) {
+    https.get(url, res => {
+        if (REDIRECT_CODES.has(res.statusCode)) {
+            res.resume(); // drain so the socket can be reused
+            if (redirectsLeft <= 0) return reject(new Error('Too many redirects while downloading Silero VAD model'));
+            if (!res.headers.location) return reject(new Error('Redirect response missing Location header'));
+            const next = new URL(res.headers.location, url).toString();
+            return fetchFollowingRedirects(next, file, redirectsLeft - 1, resolve, reject);
+        }
+        if (res.statusCode !== 200) {
+            res.resume();
+            return reject(new Error(`Model download failed: HTTP ${res.statusCode}`));
+        }
+        res.pipe(file);
+        file.on('finish', () => file.close(resolve));
+    }).on('error', reject);
+}
+
 async function downloadModel(destPath) {
     const dir = path.dirname(destPath);
     if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
 
-    return new Promise((resolve, reject) => {
+    await new Promise((resolve, reject) => {
         const file = fs.createWriteStream(destPath);
-        https.get(MODEL_URL, res => {
-            if (res.statusCode === 302 || res.statusCode === 301) {
-                file.close();
-                fs.unlinkSync(destPath);
-                https.get(res.headers.location, res2 => {
-                    res2.pipe(file);
-                    file.on('finish', () => file.close(resolve));
-                }).on('error', reject);
-                return;
-            }
-            res.pipe(file);
-            file.on('finish', () => file.close(resolve));
-        }).on('error', err => {
+        file.on('error', err => {
             fs.unlink(destPath, () => {});
             reject(err);
         });
+        fetchFollowingRedirects(MODEL_URL, file, MAX_REDIRECTS, resolve, err => {
+            file.close(() => fs.unlink(destPath, () => {}));
+            reject(err);
+        });
     });
+
+    // Guard against a truncated or HTML-redirect body being saved as the model.
+    const { size } = fs.statSync(destPath);
+    if (size < MIN_MODEL_BYTES) {
+        fs.unlinkSync(destPath);
+        throw new Error(`Downloaded Silero model is too small (${size} bytes) — download likely failed`);
+    }
 }
 
 class SileroVAD {
@@ -91,16 +116,6 @@ class SileroVAD {
 
         const prob = results.output.data[0];
         return prob >= this._threshold;
-    }
-
-    // Synchronous wrapper using cached last result — call isVoicedAsync externally
-    isVoiced(frame) {
-        return this._lastResult ?? false;
-    }
-
-    async processFrame(frame) {
-        this._lastResult = await this.isVoicedAsync(frame);
-        return this._lastResult;
     }
 }
 

@@ -26,6 +26,17 @@ let currentProviderMode = 'byok';
 // Groq conversation history for context
 let groqConversationHistory = [];
 
+// sendToGroq/sendToGemma both read-then-mutate groqConversationHistory, so two
+// overlapping turns would interleave and corrupt the history order. Serialize
+// them through a single promise chain so each turn completes before the next.
+let _textGenChain = Promise.resolve();
+function enqueueTextGen(fn) {
+    _textGenChain = _textGenChain.then(fn).catch(err =>
+        console.error('[TextGen] Error:', err && err.message ? err.message : err)
+    );
+    return _textGenChain;
+}
+
 // Conversation tracking variables
 let currentSessionId = null;
 let currentTranscription = '';
@@ -181,20 +192,22 @@ async function getStoredSetting(key, defaultValue) {
             // Wait a bit for the renderer to be ready
             await new Promise(resolve => setTimeout(resolve, 100));
 
-            // Try to get setting from renderer process localStorage
+            // JSON.stringify produces safe JS string literals, so a key or
+            // default value containing quotes/backticks can't break out of the
+            // expression and inject code into the renderer.
+            const keyLit = JSON.stringify(String(key));
+            const defLit = JSON.stringify(defaultValue == null ? '' : String(defaultValue));
+
             const value = await windows[0].webContents.executeJavaScript(`
                 (function() {
                     try {
                         if (typeof localStorage === 'undefined') {
-                            console.log('localStorage not available yet for ${key}');
-                            return '${defaultValue}';
+                            return ${defLit};
                         }
-                        const stored = localStorage.getItem('${key}');
-                        console.log('Retrieved setting ${key}:', stored);
-                        return stored || '${defaultValue}';
+                        const stored = localStorage.getItem(${keyLit});
+                        return stored || ${defLit};
                     } catch (e) {
-                        console.error('Error accessing localStorage for ${key}:', e);
-                        return '${defaultValue}';
+                        return ${defLit};
                     }
                 })()
             `);
@@ -494,11 +507,8 @@ async function initializeGeminiSession(apiKey, customPrompt = '', profile = 'mee
 
                     if (message.serverContent?.generationComplete) {
                         if (currentTranscription.trim() !== '') {
-                            if (hasGroqKey()) {
-                                sendToGroq(currentTranscription);
-                            } else {
-                                sendToGemma(currentTranscription);
-                            }
+                            const turn = currentTranscription;
+                            enqueueTextGen(() => hasGroqKey() ? sendToGroq(turn) : sendToGemma(turn));
                             currentTranscription = '';
                         }
                         messageBuffer = '';
@@ -712,7 +722,8 @@ async function startMacOSAudioCapture(geminiSessionRef) {
             if (currentProviderMode === 'cloud') {
                 sendCloudAudio(monoChunk);
             } else if (currentProviderMode === 'local' || currentProviderMode === 'anthropic') {
-                getLocalAi().processLocalAudio(monoChunk);
+                // Local/Anthropic modes run their own 16kHz AudioPipeline capture;
+                // this 24kHz SystemAudioDump stream is not started for them.
             } else {
                 const base64Data = monoChunk.toString('base64');
                 sendAudioToGemini(base64Data, geminiSessionRef);
@@ -918,14 +929,9 @@ function setupGeminiIpcHandlers(geminiSessionRef) {
             }
         }
         if (currentProviderMode === 'local' || currentProviderMode === 'anthropic') {
-            try {
-                const pcmBuffer = Buffer.from(data, 'base64');
-                getLocalAi().processLocalAudio(pcmBuffer);
-                return { success: true };
-            } catch (error) {
-                console.error('Error sending local audio:', error);
-                return { success: false, error: error.message };
-            }
+            // The local/anthropic AudioPipeline captures system audio directly at
+            // 16kHz; renderer-streamed audio is not needed in these modes.
+            return { success: true };
         }
         if (!geminiSessionRef.current) return { success: false, error: 'No active Gemini session' };
         try {
@@ -953,14 +959,8 @@ function setupGeminiIpcHandlers(geminiSessionRef) {
             }
         }
         if (currentProviderMode === 'local' || currentProviderMode === 'anthropic') {
-            try {
-                const pcmBuffer = Buffer.from(data, 'base64');
-                getLocalAi().processLocalAudio(pcmBuffer);
-                return { success: true };
-            } catch (error) {
-                console.error('Error sending local mic audio:', error);
-                return { success: false, error: error.message };
-            }
+            // Local/anthropic capture is owned by the AudioPipeline (see above).
+            return { success: true };
         }
         if (!geminiSessionRef.current) return { success: false, error: 'No active Gemini session' };
         try {
@@ -1058,13 +1058,10 @@ function setupGeminiIpcHandlers(geminiSessionRef) {
         try {
             console.log('Sending text message:', text);
 
-            if (hasGroqKey()) {
-                sendToGroq(text.trim());
-            } else {
-                sendToGemma(text.trim());
-            }
+            const trimmed = text.trim();
+            enqueueTextGen(() => hasGroqKey() ? sendToGroq(trimmed) : sendToGemma(trimmed));
 
-            await geminiSessionRef.current.sendRealtimeInput({ text: text.trim() });
+            await geminiSessionRef.current.sendRealtimeInput({ text: trimmed });
             return { success: true };
         } catch (error) {
             console.error('Error sending text:', error);
@@ -1078,6 +1075,12 @@ function setupGeminiIpcHandlers(geminiSessionRef) {
                 success: false,
                 error: 'macOS audio capture only available on macOS',
             };
+        }
+
+        // Local/Anthropic modes capture system audio via their own AudioPipeline
+        // (16kHz mono for Whisper/VAD); don't also spawn the 24kHz SystemAudioDump.
+        if (currentProviderMode === 'local' || currentProviderMode === 'anthropic') {
+            return { success: true };
         }
 
         try {

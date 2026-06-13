@@ -202,8 +202,25 @@ async function sendAnthropicImage(base64Data, prompt) {
     }
 
     if (fullText.trim()) {
-        conversationHistory.push({ role: 'user', content: prompt });
+        // Record the full multimodal user turn (image + text), not just the text
+        // prompt — otherwise the model loses the image context on later turns.
+        conversationHistory.push({
+            role: 'user',
+            content: [
+                {
+                    type: 'image',
+                    source: { type: 'base64', media_type: 'image/jpeg', data: base64Data },
+                },
+                {
+                    type: 'text',
+                    text: prompt || 'Describe what is visible on screen and provide a concise, professional summary relevant to the current meeting context.',
+                },
+            ],
+        });
         conversationHistory.push({ role: 'assistant', content: fullText.trim() });
+        if (conversationHistory.length > 20) {
+            conversationHistory = conversationHistory.slice(-20);
+        }
         saveConversationTurn(prompt, fullText);
     }
 
