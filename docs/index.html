@@ -56,8 +56,7 @@
         </h1>
         <p class="hero-sub fade-up fade-up-delay-2">
           MeetBrief listens to the conversation, transcribes speech in real time, and streams
-          AI-suggested replies to a floating overlay — so you stay sharp and present while
-          the model has your back.
+          AI-suggested replies to a floating overlay. Use Claude, GPT-4o, or Gemini — your key, your model, your choice.
         </p>
         <div class="hero-actions fade-up fade-up-delay-3">
           <a href="install.html" class="btn btn-primary">
@@ -108,7 +107,12 @@
               </div>
               <div>
                 <div class="m-label">AI Provider</div>
-                <div class="m-select"><span>Claude (Anthropic)</span><span style="color:var(--text3)">▾</span></div>
+                <div style="display:flex; gap:4px; flex-wrap:wrap; margin-top:4px;">
+                  <div style="padding:4px 10px; background:rgba(79,121,245,0.18); border:1px solid rgba(79,121,245,0.4); border-radius:6px; font-size:10px; font-weight:600; color:#7C9FF8;">Claude</div>
+                  <div style="padding:4px 10px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:6px; font-size:10px; color:#55555F;">GPT-4o</div>
+                  <div style="padding:4px 10px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:6px; font-size:10px; color:#55555F;">Gemini</div>
+                  <div style="padding:4px 10px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:6px; font-size:10px; color:#55555F;">Ollama</div>
+                </div>
               </div>
               <div class="m-start">▶ Start Session</div>
             </div>
@@ -132,7 +136,11 @@
 <!-- STRIP -->
 <div class="strip">
   <div class="strip-inner">
-    <div class="strip-item"><span>🤖</span> Anthropic Claude</div>
+    <div class="strip-item"><span>🧠</span> Anthropic Claude</div>
+    <div class="strip-sep"></div>
+    <div class="strip-item"><span>✦</span> OpenAI GPT-4o</div>
+    <div class="strip-sep"></div>
+    <div class="strip-item"><span>◆</span> Google Gemini</div>
     <div class="strip-sep"></div>
     <div class="strip-item"><span>🦙</span> Ollama (local)</div>
     <div class="strip-sep"></div>
@@ -140,9 +148,7 @@
     <div class="strip-sep"></div>
     <div class="strip-item"><span>⚡</span> Silero VAD</div>
     <div class="strip-sep"></div>
-    <div class="strip-item"><span>🔒</span> Zero cloud dependency</div>
-    <div class="strip-sep"></div>
-    <div class="strip-item"><span>🖥️</span> Electron · macOS · Windows · Linux</div>
+    <div class="strip-item"><span>🖥️</span> macOS · Windows · Linux</div>
   </div>
 </div>
 
@@ -253,7 +259,7 @@
         <li><a href="https://github.com/martian-coder/TinyTools/tree/main/MeetingCopilot" target="_blank">GitHub</a></li>
         <li><a href="mailto:martian.coders.x@gmail.com">Contact</a></li>
       </ul>
-      <div class="footer-right">Built with Electron · Anthropic Claude · Whisper</div>
+      <div class="footer-right">Built with Electron · Claude · GPT-4o · Gemini · Whisper</div>
     </div>
   </div>
 </footer>

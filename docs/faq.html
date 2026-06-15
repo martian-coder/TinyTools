@@ -56,6 +56,14 @@
       <div class="faq-list fade-up fade-up-delay-1">
         <div class="faq-item">
           <div class="faq-q" onclick="toggleFaq(this)">
+            Which AI models can I use?
+            <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+          <div class="faq-a">MeetBrief supports four AI providers out of the box: <strong>Anthropic Claude</strong> (Sonnet 4.6 or Opus 4.8, with prompt caching), <strong>OpenAI GPT-4o</strong> (or GPT-4o Mini for lower cost), <strong>Google Gemini</strong> (via the Live API), and <strong>Ollama</strong> for fully offline operation with any local model. You can switch between them from the setup screen — no config file editing required. All providers support vision (screen analysis) and multilingual transcription via local Whisper.</div>
+        </div>
+
+        <div class="faq-item">
+          <div class="faq-q" onclick="toggleFaq(this)">
             Does it work with Zoom, Teams, and Google Meet?
             <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><polyline points="6 9 12 15 18 9"/></svg>
           </div>
@@ -268,7 +276,7 @@
         <li><a href="https://github.com/martian-coder/TinyTools/tree/main/MeetingCopilot" target="_blank">GitHub</a></li>
         <li><a href="mailto:martian.coders.x@gmail.com">Contact</a></li>
       </ul>
-      <div class="footer-right">Built with Electron · Anthropic Claude · Whisper</div>
+      <div class="footer-right">Built with Electron · Claude · GPT-4o · Gemini · Whisper</div>
     </div>
   </div>
 </footer>
