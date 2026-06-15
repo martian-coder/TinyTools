@@ -728,9 +728,8 @@ async function startMacOSAudioCapture(geminiSessionRef) {
 
             if (currentProviderMode === 'cloud') {
                 sendCloudAudio(monoChunk);
-            } else if (currentProviderMode === 'local' || currentProviderMode === 'anthropic') {
-                // Local/Anthropic modes run their own 16kHz AudioPipeline capture;
-                // this 24kHz SystemAudioDump stream is not started for them.
+            } else if (currentProviderMode === 'local' || currentProviderMode === 'anthropic' || currentProviderMode === 'openai') {
+                // These modes run their own 16kHz AudioPipeline; SystemAudioDump not used.
             } else {
                 const base64Data = monoChunk.toString('base64');
                 sendAudioToGemini(base64Data, geminiSessionRef);
