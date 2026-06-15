@@ -60,7 +60,8 @@ async function sendToAnthropic(transcription) {
     } catch (err) {
         console.error('[Anthropic] Failed to create stream:', err.message);
         dropLastUserTurn();
-        resumeListening();
+        sendToRenderer('update-status', 'Claude error: ' + err.message);
+        sendToRenderer('new-response', '⚠ **Claude API error:** ' + err.message);
         return;
     }
 
@@ -81,7 +82,13 @@ async function sendToAnthropic(transcription) {
     } catch (err) {
         console.error('[Anthropic] Stream error:', err.message);
         dropLastUserTurn();
-        resumeListening();
+        const friendly = err.status === 401
+            ? '⚠ **Invalid API key.** Check your Claude API key in settings.'
+            : err.status === 429
+            ? '⚠ **Rate limited.** Wait a moment and try again.'
+            : '⚠ **Claude error:** ' + err.message;
+        sendToRenderer('new-response', friendly);
+        sendToRenderer('update-status', 'Error — Listening...');
         return;
     }
 
@@ -113,12 +120,16 @@ async function sendToAnthropic(transcription) {
 // ── Public API ─────────────────────────────────────────────────────────────
 
 async function initializeAnthropicProvider(apiKey, model, systemPrompt) {
+    if (!apiKey || !String(apiKey).trim()) {
+        throw new Error('Anthropic API key is required. Add it in Settings → Claude API.');
+    }
     anthropicClient = new Anthropic({ apiKey });
-    anthropicModel = model || 'claude-opus-4-8';
+    anthropicModel = model || 'claude-sonnet-4-6';
     currentSystemPrompt = systemPrompt || 'You are a helpful meeting assistant.';
     conversationHistory = [];
     isActive = true;
     console.log('[Anthropic] Provider initialized with model:', anthropicModel);
+    return true;
 }
 
 async function sendAnthropicText(text) {

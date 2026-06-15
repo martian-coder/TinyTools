@@ -898,7 +898,7 @@ function setupGeminiIpcHandlers(geminiSessionRef) {
             const { getSystemPrompt } = require('./prompts');
             const systemPrompt = getSystemPrompt(profile, customPrompt, false);
 
-            getAnthropic().initializeAnthropicProvider(apiKey, model, systemPrompt);
+            await getAnthropic().initializeAnthropicProvider(apiKey, model, systemPrompt);
 
             const success = await getLocalAi().initializeLocalWhisperSession(whisperModel, profile, customPrompt, translate);
             if (!success) {

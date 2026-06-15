@@ -527,7 +527,7 @@ export class MainView extends LitElement {
         this.isInitializing = false;
         this.whisperDownloading = false;
 
-        this._mode = 'byok';
+        this._mode = 'anthropic';
         this._token = '';
         this._geminiKey = '';
         this._groqKey = '';
@@ -559,7 +559,7 @@ export class MainView extends LitElement {
                 copilot.storage.getCredentials().catch(() => ({})),
             ]);
 
-            const storedMode = prefs.providerMode || 'byok';
+            const storedMode = prefs.providerMode || 'anthropic';
             this._mode = storedMode === 'cloud' ? 'byok' : storedMode;
 
             if (storedMode === 'cloud') {
