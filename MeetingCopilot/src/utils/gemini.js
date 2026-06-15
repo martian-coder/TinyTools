@@ -272,7 +272,7 @@ async function sendToGroq(transcription) {
         return;
     }
 
-    console.log(`Sending to Groq (${modelToUse}):`, transcription.substring(0, 100) + '...');
+    if (process.env.DEBUG) console.log(`Sending to Groq (${modelToUse}):`, transcription.substring(0, 100) + '...');
 
     groqConversationHistory.push({
         role: 'user',
@@ -384,7 +384,7 @@ async function sendToGemma(transcription) {
         return;
     }
 
-    console.log('Sending to Gemma:', transcription.substring(0, 100) + '...');
+    if (process.env.DEBUG) console.log('Sending to Gemma:', transcription.substring(0, 100) + '...');
 
     groqConversationHistory.push({
         role: 'user',

@@ -26,6 +26,9 @@
         "name": "amit"
     },
     "license": "BUSL-1.1",
+    "engines": {
+        "node": ">=18.0.0"
+    },
     "dependencies": {
         "@anthropic-ai/sdk": "^0.55.0",
         "openai": "^4.103.0",

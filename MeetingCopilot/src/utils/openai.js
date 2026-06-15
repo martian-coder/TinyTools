@@ -33,7 +33,7 @@ async function sendToOpenAI(transcription) {
     }
     if (!transcription || !transcription.trim()) return;
 
-    console.log('[OpenAI] Sending:', transcription.substring(0, 100));
+    if (process.env.DEBUG) console.log('[OpenAI] Sending:', transcription.substring(0, 100));
 
     conversationHistory.push({ role: 'user', content: transcription.trim() });
     if (conversationHistory.length > 20) {

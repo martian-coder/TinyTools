@@ -1,6 +1,6 @@
 # Meeting Copilot
 
-A personal AI meeting assistant that sits as a transparent overlay during Zoom/Teams calls. It listens to the other speaker, transcribes their speech locally with Whisper, and streams a concise talking point from Claude the moment they pause — so you always have something clear and confident to say.
+A personal AI meeting assistant that sits as a transparent overlay during Zoom/Teams calls. It listens to the other speaker, transcribes their speech locally with Whisper, and streams a concise talking point — powered by Claude, GPT-4o, Gemini, or a local Ollama model — the moment they pause.
 
 ## 🌍 Multilingual — the standout feature
 
@@ -26,7 +26,7 @@ This is on by default. Toggle it off in the setup screen for English-only meetin
 
 1. Before the meeting: paste context (agenda, your role, talking points) into the text area
 2. Start session — the overlay appears
-3. The other person speaks → Whisper transcribes (+ translates to English if needed) → Claude streams a suggested reply
+3. The other person speaks → Whisper transcribes (+ translates to English if needed) → your chosen AI streams a suggested reply
 4. Glance at the overlay, adapt, keep talking
 
 Context is sent once as a **cached system prompt** — only the live transcript changes per API call, so latency and cost stay low.
@@ -45,9 +45,16 @@ npm start
 
 Requires Node 18+. `ffmpeg` is bundled automatically via `npm install` — no separate ffmpeg install needed.
 
-### 2. Claude API key
+### 2. API key (choose your AI provider)
 
-Get one at [console.anthropic.com](https://console.anthropic.com/settings/keys). Paste it into the setup screen and pick a model (Sonnet 4.6 recommended, Opus 4.8 for best quality).
+| Provider | Where to get a key | Recommended model |
+|----------|--------------------|-------------------|
+| **Claude** (recommended) | [console.anthropic.com](https://console.anthropic.com/settings/keys) | Sonnet 4.6 |
+| **OpenAI GPT-4o** | [platform.openai.com](https://platform.openai.com/api-keys) | gpt-4o-mini |
+| **Gemini BYOK** | [aistudio.google.com](https://aistudio.google.com/app/apikey) | gemini-2.0-flash-live-001 |
+| **Local Ollama** | [ollama.com](https://ollama.com) — no key needed | llama3.2 or any model |
+
+Paste the key in Settings after launch and select your provider from the top of the setup screen.
 
 ### 3. System audio setup (per platform)
 
@@ -59,7 +66,7 @@ Two modes for macOS system audio:
 
 **Gemini / BYOK mode** — uses the built-in `SystemAudioDump` binary. No extra software. Grant **Screen Recording** permission on first launch (System Settings → Privacy & Security → Screen Recording).
 
-**Claude API / Ollama mode** — uses ffmpeg with BlackHole.
+**Claude API / OpenAI / Ollama mode** — uses ffmpeg with BlackHole.
 
 1. Install **BlackHole 2ch** (free, open-source):  
    https://existential.audio/blackhole/
@@ -74,7 +81,7 @@ Two modes for macOS system audio:
 
 **Gemini / BYOK mode** — no extra software. The Electron audio handler uses WASAPI loopback automatically.
 
-**Claude API / Ollama mode** — Meeting Copilot tries WASAPI loopback automatically. If your audio card doesn't support loopback natively, install **VB-Cable** (free):  
+**Claude API / OpenAI / Ollama mode** — Meeting Copilot tries WASAPI loopback automatically. If your audio card doesn't support loopback natively, install **VB-Cable** (free):  
 https://vb-audio.com/Cable/
 
 After installing VB-Cable, set **CABLE Input** as your default audio output in Windows Sound settings, then set CABLE Output as your recording input.
@@ -98,9 +105,10 @@ PULSE_SOURCE=alsa_output.pci-0000_00_1f.3.analog-stereo.monitor npm start
 
 | Mode | What it uses |
 |------|-------------|
-| **Claude API** (recommended) | Claude API + local Whisper transcription. Best quality, no system audio compromise. |
-| **Local AI** | Ollama LLM + local Whisper. Fully offline, slower without a GPU. |
+| **Claude API** (recommended) | Anthropic Claude + local Whisper. Best quality, prompt caching keeps cost low. |
+| **OpenAI GPT-4o** | GPT-4o or GPT-4o-mini + local Whisper. Great alternative if you prefer OpenAI. |
 | **Gemini BYOK** | Gemini Live API — no extra audio setup on macOS, cloud transcription. |
+| **Local AI** | Ollama LLM + local Whisper. Fully offline, slower without a GPU. |
 
 ---
 
@@ -132,10 +140,10 @@ node cli.js start --help
 
 ## Quick demo (no microphone needed)
 
-1. Start in Claude API mode with your key
+1. Start in Claude API (or OpenAI) mode with your key
 2. Click **Start Session**
 3. Type a question in the bottom text bar and press Enter
-4. Claude's suggested reply streams in the overlay
+4. The AI's suggested reply streams in the overlay
 
 ---
 

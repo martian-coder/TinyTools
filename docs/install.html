@@ -120,8 +120,13 @@
       <div class="prereq-item">
         <div class="pi-icon">🔑</div>
         <div>
-          <strong>API key (Anthropic or Ollama)</strong>
-          <span>For Claude: get an API key at console.anthropic.com. For fully local use, install <a href="https://ollama.ai" target="_blank">Ollama</a> and pull a model. No key needed for Ollama.</span>
+          <strong>API key — pick your AI provider</strong>
+          <span>
+            <a href="https://console.anthropic.com/settings/keys" target="_blank">Claude (Anthropic)</a> ·
+            <a href="https://platform.openai.com/api-keys" target="_blank">OpenAI GPT-4o</a> ·
+            <a href="https://aistudio.google.com/app/apikey" target="_blank">Gemini (Google AI Studio)</a> ·
+            or install <a href="https://ollama.com" target="_blank">Ollama</a> for fully offline use (no key needed).
+          </span>
         </div>
       </div>
       <div class="prereq-item">
@@ -182,88 +187,69 @@
       </div>
     </div>
 
-    <!-- ENV CONFIG -->
+    <!-- PROVIDER CONFIG -->
     <div style="margin-top:64px;">
       <div class="section-eyebrow fade-up">Step 3</div>
-      <h2 class="section-headline fade-up fade-up-delay-1">Configure your provider</h2>
-      <p class="section-sub fade-up fade-up-delay-2">Create a <code>.env</code> file in <code>MeetingCopilot/</code> and set your provider and API key. Your key stays on your machine — it is never sent to MeetBrief.</p>
+      <h2 class="section-headline fade-up fade-up-delay-1">Choose your AI provider</h2>
+      <p class="section-sub fade-up fade-up-delay-2">MeetBrief supports four providers. Pick the one that fits your workflow — all configuration is done inside the app in Settings. Your key stays on your machine and is never sent to MeetBrief.</p>
 
       <div class="platform-tabs fade-up fade-up-delay-1">
-        <button class="ptab active" onclick="showPlatform('anthropic',this)">Using Claude (Anthropic)</button>
-        <button class="ptab" onclick="showPlatform('ollama',this)">Using Ollama (local)</button>
+        <button class="ptab active" onclick="showPlatform('anthropic',this)">Claude (Anthropic)</button>
+        <button class="ptab" onclick="showPlatform('openai',this)">OpenAI GPT-4o</button>
+        <button class="ptab" onclick="showPlatform('gemini',this)">Gemini BYOK</button>
+        <button class="ptab" onclick="showPlatform('ollama',this)">Ollama (offline)</button>
       </div>
 
       <div id="anthropic-note" class="platform-note macos visible fade-up fade-up-delay-2">
-        <strong style="color:var(--green);">Claude setup:</strong> Get your API key at <strong>console.anthropic.com</strong> → API Keys. Paste it below. Your key is billed per-token directly by Anthropic — typically under $0.10/hour of meeting time with prompt caching enabled.
+        <strong style="color:var(--green);">Recommended.</strong> Get your API key at <a href="https://console.anthropic.com/settings/keys" target="_blank" style="color:var(--green);">console.anthropic.com</a> → API Keys. Paste it in Settings → Claude API. Billing is per-token directly with Anthropic — typically under $0.10/hour with prompt caching on.
       </div>
-      <div id="ollama-note" class="platform-note linux fade-up fade-up-delay-2">
-        <strong style="color:var(--amber);">Ollama setup:</strong> Install Ollama from <strong>ollama.ai</strong>, then run <code>ollama pull llama3.1</code> (or any model). No API key needed. Latency depends on your hardware — a mid-range GPU gives good results.
+      <div id="openai-note" class="platform-note windows fade-up fade-up-delay-2" style="display:none;">
+        <strong style="color:var(--blue2);">OpenAI GPT-4o.</strong> Get your API key at <a href="https://platform.openai.com/api-keys" target="_blank" style="color:var(--blue2);">platform.openai.com</a> → API Keys. Paste it in Settings → OpenAI. Default model is <code>gpt-4o-mini</code> (fast and affordable); switch to <code>gpt-4o</code> for higher quality.
       </div>
-
-      <div class="code-block fade-up fade-up-delay-2" id="env-anthropic">
-        <div class="code-block-header">
-          <span class="code-block-title">.env (Claude)</span>
-          <button class="copy-btn" onclick="copyCode(this,'env-claude')">Copy</button>
-        </div>
-        <pre id="env-claude"><span class="h"># LLM provider: anthropic | ollama</span>
-<span class="v">LLM_PROVIDER</span>=<span class="s">anthropic</span>
-
-<span class="h"># Your Anthropic API key</span>
-<span class="v">ANTHROPIC_API_KEY</span>=<span class="s">sk-ant-api03-...</span>
-
-<span class="h"># Whisper model size: tiny | small | medium</span>
-<span class="h"># whisper-small is recommended (good speed/accuracy balance)</span>
-<span class="v">WHISPER_MODEL</span>=<span class="s">Xenova/whisper-small</span></pre>
+      <div id="gemini-note" class="platform-note linux fade-up fade-up-delay-2" style="display:none;">
+        <strong style="color:var(--amber);">Gemini Live API.</strong> Get a key at <a href="https://aistudio.google.com/app/apikey" target="_blank" style="color:var(--amber);">aistudio.google.com</a>. Paste it in Settings → Gemini BYOK. <strong>No audio driver setup needed on macOS</strong> — Gemini handles audio streaming natively via <code>ScreenCaptureKit</code>.
+      </div>
+      <div id="ollama-note" class="platform-note linux fade-up fade-up-delay-2" style="display:none;">
+        <strong style="color:var(--text2);">Fully offline.</strong> Install Ollama from <a href="https://ollama.com" target="_blank">ollama.com</a>, run <code>ollama pull llama3.2</code> (or any model), then set the Ollama host and model name in Settings → Local AI. No API key needed. Latency depends on your GPU.
       </div>
 
-      <div class="code-block fade-up fade-up-delay-2" id="env-ollama" style="display:none;">
-        <div class="code-block-header">
-          <span class="code-block-title">.env (Ollama)</span>
-          <button class="copy-btn" onclick="copyCode(this,'env-ollama-code')">Copy</button>
-        </div>
-        <pre id="env-ollama-code"><span class="h"># LLM provider: anthropic | ollama</span>
-<span class="v">LLM_PROVIDER</span>=<span class="s">ollama</span>
-
-<span class="h"># Ollama model name (must be pulled first)</span>
-<span class="v">OLLAMA_MODEL</span>=<span class="s">llama3.1</span>
-
-<span class="h"># Whisper model size</span>
-<span class="v">WHISPER_MODEL</span>=<span class="s">Xenova/whisper-small</span></pre>
-      </div>
-
-      <div class="env-note fade-up fade-up-delay-3">
-        <strong>Your API key stays on your machine.</strong> It is sent directly from your machine to Anthropic (or your local Ollama instance). It never passes through MeetBrief infrastructure — there is none.
+      <div class="env-note fade-up fade-up-delay-3" style="margin-top:24px;">
+        <strong>Your API key stays on your machine.</strong> Keys are stored locally in the app's data directory and sent directly to your chosen AI provider. They never touch MeetBrief infrastructure — there is none.
       </div>
     </div>
 
-    <!-- FULL ENV REFERENCE -->
+    <!-- PROVIDER REFERENCE TABLE -->
     <div style="margin-top:48px;" class="fade-up">
-      <h3 style="font-size:1rem; margin-bottom:16px; color:var(--text);">Full .env reference</h3>
+      <h3 style="font-size:1rem; margin-bottom:16px; color:var(--text);">Provider comparison</h3>
       <div class="code-block">
         <table class="env-table">
           <thead>
-            <tr><th>Variable</th><th>Values</th><th>Description</th></tr>
+            <tr><th>Provider</th><th>Where to get key</th><th>Best model</th><th>Audio setup</th></tr>
           </thead>
           <tbody>
             <tr>
-              <td class="key">LLM_PROVIDER</td>
-              <td class="val"><code>anthropic</code> | <code>ollama</code></td>
-              <td class="desc">Which LLM backend to use</td>
+              <td class="key">Claude</td>
+              <td class="val"><a href="https://console.anthropic.com/settings/keys" target="_blank">console.anthropic.com</a></td>
+              <td class="desc">Sonnet 4.6 (or Opus 4.8)</td>
+              <td class="desc">BlackHole (macOS) / VB-Cable (Windows)</td>
             </tr>
             <tr>
-              <td class="key">ANTHROPIC_API_KEY</td>
-              <td class="val"><code>sk-ant-...</code></td>
-              <td class="desc">Anthropic API key (required when using Claude)</td>
+              <td class="key">OpenAI</td>
+              <td class="val"><a href="https://platform.openai.com/api-keys" target="_blank">platform.openai.com</a></td>
+              <td class="desc">gpt-4o-mini or gpt-4o</td>
+              <td class="desc">BlackHole (macOS) / VB-Cable (Windows)</td>
             </tr>
             <tr>
-              <td class="key">OLLAMA_MODEL</td>
-              <td class="val"><code>llama3.1</code>, <code>mistral</code>, …</td>
-              <td class="desc">Model name to use with Ollama</td>
+              <td class="key">Gemini</td>
+              <td class="val"><a href="https://aistudio.google.com/app/apikey" target="_blank">aistudio.google.com</a></td>
+              <td class="desc">gemini-2.0-flash-live-001</td>
+              <td class="desc">None needed on macOS</td>
             </tr>
             <tr>
-              <td class="key">WHISPER_MODEL</td>
-              <td class="val"><code>Xenova/whisper-tiny</code><br><code>Xenova/whisper-small</code><br><code>Xenova/whisper-medium</code></td>
-              <td class="desc">Whisper model size. Small is recommended. Larger = more accurate but slower.</td>
+              <td class="key">Ollama</td>
+              <td class="val"><a href="https://ollama.com" target="_blank">ollama.com</a> (free)</td>
+              <td class="desc">llama3.2, mistral, etc.</td>
+              <td class="desc">BlackHole (macOS) / VB-Cable (Windows)</td>
             </tr>
           </tbody>
         </table>
@@ -344,7 +330,7 @@
             API calls fail with an authentication error
             <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><polyline points="6 9 12 15 18 9"/></svg>
           </div>
-          <div class="faq-a">Check that your <code>ANTHROPIC_API_KEY</code> in <code>.env</code> is correct and starts with <code>sk-ant-</code>. Make sure you're in the <code>MeetingCopilot/</code> directory when running <code>npm start</code> (the <code>.env</code> file must be in that directory).</div>
+          <div class="faq-a">Open Settings inside MeetBrief and re-paste your API key. For Claude keys start with <code>sk-ant-</code>; for OpenAI keys start with <code>sk-</code>. If the error persists, check that you have credits/billing enabled on your provider's dashboard.</div>
         </div>
         <div class="faq-item">
           <div class="faq-q" onclick="toggleFaq(this)">
@@ -425,10 +411,9 @@ function copyCode(btn, id) {
 function showPlatform(platform, btn) {
   document.querySelectorAll('.ptab').forEach(t => t.classList.remove('active'));
   btn.classList.add('active');
-  document.querySelectorAll('.platform-note').forEach(n => n.classList.remove('visible'));
-  document.getElementById(platform + '-note').classList.add('visible');
-  document.getElementById('env-anthropic').style.display = platform === 'anthropic' ? 'block' : 'none';
-  document.getElementById('env-ollama').style.display = platform === 'ollama' ? 'block' : 'none';
+  document.querySelectorAll('.platform-note').forEach(n => { n.style.display = 'none'; n.classList.remove('visible'); });
+  const note = document.getElementById(platform + '-note');
+  if (note) { note.style.display = 'block'; note.classList.add('visible'); }
 }
 </script>
 </body>
