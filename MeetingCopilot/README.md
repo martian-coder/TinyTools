@@ -43,30 +43,54 @@ npm install
 npm start
 ```
 
-Requires Node 18+.
+Requires Node 18+. `ffmpeg` is bundled automatically via `npm install` — no separate ffmpeg install needed.
 
-### 2. macOS — system audio
+### 2. Claude API key
 
-The first run will ask for Screen Recording permission. Grant it in System Preferences → Privacy & Security. Without it, audio capture will not work.
+Get one at [console.anthropic.com](https://console.anthropic.com/settings/keys). Paste it into the setup screen and pick a model (Sonnet 4.6 recommended, Opus 4.8 for best quality).
 
-### 3. Windows — system audio
+### 3. System audio setup (per platform)
 
-Uses ffmpeg WASAPI loopback. Install once:
-```
-winget install Gyan.FFmpeg
-```
+System audio capture is required so Meeting Copilot hears the other person — not you.
 
-### 4. Linux — system audio
+#### macOS
+
+Two modes for macOS system audio:
+
+**Gemini / BYOK mode** — uses the built-in `SystemAudioDump` binary. No extra software. Grant **Screen Recording** permission on first launch (System Settings → Privacy & Security → Screen Recording).
+
+**Claude API / Ollama mode** — uses ffmpeg with BlackHole.
+
+1. Install **BlackHole 2ch** (free, open-source):  
+   https://existential.audio/blackhole/
+
+2. Open **Audio MIDI Setup** → create a **Multi-Output Device** that includes both BlackHole 2ch and your speakers/headphones.
+
+3. Set the Multi-Output Device as your system audio output before joining the call.
+
+> BlackHole routes a copy of system audio to Meeting Copilot while you still hear it normally.
+
+#### Windows
+
+**Gemini / BYOK mode** — no extra software. The Electron audio handler uses WASAPI loopback automatically.
+
+**Claude API / Ollama mode** — Meeting Copilot tries WASAPI loopback automatically. If your audio card doesn't support loopback natively, install **VB-Cable** (free):  
+https://vb-audio.com/Cable/
+
+After installing VB-Cable, set **CABLE Input** as your default audio output in Windows Sound settings, then set CABLE Output as your recording input.
+
+#### Linux
 
 ```bash
-apt install pulseaudio-utils
-pactl list sources short        # find your monitor source
-# then set --loopback <name> in CLI, or use mic
+# PulseAudio / PipeWire (default on Ubuntu 20.04+)
+pactl list sources short        # find your monitor source name
+# Meeting Copilot uses default.monitor automatically
 ```
 
-### 5. Claude API key
-
-Get one at [console.anthropic.com](https://console.anthropic.com/settings/keys). Paste it into the setup screen and pick a model (Sonnet 4.6 recommended).
+If your PulseAudio monitor source has a custom name, set the environment variable before launching:
+```bash
+PULSE_SOURCE=alsa_output.pci-0000_00_1f.3.analog-stereo.monitor npm start
+```
 
 ---
 
@@ -74,9 +98,9 @@ Get one at [console.anthropic.com](https://console.anthropic.com/settings/keys).
 
 | Mode | What it uses |
 |------|-------------|
-| **Claude API** (default) | Claude API + local Whisper transcription |
-| **Local AI** | Ollama LLM + local Whisper transcription |
-| **Gemini BYOK** | Gemini Live API (bring your own keys) |
+| **Claude API** (recommended) | Claude API + local Whisper transcription. Best quality, no system audio compromise. |
+| **Local AI** | Ollama LLM + local Whisper. Fully offline, slower without a GPU. |
+| **Gemini BYOK** | Gemini Live API — no extra audio setup on macOS, cloud transcription. |
 
 ---
 
@@ -100,7 +124,7 @@ node cli.js start --help
 
 **Platform audio:**
 - macOS: system audio (Teams/Zoom output) by default
-- Windows: ffmpeg WASAPI loopback (`winget install Gyan.FFmpeg`)
+- Windows: WASAPI loopback (built-in) or VB-Cable
 - Linux: `--loopback <pulse-monitor-device>` for system audio, or `--mic`
 - Android/Termux: `--mic` + `--serve` to view on phone
 

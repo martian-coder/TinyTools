@@ -211,10 +211,12 @@ async function initializeCloud(profile = 'meeting') {
     }
 }
 
-// Listen for status updates
-ipcRenderer.on('update-status', (event, status) => {
-    console.log('Status update:', status);
-    copilot.setStatus(status);
+// Surface audio-device setup errors as a visible response in the overlay.
+ipcRenderer.on('audio-error', (_, { message }) => {
+    // Extract the "Fix:" hint from the structured error, if present.
+    const fixMatch = message.match(/Fix:\s*([^\n]+)/);
+    const fixHint = fixMatch ? '\n\n**Fix:** ' + fixMatch[1] : '';
+    copilot.addNewResponse('⚠ **Audio capture failed**' + fixHint + '\n\nSee console (DevTools → Console) for full details.');
 });
 
 // Listen for live transcript updates (from Whisper VAD)

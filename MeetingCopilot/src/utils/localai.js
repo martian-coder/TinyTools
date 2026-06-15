@@ -172,7 +172,12 @@ function createPipeline(whisperModel, captureSource) {
 
     pipeline.on('error', err => {
         console.error('[LocalAI] Pipeline error:', err);
-        sendToRenderer('update-status', 'Audio pipeline error: ' + err.message);
+        // Surface setup-guidance hints (BlackHole, VB-Cable etc.) in the UI
+        const msg = err.message.includes('\n\nFix:')
+            ? err.message.split('\n\nFix:')[1].split('\n')[0].trim()
+            : err.message.split('\n')[0];
+        sendToRenderer('update-status', '⚠ Audio error — ' + msg);
+        sendToRenderer('audio-error', { message: err.message });
     });
 
     return pipeline;
