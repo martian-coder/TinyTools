@@ -514,6 +514,8 @@ export class MainView extends LitElement {
         // Anthropic state
         _anthropicKey: { state: true },
         _anthropicModel: { state: true },
+        // OpenAI state
+        _openaiModel: { state: true },
         _customContext: { state: true },
         _translateToEnglish: { state: true },
     };
@@ -540,6 +542,8 @@ export class MainView extends LitElement {
         this._whisperModel = 'Xenova/whisper-small';
         this._anthropicKey = '';
         this._anthropicModel = 'claude-sonnet-4-6';
+        this._openaiKey = '';
+        this._openaiModel = 'gpt-4o-mini';
         this._customContext = '';
         this._translateToEnglish = true;
 
@@ -580,6 +584,8 @@ export class MainView extends LitElement {
             // Load Anthropic settings
             this._anthropicKey = creds.anthropicApiKey || '';
             this._anthropicModel = prefs.anthropicModel || 'claude-sonnet-4-6';
+            this._openaiKey = creds.openaiKey || '';
+            this._openaiModel = prefs.openaiModel || 'gpt-4o-mini';
             this._customContext = prefs.customPrompt || '';
             this._translateToEnglish = prefs.translateToEnglish !== false;
 
@@ -786,6 +792,22 @@ export class MainView extends LitElement {
         this.requestUpdate();
     }
 
+    async _saveOpenaiKey(val) {
+        this._openaiKey = val;
+        this._keyError = false;
+        try {
+            const creds = await copilot.storage.getCredentials().catch(() => ({}));
+            await copilot.storage.setCredentials({ ...creds, openaiKey: val });
+        } catch (e) {}
+        this.requestUpdate();
+    }
+
+    async _saveOpenaiModel(val) {
+        this._openaiModel = val;
+        await copilot.storage.updatePreference('openaiModel', val);
+        this.requestUpdate();
+    }
+
     async _saveCustomContext(val) {
         this._customContext = val;
         await copilot.storage.updatePreference('customPrompt', val);
@@ -809,6 +831,12 @@ export class MainView extends LitElement {
 
         if (this._mode === 'anthropic') {
             if (!this._anthropicKey.trim()) {
+                this._keyError = true;
+                this.requestUpdate();
+                return;
+            }
+        } else if (this._mode === 'openai') {
+            if (!this._openaiKey.trim()) {
                 this._keyError = true;
                 this.requestUpdate();
                 return;
@@ -911,6 +939,90 @@ export class MainView extends LitElement {
             ${this._renderDivider()}
 
             <div class="mode-links">
+                <button class="mode-link" @click=${() => this._saveMode('openai')}>Use OpenAI GPT</button>
+                <button class="mode-link" @click=${() => this._saveMode('byok')}>Use Gemini API keys</button>
+                <button class="mode-link" @click=${() => this._saveMode('local')}>Use local Ollama</button>
+            </div>
+        `;
+    }
+
+    // ── OpenAI mode ──
+
+    _renderOpenAIMode() {
+        return html`
+            <div class="form-group">
+                <label class="form-label">OpenAI API Key</label>
+                <input
+                    type="password"
+                    placeholder="Required"
+                    .value=${this._openaiKey}
+                    @input=${e => this._saveOpenaiKey(e.target.value)}
+                    class=${this._keyError ? 'error' : ''}
+                />
+                <div class="form-hint">
+                    <span class="link" @click=${() => this.onExternalLink('https://platform.openai.com/api-keys')}>Get OpenAI key</span>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">GPT Model</label>
+                <select
+                    .value=${this._openaiModel}
+                    @change=${e => this._saveOpenaiModel(e.target.value)}
+                >
+                    <option value="gpt-4o-mini" ?selected=${this._openaiModel === 'gpt-4o-mini'}>GPT-4o Mini (recommended)</option>
+                    <option value="gpt-4o" ?selected=${this._openaiModel === 'gpt-4o'}>GPT-4o (most capable)</option>
+                    <option value="gpt-4.1" ?selected=${this._openaiModel === 'gpt-4.1'}>GPT-4.1</option>
+                    <option value="gpt-4.1-mini" ?selected=${this._openaiModel === 'gpt-4.1-mini'}>GPT-4.1 Mini</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Meeting Context</label>
+                <textarea
+                    rows="4"
+                    placeholder="Paste agenda, talking points, your role, or background here..."
+                    .value=${this._customContext}
+                    @input=${e => this._saveCustomContext(e.target.value)}
+                    style="resize: vertical; min-height: 80px; user-select: text; cursor: text;"
+                ></textarea>
+                <div class="form-hint">Becomes the system prompt — update before each meeting</div>
+            </div>
+
+            <div class="form-group">
+                <div class="whisper-label-row">
+                    <label class="form-label">Whisper Model (local transcription)</label>
+                    ${this.whisperDownloading ? html`<div class="whisper-spinner"></div>` : ''}
+                </div>
+                <select
+                    .value=${this._whisperModel}
+                    @change=${e => this._saveWhisperModel(e.target.value)}
+                >
+                    <option value="Xenova/whisper-tiny" ?selected=${this._whisperModel === 'Xenova/whisper-tiny'}>Tiny (fastest, least accurate)</option>
+                    <option value="Xenova/whisper-base" ?selected=${this._whisperModel === 'Xenova/whisper-base'}>Base</option>
+                    <option value="Xenova/whisper-small" ?selected=${this._whisperModel === 'Xenova/whisper-small'}>Small (recommended)</option>
+                    <option value="Xenova/whisper-medium" ?selected=${this._whisperModel === 'Xenova/whisper-medium'}>Medium (most accurate, slowest)</option>
+                </select>
+                <div class="form-hint">${this.whisperDownloading ? 'Downloading model...' : 'Downloaded automatically on first use'}</div>
+            </div>
+
+            <div class="form-group">
+                <label class="toggle-row">
+                    <input
+                        type="checkbox"
+                        .checked=${this._translateToEnglish}
+                        @change=${e => this._saveTranslateToEnglish(e.target.checked)}
+                    />
+                    <span class="toggle-label">Translate to English (multilingual)</span>
+                </label>
+                <div class="form-hint">On: speaker can use any language — output is always English. Off: English only.</div>
+            </div>
+
+            ${this._renderStartButton()}
+            ${this._renderDivider()}
+
+            <div class="mode-links">
+                <button class="mode-link" @click=${() => this._saveMode('anthropic')}>Use Claude API</button>
                 <button class="mode-link" @click=${() => this._saveMode('byok')}>Use Gemini API keys</button>
                 <button class="mode-link" @click=${() => this._saveMode('local')}>Use local Ollama</button>
             </div>
@@ -991,6 +1103,7 @@ export class MainView extends LitElement {
 
             <div class="mode-links">
                 <button class="mode-link" @click=${() => this._saveMode('anthropic')}>Use Claude API</button>
+                <button class="mode-link" @click=${() => this._saveMode('openai')}>Use OpenAI GPT</button>
                 <button class="mode-link" @click=${() => this._saveMode('local')}>Use local AI</button>
             </div>
         `;
@@ -1044,6 +1157,7 @@ export class MainView extends LitElement {
 
             <div class="mode-links">
                 <button class="mode-link" @click=${() => this._saveMode('anthropic')}>Use Claude API</button>
+                <button class="mode-link" @click=${() => this._saveMode('openai')}>Use OpenAI GPT</button>
                 <button class="mode-link" @click=${() => this._saveMode('byok')}>Use Gemini API keys</button>
             </div>
         `;
@@ -1059,6 +1173,8 @@ export class MainView extends LitElement {
             <div class="form-wrapper">
                 ${this._mode === 'anthropic' ? html`
                     <div class="page-title">MeetBrief <span class="mode-suffix">Claude</span></div>
+                ` : this._mode === 'openai' ? html`
+                    <div class="page-title">MeetBrief <span class="mode-suffix">OpenAI</span></div>
                 ` : this._mode === 'local' ? html`
                     <div class="title-row">
                         <div class="page-title">MeetBrief <span class="mode-suffix">Local AI</span></div>
@@ -1069,11 +1185,13 @@ export class MainView extends LitElement {
                 `}
                 <div class="page-subtitle">
                     ${this._mode === 'anthropic' ? 'Claude API + local Whisper transcription' :
+                      this._mode === 'openai' ? 'OpenAI GPT + local Whisper transcription' :
                       this._mode === 'byok' ? 'Bring your own API keys' :
                       'Run models locally on your machine'}
                 </div>
 
                 ${this._mode === 'anthropic' ? this._renderAnthropicMode() : ''}
+                ${this._mode === 'openai' ? this._renderOpenAIMode() : ''}
                 ${this._mode === 'byok' ? this._renderByokMode() : ''}
                 ${this._mode === 'local' ? (this._showLocalHelp ? this._renderLocalHelp() : this._renderLocalMode()) : ''}
             </div>

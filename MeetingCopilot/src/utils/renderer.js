@@ -192,6 +192,27 @@ async function initializeAnthropic(profile = 'meeting') {
     }
 }
 
+async function initializeOpenAI(profile = 'meeting') {
+    const prefs = await storage.getPreferences();
+    const creds = await storage.getCredentials();
+    const apiKey = creds.openaiKey || '';
+    const model = prefs.openaiModel || 'gpt-4o-mini';
+    const whisperModel = prefs.whisperModel || 'Xenova/whisper-small';
+    const customPrompt = prefs.customPrompt || '';
+    const translate = prefs.translateToEnglish !== false;
+
+    const success = await ipcRenderer.invoke(
+        'initialize-openai', apiKey, model, whisperModel, profile, customPrompt, translate
+    );
+    if (success) {
+        copilot.setStatus('OpenAI Live — Listening...');
+        return true;
+    } else {
+        copilot.setStatus('error');
+        return false;
+    }
+}
+
 async function initializeCloud(profile = 'meeting') {
     const creds = await storage.getCredentials();
     const token = creds.cloudToken;
@@ -1061,6 +1082,7 @@ const copilot = {
     initializeCloud,
     initializeLocal,
     initializeAnthropic,
+    initializeOpenAI,
     startCapture,
     stopCapture,
     sendTextMessage,

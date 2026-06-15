@@ -20,6 +20,13 @@ function getAnthropic() {
     return _anthropic;
 }
 
+// Lazy-loaded OpenAI provider
+let _openai = null;
+function getOpenAI() {
+    if (!_openai) _openai = require('./openai');
+    return _openai;
+}
+
 // Provider mode: 'byok', 'cloud', or 'local'
 let currentProviderMode = 'byok';
 
@@ -917,6 +924,30 @@ function setupGeminiIpcHandlers(geminiSessionRef) {
         }
     });
 
+    ipcMain.handle('initialize-openai', async (event, apiKey, model, whisperModel, profile, customPrompt, translate = true) => {
+        currentProviderMode = 'openai';
+        try {
+            const systemPrompt = getSystemPrompt(profile, customPrompt, false);
+
+            await getOpenAI().initializeOpenAIProvider(apiKey, model, systemPrompt);
+
+            const success = await getLocalAi().initializeLocalWhisperSession(whisperModel, profile, customPrompt, translate);
+            if (!success) {
+                currentProviderMode = 'byok';
+                return false;
+            }
+
+            getLocalAi().setExternalLlmFn(transcription => getOpenAI().sendToOpenAI(transcription));
+
+            console.log('[OpenAI] Session initialized —', model, '+ Whisper', whisperModel);
+            return true;
+        } catch (err) {
+            console.error('[OpenAI] Init error:', err);
+            currentProviderMode = 'byok';
+            return false;
+        }
+    });
+
     ipcMain.handle('send-audio-content', async (event, { data, mimeType }) => {
         if (currentProviderMode === 'cloud') {
             try {
@@ -928,9 +959,8 @@ function setupGeminiIpcHandlers(geminiSessionRef) {
                 return { success: false, error: error.message };
             }
         }
-        if (currentProviderMode === 'local' || currentProviderMode === 'anthropic') {
-            // The local/anthropic AudioPipeline captures system audio directly at
-            // 16kHz; renderer-streamed audio is not needed in these modes.
+        if (currentProviderMode === 'local' || currentProviderMode === 'anthropic' || currentProviderMode === 'openai') {
+            // These modes run their own 16kHz AudioPipeline; renderer-streamed audio not needed.
             return { success: true };
         }
         if (!geminiSessionRef.current) return { success: false, error: 'No active Gemini session' };
@@ -958,8 +988,8 @@ function setupGeminiIpcHandlers(geminiSessionRef) {
                 return { success: false, error: error.message };
             }
         }
-        if (currentProviderMode === 'local' || currentProviderMode === 'anthropic') {
-            // Local/anthropic capture is owned by the AudioPipeline (see above).
+        if (currentProviderMode === 'local' || currentProviderMode === 'anthropic' || currentProviderMode === 'openai') {
+            // These modes own their AudioPipeline.
             return { success: true };
         }
         if (!geminiSessionRef.current) return { success: false, error: 'No active Gemini session' };
@@ -1003,6 +1033,10 @@ function setupGeminiIpcHandlers(geminiSessionRef) {
                 return await getAnthropic().sendAnthropicImage(data, prompt);
             }
 
+            if (currentProviderMode === 'openai') {
+                return await getOpenAI().sendOpenAIImage(data, prompt);
+            }
+
             if (currentProviderMode === 'local') {
                 const result = await getLocalAi().sendLocalImage(data, prompt);
                 return result;
@@ -1043,6 +1077,16 @@ function setupGeminiIpcHandlers(geminiSessionRef) {
             }
         }
 
+        if (currentProviderMode === 'openai') {
+            try {
+                console.log('Sending text to OpenAI:', text);
+                return await getOpenAI().sendOpenAIText(text.trim());
+            } catch (error) {
+                console.error('Error sending OpenAI text:', error);
+                return { success: false, error: error.message };
+            }
+        }
+
         if (currentProviderMode === 'local') {
             try {
                 console.log('Sending text to local Ollama:', text);
@@ -1077,9 +1121,9 @@ function setupGeminiIpcHandlers(geminiSessionRef) {
             };
         }
 
-        // Local/Anthropic modes capture system audio via their own AudioPipeline
-        // (16kHz mono for Whisper/VAD); don't also spawn the 24kHz SystemAudioDump.
-        if (currentProviderMode === 'local' || currentProviderMode === 'anthropic') {
+        // These modes capture system audio via their own AudioPipeline (16kHz mono);
+        // don't also spawn the 24kHz SystemAudioDump.
+        if (currentProviderMode === 'local' || currentProviderMode === 'anthropic' || currentProviderMode === 'openai') {
             return { success: true };
         }
 
@@ -1114,6 +1158,13 @@ function setupGeminiIpcHandlers(geminiSessionRef) {
 
             if (currentProviderMode === 'anthropic') {
                 getAnthropic().closeAnthropicProvider();
+                getLocalAi().closeLocalSession();
+                currentProviderMode = 'byok';
+                return { success: true };
+            }
+
+            if (currentProviderMode === 'openai') {
+                getOpenAI().closeOpenAIProvider();
                 getLocalAi().closeLocalSession();
                 currentProviderMode = 'byok';
                 return { success: true };

@@ -15,6 +15,7 @@ const DEFAULT_CREDENTIALS = {
     apiKey: '',
     groqApiKey: '',
     anthropicApiKey: '',
+    openaiKey: '',
 };
 
 const DEFAULT_PREFERENCES = {
@@ -33,6 +34,7 @@ const DEFAULT_PREFERENCES = {
     ollamaModel: 'llama3.1',
     whisperModel: 'Xenova/whisper-small',
     anthropicModel: 'claude-sonnet-4-6',
+    openaiModel: 'gpt-4o-mini',
     translateToEnglish: true,
 };
 

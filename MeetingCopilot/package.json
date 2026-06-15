@@ -28,6 +28,7 @@
     "license": "BUSL-1.1",
     "dependencies": {
         "@anthropic-ai/sdk": "^0.55.0",
+        "openai": "^4.103.0",
         "commander": "^12.1.0",
         "@google/genai": "^1.2.0",
         "@huggingface/transformers": "^3.8.1",

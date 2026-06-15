@@ -595,6 +595,15 @@ export class MeetBriefApp extends LitElement {
                 }
                 return;
             }
+        } else if (providerMode === 'openai') {
+            const success = await copilot.initializeOpenAI(this.selectedProfile);
+            if (!success) {
+                const mainView = this.shadowRoot.querySelector('main-view');
+                if (mainView && mainView.triggerApiKeyError) {
+                    mainView.triggerApiKeyError();
+                }
+                return;
+            }
         } else if (providerMode === 'local') {
             const success = await copilot.initializeLocal(this.selectedProfile);
             if (!success) {
