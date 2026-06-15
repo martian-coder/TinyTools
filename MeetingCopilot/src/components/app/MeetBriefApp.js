@@ -595,24 +595,6 @@ export class MeetBriefApp extends LitElement {
                 }
                 return;
             }
-        } else if (providerMode === 'cloud') {
-            const creds = await copilot.storage.getCredentials();
-            if (!creds.cloudToken || creds.cloudToken.trim() === '') {
-                const mainView = this.shadowRoot.querySelector('main-view');
-                if (mainView && mainView.triggerApiKeyError) {
-                    mainView.triggerApiKeyError();
-                }
-                return;
-            }
-
-            const success = await copilot.initializeCloud(this.selectedProfile);
-            if (!success) {
-                const mainView = this.shadowRoot.querySelector('main-view');
-                if (mainView && mainView.triggerApiKeyError) {
-                    mainView.triggerApiKeyError();
-                }
-                return;
-            }
         } else if (providerMode === 'local') {
             const success = await copilot.initializeLocal(this.selectedProfile);
             if (!success) {

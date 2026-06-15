@@ -104,6 +104,7 @@ async function handleSpeechEnd(audioBuffer) {
 async function sendToOllama(transcription) {
     if (!ollamaClient || !ollamaModel) {
         console.error('[LocalAI] Ollama not configured');
+        sendToRenderer('update-status', 'Ollama not configured — check settings');
         return;
     }
 
@@ -164,7 +165,10 @@ function createPipeline(whisperModel, captureSource) {
 
     pipeline.on('status', msg => sendToRenderer('update-status', msg));
     pipeline.on('speech-start', () => sendToRenderer('update-status', 'Listening... (speech detected)'));
-    pipeline.on('vad-ready', () => console.log('[LocalAI] Silero VAD ready'));
+    pipeline.on('vad-ready', () => {
+        console.log('[LocalAI] Silero VAD ready');
+        sendToRenderer('update-status', 'Listening...');
+    });
 
     pipeline.on('speech-end', ({ audio }) => {
         handleSpeechEnd(audio).catch(err => console.error('[LocalAI] speech-end handler:', err));

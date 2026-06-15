@@ -56,6 +56,7 @@ class AudioPipeline extends EventEmitter {
     async start() {
         if (this._running) return;
 
+        this.emit('status', 'Loading audio model...');
         await this._vad.load();
         this.emit('vad-ready');
 
