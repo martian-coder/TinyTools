@@ -1,1 +1,28 @@
-aW1wb3J0IHsgZGVmaW5lQ29uZmlnIH0gZnJvbSAndml0ZScKaW1wb3J0IHJlYWN0IGZyb20gJ0B2aXRlanMvcGx1Z2luLXJlYWN0JwppbXBvcnQgdGFpbHdpbmRjc3MgZnJvbSAnQHRhaWx3aW5kY3NzL3ZpdGUnCmltcG9ydCB7IFZpdGVQV0EgfSBmcm9tICd2aXRlLXBsdWdpbi1wd2EnCgpleHBvcnQgZGVmYXVsdCBkZWZpbmVDb25maWcoewogIGJhc2U6IHByb2Nlc3MuZW52LlZJVEVfQkFTRSA/PyAnLycsCiAgcGx1Z2luczogWwogICAgcmVhY3QoKSwKICAgIHRhaWx3aW5kY3NzKCksCiAgICBWaXRlUFdBKHsKICAgICAgcmVnaXN0ZXJUeXBlOiAnYXV0b1VwZGF0ZScsCiAgICAgIG1hbmlmZXN0OiB7CiAgICAgICAgbmFtZTogJ1NpZnQg4oCUIFNtYXJ0IE1lc3NhZ2UgRmlsdGVyJywKICAgICAgICBzaG9ydF9uYW1lOiAnU2lmdCcsCiAgICAgICAgZGVzY3JpcHRpb246ICdBSS1maWx0ZXJlZCBtZXNzYWdpbmcg4oCUIHlvdSBjb250cm9sIHdoYXQgcmVhY2hlcyB5b3UnLAogICAgICAgIHRoZW1lX2NvbG9yOiAnIzBiMTAyMCcsCiAgICAgICAgYmFja2dyb3VuZF9jb2xvcjogJyMwYjEwMjAnLAogICAgICAgIGRpc3BsYXk6ICdzdGFuZGFsb25lJywKICAgICAgICBvcmllbnRhdGlvbjogJ3BvcnRyYWl0JywKICAgICAgICBpY29uczogWwogICAgICAgICAgeyBzcmM6ICcvaWNvbi0xOTIucG5nJywgc2l6ZXM6ICcxOTJ4MTkyJywgdHlwZTogJ2ltYWdlL3BuZycgfSwKICAgICAgICAgIHsgc3JjOiAnL2ljb24tNTEyLnBuZycsIHNpemVzOiAnNTEyeDUxMicsIHR5cGU6ICdpbWFnZS9wbmcnLCBwdXJwb3NlOiAnYW55IG1hc2thYmxlJyB9LAogICAgICAgIF0sCiAgICAgIH0sCiAgICB9KSwKICBdLAp9KQo=
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
+import tailwindcss from '@tailwindcss/vite'
+import { VitePWA } from 'vite-plugin-pwa'
+
+export default defineConfig({
+  base: process.env.VITE_BASE ?? '/',
+  plugins: [
+    react(),
+    tailwindcss(),
+    VitePWA({
+      registerType: 'autoUpdate',
+      manifest: {
+        name: 'Sift — Smart Message Filter',
+        short_name: 'Sift',
+        description: 'AI-filtered messaging — you control what reaches you',
+        theme_color: '#0b1020',
+        background_color: '#0b1020',
+        display: 'standalone',
+        orientation: 'portrait',
+        icons: [
+          { src: '/icon-192.png', sizes: '192x192', type: 'image/png' },
+          { src: '/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any maskable' },
+        ],
+      },
+    }),
+  ],
+})
