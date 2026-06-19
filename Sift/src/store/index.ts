@@ -1,9 +1,9 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { Contact, Message, UserSettings, Folder, RouteResult } from '../types';
+import type { Contact, Message, UserSettings, Folder, RouteResult, ModerationVerdict } from '../types';
 import { SEED_CONTACTS, SEED_MESSAGES, DEFAULT_SETTINGS } from '../seed';
 
-type Screen = 'chats' | 'conversation' | 'settings' | 'simulator';
+export type Screen = 'chats' | 'conversation' | 'settings' | 'simulator';
 
 interface SiftState {
   contacts: Contact[];
@@ -13,13 +13,16 @@ interface SiftState {
   activeFolder: Folder;
   activeContactId: string | null;
   pendingAsk: { messageId: string; text: string } | null;
+  revealed: Record<string, boolean>;
+  banner: string | null;
 
-  // Actions
-  setScreen: (screen: Screen) => void;
-  setFolder: (folder: Folder) => void;
+  setScreen: (s: Screen) => void;
+  setFolder: (f: Folder) => void;
   openConversation: (contactId: string) => void;
+  setRevealed: (id: string) => void;
+  setBanner: (msg: string | null) => void;
   sendMessage: (contactId: string, text: string) => void;
-  receiveMessage: (contactId: string, text: string, route: RouteResult, verdict: import('../types').ModerationVerdict) => void;
+  receiveMessage: (contactId: string, text: string, route: RouteResult, verdict: ModerationVerdict) => void;
   approveMessage: (id: string) => void;
   rejectMessage: (id: string) => void;
   clearReview: () => void;
@@ -28,154 +31,120 @@ interface SiftState {
   updateSpam: (patch: Partial<UserSettings['spam']>) => void;
   updateBusiness: (patch: Partial<UserSettings['business']>) => void;
   toggleTrusted: (contactId: string) => void;
+  setContactTrusted: (contactId: string, trusted: boolean) => void;
   resolvePendingAsk: (approve: boolean) => void;
   resetToSeed: () => void;
 }
 
+let idCounter = 200;
+const nid = () => `m${idCounter++}`;
+
 export const useSiftStore = create<SiftState>()(
   persist(
     (set, get) => ({
-      contacts: SEED_CONTACTS,
-      messages: SEED_MESSAGES,
-      settings: DEFAULT_SETTINGS,
-      activeScreen: 'chats',
-      activeFolder: 'primary',
-      activeContactId: null,
-      pendingAsk: null,
+      contacts:         SEED_CONTACTS,
+      messages:         SEED_MESSAGES,
+      settings:         DEFAULT_SETTINGS,
+      activeScreen:     'chats',
+      activeFolder:     'primary',
+      activeContactId:  null,
+      pendingAsk:       null,
+      revealed:         {},
+      banner:           null,
 
-      setScreen: (screen) => set({ activeScreen: screen }),
-      setFolder: (folder) => set({ activeFolder: folder }),
+      setScreen: s  => set({ activeScreen: s }),
+      setFolder: f  => set({ activeFolder: f }),
+      openConversation: id => set({ activeContactId: id, activeScreen: 'conversation' }),
+      setRevealed: id => set(s => ({ revealed: { ...s.revealed, [id]: true } })),
+      setBanner: msg => set({ banner: msg }),
 
-      openConversation: (contactId) => set({ activeContactId: contactId, activeScreen: 'conversation' }),
-
-      sendMessage: (contactId, text) => {
-        const msg: Message = {
-          id: `m${Date.now()}`,
-          contactId,
-          text,
-          dir: 'out',
-          ts: Date.now(),
-          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-          folder: 'primary',
-          status: 'delivered',
-        };
-        set(s => ({ messages: [...s.messages, msg] }));
-      },
+      sendMessage: (contactId, text) => set(s => ({
+        messages: [...s.messages, {
+          id: nid(), contactId, text, dir: 'out',
+          ts: Date.now(), time: 'now',
+          folder: 'primary', status: 'delivered',
+        }],
+      })),
 
       receiveMessage: (contactId, text, route, verdict) => {
-        const msg: Message = {
-          id: `m${Date.now()}`,
-          contactId,
-          text,
-          dir: 'in',
-          ts: Date.now(),
-          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-          verdict,
-          folder: route.folder,
-          status: route.status,
-          autoReply: !!route.autoReply,
+        const newMsg: Message = {
+          id: nid(), contactId, text, dir: 'in',
+          ts: Date.now(), time: 'now',
+          verdict, folder: route.folder, status: route.status,
+          autoReply: route.autoReply,
         };
         set(s => {
-          const next = { messages: [...s.messages, msg] };
+          const messages = [...s.messages, newMsg];
           if (route.ask) {
-            return { ...next, pendingAsk: { messageId: msg.id, text } };
+            return { messages, pendingAsk: { messageId: newMsg.id, text } };
           }
-          return next;
+          return { messages };
         });
       },
 
-      approveMessage: (id) => {
-        set(s => ({
-          messages: s.messages.map(m =>
-            m.id === id ? { ...m, folder: 'primary', status: 'approved' } : m
-          ),
-        }));
-      },
+      approveMessage: id => set(s => ({
+        messages: s.messages.map(m => m.id === id ? { ...m, status: 'approved', folder: 'primary' } : m),
+      })),
 
-      rejectMessage: (id) => {
-        set(s => ({
-          messages: s.messages.map(m =>
-            m.id === id ? { ...m, status: 'rejected' } : m
-          ),
-        }));
-      },
+      rejectMessage: id => set(s => ({
+        messages: s.messages.map(m => m.id === id ? { ...m, status: 'rejected' } : m),
+      })),
 
-      clearReview: () => {
-        set(s => ({
-          messages: s.messages.map(m =>
-            (m.folder === 'review' && (m.status === 'held' || m.status === 'approved'))
-              ? { ...m, status: 'rejected' }
-              : m
-          ),
-        }));
-      },
+      clearReview: () => set(s => ({
+        messages: s.messages.map(m =>
+          (m.folder === 'review' && (m.status === 'held' || m.status === 'approved'))
+            ? { ...m, status: 'rejected' } : m
+        ),
+      })),
 
-      updateSettings: (patch) => set(s => ({ settings: { ...s.settings, ...patch } })),
-      updateCivility: (patch) => set(s => ({ settings: { ...s.settings, civility: { ...s.settings.civility, ...patch } } })),
-      updateSpam: (patch) => set(s => ({ settings: { ...s.settings, spam: { ...s.settings.spam, ...patch } } })),
-      updateBusiness: (patch) => set(s => ({ settings: { ...s.settings, business: { ...s.settings.business, ...patch } } })),
+      updateSettings: patch => set(s => ({ settings: { ...s.settings, ...patch } })),
+      updateCivility: patch => set(s => ({ settings: { ...s.settings, civility: { ...s.settings.civility, ...patch } } })),
+      updateSpam:     patch => set(s => ({ settings: { ...s.settings, spam:     { ...s.settings.spam,     ...patch } } })),
+      updateBusiness: patch => set(s => ({ settings: { ...s.settings, business: { ...s.settings.business, ...patch } } })),
 
-      toggleTrusted: (contactId) => {
-        const { settings } = get();
-        const ids = settings.trustedIds.includes(contactId)
-          ? settings.trustedIds.filter(id => id !== contactId)
-          : [...settings.trustedIds, contactId];
-        set(s => ({ settings: { ...s.settings, trustedIds: ids } }));
-      },
+      toggleTrusted: id => set(s => ({
+        contacts: s.contacts.map(c => c.id === id ? { ...c, trusted: !c.trusted } : c),
+        settings: {
+          ...s.settings,
+          trustedIds: s.contacts.find(c => c.id === id)?.trusted
+            ? s.settings.trustedIds.filter(x => x !== id)
+            : [...s.settings.trustedIds, id],
+        },
+      })),
 
-      resolvePendingAsk: (approve) => {
+      setContactTrusted: (id, trusted) => set(s => ({
+        contacts: s.contacts.map(c => c.id === id ? { ...c, trusted } : c),
+        settings: {
+          ...s.settings,
+          trustedIds: trusted
+            ? [...new Set([...s.settings.trustedIds, id])]
+            : s.settings.trustedIds.filter(x => x !== id),
+        },
+      })),
+
+      resolvePendingAsk: approve => {
         const { pendingAsk } = get();
         if (!pendingAsk) return;
-        if (approve) {
-          get().approveMessage(pendingAsk.messageId);
-        } else {
-          get().rejectMessage(pendingAsk.messageId);
-        }
+        if (approve) get().approveMessage(pendingAsk.messageId);
+        else         get().rejectMessage(pendingAsk.messageId);
         set({ pendingAsk: null });
       },
 
       resetToSeed: () => set({
-        contacts: SEED_CONTACTS,
-        messages: SEED_MESSAGES,
-        settings: DEFAULT_SETTINGS,
-        activeScreen: 'chats',
-        activeFolder: 'primary',
-        activeContactId: null,
-        pendingAsk: null,
+        contacts: SEED_CONTACTS, messages: SEED_MESSAGES, settings: DEFAULT_SETTINGS,
+        activeScreen: 'chats', activeFolder: 'primary', activeContactId: null,
+        pendingAsk: null, revealed: {}, banner: null,
       }),
     }),
     {
-      name: 'sift-store',
-      partialize: (s) => ({
-        contacts: s.contacts,
-        messages: s.messages,
-        settings: s.settings,
-      }),
+      name: 'sift-v2',
+      partialize: s => ({ contacts: s.contacts, messages: s.messages, settings: s.settings }),
     }
   )
 );
 
 // Selectors
-export const selectConversation = (state: SiftState, contactId: string) =>
-  state.messages
-    .filter(m => m.contactId === contactId && m.status !== 'dropped' && m.status !== 'rejected')
+export const selectConversation = (s: SiftState, contactId: string) =>
+  s.messages
+    .filter(m => m.contactId === contactId && (m.status === 'delivered' || m.dir === 'out' || m.status === 'approved'))
     .sort((a, b) => a.ts - b.ts);
-
-export const selectFolderThreads = (state: SiftState, folder: Folder) => {
-  const contactMap = new Map<string, Message>();
-  for (const msg of state.messages) {
-    if (msg.folder !== folder) continue;
-    if (msg.status === 'dropped' || msg.status === 'rejected') continue;
-    const existing = contactMap.get(msg.contactId);
-    if (!existing || msg.ts > existing.ts) contactMap.set(msg.contactId, msg);
-  }
-  return Array.from(contactMap.values()).sort((a, b) => b.ts - a.ts);
-};
-
-export const selectReviewMessages = (state: SiftState) =>
-  state.messages.filter(m => m.folder === 'review' && m.status === 'held').sort((a, b) => b.ts - a.ts);
-
-export const selectUnreadCount = (state: SiftState, folder: Folder) => {
-  if (folder === 'review') return selectReviewMessages(state).length;
-  return selectFolderThreads(state, folder).filter(m => m.dir === 'in' && m.status === 'delivered').length;
-};

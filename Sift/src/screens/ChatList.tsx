@@ -1,380 +1,218 @@
-import { useSiftStore, selectFolderThreads, selectReviewMessages, selectUnreadCount } from '../store';
-import { Glass } from '../components/ui/Glass';
+import { ShieldCheck, Inbox, Briefcase, Megaphone, Check, X, Eye, Forward, ChevronRight, Palette } from 'lucide-react';
+import { useSiftStore } from '../store';
 import { Avatar } from '../components/ui/Avatar';
 import { CategoryBadge } from '../components/ui/Badge';
-import type { Folder, Message } from '../types';
+import type { Folder, Contact, Message } from '../types';
 
-const FOLDER_TABS: { id: Folder; label: string; icon: string }[] = [
-  { id: 'primary',    label: 'Primary',    icon: '💬' },
-  { id: 'business',   label: 'Business',   icon: '🏢' },
-  { id: 'promotions', label: 'Promos',     icon: '🎁' },
-  { id: 'review',     label: 'Review',     icon: '🛡️' },
+const FOLDERS: { id: Folder; label: string; Icon: React.ComponentType<{ size?: number }> }[] = [
+  { id: 'primary',    label: 'Primary',    Icon: Inbox      },
+  { id: 'business',   label: 'Business',   Icon: Briefcase  },
+  { id: 'promotions', label: 'Promotions', Icon: Megaphone  },
+  { id: 'review',     label: 'Review',     Icon: ShieldCheck },
 ];
 
-export function ChatList() {
-  const activeFolder = useSiftStore(s => s.activeFolder);
-  const setFolder = useSiftStore(s => s.setFolder);
-  const contacts = useSiftStore(s => s.contacts);
-  const openConversation = useSiftStore(s => s.openConversation);
-  const approveMessage = useSiftStore(s => s.approveMessage);
-  const rejectMessage = useSiftStore(s => s.rejectMessage);
-  const clearReview = useSiftStore(s => s.clearReview);
+interface ChatListProps {
+  onShowThemes: () => void;
+}
 
-  const threads = useSiftStore(s =>
-    activeFolder !== 'review' ? selectFolderThreads(s, activeFolder) : []
-  );
-  const reviewMsgs = useSiftStore(s =>
-    activeFolder === 'review' ? selectReviewMessages(s) : []
-  );
-  const counts = {
-    primary:    useSiftStore(s => selectUnreadCount(s, 'primary')),
-    business:   useSiftStore(s => selectUnreadCount(s, 'business')),
-    promotions: useSiftStore(s => selectUnreadCount(s, 'promotions')),
-    review:     useSiftStore(s => selectUnreadCount(s, 'review')),
-  };
+export function ChatList({ onShowThemes }: ChatListProps) {
+  const messages          = useSiftStore(s => s.messages);
+  const contacts          = useSiftStore(s => s.contacts);
+  const activeFolder      = useSiftStore(s => s.activeFolder);
+  const setFolder         = useSiftStore(s => s.setFolder);
+  const openConversation  = useSiftStore(s => s.openConversation);
+  const approveMessage    = useSiftStore(s => s.approveMessage);
+  const rejectMessage     = useSiftStore(s => s.rejectMessage);
 
-  const getContact = (id: string) => contacts.find(c => c.id === id);
+  const reviewCount = messages.filter(m => m.status === 'held').length;
+
+  const cById = (id: string) => contacts.find(c => c.id === id);
+
+  // Threads: unique contact IDs with at least one delivered in-message in this folder
+  const threads = (() => {
+    const ids = [...new Set(
+      messages.filter(m => m.dir === 'in' && m.status === 'delivered' && m.folder === activeFolder)
+              .map(m => m.contactId)
+    )];
+    return ids.map(id => {
+      const cm = messages.filter(m => m.contactId === id);
+      const last = [...cm].reverse().find(m => m.status === 'delivered' || m.dir === 'out');
+      return { id, c: cById(id), last };
+    });
+  })();
+
+  const held    = messages.filter(m => m.status === 'held');
+  const dropped = messages.filter(m => m.status === 'dropped');
+
+  const revealed    = useSiftStore(s => s.revealed);
+  const setRevealed = useSiftStore(s => s.setRevealed);
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-      {/* Header */}
-      <div style={{ padding: '16px 20px 8px', paddingTop: 'max(16px, env(safe-area-inset-top))' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-          <div>
-            <h1 style={{ color: 'var(--text)', fontSize: 26, fontWeight: 700, margin: 0, letterSpacing: '-0.5px' }}>
-              Sift
-            </h1>
-            <p style={{ color: 'var(--text-muted)', fontSize: 12, margin: 0 }}>
-              Your messages, filtered
-            </p>
-          </div>
-          <div
-            style={{
-              width: 36,
-              height: 36,
-              borderRadius: '50%',
-              background: 'linear-gradient(135deg, var(--accent), var(--accent2))',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: 16,
-              boxShadow: '0 0 16px var(--accent)44',
-            }}
-          >
-            🔮
-          </div>
-        </div>
+    <>
+      <Header title="Sift" sub="private by design" onShowThemes={onShowThemes} />
 
-        {/* Folder Tabs */}
-        <div style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 4 }}>
-          {FOLDER_TABS.map(tab => {
-            const active = activeFolder === tab.id;
-            const count = counts[tab.id];
-            return (
-              <button
-                key={tab.id}
-                onClick={() => setFolder(tab.id)}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 5,
-                  padding: '7px 14px',
-                  borderRadius: 20,
-                  border: active ? '1px solid var(--accent)' : '1px solid var(--border)',
-                  background: active
-                    ? 'linear-gradient(135deg, var(--accent)22, var(--accent2)22)'
-                    : 'var(--surface)',
-                  color: active ? 'var(--accent)' : 'var(--text-muted)',
-                  fontWeight: active ? 600 : 400,
-                  fontSize: 13,
-                  cursor: 'pointer',
-                  whiteSpace: 'nowrap',
-                  flexShrink: 0,
-                  transition: 'all 0.15s ease',
-                }}
-              >
-                <span style={{ fontSize: 14 }}>{tab.icon}</span>
-                {tab.label}
-                {count > 0 && (
-                  <span
-                    style={{
-                      background: tab.id === 'review' ? '#fb7185' : 'var(--accent)',
-                      color: '#fff',
-                      fontSize: 10,
-                      fontWeight: 700,
-                      borderRadius: 8,
-                      padding: '1px 5px',
-                      minWidth: 16,
-                      textAlign: 'center',
-                    }}
-                  >
-                    {count}
-                  </span>
-                )}
-              </button>
-            );
-          })}
-        </div>
+      {/* Folder pills */}
+      <div className="px-3 py-2 flex gap-2 overflow-x-auto no-bar">
+        {FOLDERS.map(f => {
+          const active = activeFolder === f.id;
+          return (
+            <button key={f.id} onClick={() => setFolder(f.id)} className={`pill ${active ? 'pill-on' : ''}`}>
+              <f.Icon size={13} /> {f.label}
+              {f.id === 'review' && reviewCount > 0 && <span className="rev-dot">{reviewCount}</span>}
+            </button>
+          );
+        })}
       </div>
 
-      {/* Thread List */}
-      <div style={{ flex: 1, overflowY: 'auto', padding: '8px 12px' }}>
+      <div className="flex-1 overflow-y-auto px-3 pb-28 no-bar">
         {activeFolder === 'review' ? (
-          <ReviewFolder
-            messages={reviewMsgs}
-            contacts={contacts}
-            onApprove={approveMessage}
-            onReject={rejectMessage}
-            onClearAll={clearReview}
-          />
+          <ReviewFolder held={held} dropped={dropped} contacts={contacts} revealed={revealed} setRevealed={setRevealed} onApprove={approveMessage} onReject={rejectMessage} />
         ) : threads.length === 0 ? (
-          <EmptyState folder={activeFolder} />
+          <EmptyState icon={Inbox} title="Nothing here yet" body="Messages sorted to this folder land here. Try the Test tab." />
         ) : (
-          threads.map(msg => {
-            const contact = getContact(msg.contactId);
-            if (!contact) return null;
-            return (
-              <Glass
-                key={msg.contactId}
-                onClick={() => openConversation(msg.contactId)}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 12,
-                  padding: '12px 14px',
-                  marginBottom: 8,
-                  cursor: 'pointer',
-                  transition: 'transform 0.12s ease, box-shadow 0.12s ease',
-                  animation: 'slideIn 0.3s ease both',
-                }}
-                onMouseEnter={e => {
-                  (e.currentTarget as HTMLDivElement).style.transform = 'translateX(2px)';
-                  (e.currentTarget as HTMLDivElement).style.boxShadow = '0 4px 24px rgba(0,0,0,0.2)';
-                }}
-                onMouseLeave={e => {
-                  (e.currentTarget as HTMLDivElement).style.transform = '';
-                  (e.currentTarget as HTMLDivElement).style.boxShadow = '';
-                }}
+          <div className="space-y-2 pt-1">
+            {threads.map(({ id, c, last }, i) => (
+              <button
+                key={id}
+                onClick={() => openConversation(id)}
+                className="row glass w-full flex items-center gap-3 p-3 text-left pop"
+                style={{ animationDelay: `${i * 40}ms`, borderRadius: 18 }}
               >
-                <Avatar name={contact.name} grad={contact.grad} trusted={contact.trusted} />
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 3 }}>
-                    <span style={{ color: 'var(--text)', fontWeight: 600, fontSize: 15 }}>
-                      {contact.name}
-                    </span>
-                    <span style={{ color: 'var(--text-muted)', fontSize: 11 }}>{msg.time}</span>
+                <Avatar name={c?.name || '?'} grad={c?.grad || ''} size={44} trusted={c?.trusted} />
+                <div className="min-w-0 flex-1">
+                  <div className="flex justify-between items-baseline gap-2">
+                    <span className="font-semibold text-main truncate">{c?.name}</span>
+                    <span className="text-[11px] dim shrink-0">{last?.time}</span>
                   </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span
-                      style={{
-                        color: 'var(--text-muted)',
-                        fontSize: 13,
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap',
-                        flex: 1,
-                        marginRight: 8,
-                      }}
-                    >
-                      {msg.dir === 'out' ? 'You: ' : ''}
-                      {msg.text}
-                    </span>
-                    {msg.verdict && msg.verdict.category !== 'clean' && (
-                      <CategoryBadge category={msg.verdict.category} size="sm" />
-                    )}
-                  </div>
+                  <div className="text-sm dim truncate">{last?.text}</div>
                 </div>
-              </Glass>
-            );
-          })
+                <ChevronRight size={16} className="dim shrink-0" />
+              </button>
+            ))}
+          </div>
         )}
       </div>
-    </div>
+    </>
   );
 }
 
 function ReviewFolder({
-  messages,
-  contacts,
-  onApprove,
-  onReject,
-  onClearAll,
+  held, dropped, contacts, revealed, setRevealed, onApprove, onReject
 }: {
-  messages: Message[];
-  contacts: import('../types').Contact[];
-  onApprove: (id: string) => void;
-  onReject: (id: string) => void;
-  onClearAll: () => void;
+  held: Message[]; dropped: Message[]; contacts: Contact[];
+  revealed: Record<string, boolean>; setRevealed: (id: string) => void;
+  onApprove: (id: string) => void; onReject: (id: string) => void;
 }) {
-  if (messages.length === 0) {
-    return <EmptyState folder="review" />;
-  }
+  const cById = (id: string) => contacts.find(c => c.id === id);
+  const settings = useSiftStore(s => s.settings);
+
+  if (held.length === 0 && dropped.length === 0)
+    return <EmptyState icon={ShieldCheck} title="All clear" body="No filtered messages need your attention." />;
 
   return (
-    <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-        <span style={{ color: 'var(--text-muted)', fontSize: 12 }}>
-          {messages.length} message{messages.length !== 1 ? 's' : ''} held for review
-        </span>
-        <button
-          onClick={onClearAll}
-          style={{
-            background: 'rgba(244,63,94,0.15)',
-            color: '#fb7185',
-            border: '1px solid rgba(244,63,94,0.3)',
-            borderRadius: 10,
-            padding: '5px 12px',
-            fontSize: 12,
-            cursor: 'pointer',
-          }}
-        >
-          Clear All
-        </button>
-      </div>
-
-      {messages.map(msg => {
-        const contact = contacts.find(c => c.id === msg.contactId);
-        if (!contact) return null;
-        return (
-          <Glass key={msg.id} style={{ padding: '14px', marginBottom: 10, animation: 'slideIn 0.3s ease both' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
-              <Avatar name={contact.name} grad={contact.grad} size={36} />
-              <div>
-                <div style={{ color: 'var(--text)', fontWeight: 600, fontSize: 14 }}>{contact.name}</div>
-                <div style={{ color: 'var(--text-muted)', fontSize: 11 }}>{msg.time}</div>
-              </div>
-              {msg.verdict && <CategoryBadge category={msg.verdict.category} />}
+    <div className="space-y-3 pt-1">
+      {held.map((m, i) => (
+        <div key={m.id} className="glass p-3 pop" style={{ borderRadius: 20, animationDelay: `${i * 50}ms` }}>
+          <div className="flex items-center justify-between mb-2.5">
+            <div className="flex items-center gap-2">
+              <Avatar name={cById(m.contactId)?.name || '?'} grad={cById(m.contactId)?.grad || ''} size={30} />
+              <span className="text-sm font-medium text-main">{cById(m.contactId)?.name}</span>
             </div>
+            <CategoryBadge category={m.verdict?.category || 'clean'} />
+          </div>
 
-            {/* Blurred content */}
-            <div
-              style={{
-                background: 'var(--surface)',
-                border: '1px solid var(--border)',
-                borderRadius: 10,
-                padding: '10px 12px',
-                marginBottom: 10,
-                position: 'relative',
-                overflow: 'hidden',
-              }}
+          {/* Blurred message */}
+          <div className="relative mb-2">
+            <p
+              className={`text-sm text-main p-3 ${revealed[m.id] ? '' : 'blur-md select-none'}`}
+              style={{ background: 'var(--in)', borderRadius: 14, transition: 'filter .4s ease' }}
             >
-              <p
-                style={{
-                  color: 'var(--text)',
-                  fontSize: 14,
-                  margin: 0,
-                  filter: 'blur(5px)',
-                  userSelect: 'none',
-                  lineHeight: 1.5,
-                }}
-              >
-                {msg.text}
-              </p>
-              <div
-                style={{
-                  position: 'absolute',
-                  inset: 0,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: 11,
-                  color: 'var(--text-muted)',
-                  fontWeight: 500,
-                }}
-              >
-                🛡️ Content held — click Reveal to read
-              </div>
-            </div>
-
-            {msg.verdict?.flaggedTerms && msg.verdict.flaggedTerms.length > 0 && (
-              <div style={{ marginBottom: 10, display: 'flex', gap: 4, flexWrap: 'wrap' }}>
-                {msg.verdict.flaggedTerms.map(term => (
-                  <span
-                    key={term}
-                    style={{
-                      background: 'rgba(244,63,94,0.12)',
-                      color: '#fb7185',
-                      border: '1px solid rgba(244,63,94,0.25)',
-                      borderRadius: 6,
-                      padding: '2px 7px',
-                      fontSize: 11,
-                    }}
-                  >
-                    "{term}"
-                  </span>
-                ))}
-              </div>
-            )}
-
-            {msg.autoReply && (
-              <div
-                style={{
-                  background: 'rgba(124,131,255,0.12)',
-                  border: '1px solid rgba(124,131,255,0.25)',
-                  borderRadius: 8,
-                  padding: '7px 10px',
-                  marginBottom: 10,
-                  fontSize: 12,
-                  color: 'var(--accent)',
-                }}
-              >
-                🤖 Auto-reply sent: "This person doesn't accept messages with abusive language."
-              </div>
-            )}
-
-            <div style={{ display: 'flex', gap: 8 }}>
+              {m.text}
+            </p>
+            {!revealed[m.id] && (
               <button
-                onClick={() => onApprove(msg.id)}
-                style={{
-                  flex: 1,
-                  padding: '8px',
-                  borderRadius: 10,
-                  border: '1px solid rgba(16,185,129,0.4)',
-                  background: 'rgba(16,185,129,0.15)',
-                  color: '#34d399',
-                  fontWeight: 600,
-                  fontSize: 13,
-                  cursor: 'pointer',
-                }}
+                onClick={() => setRevealed(m.id)}
+                className="absolute inset-0 grid place-items-center text-xs font-semibold text-main"
               >
-                ✓ Approve
+                <span className="glass2 px-3 py-1.5 rounded-full flex items-center gap-1.5">
+                  <Eye size={13} /> Hidden — tap to reveal
+                </span>
               </button>
-              <button
-                onClick={() => onReject(msg.id)}
-                style={{
-                  flex: 1,
-                  padding: '8px',
-                  borderRadius: 10,
-                  border: '1px solid rgba(244,63,94,0.4)',
-                  background: 'rgba(244,63,94,0.15)',
-                  color: '#fb7185',
-                  fontWeight: 600,
-                  fontSize: 13,
-                  cursor: 'pointer',
-                }}
-              >
-                ✕ Reject
-              </button>
+            )}
+          </div>
+
+          <p className="text-[11px] dim mb-2.5 flex items-start gap-1.5">
+            <Forward size={12} className="mt-0.5 shrink-0" />
+            Sender sees "Under review"{m.autoReply ? ` · filter set to ${settings.civility.sensitivity}` : ''}.
+          </p>
+
+          {m.verdict?.flaggedTerms && m.verdict.flaggedTerms.length > 0 && (
+            <p className="text-[11px] dim mb-2.5">
+              Triggered: {m.verdict.flaggedTerms.map(w => `"${w}"`).join(', ')}
+            </p>
+          )}
+
+          <div className="flex gap-2">
+            <button onClick={() => onApprove(m.id)} className="act act-ok"><Check size={15} /> Let through</button>
+            <button onClick={() => onReject(m.id)}  className="act act-no"><X    size={15} /> Reject</button>
+          </div>
+        </div>
+      ))}
+
+      {dropped.length > 0 && (
+        <div>
+          <div className="text-[11px] uppercase tracking-wide dim px-1 mb-1.5">
+            Silently dropped · hidden in real use
+          </div>
+          {dropped.map(m => (
+            <div key={m.id} className="glass p-3 mb-2 opacity-60" style={{ borderRadius: 18 }}>
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-xs dim">{contacts.find(c => c.id === m.contactId)?.name}</span>
+                <CategoryBadge category={m.verdict?.category || 'spam'} />
+              </div>
+              <p className="text-sm dim line-through">{m.text}</p>
             </div>
-          </Glass>
-        );
-      })}
+          ))}
+        </div>
+      )}
     </div>
   );
 }
 
-function EmptyState({ folder }: { folder: Folder }) {
-  const EMPTY: Record<Folder, { icon: string; text: string }> = {
-    primary:    { icon: '💬', text: 'No messages yet. Say hello!' },
-    business:   { icon: '🏢', text: 'Business messages will appear here.' },
-    promotions: { icon: '🎁', text: 'Promotional messages land here.' },
-    review:     { icon: '🛡️', text: 'No messages pending review.' },
-  };
-  const e = EMPTY[folder];
+function Header({ title, sub, onShowThemes }: { title: string; sub: string; onShowThemes: () => void }) {
   return (
-    <div style={{ textAlign: 'center', paddingTop: 60, color: 'var(--text-muted)' }}>
-      <div style={{ fontSize: 48, marginBottom: 12 }}>{e.icon}</div>
-      <p style={{ fontSize: 14 }}>{e.text}</p>
+    <div className="glass-h px-4 pt-4 pb-3 flex items-center justify-between">
+      <div className="flex items-center gap-2.5">
+        <div
+          className="grid place-items-center"
+          style={{ width: 34, height: 34, borderRadius: 11, background: 'linear-gradient(135deg,var(--accent),var(--accent2))', boxShadow: '0 6px 18px -6px var(--accent)' }}
+        >
+          <ShieldCheck size={18} color="#fff" />
+        </div>
+        <div>
+          <div className="font-semibold text-main leading-tight tracking-tight">{title}</div>
+          <div className="text-[11px] dim leading-tight">{sub}</div>
+        </div>
+      </div>
+      <button
+        onClick={onShowThemes}
+        className="glass grid place-items-center"
+        style={{ width: 34, height: 34, borderRadius: 11 }}
+      >
+        <Palette size={16} className="text-main" />
+      </button>
+    </div>
+  );
+}
+
+function EmptyState({ icon: Icon, title, body }: { icon: React.ComponentType<{ size?: number; className?: string }>; title: string; body: string }) {
+  return (
+    <div className="flex flex-col items-center justify-center text-center px-8 py-16">
+      <div className="glass grid place-items-center mb-3" style={{ width: 62, height: 62, borderRadius: 20 }}>
+        <Icon size={26} className="dim" />
+      </div>
+      <div className="font-semibold text-main">{title}</div>
+      <div className="text-sm dim mt-1">{body}</div>
     </div>
   );
 }

@@ -1,100 +1,33 @@
-import type { Category, ModerationVerdict, UserSettings } from '../types';
+import type { ModerationVerdict, UserSettings } from '../types';
 
-const ABUSIVE_WORDS = [
-  'idiot','moron','stupid','dumb','fool','hate','loser','trash','garbage',
-  'damn','hell','crap','bastard','jerk','creep','ugly','pathetic','worthless',
-  'screw you','shut up','go away','leave me alone','die','kill','threat',
-  'abuse','harass','bully','insult','attack',
-];
-
-const SPAM_PATTERNS = [
-  /forward(ed)?\s*(this|to|message)/i,
-  /share\s+with\s+\d+\s+(friends|people|contacts)/i,
-  /send\s+this\s+to\s+\d+/i,
-  /chain\s+(letter|message|mail)/i,
-  /you('ve| have) won/i,
-  /click\s+here\s+to\s+claim/i,
-  /limited\s+time\s+offer/i,
-  /congratulations.*won/i,
-  /free\s+gift/i,
-  /act\s+now/i,
-];
-
-const BUSINESS_KEYWORDS = [
-  'order','invoice','otp','verification','code','delivery','shipment','shipped',
-  'package','track','booking','appointment','account','statement','receipt',
-  'transaction','payment','bank','balance','credit','debit','bill','subscription',
-];
-
-const PROMO_KEYWORDS = [
-  'sale','discount','offer','deal','coupon','promo','save','off','% off',
-  'flash sale','buy one','free shipping','exclusive','special offer','today only',
-  'hurry','expires','limited stock','shop now',
-];
-
-function countEmojis(text: string): number {
-  return [...text].filter(c => /\p{Emoji}/u.test(c)).length;
-}
-
-function countLinks(text: string): number {
-  return (text.match(/https?:\/\/\S+/g) || []).length;
-}
+const ABUSIVE  = ['idiot','stupid','hate you','shut up','loser','moron','trash','kill','dumb','worthless'];
+const SPAM     = ['forwarded','share with','forward to','10 people','10 friends','click here','good luck','bad luck','win free','http'];
+const BUSINESS = ['order','invoice','otp','delivery','tracking','shipped','payment','receipt','appointment','booking'];
+const PROMO    = ['sale','discount','% off','offer','deal','coupon','limited time','buy now','free shipping'];
 
 export function moderate(text: string, settings: UserSettings): ModerationVerdict {
-  const lower = text.toLowerCase();
-  const words = lower.split(/\s+/);
+  const t = text.toLowerCase();
+  const hit = (list: string[]) => list.filter(w => t.includes(w));
 
-  // Abusive check
-  const sens = settings.civility.sensitivity;
-  const threshold = sens === 'high' ? 1 : sens === 'medium' ? 2 : 3;
-  const flaggedTerms: string[] = [];
-
-  for (const word of words) {
-    const clean = word.replace(/[^a-z]/g, '');
-    for (const bad of ABUSIVE_WORDS) {
-      if (clean.includes(bad.replace(/\s/g, '')) || lower.includes(bad)) {
-        if (!flaggedTerms.includes(bad)) flaggedTerms.push(bad);
-      }
-    }
+  const ab = hit(ABUSIVE);
+  if (settings.civility.enabled && ab.length) {
+    const base = settings.civility.sensitivity === 'high' ? 0.70 : settings.civility.sensitivity === 'low' ? 0.55 : 0.62;
+    return { category: 'abusive', confidence: Math.min(0.97, base + ab.length * 0.12), flaggedTerms: ab, engine: 'rules' };
   }
 
-  if (flaggedTerms.length >= threshold) {
-    const confidence = Math.min(0.6 + flaggedTerms.length * 0.1, 0.99);
-    return { category: 'abusive', confidence, flaggedTerms, reason: 'Abusive language detected', engine: 'rules' };
-  }
+  const sp = hit(SPAM);
+  const emoji = (t.match(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/gu) || []).length >= 3;
+  const shout = text.replace(/[^A-Z]/g, '').length > 8 && text === text.toUpperCase();
+  if (settings.spam.enabled && (sp.length || emoji || shout))
+    return { category: 'spam', confidence: Math.min(0.96, 0.6 + (sp.length + (emoji ? 1 : 0)) * 0.12), flaggedTerms: sp, engine: 'rules' };
 
-  // Spam check
-  const emojiCount = countEmojis(text);
-  const linkCount = countLinks(text);
-  const isAllCaps = text.length > 10 && text === text.toUpperCase();
-  const spamMatches = SPAM_PATTERNS.filter(p => p.test(text));
+  const bz = hit(BUSINESS);
+  if (settings.business.enabled && bz.length)
+    return { category: 'business', confidence: Math.min(0.95, 0.62 + bz.length * 0.1), flaggedTerms: bz, engine: 'rules' };
 
-  if (spamMatches.length > 0 || (emojiCount > 5 && linkCount > 1) || isAllCaps) {
-    const confidence = 0.5 + spamMatches.length * 0.15 + (isAllCaps ? 0.1 : 0);
-    return { category: 'spam', confidence: Math.min(confidence, 0.95), reason: 'Spam/forward pattern detected', engine: 'rules' };
-  }
+  const pr = hit(PROMO);
+  if (pr.length)
+    return { category: 'promo', confidence: Math.min(0.95, 0.6 + pr.length * 0.1), flaggedTerms: pr, engine: 'rules' };
 
-  // Business check
-  const bizMatches = BUSINESS_KEYWORDS.filter(k => lower.includes(k));
-  if (bizMatches.length >= 2) {
-    return { category: 'business', confidence: 0.5 + bizMatches.length * 0.08, reason: 'Business/transactional content', engine: 'rules' };
-  }
-
-  // Promo check
-  const promoMatches = PROMO_KEYWORDS.filter(k => lower.includes(k));
-  if (promoMatches.length >= 2) {
-    return { category: 'promo', confidence: 0.5 + promoMatches.length * 0.08, reason: 'Promotional content', engine: 'rules' };
-  }
-
-  // Single keyword business/promo with weak signal
-  if (bizMatches.length === 1) {
-    return { category: 'business', confidence: 0.45, reason: 'Possible business content', engine: 'rules' };
-  }
-  if (promoMatches.length === 1) {
-    return { category: 'promo', confidence: 0.40, reason: 'Possible promo content', engine: 'rules' };
-  }
-
-  return { category: 'clean', confidence: 0.90, reason: 'No issues detected', engine: 'rules' };
+  return { category: 'clean', confidence: 0.92, flaggedTerms: [], engine: 'rules' };
 }
-
-export type { Category, ModerationVerdict };

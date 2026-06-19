@@ -1,106 +1,151 @@
 @import "tailwindcss";
 
-/* Design token CSS variables — set at runtime by theme engine */
-:root {
-  --base: #0b1020;
-  --surface: rgba(255,255,255,0.07);
-  --surface-strong: rgba(255,255,255,0.13);
-  --border: rgba(255,255,255,0.14);
-  --accent: #7c83ff;
-  --accent2: #22d3ee;
-  --text: #eef1ff;
-  --text-muted: rgba(238,241,255,0.55);
-  --bubble: rgba(255,255,255,0.10);
-  --bubble-out: rgba(124,131,255,0.30);
-  --nav-bg: rgba(11,16,32,0.82);
+/* ─── Layout ─────────────────────────────────────────────────────── */
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; height: 100%; overflow: hidden;
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased; color: var(--text); }
+#root { height: 100%; }
+button { font-family: inherit; -webkit-appearance: none; border: none; cursor: pointer; background: none; }
+input, textarea { font-family: inherit; }
+::placeholder { color: var(--dim); }
+
+/* ─── Aurora drift background ────────────────────────────────────── */
+.app-bg {
+  min-height: 100vh; min-height: 100dvh;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--text);
+  background:
+    radial-gradient(40% 35% at 18% 18%, var(--g1), transparent 70%),
+    radial-gradient(42% 38% at 84% 26%, var(--g2), transparent 70%),
+    radial-gradient(46% 42% at 50% 88%, var(--g3), transparent 72%),
+    var(--base);
+  background-size: 180% 180%, 180% 180%, 200% 200%, auto;
+  animation: drift 22s ease-in-out infinite alternate;
+}
+@keyframes drift {
+  0%   { background-position: 0% 0%,   100% 0%,  50% 100%; }
+  100% { background-position: 60% 50%, 20% 60%,  50% 10%;  }
 }
 
-* {
-  box-sizing: border-box;
-  -webkit-tap-highlight-color: transparent;
+/* ─── Phone frame ────────────────────────────────────────────────── */
+.phone {
+  position: relative; width: 100%; height: 100vh; height: 100dvh;
+  display: flex; flex-direction: column; overflow: hidden;
 }
-
-html, body {
-  margin: 0;
-  padding: 0;
-  background: var(--base);
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  height: 100%;
-  overflow: hidden;
-}
-
-#root {
-  height: 100%;
-}
-
-button {
-  font-family: inherit;
-  -webkit-appearance: none;
-}
-
-input, textarea {
-  font-family: inherit;
-}
-
-/* Aurora orb drift animations */
-@keyframes auroraFloat1 {
-  0%, 100% { transform: translate(0, 0) scale(1); }
-  33% { transform: translate(8%, 12%) scale(1.1); }
-  66% { transform: translate(-5%, 8%) scale(0.95); }
-}
-
-@keyframes auroraFloat2 {
-  0%, 100% { transform: translate(0, 0) scale(1); }
-  40% { transform: translate(-10%, -8%) scale(1.08); }
-  70% { transform: translate(5%, 15%) scale(0.92); }
-}
-
-@keyframes auroraFloat3 {
-  0%, 100% { transform: translate(0, 0) scale(1); }
-  50% { transform: translate(12%, -10%) scale(1.12); }
-}
-
-/* Message pop-in */
-@keyframes popIn {
-  from { opacity: 0; transform: scale(0.85) translateY(6px); }
-  to   { opacity: 1; transform: scale(1) translateY(0); }
-}
-
-/* Slide-in for list items */
-@keyframes slideIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-
-/* Scan bar animation */
-@keyframes scanBar {
-  from { width: 0%; }
-  to   { width: 100%; }
-}
-
-/* Confidence bar */
-@keyframes confBar {
-  from { width: 0%; }
-}
-
-/* Pulse for scan lock icon */
-@keyframes pulse {
-  0%, 100% { transform: scale(1); opacity: 1; }
-  50% { transform: scale(1.15); opacity: 0.75; }
-}
-
-/* Smooth scrollbar */
-::-webkit-scrollbar { width: 4px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
-
-/* Placeholder styling */
-::placeholder { color: var(--text-muted); opacity: 0.7; }
-
-@media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
-    animation-duration: 0.01ms !important;
-    transition-duration: 0.01ms !important;
+@media (min-width: 640px) {
+  .app-bg { padding: 24px; }
+  .phone {
+    width: 392px; height: 824px; border-radius: 40px;
+    box-shadow: 0 50px 90px -30px rgba(0,0,0,.65), 0 0 0 1px var(--line), inset 0 0 0 1px rgba(255,255,255,.04);
   }
+}
+
+/* ─── Typography helpers ─────────────────────────────────────────── */
+.text-main { color: var(--text); }
+.dim        { color: var(--dim); }
+.accent-t   { color: var(--accent); }
+
+/* ─── Glass surfaces ─────────────────────────────────────────────── */
+.glass  { background: var(--glass);  backdrop-filter: blur(18px) saturate(150%); -webkit-backdrop-filter: blur(18px) saturate(150%);  border: 1px solid var(--line); }
+.glass2 { background: var(--glass2); backdrop-filter: blur(26px) saturate(160%); -webkit-backdrop-filter: blur(26px) saturate(160%); border: 1px solid var(--line); }
+.glass-h { background: var(--glass); backdrop-filter: blur(22px) saturate(150%); -webkit-backdrop-filter: blur(22px) saturate(150%); border-bottom: 1px solid var(--line); position: sticky; top: 0; z-index: 10; }
+
+/* ─── Scrollbars ─────────────────────────────────────────────────── */
+.no-bar::-webkit-scrollbar { display: none; }
+.no-bar { scrollbar-width: none; }
+
+/* ─── Thread list row ────────────────────────────────────────────── */
+.row { border-radius: 18px; transition: transform .15s ease, background .2s ease; }
+.row:active { transform: scale(.985); }
+
+/* ─── Folder pills ───────────────────────────────────────────────── */
+.pill { display: flex; align-items: center; gap: 6px; padding: 7px 13px; border-radius: 999px; font-size: 12px; font-weight: 600; white-space: nowrap; color: var(--dim); background: var(--glass); border: 1px solid var(--line); transition: .2s; }
+.pill-on { color: #fff; background: linear-gradient(135deg, var(--accent), var(--accent2)); border-color: transparent; box-shadow: 0 8px 20px -8px var(--accent); }
+.rev-dot { margin-left: 2px; background: #f43f5e; color: #fff; font-size: 10px; padding: 0 6px; border-radius: 999px; }
+
+/* ─── Chat bubbles ───────────────────────────────────────────────── */
+.bubble-out { background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #fff; box-shadow: 0 10px 24px -10px var(--accent); }
+.bubble-in  { background: var(--in); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border: 1px solid var(--line); }
+.out-time   { color: rgba(255,255,255,.75); }
+
+/* ─── Send button ────────────────────────────────────────────────── */
+.send-btn { background: linear-gradient(135deg, var(--accent), var(--accent2)); box-shadow: 0 8px 20px -8px var(--accent); transition: .18s; }
+.send-btn:active { transform: scale(.92); }
+
+/* ─── Text inputs ────────────────────────────────────────────────── */
+.inp { background: var(--glass); border: 1px solid var(--line); color: var(--text); border-radius: 14px; outline: none; }
+.inp::placeholder { color: var(--dim); }
+
+/* ─── Quick-test chips ───────────────────────────────────────────── */
+.chip { background: var(--glass); border: 1px solid var(--line); color: var(--dim); transition: .18s; }
+.chip:hover { color: var(--text); }
+
+/* ─── Primary accent button ──────────────────────────────────────── */
+.btn-accent { background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #fff; border-radius: 16px; box-shadow: 0 14px 30px -10px var(--accent); transition: .18s; }
+.btn-accent:active { transform: scale(.98); }
+
+/* ─── Review actions ─────────────────────────────────────────────── */
+.act { flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 9px 0; border-radius: 13px; font-size: 13px; font-weight: 600; }
+.act-ok { background: rgba(16,185,129,.16); color: #34d399; border: 1px solid rgba(16,185,129,.3); }
+.act-no { background: rgba(244,63,94,.16);  color: #fb7185;  border: 1px solid rgba(244,63,94,.3); }
+
+/* ─── Toggle switch ──────────────────────────────────────────────── */
+.sw { width: 44px; height: 26px; border-radius: 999px; position: relative; background: var(--line); transition: .25s; flex-shrink: 0; cursor: pointer; }
+.sw.on { background: linear-gradient(135deg, var(--accent), var(--accent2)); }
+.sw .knob { position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 999px; background: #fff; transition: .25s; box-shadow: 0 1px 4px rgba(0,0,0,.35); }
+.sw.on .knob { left: 21px; }
+
+/* ─── Segmented control ──────────────────────────────────────────── */
+.seg { display: flex; gap: 4px; padding: 4px; border-radius: 14px; background: var(--glass); border: 1px solid var(--line); }
+.seg button { flex: 1; font-size: 12px; font-weight: 600; padding: 7px 0; border-radius: 10px; color: var(--dim); transition: .18s; }
+.seg button.on { background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #fff; box-shadow: 0 6px 16px -6px var(--accent); }
+
+/* ─── Category badge classes ─────────────────────────────────────── */
+.cat-clean    { background: rgba(16,185,129,.16); color: #34d399; border: 1px solid rgba(16,185,129,.3); }
+.cat-abusive  { background: rgba(244,63,94,.16);  color: #fb7185; border: 1px solid rgba(244,63,94,.3);  }
+.cat-spam     { background: rgba(245,158,11,.16); color: #fbbf24; border: 1px solid rgba(245,158,11,.3); }
+.cat-business { background: rgba(14,165,233,.16); color: #38bdf8; border: 1px solid rgba(14,165,233,.3); }
+.cat-promo    { background: rgba(139,92,246,.16); color: #a78bfa; border: 1px solid rgba(139,92,246,.3); }
+.cat-ic-rose    { color: #fb7185; }
+.cat-ic-sky     { color: #38bdf8; }
+.cat-ic-amber   { color: #fbbf24; }
+.cat-ic-emerald { color: #34d399; }
+
+/* ─── On-device chip ─────────────────────────────────────────────── */
+.onchip { display: inline-flex; align-items: center; gap: 4px; font-size: 10px; font-weight: 600; padding: 3px 8px; border-radius: 999px; background: var(--glass); border: 1px solid var(--line); color: var(--dim); }
+
+/* ─── Confidence bar ─────────────────────────────────────────────── */
+.bar { height: 7px; border-radius: 999px; background: var(--glass); overflow: hidden; border: 1px solid var(--line); }
+.bar-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2)); transition: width .6s cubic-bezier(.2,.8,.2,1); }
+
+/* ─── Scan animation ─────────────────────────────────────────────── */
+.scan-ring { background: var(--glass); border: 1px solid var(--line); animation: pulse 1s ease-in-out infinite; }
+@keyframes pulse { 0%,100% { box-shadow: 0 0 0 0 rgba(124,131,255,.0); } 50% { box-shadow: 0 0 26px 2px var(--accent); } }
+.scan-bar { width: 160px; height: 5px; border-radius: 999px; background: linear-gradient(90deg,transparent,var(--accent),transparent); background-size: 200% 100%; animation: shimmer 1s linear infinite; }
+@keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+/* ─── Bottom nav ─────────────────────────────────────────────────── */
+.nav-wrap { position: absolute; left: 0; right: 0; bottom: 0; padding: 12px 16px calc(12px + env(safe-area-inset-bottom)); display: flex; justify-content: center; z-index: 20; }
+.nav { background: var(--glass2); backdrop-filter: blur(28px) saturate(170%); -webkit-backdrop-filter: blur(28px) saturate(170%); border: 1px solid var(--line); border-radius: 24px; padding: 6px; box-shadow: 0 20px 40px -16px rgba(0,0,0,.5); gap: 4px; display: flex; }
+.nav-item { display: flex; flex-direction: column; align-items: center; gap: 2px; color: var(--dim); padding: 8px 22px; border-radius: 18px; transition: .2s; }
+.nav-on { color: #fff; background: linear-gradient(135deg, var(--accent), var(--accent2)); box-shadow: 0 8px 20px -8px var(--accent); }
+
+/* ─── Theme bottom sheet ─────────────────────────────────────────── */
+.sheet-bg { position: absolute; inset: 0; background: rgba(0,0,0,.35); backdrop-filter: blur(2px); }
+.th-card { display: flex; align-items: center; gap: 10px; padding: 12px; border-radius: 16px; background: var(--glass); border: 1px solid var(--line); transition: .18s; }
+.th-on { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+.th-swatch { width: 26px; height: 26px; border-radius: 9px; box-shadow: 0 4px 12px -4px rgba(0,0,0,.5); flex-shrink: 0; }
+
+/* ─── Animations ─────────────────────────────────────────────────── */
+.pop { animation: popIn .36s cubic-bezier(.2,.85,.25,1.15) both; }
+@keyframes popIn { 0% { transform: scale(.85) translateY(8px); opacity: 0; } 60% { transform: scale(1.02); } 100% { transform: scale(1) translateY(0); opacity: 1; } }
+.slide-up { animation: slideUp .3s ease both; }
+@keyframes slideUp { from { transform: translateY(16px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+.screen { animation: fade .28s ease both; }
+@keyframes fade { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+/* ─── Reduced motion ─────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important; }
 }

@@ -1,147 +1,115 @@
-import { useEffect } from 'react';
+import { useState } from 'react';
+import { X, Palette, Check, Lock } from 'lucide-react';
 import { useSiftStore } from './store';
-import { THEMES, applyTheme } from './theme';
-import { AuroraBackground } from './components/ui/AuroraBackground';
+import { THEMES } from './theme';
 import { BottomNav } from './components/ui/BottomNav';
-import { Glass } from './components/ui/Glass';
 import { ChatList } from './screens/ChatList';
 import { Conversation } from './screens/Conversation';
 import { Settings } from './screens/Settings';
 import { Simulator } from './screens/Simulator';
+import type { ThemeName } from './types';
 
 export default function App() {
-  const activeScreen = useSiftStore(s => s.activeScreen);
-  const theme = useSiftStore(s => s.settings.theme);
-  const pendingAsk = useSiftStore(s => s.pendingAsk);
+  const activeScreen   = useSiftStore(s => s.activeScreen);
+  const theme          = useSiftStore(s => s.settings.theme);
+  const updateSettings = useSiftStore(s => s.updateSettings);
+  const pendingAsk     = useSiftStore(s => s.pendingAsk);
   const resolvePendingAsk = useSiftStore(s => s.resolvePendingAsk);
+  const banner         = useSiftStore(s => s.banner);
+  const setBanner      = useSiftStore(s => s.setBanner);
 
-  // Apply theme to CSS variables whenever theme changes
-  useEffect(() => {
-    applyTheme(THEMES[theme]);
-  }, [theme]);
+  const [showThemes, setShowThemes] = useState(false);
 
-  const showNav = activeScreen !== 'conversation';
+  const themeVars = THEMES[theme].vars;
+  const isConversation = activeScreen === 'conversation';
 
   return (
-    // Full-page outer container — centers phone frame on desktop
     <div
-      style={{
-        width: '100%',
-        height: '100%',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        background: THEMES[theme].isLight ? '#d0d4e8' : '#050810',
-      }}
+      className="app-bg"
+      style={themeVars as React.CSSProperties}
     >
-      {/* Phone frame */}
-      <div
-        style={{
-          position: 'relative',
-          width: '100%',
-          maxWidth: 430,
-          height: '100%',
-          maxHeight: '100dvh',
-          overflow: 'hidden',
-        }}
-      >
-        {/* Animated aurora background */}
-        <AuroraBackground />
+      <div className="phone">
 
-        {/* Screen content */}
-        <div
-          style={{
-            position: 'relative',
-            zIndex: 1,
-            height: '100%',
-            display: 'flex',
-            flexDirection: 'column',
-            paddingBottom: showNav ? 80 : 0,
-            overflow: 'hidden',
-          }}
-        >
-          {activeScreen === 'chats' && <ChatList />}
+        {/* Banner */}
+        {banner && (
+          <div
+            className="absolute top-3 left-3 right-3 z-30 glass2 text-main text-xs px-3 py-2.5 flex items-center justify-between slide-up"
+            style={{ borderRadius: 14 }}
+          >
+            <span>{banner}</span>
+            <button onClick={() => setBanner(null)}><X size={14} /></button>
+          </div>
+        )}
+
+        {/* Screen */}
+        <div key={activeScreen} className="flex-1 flex flex-col overflow-hidden screen">
+          {activeScreen === 'chats'       && <ChatList    onShowThemes={() => setShowThemes(true)} />}
           {activeScreen === 'conversation' && <Conversation />}
-          {activeScreen === 'settings' && <Settings />}
-          {activeScreen === 'simulator' && <Simulator />}
+          {activeScreen === 'settings'    && <Settings    onShowThemes={() => setShowThemes(true)} />}
+          {activeScreen === 'simulator'   && <Simulator />}
         </div>
 
         {/* Bottom nav */}
-        {showNav && <BottomNav />}
+        {!isConversation && <BottomNav />}
+
+        {/* Theme bottom sheet */}
+        {showThemes && (
+          <div
+            className="absolute inset-0 z-40 flex items-end"
+            onClick={() => setShowThemes(false)}
+          >
+            <div className="sheet-bg" />
+            <div
+              className="glass2 relative w-full p-4 slide-up"
+              style={{ borderTopLeftRadius: 26, borderTopRightRadius: 26 }}
+              onClick={e => e.stopPropagation()}
+            >
+              <div className="flex items-center gap-2 font-semibold text-main mb-3">
+                <Palette size={16} /> Theme
+              </div>
+              <div className="grid grid-cols-2 gap-2.5">
+                {(Object.entries(THEMES) as [ThemeName, typeof THEMES[ThemeName]][]).map(([k, t]) => (
+                  <button
+                    key={k}
+                    onClick={() => { updateSettings({ theme: k }); setShowThemes(false); }}
+                    className={`th-card ${theme === k ? 'th-on' : ''}`}
+                  >
+                    <span className="th-swatch" style={{ background: t.swatch }} />
+                    <span className="text-sm font-medium text-main">{t.label}</span>
+                    {theme === k && <Check size={14} className="accent-t" style={{ marginLeft: 'auto' }} />}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* askPerMessage modal */}
         {pendingAsk && (
           <div
-            style={{
-              position: 'absolute',
-              inset: 0,
-              zIndex: 200,
-              background: 'rgba(0,0,0,0.6)',
-              backdropFilter: 'blur(8px)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              padding: 24,
-            }}
+            className="absolute inset-0 z-50 flex items-center justify-center p-6"
+            style={{ background: 'rgba(0,0,0,.6)', backdropFilter: 'blur(8px)' }}
           >
-            <Glass strong style={{ padding: 24, maxWidth: 340, width: '100%', animation: 'popIn 0.3s cubic-bezier(0.34,1.56,0.64,1) both' }}>
-              <div style={{ fontSize: 28, textAlign: 'center', marginBottom: 12 }}>🛡️</div>
-              <h3 style={{ color: 'var(--text)', fontSize: 16, fontWeight: 700, margin: '0 0 8px', textAlign: 'center' }}>
-                Message Filtered
-              </h3>
-              <p style={{ color: 'var(--text-muted)', fontSize: 13, textAlign: 'center', margin: '0 0 16px', lineHeight: 1.5 }}>
-                A message was blocked by your civility filter. Do you want to view it?
+            <div className="glass2 w-full p-6 pop" style={{ borderRadius: 24, maxWidth: 340 }}>
+              <div className="grid place-items-center mb-4"
+                style={{ width: 52, height: 52, borderRadius: 16, background: 'linear-gradient(135deg,var(--accent),var(--accent2))', boxShadow: '0 8px 24px -8px var(--accent)', margin: '0 auto 16px' }}>
+                <Lock size={22} color="#fff" />
+              </div>
+              <h3 className="font-bold text-main text-center text-base mb-2">Message Filtered</h3>
+              <p className="text-sm dim text-center mb-4 leading-relaxed">
+                Your civility filter held a message. Do you want to read it?
               </p>
               <div
-                style={{
-                  background: 'var(--surface)',
-                  border: '1px solid var(--border)',
-                  borderRadius: 10,
-                  padding: '10px 12px',
-                  marginBottom: 16,
-                  filter: 'blur(4px)',
-                  userSelect: 'none',
-                  fontSize: 13,
-                  color: 'var(--text)',
-                }}
+                className="text-sm text-main p-3 mb-4 blur-sm select-none"
+                style={{ background: 'var(--in)', borderRadius: 12 }}
               >
                 {pendingAsk.text}
               </div>
-              <div style={{ display: 'flex', gap: 10 }}>
-                <button
-                  onClick={() => resolvePendingAsk(true)}
-                  style={{
-                    flex: 1,
-                    padding: '10px',
-                    borderRadius: 10,
-                    border: '1px solid rgba(16,185,129,0.4)',
-                    background: 'rgba(16,185,129,0.15)',
-                    color: '#34d399',
-                    fontWeight: 600,
-                    fontSize: 14,
-                    cursor: 'pointer',
-                  }}
-                >
-                  View it
-                </button>
-                <button
-                  onClick={() => resolvePendingAsk(false)}
-                  style={{
-                    flex: 1,
-                    padding: '10px',
-                    borderRadius: 10,
-                    border: '1px solid rgba(244,63,94,0.4)',
-                    background: 'rgba(244,63,94,0.15)',
-                    color: '#fb7185',
-                    fontWeight: 600,
-                    fontSize: 14,
-                    cursor: 'pointer',
-                  }}
-                >
-                  Discard
-                </button>
+              <div className="flex gap-2">
+                <button onClick={() => resolvePendingAsk(true)}  className="act act-ok flex-1">View it</button>
+                <button onClick={() => resolvePendingAsk(false)} className="act act-no flex-1">Discard</button>
               </div>
-            </Glass>
+            </div>
           </div>
         )}
       </div>

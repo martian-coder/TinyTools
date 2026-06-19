@@ -14,9 +14,8 @@ export interface ModerationVerdict {
 export interface Contact {
   id: string;
   name: string;
-  avatar?: string;
-  grad: string;
   trusted: boolean;
+  grad: string;
 }
 
 export interface Message {
@@ -47,7 +46,7 @@ export interface UserSettings {
 
 export interface RouteResult {
   folder: Folder;
-  status: Message['status'];
-  autoReply?: string;
+  status: 'delivered' | 'held' | 'dropped';
+  autoReply?: boolean;
   ask?: boolean;
 }

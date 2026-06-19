@@ -1,21 +1,17 @@
 import { useState, useRef, useEffect } from 'react';
+import { ArrowLeft, ShieldCheck, Send } from 'lucide-react';
 import { useSiftStore, selectConversation } from '../store';
-import { Glass } from '../components/ui/Glass';
 import { Avatar } from '../components/ui/Avatar';
-import { CategoryBadge } from '../components/ui/Badge';
 
 export function Conversation() {
   const activeContactId = useSiftStore(s => s.activeContactId);
-  const contacts = useSiftStore(s => s.contacts);
-  const setScreen = useSiftStore(s => s.setScreen);
-  const sendMessage = useSiftStore(s => s.sendMessage);
-  const messages = useSiftStore(s =>
-    activeContactId ? selectConversation(s, activeContactId) : []
-  );
+  const contacts        = useSiftStore(s => s.contacts);
+  const setScreen       = useSiftStore(s => s.setScreen);
+  const sendMessage     = useSiftStore(s => s.sendMessage);
+  const messages        = useSiftStore(s => activeContactId ? selectConversation(s, activeContactId) : []);
 
-  const [input, setInput] = useState('');
+  const [draft, setDraft] = useState('');
   const bottomRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
 
   const contact = contacts.find(c => c.id === activeContactId);
 
@@ -25,168 +21,67 @@ export function Conversation() {
 
   if (!contact) return null;
 
-  const handleSend = () => {
-    const text = input.trim();
-    if (!text || !activeContactId) return;
-    sendMessage(activeContactId, text);
-    setInput('');
+  const sendOut = () => {
+    if (!draft.trim() || !activeContactId) return;
+    sendMessage(activeContactId, draft.trim());
+    setDraft('');
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+    <>
       {/* Header */}
-      <Glass
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 12,
-          padding: '12px 16px',
-          paddingTop: 'max(12px, env(safe-area-inset-top))',
-          borderRadius: 0,
-          borderLeft: 'none',
-          borderRight: 'none',
-          borderTop: 'none',
-          flexShrink: 0,
-        }}
-      >
-        <button
-          onClick={() => setScreen('chats')}
-          style={{
-            background: 'none',
-            border: 'none',
-            color: 'var(--accent)',
-            fontSize: 22,
-            cursor: 'pointer',
-            padding: '0 4px',
-            lineHeight: 1,
-          }}
-        >
-          ‹
-        </button>
-        <Avatar name={contact.name} grad={contact.grad} size={38} trusted={contact.trusted} />
-        <div style={{ flex: 1 }}>
-          <div style={{ color: 'var(--text)', fontWeight: 600, fontSize: 16 }}>{contact.name}</div>
+      <div className="glass-h px-3 py-3 flex items-center gap-3">
+        <button onClick={() => setScreen('chats')} className="text-main"><ArrowLeft size={20} /></button>
+        <Avatar name={contact.name} grad={contact.grad} size={36} trusted={contact.trusted} />
+        <div className="flex-1">
+          <div className="font-semibold text-main leading-tight">{contact.name}</div>
           {contact.trusted && (
-            <div style={{ color: '#34d399', fontSize: 11, fontWeight: 500 }}>✓ Trusted contact</div>
+            <div className="text-[11px] flex items-center gap-1 accent-t">
+              <ShieldCheck size={11} /> Trusted · filters off
+            </div>
           )}
         </div>
-      </Glass>
+      </div>
 
       {/* Messages */}
-      <div style={{ flex: 1, overflowY: 'auto', padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: 8 }}>
-        {messages.map(msg => {
-          const isOut = msg.dir === 'out';
-          return (
+      <div className="flex-1 overflow-y-auto px-3 py-3 space-y-2 pb-24 no-bar">
+        {messages.map(m => (
+          <div key={m.id} className={`flex ${m.dir === 'out' ? 'justify-end' : 'justify-start'}`}>
             <div
-              key={msg.id}
+              className={`max-w-[78%] px-3.5 py-2 text-sm pop ${m.dir === 'out' ? 'bubble-out' : 'bubble-in text-main'}`}
               style={{
-                display: 'flex',
-                justifyContent: isOut ? 'flex-end' : 'flex-start',
-                animation: 'popIn 0.25s cubic-bezier(0.34,1.56,0.64,1) both',
+                borderRadius: 18,
+                borderBottomRightRadius: m.dir === 'out' ? 6 : 18,
+                borderBottomLeftRadius:  m.dir === 'out' ? 18 : 6,
               }}
             >
-              <div style={{ maxWidth: '78%', display: 'flex', flexDirection: 'column', gap: 4, alignItems: isOut ? 'flex-end' : 'flex-start' }}>
-                <div
-                  style={{
-                    background: isOut ? 'var(--bubble-out)' : 'var(--bubble)',
-                    backdropFilter: 'blur(10px)',
-                    border: '1px solid var(--border)',
-                    borderRadius: isOut ? '18px 18px 4px 18px' : '18px 18px 18px 4px',
-                    padding: '10px 14px',
-                    color: 'var(--text)',
-                    fontSize: 14,
-                    lineHeight: 1.45,
-                  }}
-                >
-                  {msg.text}
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <span style={{ color: 'var(--text-muted)', fontSize: 10 }}>{msg.time}</span>
-                  {isOut && <span style={{ color: 'var(--text-muted)', fontSize: 10 }}>✓✓</span>}
-                  {msg.verdict && msg.verdict.category !== 'clean' && !isOut && (
-                    <CategoryBadge category={msg.verdict.category} size="sm" />
-                  )}
-                  {msg.status === 'approved' && (
-                    <span style={{ color: '#34d399', fontSize: 10 }}>✓ Approved</span>
-                  )}
-                </div>
-                {msg.autoReply && !isOut && (
-                  <div
-                    style={{
-                      fontSize: 11,
-                      color: 'var(--accent)',
-                      background: 'rgba(124,131,255,0.1)',
-                      border: '1px solid rgba(124,131,255,0.2)',
-                      borderRadius: 8,
-                      padding: '4px 8px',
-                    }}
-                  >
-                    🤖 Auto-reply sent to sender
-                  </div>
-                )}
-              </div>
+              {m.text}
+              <div className={`text-[10px] mt-0.5 ${m.dir === 'out' ? 'out-time' : 'dim'}`}>{m.time}</div>
             </div>
-          );
-        })}
+          </div>
+        ))}
         <div ref={bottomRef} />
       </div>
 
       {/* Input */}
-      <div
-        style={{
-          padding: '10px 14px',
-          paddingBottom: 'max(10px, env(safe-area-inset-bottom))',
-          borderTop: '1px solid var(--border)',
-          background: 'var(--nav-bg)',
-          backdropFilter: 'blur(20px)',
-          flexShrink: 0,
-          display: 'flex',
-          gap: 8,
-          alignItems: 'center',
-        }}
-      >
-        <input
-          ref={inputRef}
-          value={input}
-          onChange={e => setInput(e.target.value)}
-          onKeyDown={e => e.key === 'Enter' && handleSend()}
-          placeholder="Type a message…"
-          style={{
-            flex: 1,
-            background: 'var(--surface)',
-            border: '1px solid var(--border)',
-            borderRadius: 22,
-            padding: '10px 16px',
-            color: 'var(--text)',
-            fontSize: 14,
-            outline: 'none',
-          }}
-        />
-        <button
-          onClick={handleSend}
-          disabled={!input.trim()}
-          style={{
-            width: 42,
-            height: 42,
-            borderRadius: '50%',
-            border: 'none',
-            background: input.trim()
-              ? 'linear-gradient(135deg, var(--accent), var(--accent2))'
-              : 'var(--surface-strong)',
-            color: '#fff',
-            fontSize: 18,
-            cursor: input.trim() ? 'pointer' : 'default',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            transition: 'all 0.15s ease',
-            flexShrink: 0,
-            boxShadow: input.trim() ? '0 0 16px var(--accent)44' : 'none',
-          }}
-        >
-          ↑
-        </button>
+      <div className="px-3 pb-3 pt-1">
+        <div className="glass2 flex items-center gap-2 p-1.5" style={{ borderRadius: 999 }}>
+          <input
+            value={draft}
+            onChange={e => setDraft(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && sendOut()}
+            placeholder="Message"
+            className="flex-1 bg-transparent px-3 text-sm text-main outline-none placeholder:dim"
+          />
+          <button
+            onClick={sendOut}
+            className="send-btn grid place-items-center"
+            style={{ width: 38, height: 38, borderRadius: 999 }}
+          >
+            <Send size={16} color="#fff" />
+          </button>
+        </div>
       </div>
-    </div>
+    </>
   );
 }
