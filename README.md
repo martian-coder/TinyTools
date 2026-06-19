@@ -2,27 +2,79 @@
   <img src="./banner.png" alt="TinyTools Banner" width="100%">
 </p>
 
-# 🛠️ TinyTools
+<p align="center">
+  <a href="https://martian-coder.github.io/TinyTools/sift-home/"><img src="https://img.shields.io/badge/Sift-Live%20Demo-7c83ff?style=for-the-badge&logo=pwa&logoColor=white" alt="Sift Live Demo"></a>
+  <a href="https://martian-coder.github.io/TinyTools/sift/"><img src="https://img.shields.io/badge/Sift%20PWA-Install-22d3ee?style=for-the-badge&logo=googlechrome&logoColor=white" alt="Install Sift PWA"></a>
+  <img src="https://img.shields.io/github/deployments/martian-coder/TinyTools/github-pages?style=for-the-badge&label=Pages&color=0b1020" alt="GitHub Pages">
+</p>
 
-> A collection of stupid-delightful, zero-dependency tiny tools — built with love, made for an audience of one.
+# TinyTools
+
+> A collection of stupid-delightful tiny tools — built with love, made for an audience of one.
 
 Inspired by [Scott Hanselman's TinyToolTown](https://tinytooltown.com) — _"Vibe coding is the GeoCities of the AI era."_
 
 ---
 
-## 🏘️ The Tools
+## The Tools
 
-| Tool | What it does | Language | Platform |
-|------|-------------|----------|---------|
-| [**CopyToLLM**](./CopyToLLM/) | Screen capture → clipboard → paste into any AI chat in one hotkey | C# / .NET 9 | Windows |
-| [**WingetDiff**](./WingetDiff/) | Diff two `winget export` JSON files with a gorgeous terminal UI | C# / .NET 8 | Windows |
+### Featured
+
+<table>
+<tr>
+<td width="60%">
+
+**[Sift — AI Message Filter](https://martian-coder.github.io/TinyTools/sift-home/)**
+
+A WhatsApp-style PWA where *you* control an AI filter that screens every incoming message before it reaches you. Spam, abuse, and noise stay out. Signal gets through.
+
+- On-device AI via Gemini Nano (Chrome built-in) — message plaintext never leaves your device
+- Rules engine fallback for instant offline classification
+- 4 smart folders: Primary, Business, Promos, Review
+- Civility filter with blur-to-reveal for borderline messages
+- Installable PWA — works offline, feels native
+
+**[→ See why Sift beats WhatsApp, iMessage & Telegram](https://martian-coder.github.io/TinyTools/sift-home/)** &nbsp;·&nbsp; **[→ Install the app](https://martian-coder.github.io/TinyTools/sift/)**
+
+</td>
+<td width="40%" align="center">
+
+```
+┌─────────────────────┐
+│  Sift               │
+│  ─────────────────  │
+│  Primary    (3)  ▸  │
+│  Business   (1)  ▸  │
+│  Promos     (0)  ▸  │
+│  Review     (2)  ▸  │
+│                     │
+│  ✓ clean            │
+│  ⚑ business         │
+│  ░░░░░░░ held       │
+│  ✗ blocked          │
+└─────────────────────┘
+```
+
+</td>
+</tr>
+</table>
+
+---
+
+### All Tools
+
+| Tool | What it does | Stack | Platform |
+|------|-------------|-------|---------|
+| [**Sift**](https://martian-coder.github.io/TinyTools/sift-home/) | AI-filtered messaging PWA — on-device Gemini Nano screens every message before it reaches you | React 19 + Vite + PWA | Any browser |
+| [**MeetingCopilot**](./MeetingCopilot/) | On-screen AI copilot — listens to meeting audio, transcribes with local Whisper, streams reply suggestions with Claude in a transparent overlay | Node.js / Electron | Windows / macOS / Linux / Android |
+| [**Olus**](./Olus/) | A featherweight browser — real Chromium via WebView2, never-lose-your-tabs sessions, Tor/proxy region routing, switchable search engine | Rust / Tauri 2 | Windows |
+| [**MarkdownZipped**](./MarkdownZipped/) | Compress LLM prompts through a 4-stage pipeline (minify → rewrite → dedup → cache) and pack them into a `.mdz` file | Python 3 | Windows / macOS / Linux |
+| [**CmdLog**](./CmdLog/) | Interactive history browser — search, categorize, bookmark and re-run commands with full context (directory, branch, timing, exit code) | Python 3 | Windows / macOS / Linux |
+| [**SmartRecover**](./SmartRecover/) | When your machine crashes — pick up where you left off. Snapshots tmux / browser / clipboard on a schedule, restores from any past timeline state | Python 3 | Linux |
 | [**JumpDir**](./JumpDir/) | Interactive fuzzy directory navigator for your terminal | Python 3 | Windows / macOS / Linux |
 | [**CodeBlaster**](./CodeBlaster/) | Arcade game — shoot falling code asteroids with the correct keyword | HTML / JS | Any browser |
-| [**SmartRecover**](./SmartRecover/) | When your machine crashes — pick up where you left off. Snapshots tmux / browser / clipboard on a schedule, restores from any past timeline state | Python 3 | Linux |
-| [**CmdLog**](./CmdLog/) | Interactive history browser — search, categorize, bookmark and re-run commands with full context (directory, branch, timing, exit code) | Python 3 | Windows / macOS / Linux |
-| [**MarkdownZipped**](./MarkdownZipped/) | Compress LLM prompts through a 4-stage pipeline (minify → rewrite → dedup → cache) and pack them into a `.mdz` file | Python 3 | Windows / macOS / Linux |
-| [**Olus**](./Olus/) | A featherweight browser — real Chromium via WebView2, never-lose-your-tabs sessions, Tor/proxy region routing, switchable search engine | Rust / Tauri 2 | Windows |
-| [**MeetingCopilot**](./MeetingCopilot/) | On-screen AI copilot — listens to meeting audio, transcribes with local Whisper (any language → English), streams reply suggestions with Claude in a transparent overlay | Node.js / Electron | Windows / macOS / Linux / Android |
+| [**CopyToLLM**](./CopyToLLM/) | Screen capture → clipboard → paste into any AI chat in one hotkey | C# / .NET 9 | Windows |
+| [**WingetDiff**](./WingetDiff/) | Diff two `winget export` JSON files with a gorgeous terminal UI | C# / .NET 8 | Windows |
 
 ---
 
