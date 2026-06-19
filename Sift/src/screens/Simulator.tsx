@@ -1,8 +1,7 @@
 import { useState } from 'react';
 import { ShieldCheck, Sparkles, Lock, ChevronRight, Check, Clock, Ban } from 'lucide-react';
 import { useSiftStore } from '../store';
-import { moderate } from '../moderation/rules';
-import { routeVerdict } from '../moderation/route';
+import { getModerator, routeVerdict, ENGINE_LABELS } from '../moderation';
 import { Switch } from '../components/ui/Switch';
 import { CategoryBadge } from '../components/ui/Badge';
 import type { ModerationVerdict, RouteResult, Folder } from '../types';
@@ -60,31 +59,38 @@ export function Simulator() {
 
   const cById = (id: string) => contacts.find(c => c.id === id);
 
-  const receive = () => {
-    if (!tText.trim()) return;
+  const receive = async () => {
+    if (!tText.trim() || tScan) return;
     const txt = tText.trim();
     setTScan(true); setTResult(null);
-    setTimeout(() => {
-      const v = moderate(txt, settings);
-      const r = routeVerdict(v, settings, tTrusted);
-      const cid = (tName.trim().toLowerCase().replace(/[^a-z0-9]/g, '') || 'newnumber');
 
-      useSiftStore.setState(s => {
-        const contacts = cById(cid)
-          ? s.contacts
-          : [...s.contacts, {
-              id: cid,
-              name: tName.trim() || 'New number',
-              trusted: tTrusted,
-              grad: `linear-gradient(135deg,#94a3b8,#64748b)`,
-            }];
-        return { contacts };
-      });
+    // Classification runs entirely on-device (Moderator.classify). The minimum
+    // delay keeps the "Checking on your device…" scan animation legible even
+    // when the verdict comes back instantly.
+    const minDelay = new Promise<void>(res => setTimeout(res, 750));
+    const classify = getModerator().then(m =>
+      m.classify(txt, { sensitivity: settings.civility.sensitivity })
+    );
+    const [v] = await Promise.all([classify, minDelay]);
 
-      receiveMsg(cid, txt, r, v);
-      setTResult({ v, r, text: txt }); setTScan(false);
-      if (r.ask) setBanner('A message was filtered — review it.');
-    }, 750);
+    const r = routeVerdict(v, settings, tTrusted);
+    const cid = (tName.trim().toLowerCase().replace(/[^a-z0-9]/g, '') || 'newnumber');
+
+    useSiftStore.setState(s => {
+      const contacts = cById(cid)
+        ? s.contacts
+        : [...s.contacts, {
+            id: cid,
+            name: tName.trim() || 'New number',
+            trusted: tTrusted,
+            grad: `linear-gradient(135deg,#94a3b8,#64748b)`,
+          }];
+      return { contacts };
+    });
+
+    receiveMsg(cid, txt, r, v);
+    setTResult({ v, r, text: txt }); setTScan(false);
+    if (r.ask) setBanner('A message was filtered — review it.');
   };
 
   const st = tResult ? senderStatus(tResult.r, settings.civility.sensitivity) : null;
@@ -169,7 +175,7 @@ export function Simulator() {
               {/* Badge + on-device chip */}
               <div className="flex items-center justify-between mb-3">
                 <CategoryBadge category={v.category} />
-                <span className="onchip"><Lock size={10} /> on-device</span>
+                <span className="onchip"><Lock size={10} /> {ENGINE_LABELS[v.engine]}</span>
               </div>
 
               {/* Confidence bar */}
@@ -177,12 +183,14 @@ export function Simulator() {
                 <div className="bar-fill" style={{ width: `${Math.round((v.confidence || .9) * 100)}%` }} />
               </div>
 
-              {/* Flagged terms */}
-              {v.flaggedTerms && v.flaggedTerms.length > 0 && (
+              {/* Flagged terms (rules) or model reason */}
+              {v.flaggedTerms && v.flaggedTerms.length > 0 ? (
                 <div className="text-xs dim mb-3">
                   Triggered by: {v.flaggedTerms.map(w => `"${w}"`).join(', ')}
                 </div>
-              )}
+              ) : v.reason ? (
+                <div className="text-xs dim mb-3">{v.reason}</div>
+              ) : null}
 
               {/* Recipient's view */}
               <div className="text-[11px] uppercase tracking-wide dim mb-1">On your phone (recipient)</div>

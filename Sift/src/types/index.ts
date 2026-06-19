@@ -3,12 +3,14 @@ export type Category = 'clean' | 'abusive' | 'spam' | 'business' | 'promo';
 export type BlockAction = 'review' | 'silentDrop' | 'askPerMessage';
 export type ThemeName = 'aurora' | 'sunset' | 'noir' | 'daylight';
 
+export type ModerationEngine = 'rules' | 'apple-fm' | 'gemini-nano' | 'executorch';
+
 export interface ModerationVerdict {
   category: Category;
   confidence: number;
   flaggedTerms?: string[];
   reason?: string;
-  engine: 'rules';
+  engine: ModerationEngine;
 }
 
 export interface Contact {

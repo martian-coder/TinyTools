@@ -14,7 +14,7 @@ Sift is a WhatsApp-style messaging PWA where the **recipient** controls an AI fi
 - `reference/sift-glass.jsx` — original working demo (port UX + logic from this, don't reinvent)
 
 ## Architecture rules
-1. **All classification goes through `src/moderation/rules.ts` → `moderate(text, settings)`** — the swappable module.
+1. **All classification goes through `getModerator().classify(text, { sensitivity })`** (`src/moderation/index.ts`) — the swappable `Moderator` engine. Never fork classification logic across screens.
 2. **All routing goes through `src/moderation/route.ts` → `routeVerdict(verdict, settings, trusted)`** — never bake routing into UI components.
 3. **No network calls during moderation.** Everything runs offline.
 4. **Theme tokens** live in `src/theme/index.ts` and are applied as CSS custom properties via `applyTheme()`. Never hardcode colors in components — always use `var(--accent)`, `var(--text)`, etc.
@@ -24,7 +24,10 @@ Sift is a WhatsApp-style messaging PWA where the **recipient** controls an AI fi
 src/types/index.ts         — all shared TypeScript types
 src/theme/index.ts         — THEMES map + CATEGORY_COLORS + applyTheme()
 src/store/index.ts         — Zustand store + selectors
-src/moderation/rules.ts    — RulesModerator: moderate(text, settings)
+src/moderation/types.ts    — Moderator interface + Sensitivity
+src/moderation/rules.ts    — classifyByRules() + RulesModerator (always-on fallback)
+src/moderation/gemini-nano.ts — GeminiNanoModerator: Chrome Prompt API, on-device, zero network
+src/moderation/index.ts    — getModerator() engine-selection factory + ENGINE_LABELS
 src/moderation/route.ts    — routeVerdict(verdict, settings, trusted)
 src/seed/index.ts          — seed contacts + messages + default settings
 src/components/ui/         — Glass, Badge, Avatar, BottomNav, Switch, Segment, AuroraBackground
@@ -36,7 +39,7 @@ src/index.css              — Tailwind import + CSS var defaults + keyframe ani
 ## Milestone status
 - [x] **M0** — Scaffold: Vite + React + TS + Tailwind v4 + PWA + Zustand + theme + base UI atoms + aurora background + bottom nav
 - [x] **M1** — UI + local data: all 4 screens, folder tabs, conversation, Review (blur/approve/reject), Settings, Simulator, all 4 themes, animations, seed data
-- [ ] **M2** — Future: swap `moderate()` to call a real AI model (Apple Foundation Models / Gemini Nano / ExecuTorch)
+- [x] **M2** — Real AI moderation: `Moderator` interface + `getModerator()` factory; `GeminiNanoModerator` (Chrome built-in Prompt API → Gemini Nano, fully on-device, zero network) with `RulesModerator` silent fallback. Rules pre-filter resolves obvious cases; borderline input escalates to the model. Classification flows through `getModerator().classify()`; routing stays in `routeVerdict()`.
 - [ ] **M3** — Future: real backend + E2E encryption (libsignal + Convex/Supabase)
 - [ ] **M4** — Future: push notifications, accessibility polish, EAS build
 
