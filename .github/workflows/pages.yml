@@ -1,9 +1,10 @@
 name: Deploy to GitHub Pages
 
-# Publishes three static surfaces:
+# Publishes four static surfaces:
 #   /            -> MarkdownZipped/web  (the live compression studio, v1)
 #   /v2/         -> static PREVIEW of the SaaS frontend (saas/public)
 #   /sift/       -> Sift messaging-filter PWA (Sift/)
+#   /sift-home/  -> Sift marketing landing page (Sift/landing/)
 #
 # Deploys ONLY from the default branch (main).
 
@@ -21,6 +22,7 @@ on:
       - "Sift/index.html"
       - "Sift/vite.config.ts"
       - "Sift/package.json"
+      - "Sift/landing/**"
       - ".github/workflows/pages.yml"
   workflow_dispatch:
 
@@ -70,9 +72,12 @@ jobs:
           node MarkdownZipped/saas/build-preview.mjs \
             MarkdownZipped/saas/public _site/v2
           # /sift/ — Sift PWA
+          mkdir -p _site/sift
           cp -r Sift/dist/. _site/sift/
-          # SPA fallback so deep links reload correctly
           cp Sift/dist/index.html _site/sift/404.html
+          # /sift-home/ — Sift marketing landing page
+          mkdir -p _site/sift-home
+          cp -r Sift/landing/. _site/sift-home/
           touch _site/.nojekyll
 
       - name: Upload Pages artifact

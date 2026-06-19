@@ -1,0 +1,43 @@
+SIFT PROPRIETARY LICENSE
+========================
+
+Copyright (c) 2026 Sift. All rights reserved.
+
+This software and its source code, design, user interface, architecture, and
+all associated intellectual property ("Software") are the exclusive property
+of the author.
+
+PERMISSIONS
+-----------
+You are permitted to:
+  - Use Sift freely for personal and commercial communication
+  - Install Sift on your own devices
+  - Share the Sift installation URL with others
+  - View the source code for educational purposes
+
+RESTRICTIONS
+------------
+You are expressly prohibited from:
+  - Copying, reproducing, or redistributing the source code or design
+  - Modifying or creating derivative works based on the Software
+  - Reverse-engineering, decompiling, or disassembling the Software
+  - Rebranding or relaunching the Software under a different name
+  - Sublicensing, selling, or commercially exploiting the Software
+  - Creating a competing product substantially derived from Sift's concept,
+    design, architecture, or codebase without explicit written permission
+    from the author
+
+NO WARRANTY
+-----------
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE, AND NONINFRINGEMENT.
+
+LEGAL ACTION
+------------
+Unauthorized reproduction, redistribution, or creation of derivative works
+based on this Software may constitute copyright infringement and could
+result in civil and/or criminal legal action.
+
+For licensing inquiries or permissions beyond the scope above, contact the
+author via the repository.

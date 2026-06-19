@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="description" content="Sift — AI-filtered messaging. On-device AI screens every incoming message before it reaches you. Zero cloud. Zero compromise.">
+  <meta property="og:title" content="Sift — Smart Message Filter">
+  <meta property="og:description" content="The only messaging filter where AI works for you — entirely on your device. No cloud, no ads, no data collection. Your inbox, your rules.">
+  <meta property="og:type" content="website">
+  <meta name="theme-color" content="#0b1020">
+  <title>Sift — Smart Message Filter</title>
+  <style>
+    :root {
+      --base: #0b1020;
+      --surface: rgba(255,255,255,0.06);
+      --surface2: rgba(255,255,255,0.10);
+      --border: rgba(255,255,255,0.12);
+      --border2: rgba(255,255,255,0.22);
+      --accent: #7c83ff;
+      --accent2: #22d3ee;
+      --accent3: #a855f7;
+      --text: #eef1ff;
+      --dim: rgba(238,241,255,0.55);
+      --dimmer: rgba(238,241,255,0.32);
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      background: var(--base);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+
+    /* AURORA */
+    .aurora { position: fixed; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
+    .aurora-blob {
+      position: absolute; border-radius: 50%; filter: blur(90px); opacity: 0.22;
+      animation: drift 20s ease-in-out infinite alternate;
+    }
+    .aurora-blob:nth-child(1) { width:650px;height:650px;background:var(--accent);top:-220px;left:-200px;animation-duration:18s; }
+    .aurora-blob:nth-child(2) { width:520px;height:520px;background:var(--accent2);top:38%;right:-160px;animation-duration:23s;animation-delay:-6s; }
+    .aurora-blob:nth-child(3) { width:420px;height:420px;background:var(--accent3);bottom:-120px;left:28%;animation-duration:16s;animation-delay:-11s; }
+    @keyframes drift {
+      0%   { transform: translate(0,0) scale(1); }
+      50%  { transform: translate(60px,44px) scale(1.08); }
+      100% { transform: translate(-30px,80px) scale(0.94); }
+    }
+
+    /* LAYOUT */
+    .container { max-width: 1100px; margin: 0 auto; padding: 0 24px; position: relative; z-index: 1; }
+
+    /* NAV */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      background: rgba(11,16,32,0.82);
+      backdrop-filter: blur(24px) saturate(180%);
+      -webkit-backdrop-filter: blur(24px) saturate(180%);
+      border-bottom: 1px solid var(--border);
+    }
+    .nav-inner {
+      max-width: 1100px; margin: 0 auto; padding: 0 24px;
+      height: 62px; display: flex; align-items: center; justify-content: space-between;
+    }
+    .nav-logo {
+      font-size: 22px; font-weight: 800;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text; letter-spacing: -0.5px;
+    }
+    .nav-links { display: flex; align-items: center; gap: 28px; list-style: none; }
+    .nav-links a { color: var(--dim); text-decoration: none; font-size: 14px; font-weight: 500; transition: color .2s; }
+    .nav-links a:hover { color: var(--text); }
+    .nav-cta {
+      background: linear-gradient(135deg, var(--accent), var(--accent2)) !important;
+      color: #fff !important; padding: 9px 22px; border-radius: 99px;
+      font-weight: 700 !important; box-shadow: 0 4px 18px -4px rgba(124,131,255,.5);
+      transition: opacity .2s, transform .2s !important;
+    }
+    .nav-cta:hover { opacity: .9 !important; transform: translateY(-1px); }
+    @media (max-width:640px) { .hide-sm { display: none; } }
+
+    /* HERO */
+    #hero { min-height: 100dvh; display: flex; align-items: center; padding-top: 80px; }
+    .hero-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 56px; align-items: center; }
+    @media (max-width: 768px) {
+      .hero-grid { grid-template-columns: 1fr; text-align: center; }
+      .hero-badge, .hero-actions { justify-content: center; }
+    }
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: 7px;
+      background: rgba(34,211,238,.12); border: 1px solid rgba(34,211,238,.3);
+      color: var(--accent2); font-size: 11.5px; font-weight: 700;
+      padding: 5px 14px; border-radius: 99px; margin-bottom: 22px; letter-spacing: .6px;
+    }
+    .pulse { width:8px;height:8px;border-radius:50%;background:var(--accent2);animation:pulse 2s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.5;transform:scale(1.3)} }
+    .hero-title {
+      font-size: clamp(38px, 6vw, 70px); font-weight: 900;
+      line-height: 1.02; letter-spacing: -2.5px; margin-bottom: 26px;
+    }
+    .g { background: linear-gradient(135deg, var(--accent) 0%, var(--accent2) 55%, var(--accent3) 100%); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+    .hero-sub {
+      font-size: 17px; color: var(--dim); margin-bottom: 38px;
+      line-height: 1.75; max-width: 500px;
+    }
+    .hero-actions { display: flex; gap: 12px; flex-wrap: wrap; }
+    .btn-p {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      color: #fff; padding: 15px 30px; border-radius: 14px;
+      font-size: 16px; font-weight: 700; text-decoration: none;
+      box-shadow: 0 10px 36px -8px rgba(124,131,255,.65);
+      transition: transform .2s, box-shadow .2s;
+    }
+    .btn-p:hover { transform: translateY(-2px); box-shadow: 0 14px 44px -8px rgba(124,131,255,.75); }
+    .btn-s {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: var(--surface); border: 1px solid var(--border2); color: var(--text);
+      padding: 15px 28px; border-radius: 14px; font-size: 16px; font-weight: 600;
+      text-decoration: none; backdrop-filter: blur(12px);
+      transition: background .2s, transform .2s;
+    }
+    .btn-s:hover { background: var(--surface2); transform: translateY(-2px); }
+
+    /* PHONE MOCKUP */
+    .hero-phone { display: flex; justify-content: center; }
+    .phone-frame {
+      width: 255px; height: 515px;
+      background: rgba(13,19,38,.95);
+      border-radius: 42px;
+      border: 1.5px solid rgba(255,255,255,.15);
+      box-shadow: 0 44px 90px -20px rgba(0,0,0,.85), 0 0 0 1px rgba(255,255,255,.04), inset 0 1px 0 rgba(255,255,255,.08);
+      overflow: hidden; position: relative;
+      animation: float 7s ease-in-out infinite;
+    }
+    @keyframes float { 0%,100%{transform:translateY(0) rotate(-1.5deg)} 50%{transform:translateY(-14px) rotate(1.5deg)} }
+    .phone-notch { position:absolute;top:0;left:50%;transform:translateX(-50%);width:90px;height:26px;background:#0b1020;border-radius:0 0 18px 18px;z-index:2; }
+    .phone-screen { position:absolute;inset:0;overflow:hidden;border-radius:42px; }
+    .phone-hdr {
+      padding: 30px 12px 8px;
+      background: rgba(255,255,255,.04);
+      border-bottom: 1px solid rgba(255,255,255,.07);
+      display: flex; align-items: center; gap: 7px;
+    }
+    .ph-av { width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));flex-shrink:0; }
+    .ph-name { font-size:11px;font-weight:700;color:var(--text); }
+    .ph-sub { font-size:8px;color:var(--dim); }
+    .tabs { display:flex;gap:4px;padding:6px 10px;overflow-x:auto; }
+    .tab { font-size:7.5px;font-weight:700;padding:3px 9px;border-radius:99px;background:rgba(255,255,255,.07);color:var(--dim);white-space:nowrap; }
+    .tab.on { background:rgba(124,131,255,.18);color:var(--accent); }
+    .tab.warn { background:rgba(251,191,36,.12);color:#fbbf24; }
+    .msgs { padding: 8px 10px; display:flex;flex-direction:column;gap:7px; }
+    .mi {
+      align-self:flex-start; background:rgba(255,255,255,.07);
+      border-radius:12px 12px 12px 3px; padding:6px 9px;
+      font-size:9.5px;color:var(--text);max-width:78%;
+    }
+    .mt { font-size:7px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;margin-top:3px; }
+    .tc { color:#34d399; } .ty { color:#fbbf24; } .tr { color:#f87171; } .tb { color:#38bdf8; }
+    .blr { filter:blur(2.5px);opacity:.5; }
+    .chip-shield {
+      display:inline-flex;align-items:center;gap:5px;
+      font-size:8px;color:rgba(124,131,255,.85);
+      background:rgba(124,131,255,.1);padding:4px 10px;
+      border-radius:99px;border:1px solid rgba(124,131,255,.18);
+      margin:10px auto 0;display:flex;justify-content:center;
+    }
+
+    /* STATS */
+    .stats { padding:48px 0;border-top:1px solid var(--border);border-bottom:1px solid var(--border);margin-top:72px;position:relative;z-index:1; }
+    .stats-g { display:grid;grid-template-columns:repeat(4,1fr);gap:24px;text-align:center; }
+    @media(max-width:540px){.stats-g{grid-template-columns:repeat(2,1fr)}}
+    .sn { font-size:40px;font-weight:900;letter-spacing:-1.5px;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text; }
+    .sl { font-size:12.5px;color:var(--dim);margin-top:5px; }
+
+    /* SECTION */
+    section { padding: 100px 0; position: relative; z-index: 1; }
+    .sl2 { font-size:11.5px;font-weight:800;letter-spacing:2.5px;text-transform:uppercase;color:var(--accent);margin-bottom:12px; }
+    .sh { font-size:clamp(28px,4vw,50px);font-weight:900;letter-spacing:-1.5px;line-height:1.08;margin-bottom:16px; }
+    .ss { font-size:17px;color:var(--dim);max-width:560px;line-height:1.75; }
+    .s-hdr { margin-bottom:60px; }
+
+    /* PROBLEM */
+    .pg { display:grid;grid-template-columns:repeat(3,1fr);gap:20px; }
+    @media(max-width:768px){.pg{grid-template-columns:1fr}}
+    .pc {
+      background:var(--surface);border:1px solid var(--border);
+      border-radius:22px;padding:30px;backdrop-filter:blur(20px);
+      transition:border-color .3s,transform .3s;
+    }
+    .pc:hover { border-color:var(--border2);transform:translateY(-4px); }
+    .pi { width:46px;height:46px;border-radius:13px;display:grid;place-items:center;font-size:22px;margin-bottom:16px; }
+    .pt { font-size:16px;font-weight:700;margin-bottom:8px; }
+    .pp { font-size:14px;color:var(--dim);line-height:1.65; }
+
+    /* TABLE */
+    .tw { overflow-x:auto;border-radius:22px;border:1px solid var(--border);backdrop-filter:blur(20px); }
+    table { width:100%;border-collapse:collapse;font-size:13.5px; }
+    thead th { padding:16px 18px;text-align:center;font-weight:700;font-size:12.5px;border-bottom:1px solid var(--border);background:rgba(255,255,255,.04);white-space:nowrap; }
+    thead th:first-child { text-align:left; }
+    thead th.hc { background:rgba(124,131,255,.14);color:var(--accent); }
+    tbody td { padding:13px 18px;border-bottom:1px solid var(--border);text-align:center;color:var(--dim); }
+    tbody td:first-child { text-align:left;color:var(--text);font-weight:500; }
+    tbody td.hc { background:rgba(124,131,255,.07); }
+    tbody tr:last-child td { border-bottom:none; }
+    tbody tr:hover td { background:rgba(255,255,255,.02); }
+    tbody tr:hover td.hc { background:rgba(124,131,255,.12); }
+    .ck { color:#34d399;font-size:15px; } .cx { color:rgba(248,113,113,.55);font-size:15px; } .cp { color:#fbbf24;font-size:12px;font-weight:700; }
+
+    /* FEATURES */
+    .fg { display:grid;grid-template-columns:repeat(3,1fr);gap:20px; }
+    @media(max-width:900px){.fg{grid-template-columns:repeat(2,1fr)}}
+    @media(max-width:520px){.fg{grid-template-columns:1fr}}
+    .fc {
+      background:var(--surface);border:1px solid var(--border);
+      border-radius:22px;padding:30px;backdrop-filter:blur(20px);
+      transition:border-color .3s,transform .3s;
+    }
+    .fc:hover { border-color:rgba(124,131,255,.4);transform:translateY(-4px); }
+    .fi { width:50px;height:50px;border-radius:15px;display:grid;place-items:center;font-size:24px;margin-bottom:18px;background:linear-gradient(135deg,rgba(124,131,255,.12),rgba(34,211,238,.1));border:1px solid rgba(124,131,255,.2); }
+    .ftt { font-size:16px;font-weight:700;margin-bottom:8px; }
+    .ftx { font-size:14px;color:var(--dim);line-height:1.65; }
+
+    /* HOW */
+    .steps { display:grid;grid-template-columns:repeat(3,1fr);gap:44px;position:relative; }
+    @media(max-width:768px){.steps{grid-template-columns:1fr}}
+    .steps::before { content:'';position:absolute;top:27px;left:90px;right:90px;height:1px;background:linear-gradient(90deg,transparent,var(--border),var(--border),transparent); }
+    @media(max-width:768px){.steps::before{display:none}}
+    .step { text-align:center; }
+    .sn2 { width:54px;height:54px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));display:grid;place-items:center;font-size:20px;font-weight:800;margin:0 auto 20px;box-shadow:0 8px 24px -8px rgba(124,131,255,.6);position:relative;z-index:1; }
+    .stt { font-size:16px;font-weight:700;margin-bottom:8px; }
+    .stx { font-size:14px;color:var(--dim);line-height:1.6; }
+
+    /* INSTALL */
+    #install { text-align:center; }
+    .ic {
+      background:linear-gradient(135deg,rgba(124,131,255,.11),rgba(34,211,238,.07));
+      border:1px solid rgba(124,131,255,.24);border-radius:30px;padding:68px 44px;
+      backdrop-filter:blur(24px);max-width:720px;margin:0 auto;
+    }
+    .it { font-size:clamp(28px,4vw,42px);font-weight:900;letter-spacing:-1.5px;margin-bottom:16px; }
+    .is { font-size:16px;color:var(--dim);margin-bottom:36px;line-height:1.75;max-width:540px;margin-left:auto;margin-right:auto; }
+    .isteps { display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin-bottom:36px; }
+    .istep { display:flex;align-items:center;gap:8px;font-size:13px;color:var(--dim);background:rgba(255,255,255,.05);border:1px solid var(--border);border-radius:11px;padding:9px 15px; }
+    .inum { width:20px;height:20px;border-radius:50%;background:var(--accent);color:#fff;font-size:10.5px;font-weight:800;display:grid;place-items:center;flex-shrink:0; }
+    .inote { font-size:11.5px;color:var(--dimmer);margin-top:18px; }
+
+    /* LICENSE */
+    #license { padding:60px 0; }
+    .lc { background:rgba(248,113,113,.04);border:1px solid rgba(248,113,113,.14);border-radius:22px;padding:36px;backdrop-filter:blur(20px); }
+    .lt { font-size:17px;font-weight:700;margin-bottom:14px;color:#fca5a5;display:flex;align-items:center;gap:8px; }
+    .lx { font-size:13px;color:var(--dim);line-height:1.85; }
+    .lx strong { color:var(--text); }
+
+    /* FOOTER */
+    footer { border-top:1px solid var(--border);padding:40px 0;position:relative;z-index:1; }
+    .fi2 { display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px; }
+    .fl { font-size:19px;font-weight:800;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text; }
+    .fc2 { font-size:13px;color:var(--dimmer); }
+    .fls { display:flex;gap:24px; }
+    .fls a { color:var(--dim);text-decoration:none;font-size:13px; }
+    .fls a:hover { color:var(--text); }
+
+    /* REVEAL */
+    .rev { opacity:0;transform:translateY(22px);transition:opacity .65s ease,transform .65s ease; }
+    .rev.vis { opacity:1;transform:translateY(0); }
+    .d1{transition-delay:.1s}.d2{transition-delay:.2s}.d3{transition-delay:.3s}.d4{transition-delay:.4s}
+  </style>
+</head>
+<body>
+
+<div class="aurora" aria-hidden="true">
+  <div class="aurora-blob"></div>
+  <div class="aurora-blob"></div>
+  <div class="aurora-blob"></div>
+</div>
+
+<nav>
+  <div class="nav-inner">
+    <div class="nav-logo">Sift</div>
+    <ul class="nav-links">
+      <li class="hide-sm"><a href="#why">Why Sift</a></li>
+      <li class="hide-sm"><a href="#compare">Compare</a></li>
+      <li class="hide-sm"><a href="#features">Features</a></li>
+      <li><a href="#install" class="nav-cta">Install Free</a></li>
+    </ul>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section id="hero">
+  <div class="container">
+    <div class="hero-grid">
+      <div>
+        <div class="hero-badge"><div class="pulse"></div> On-device AI &middot; Zero cloud &middot; Free forever</div>
+        <h1 class="hero-title">
+          Your inbox,<br>
+          <span class="g">filtered by AI.</span><br>
+          Your rules.
+        </h1>
+        <p class="hero-sub">
+          Sift screens every incoming message with on-device AI before it reaches you &mdash; auto-blocking abuse, sorting noise, letting what matters through. Your message text never leaves your device. Not even to us.
+        </p>
+        <div class="hero-actions">
+          <a href="../sift/" class="btn-p">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Install Sift &mdash; Free
+          </a>
+          <a href="#compare" class="btn-s">
+            See the comparison
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+          </a>
+        </div>
+      </div>
+      <!-- Phone mockup -->
+      <div class="hero-phone">
+        <div class="phone-frame">
+          <div class="phone-notch"></div>
+          <div class="phone-screen">
+            <div class="phone-hdr">
+              <div class="ph-av"></div>
+              <div><div class="ph-name">Sift &mdash; Smart Filter</div><div class="ph-sub">4 messages &middot; 2 filtered</div></div>
+            </div>
+            <div class="tabs">
+              <div class="tab on">Primary</div>
+              <div class="tab">Business</div>
+              <div class="tab">Promos</div>
+              <div class="tab warn">Review 2</div>
+            </div>
+            <div class="msgs">
+              <div class="mi">
+                <div>Hey, lunch tomorrow? 🍜</div>
+                <div class="mt tc">✓ Delivered &middot; on-device rules</div>
+              </div>
+              <div class="mi">
+                <div>Your order #5510 shipped. OTP: 4471</div>
+                <div class="mt tb">→ Business folder</div>
+              </div>
+              <div class="mi" style="border:1px solid rgba(251,191,36,.25)">
+                <div class="blr">You&rsquo;re so stupid, I hate&mdash;</div>
+                <div class="mt ty">⏸ Held in Review &middot; tap to reveal</div>
+              </div>
+              <div class="mi" style="opacity:.45;border:1px solid rgba(248,113,113,.18)">
+                <div>Win $1000! Forward to 10 friends&hellip;</div>
+                <div class="mt tr">✗ Blocked &middot; auto-rejected</div>
+              </div>
+              <div style="padding:0 10px">
+                <div class="chip-shield">
+                  <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                  AI on-device &middot; Gemini Nano
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- STATS -->
+<div class="stats">
+  <div class="container">
+    <div class="stats-g">
+      <div class="rev"><div class="sn">100%</div><div class="sl">On-device &mdash; zero server</div></div>
+      <div class="rev d1"><div class="sn">0</div><div class="sl">Cloud calls ever made</div></div>
+      <div class="rev d2"><div class="sn">4</div><div class="sl">Smart inbox folders</div></div>
+      <div class="rev d3"><div class="sn">&infin;</div><div class="sl">Your privacy, intact</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- WHY -->
+<section id="why">
+  <div class="container">
+    <div class="s-hdr">
+      <div class="sl2">The problem</div>
+      <h2 class="sh">Every other messenger<br>fails you the same way.</h2>
+      <p class="ss">WhatsApp, iMessage, Telegram, Signal &mdash; built to deliver everything to you. Not to protect you from it.</p>
+    </div>
+    <div class="pg">
+      <div class="pc rev">
+        <div class="pi" style="background:rgba(248,113,113,.1)">😠</div>
+        <div class="pt">Abuse arrives unfiltered</div>
+        <p class="pp">Harassment, threats, and hate land directly in your inbox with zero screening. Every app treats all messages equally &mdash; important ones and toxic ones alike.</p>
+      </div>
+      <div class="pc rev d1">
+        <div class="pi" style="background:rgba(251,191,36,.1)">📢</div>
+        <div class="pt">Spam floods every folder</div>
+        <p class="pp">Promo blasts, chain forwards, and bot messages compete with things that actually matter. No intelligence at the door &mdash; everything gets through.</p>
+      </div>
+      <div class="pc rev d2">
+        <div class="pi" style="background:rgba(168,85,247,.1)">☁️</div>
+        <div class="pt">Your messages live on servers</div>
+        <p class="pp">Even &ldquo;private&rdquo; apps send content to the cloud for scanning, feature processing, and moderation. Your most personal conversations aren&rsquo;t fully yours.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- COMPARE -->
+<section id="compare">
+  <div class="container">
+    <div class="s-hdr">
+      <div class="sl2">Comparison</div>
+      <h2 class="sh">Sift vs. the world&rsquo;s<br>top messengers.</h2>
+      <p class="ss">See exactly what you&rsquo;re missing &mdash; and what you finally get.</p>
+    </div>
+    <div class="tw rev">
+      <table>
+        <thead>
+          <tr>
+            <th>Feature</th>
+            <th class="hc">✶&nbsp; Sift</th>
+            <th>WhatsApp</th>
+            <th>iMessage</th>
+            <th>Telegram</th>
+            <th>Signal</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>AI message filter</td><td class="hc"><span class="ck">✓</span></td><td><span class="cx">✗</span></td><td><span class="cx">✗</span></td><td><span class="cx">✗</span></td><td><span class="cx">✗</span></td></tr>
+          <tr><td>Fully on-device (zero cloud)</td><td class="hc"><span class="ck">✓</span></td><td><span class="cx">✗</span></td><td><span class="cx">✗</span></td><td><span class="cx">✗</span></td><td><span class="cp">Partial</span></td></tr>
+          <tr><td>Auto-categorize (Primary / Business / Promos)</td><td class="hc"><span class="ck">✓</span></td><td><span class="cx">✗</span></td><td><span class="cx">✗</span></td><td><span class="cx">✗</span></td><td><span class="cx">✗</span></td></tr>
+          <tr><td>Civility gate &mdash; block abusive content</td><td class="hc"><span class="ck">✓</span></td><td><span class="cx">✗</span></td><td><span class="cx">✗</span></td><td><span class="cx">✗</span></td><td><span class="cx">✗</span></td></tr>
+          <tr><td>Auto-reject with sender response</td><td class="hc"><span class="ck">✓</span></td><td><span class="cx">✗</span></td><td><span class="cx">✗</span></td><td><span class="cx">✗</span></td><td><span class="cx">✗</span></td></tr>
+          <tr><td>Trusted contact bypass</td><td class="hc"><span class="ck">✓</span></td><td><span class="cx">✗</span></td><td><span class="cx">✗</span></td><td><span class="cx">✗</span></td><td><span class="cx">✗</span></td></tr>
+          <tr><td>Blurred previews of filtered messages</td><td class="hc"><span class="ck">✓</span></td><td><span class="cx">✗</span></td><td><span class="cx">✗</span></td><td><span class="cx">✗</span></td><td><span class="cx">✗</span></td></tr>
+          <tr><td>Adjustable sensitivity (Low / Medium / High)</td><td class="hc"><span class="ck">✓</span></td><td><span class="cx">✗</span></td><td><span class="cx">✗</span></td><td><span class="cx">✗</span></td><td><span class="cx">✗</span></td></tr>
+          <tr><td>Filter simulator &amp; test mode</td><td class="hc"><span class="ck">✓</span></td><td><span class="cx">✗</span></td><td><span class="cx">✗</span></td><td><span class="cx">✗</span></td><td><span class="cx">✗</span></td></tr>
+          <tr><td>Works offline (PWA)</td><td class="hc"><span class="ck">✓</span></td><td><span class="cp">Partial</span></td><td><span class="ck">✓</span></td><td><span class="cp">Partial</span></td><td><span class="ck">✓</span></td></tr>
+          <tr><td>No ads, no data harvesting</td><td class="hc"><span class="ck">✓</span></td><td><span class="cx">✗</span></td><td><span class="ck">✓</span></td><td><span class="cp">Partial</span></td><td><span class="ck">✓</span></td></tr>
+          <tr><td>Multiple themes</td><td class="hc"><span class="ck">✓</span></td><td><span class="cx">✗</span></td><td><span class="cp">Partial</span></td><td><span class="cp">Partial</span></td><td><span class="cx">✗</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section id="features">
+  <div class="container">
+    <div class="s-hdr">
+      <div class="sl2">Features</div>
+      <h2 class="sh">Everything you need.<br>Nothing you don&rsquo;t.</h2>
+      <p class="ss">Six pillars that make Sift the most advanced message filter ever built for a PWA.</p>
+    </div>
+    <div class="fg">
+      <div class="fc rev">
+        <div class="fi">🛡️</div>
+        <div class="ftt">On-device AI moderation</div>
+        <p class="ftx">Powered by Gemini Nano via Chrome&rsquo;s built-in Prompt API. The model runs entirely on your hardware. Message text never leaves &mdash; not even to us. RulesModerator kicks in as a silent fallback on unsupported browsers.</p>
+      </div>
+      <div class="fc rev d1">
+        <div class="fi">📂</div>
+        <div class="ftt">Four smart folders</div>
+        <p class="ftx">Primary for personal conversations, Business for OTPs and delivery updates, Promotions for offers, and Review for anything borderline. Every message lands exactly where it belongs.</p>
+      </div>
+      <div class="fc rev d2">
+        <div class="fi">🎛️</div>
+        <div class="ftt">Sensitivity dial</div>
+        <p class="ftx">Low, Medium, or High &mdash; you decide how aggressive the filter is. Adjust per mood, per situation. Never too strict, never too lax, always exactly yours.</p>
+      </div>
+      <div class="fc rev d3">
+        <div class="fi">🤝</div>
+        <div class="ftt">Trusted contact bypass</div>
+        <p class="ftx">Mark anyone as trusted. Their messages skip the AI entirely and land straight in Primary &mdash; because some people always deserve a direct line, no questions asked.</p>
+      </div>
+      <div class="fc rev d4">
+        <div class="fi">🫣</div>
+        <div class="ftt">Blur &amp; reveal</div>
+        <p class="ftx">Filtered messages wait in Review, blurred until you choose. Auto-reject sends a polite refusal to the sender. You see only what you decide to see, on your timeline.</p>
+      </div>
+      <div class="fc rev d4">
+        <div class="fi">🧪</div>
+        <div class="ftt">Filter simulator</div>
+        <p class="ftx">Type any message and watch Sift classify it live &mdash; category, confidence score, folder destination, and what the sender would see. Tune your rules with real-time feedback.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- HOW -->
+<section id="how">
+  <div class="container">
+    <div class="s-hdr" style="text-align:center">
+      <div class="sl2">How it works</div>
+      <h2 class="sh">Three steps to inbox peace.</h2>
+      <p class="ss" style="margin:0 auto">From message sent to message seen &mdash; Sift&rsquo;s full pipeline runs entirely on your device.</p>
+    </div>
+    <div class="steps">
+      <div class="step rev">
+        <div class="sn2">1</div>
+        <div class="stt">Message arrives</div>
+        <p class="stx">A message comes in. Before it touches your inbox, Sift intercepts it on-device &mdash; no server round-trip, no latency, no exposure.</p>
+      </div>
+      <div class="step rev d1">
+        <div class="sn2">2</div>
+        <div class="stt">AI classifies it</div>
+        <p class="stx">Gemini Nano (or the rules engine as fallback) classifies the message as clean, spam, abusive, business, or promotional &mdash; in milliseconds.</p>
+      </div>
+      <div class="step rev d2">
+        <div class="sn2">3</div>
+        <div class="stt">Routed your way</div>
+        <p class="stx">Clean lands in Primary. Business goes to Business. Abuse is blocked. Borderline waits in Review, blurred, for you to decide &mdash; on your terms.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- INSTALL -->
+<section id="install">
+  <div class="container">
+    <div class="ic rev">
+      <div style="font-size:52px;margin-bottom:18px">📲</div>
+      <h2 class="it">Install Sift in <span class="g">30 seconds.</span></h2>
+      <p class="is">
+        Sift is a Progressive Web App &mdash; no app store approval, no account, no subscription. Open it in your browser, add it to your home screen, and you have a native-feeling app that works offline.
+      </p>
+      <div class="isteps">
+        <div class="istep"><div class="inum">1</div><span>Open Sift in Chrome or Safari</span></div>
+        <div class="istep"><div class="inum">2</div><span>iOS: Share &rarr; Add to Home Screen</span></div>
+        <div class="istep"><div class="inum">3</div><span>Android: Menu &rarr; Install app</span></div>
+      </div>
+      <a href="../sift/" target="_blank" class="btn-p" style="font-size:17px;padding:16px 36px">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Open Sift &mdash; it&rsquo;s free
+      </a>
+      <p class="inote">Works on iOS 16.4+ &middot; Android Chrome &middot; Desktop Chrome &amp; Edge &middot; No sign-up required</p>
+    </div>
+  </div>
+</section>
+
+<!-- LICENSE -->
+<section id="license">
+  <div class="container">
+    <div class="lc rev">
+      <div class="lt">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        Proprietary License
+      </div>
+      <p class="lx">
+        <strong>Sift</strong> is proprietary software. The concept, design, source code, user interface, and all associated intellectual property are owned exclusively by the author and protected under applicable intellectual property law.
+        <br><br>
+        <strong>You may:</strong> use Sift freely for personal and commercial communication, install it on your devices, and share the installation link with others.
+        <br><br>
+        <strong>You may not:</strong> copy, reproduce, modify, fork, reverse-engineer, rebrand, sublicense, or redistribute Sift or any substantial portion of its source code, design, or core functionality without explicit written permission from the author. Creating a competing product substantially derived from Sift&rsquo;s design, architecture, or codebase is strictly prohibited.
+        <br><br>
+        &copy; 2026 Sift. All rights reserved. Unauthorized reproduction, redistribution, or derivative works based on this software may result in civil and criminal legal action.
+      </p>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="container">
+    <div class="fi2">
+      <div class="fl">Sift</div>
+      <div class="fc2">&copy; 2026 Sift &mdash; All rights reserved.</div>
+      <div class="fls">
+        <a href="#why">Why Sift</a>
+        <a href="#features">Features</a>
+        <a href="../sift/" target="_blank">Launch App</a>
+        <a href="#license">License</a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script>
+  // Scroll-reveal
+  const obs = new IntersectionObserver(es => es.forEach(e => { if(e.isIntersecting) e.target.classList.add('vis'); }), {threshold:.12});
+  document.querySelectorAll('.rev').forEach(el => obs.observe(el));
+</script>
+</body>
+</html>
