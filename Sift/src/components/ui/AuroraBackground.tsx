@@ -1,15 +1,12 @@
-import { useRef } from 'react';
 import { useSiftStore } from '../../store';
 import { THEMES } from '../../theme';
 
 export function AuroraBackground() {
   const theme = useSiftStore(s => s.settings.theme);
   const t = THEMES[theme];
-  const ref = useRef<HTMLDivElement>(null);
 
   return (
     <div
-      ref={ref}
       style={{
         position: 'fixed',
         inset: 0,
