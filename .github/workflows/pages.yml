@@ -5,13 +5,7 @@ name: Deploy to GitHub Pages
 #   /v2/         -> static PREVIEW of the SaaS frontend (saas/public)
 #   /sift/       -> Sift messaging-filter PWA (Sift/)
 #
-# Deploys ONLY from the default branch (main): the github-pages
-# environment's protection rule rejects non-default branches.
-#
-# Pages must be enabled once (cannot be scripted — GitHub blocks the
-# Actions token from creating a Pages site):
-#   Repo -> Settings -> Pages -> Build and deployment -> Source:
-#   "GitHub Actions".
+# Deploys ONLY from the default branch (main).
 
 on:
   push:
@@ -54,13 +48,17 @@ jobs:
           cache-dependency-path: Sift/package-lock.json
 
       - name: Configure Pages
+        id: pages
         uses: actions/configure-pages@v5
 
       - name: Build Sift
         working-directory: Sift
+        # base_path is e.g. /TinyTools; append /sift/ so assets resolve correctly.
+        env:
+          VITE_BASE: ${{ steps.pages.outputs.base_path }}/sift/
         run: |
           npm ci
-          VITE_BASE=/sift/ npm run build
+          npm run build
 
       - name: Assemble site
         run: |
