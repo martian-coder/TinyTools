@@ -13,6 +13,7 @@ export interface ThemeVars {
   '--glass2': string;
   '--line': string;
   '--in': string;
+  '--font-family'?: string;
 }
 
 export interface ThemeMeta {
@@ -97,6 +98,26 @@ export const THEMES: Record<ThemeName, ThemeMeta> = {
       '--glass2': 'rgba(255,255,255,.72)',
       '--line': 'rgba(255,255,255,.85)',
       '--in': 'rgba(255,255,255,.78)',
+    },
+  },
+  terminal: {
+    label: 'Terminal',
+    swatch: 'linear-gradient(135deg,#00ff00,#00aa00)',
+    isLight: false,
+    vars: {
+      '--base': '#0a0e27',
+      '--g1': 'rgba(0,255,0,.3)',
+      '--g2': 'rgba(0,170,0,.25)',
+      '--g3': 'rgba(34,139,34,.35)',
+      '--accent': '#00ff00',
+      '--accent2': '#00dd00',
+      '--text': '#00ff00',
+      '--dim': 'rgba(0,255,0,.4)',
+      '--glass': 'rgba(0,255,0,.08)',
+      '--glass2': 'rgba(0,255,0,.12)',
+      '--line': 'rgba(0,255,0,.15)',
+      '--in': 'rgba(0,255,0,.1)',
+      '--font-family': "'Courier New', 'Courier', 'Lucida Console', monospace",
     },
   },
 };

@@ -1,7 +1,7 @@
 export type Folder = 'primary' | 'business' | 'promotions' | 'review';
 export type Category = 'clean' | 'abusive' | 'spam' | 'business' | 'promo';
 export type BlockAction = 'review' | 'silentDrop' | 'askPerMessage';
-export type ThemeName = 'aurora' | 'sunset' | 'noir' | 'daylight';
+export type ThemeName = 'aurora' | 'sunset' | 'noir' | 'daylight' | 'terminal';
 export type DisappearingMessageMode = 'off' | 'onRead' | '1m' | '5m' | '1h' | '24h' | 'custom';
 export type DrunkModeAction = 'prevent' | 'warn';
 
