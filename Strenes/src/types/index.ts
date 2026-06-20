@@ -8,6 +8,13 @@ export type DrunkModeAction = 'prevent' | 'warn';
 
 export type ModerationEngine = 'rules' | 'apple-fm' | 'gemini-nano' | 'executorch';
 
+export interface SpellCheckSuggestion {
+  original: string;
+  suggested: string;
+  reason: 'typo' | 'slang' | 'casual';
+  confidence: number;
+}
+
 export interface ModerationVerdict {
   category: Category;
   confidence: number;
@@ -78,6 +85,9 @@ export interface UserSettings {
   toneChecker: {
     enabled: boolean;
     warnOnAggressive: boolean;
+  };
+  spellCheck: {
+    enabled: boolean;
   };
   theme: ThemeName;
   trustedIds: string[];

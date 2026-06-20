@@ -1,4 +1,4 @@
-import { AlertTriangle, Briefcase, Forward, ShieldCheck, RotateCcw, Palette, Download, Brain, Trash2, Clock, Zap, Flame } from 'lucide-react';
+import { AlertTriangle, Briefcase, Forward, ShieldCheck, RotateCcw, Palette, Download, Brain, Trash2, Clock, Zap, Flame, Sparkles } from 'lucide-react';
 import { useSiftStore } from '../store';
 import { Switch } from '../components/ui/Switch';
 import { Segment } from '../components/ui/Segment';
@@ -20,6 +20,7 @@ export function Settings({ onShowThemes }: SettingsProps) {
   const updateDisappearingMessages = useSiftStore(s => s.updateDisappearingMessages);
   const updateUnhingedMode    = useSiftStore(s => s.updateUnhingedMode);
   const updateToneChecker     = useSiftStore(s => s.updateToneChecker);
+  const updateSpellCheck      = useSiftStore(s => s.updateSpellCheck);
   const setContactEmergency   = useSiftStore(s => s.setContactEmergency);
   const resetToSeed           = useSiftStore(s => s.resetToSeed);
   const s = settings;
@@ -219,6 +220,17 @@ export function Settings({ onShowThemes }: SettingsProps) {
               <p className="text-xs dim">AI analyzes if your message sounds polite, assertive, or aggressive before sending.</p>
             </>
           )}
+        </div>
+
+        {/* Spell Check */}
+        <div className="glass p-4 space-y-2" style={{ borderRadius: 20 }}>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 font-medium text-main">
+              <Sparkles size={16} className="cat-ic-amber" /> Style-Aware Spell Check
+            </div>
+            <Switch on={s.spellCheck.enabled} onClick={() => updateSpellCheck({ enabled: !s.spellCheck.enabled })} />
+          </div>
+          <p className="text-xs dim">Detects typos & suggests corrections in your style. "ubcan" → "bro can" 🎯</p>
         </div>
 
         {/* Trusted contacts */}

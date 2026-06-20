@@ -1,9 +1,10 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { ArrowLeft, ShieldCheck, Send, Loader2, Lock, Clock, Phone, PhoneOff, Mic, MicOff, Volume2, VolumeX } from 'lucide-react';
+import { ArrowLeft, ShieldCheck, Send, Loader2, Lock, Clock, Phone, PhoneOff, Mic, MicOff, Volume2, VolumeX, Sparkles, Check, X } from 'lucide-react';
 import { useSiftStore, selectConversation } from '../store';
 import { Avatar } from '../components/ui/Avatar';
 import { getModerator } from '../moderation';
-import type { ModerationVerdict } from '../types';
+import { checkSpelling, applySuggestion } from '../moderation/spell-check';
+import type { ModerationVerdict, SpellCheckSuggestion } from '../types';
 
 type OutgoingState =
   | { kind: 'idle' }
@@ -29,12 +30,14 @@ export function Conversation() {
   const sendOutgoingToReview = useSiftStore(s => s.sendOutgoingToReview);
   const messages             = useSiftStore(s => activeContactId ? selectConversation(s, activeContactId) : []);
 
-  const [draft, setDraft]         = useState('');
-  const [outgoing, setOutgoing]   = useState<OutgoingState>({ kind: 'idle' });
-  const [callState, setCallState] = useState<CallState>('idle');
-  const [muted, setMuted]         = useState(false);
-  const [speaker, setSpeaker]     = useState(false);
-  const [callSecs, setCallSecs]   = useState(0);
+  const [draft, setDraft]                    = useState('');
+  const [outgoing, setOutgoing]              = useState<OutgoingState>({ kind: 'idle' });
+  const [callState, setCallState]            = useState<CallState>('idle');
+  const [muted, setMuted]                    = useState(false);
+  const [speaker, setSpeaker]                = useState(false);
+  const [callSecs, setCallSecs]              = useState(0);
+  const [spellCheckSuggestions, setSpellCheckSuggestions] = useState<SpellCheckSuggestion[]>([]);
+  const [pendingSendText, setPendingSendText] = useState<string | null>(null);
   const debounceRef               = useRef<ReturnType<typeof setTimeout> | null>(null);
   const timerRef                  = useRef<ReturnType<typeof setInterval> | null>(null);
   const bottomRef                 = useRef<HTMLDivElement>(null);
@@ -103,6 +106,16 @@ export function Conversation() {
     const text = draft.trim();
     if (!text || !activeContactId) return;
     if (outgoing.kind === 'blocked' || outgoing.kind === 'checking') return;
+
+    if (settings.spellCheck.enabled && !pendingSendText) {
+      const suggestions = checkSpelling(text);
+      if (suggestions.length > 0) {
+        setSpellCheckSuggestions(suggestions);
+        setPendingSendText(text);
+        return;
+      }
+    }
+
     if (outgoing.kind === 'review') {
       sendOutgoingToReview(activeContactId, text, (outgoing as { kind: 'review'; verdict: ModerationVerdict }).verdict);
     } else {
@@ -110,6 +123,25 @@ export function Conversation() {
     }
     setDraft('');
     setOutgoing({ kind: 'idle' });
+  };
+
+  const sendWithCorrections = (acceptSuggestions: boolean) => {
+    if (!pendingSendText || !activeContactId) return;
+    let finalText = pendingSendText;
+    if (acceptSuggestions) {
+      for (const s of spellCheckSuggestions) {
+        finalText = applySuggestion(finalText, s.original, s.suggested);
+      }
+    }
+    if (outgoing.kind === 'review') {
+      sendOutgoingToReview(activeContactId, finalText, (outgoing as { kind: 'review'; verdict: ModerationVerdict }).verdict);
+    } else {
+      sendMessage(activeContactId, finalText);
+    }
+    setDraft('');
+    setOutgoing({ kind: 'idle' });
+    setPendingSendText(null);
+    setSpellCheckSuggestions([]);
   };
 
   if (!contact) return null;
@@ -229,6 +261,55 @@ export function Conversation() {
           </button>
         </div>
       </div>
+
+      {/* Spell Check Modal */}
+      {pendingSendText && spellCheckSuggestions.length > 0 && (
+        <div
+          className="absolute inset-0 z-50 flex items-center justify-center"
+          style={{ background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)' }}
+          onClick={() => {
+            setPendingSendText(null);
+            setSpellCheckSuggestions([]);
+          }}
+        >
+          <div
+            className="glass p-5 max-w-xs"
+            style={{ borderRadius: 20 }}
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="flex items-center gap-2 mb-3">
+              <Sparkles size={18} className="text-[#fbbf24]" />
+              <div className="font-semibold text-main">Style-Aware Corrections</div>
+            </div>
+            <p className="text-xs dim mb-3">Found {spellCheckSuggestions.length} {spellCheckSuggestions.length === 1 ? 'typo' : 'typos'}:</p>
+            <div className="space-y-2 mb-4">
+              {spellCheckSuggestions.map((s, i) => (
+                <div key={i} className="flex items-center gap-2 text-xs">
+                  <span className="dim">{s.original}</span>
+                  <span className="text-[10px] dim">→</span>
+                  <span className="text-main font-medium">{s.suggested}</span>
+                </div>
+              ))}
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={() => sendWithCorrections(false)}
+                className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium dim hover:bg-white hover:bg-opacity-5 transition"
+                style={{ borderRadius: 12 }}
+              >
+                <X size={14} /> Send as-is
+              </button>
+              <button
+                onClick={() => sendWithCorrections(true)}
+                className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-semibold text-main hover:bg-white hover:bg-opacity-10 transition"
+                style={{ borderRadius: 12, background: 'rgba(251,191,36,0.15)' }}
+              >
+                <Check size={14} /> Fix & send
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* In-call overlay */}
       {callState !== 'idle' && (
