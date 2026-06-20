@@ -47,17 +47,17 @@ jobs:
         with:
           node-version: 20
           cache: npm
-          cache-dependency-path: Sift/package-lock.json
+          cache-dependency-path: Strenes/package-lock.json
 
       - name: Configure Pages
         id: pages
         uses: actions/configure-pages@v5
 
-      - name: Build Sift
-        working-directory: Sift
-        # base_path is e.g. /TinyTools; append /sift/ so assets resolve correctly.
+      - name: Build Strenes
+        working-directory: Strenes
+        # base_path is e.g. /TinyTools; append /strenes/ so assets resolve correctly.
         env:
-          VITE_BASE: ${{ steps.pages.outputs.base_path }}/sift/
+          VITE_BASE: ${{ steps.pages.outputs.base_path }}/strenes/
         run: |
           npm ci
           npm run build
