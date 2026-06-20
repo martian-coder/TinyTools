@@ -36,4 +36,6 @@ export const DEFAULT_SETTINGS: UserSettings = {
   disappearingMessages: { enabled: false, defaultMode: 'off', customMinutes: 60 },
   dnd: { enabled: false, startHour: 22, endHour: 7, allowTrusted: true, allowEmergency: true, notifyButSilent: false },
   drunkMode: { enabled: false, autoDetect: true, action: 'prevent', typingSpeedThreshold: 80 },
+  unhingedMode: { enabled: false },
+  toneChecker: { enabled: true, warnOnAggressive: true },
 };

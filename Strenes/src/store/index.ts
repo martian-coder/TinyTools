@@ -33,6 +33,8 @@ interface SiftState {
   updateDND: (patch: Partial<UserSettings['dnd']>) => void;
   updateDrunkMode: (patch: Partial<UserSettings['drunkMode']>) => void;
   updateDisappearingMessages: (patch: Partial<UserSettings['disappearingMessages']>) => void;
+  updateUnhingedMode: (patch: Partial<UserSettings['unhingedMode']>) => void;
+  updateToneChecker: (patch: Partial<UserSettings['toneChecker']>) => void;
   setContactEmergency: (contactId: string, isEmergency: boolean) => void;
   toggleTrusted: (contactId: string) => void;
   setContactTrusted: (contactId: string, trusted: boolean) => void;
@@ -108,6 +110,8 @@ export const useSiftStore = create<SiftState>()(
       updateDND:      patch => set(s => ({ settings: { ...s.settings, dnd:      { ...s.settings.dnd,      ...patch } } })),
       updateDrunkMode: patch => set(s => ({ settings: { ...s.settings, drunkMode: { ...s.settings.drunkMode, ...patch } } })),
       updateDisappearingMessages: patch => set(s => ({ settings: { ...s.settings, disappearingMessages: { ...s.settings.disappearingMessages, ...patch } } })),
+      updateUnhingedMode: patch => set(s => ({ settings: { ...s.settings, unhingedMode: { ...s.settings.unhingedMode, ...patch } } })),
+      updateToneChecker: patch => set(s => ({ settings: { ...s.settings, toneChecker: { ...s.settings.toneChecker, ...patch } } })),
 
       setContactEmergency: (id, isEmergency) => set(s => ({
         contacts: s.contacts.map(c => c.id === id ? { ...c, isEmergency } : c),

@@ -4,6 +4,14 @@ export type BlockAction = 'review' | 'silentDrop' | 'askPerMessage';
 export type ThemeName = 'aurora' | 'sunset' | 'noir' | 'daylight' | 'terminal';
 export type DisappearingMessageMode = 'off' | 'onRead' | '1m' | '5m' | '1h' | '24h' | 'custom';
 export type DrunkModeAction = 'prevent' | 'warn';
+export type MessageTone = 'polite' | 'neutral' | 'assertive' | 'aggressive' | 'harsh';
+
+export interface ToneAnalysis {
+  tone: MessageTone;
+  confidence: number;
+  mightCauseAnxiety: boolean;
+  suggestion?: string;
+}
 
 export type ModerationEngine = 'rules' | 'apple-fm' | 'gemini-nano' | 'executorch';
 
@@ -73,6 +81,13 @@ export interface UserSettings {
   };
   dnd: DNDSettings;
   drunkMode: DrunkModeSettings;
+  unhingedMode: {
+    enabled: boolean;
+  };
+  toneChecker: {
+    enabled: boolean;
+    warnOnAggressive: boolean;
+  };
 }
 
 export interface RouteResult {

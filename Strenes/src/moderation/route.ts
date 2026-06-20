@@ -18,6 +18,11 @@ export function canReceiveInDND(contact: Contact, settings: UserSettings): boole
 }
 
 export function routeVerdict(verdict: ModerationVerdict, settings: UserSettings, trusted: boolean, contact?: Contact): RouteResult {
+  // Unhinged mode: bypass all filters
+  if (settings.unhingedMode.enabled) {
+    return { folder: 'primary', status: 'delivered' };
+  }
+
   // Check DND
   if (contact && !canReceiveInDND(contact, settings)) {
     if (settings.dnd.notifyButSilent) {

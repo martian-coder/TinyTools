@@ -1,4 +1,4 @@
-import { AlertTriangle, Briefcase, Forward, ShieldCheck, RotateCcw, Palette, Clock, Zap, Trash2 } from 'lucide-react';
+import { AlertTriangle, Briefcase, Forward, ShieldCheck, RotateCcw, Palette, Clock, Zap, Trash2, Flame, Brain } from 'lucide-react';
 import { useSiftStore } from '../store';
 import { Switch } from '../components/ui/Switch';
 import { Segment } from '../components/ui/Segment';
@@ -18,6 +18,8 @@ export function Settings({ onShowThemes }: SettingsProps) {
   const updateDND             = useSiftStore(s => s.updateDND);
   const updateDrunkMode       = useSiftStore(s => s.updateDrunkMode);
   const updateDisappearingMessages = useSiftStore(s => s.updateDisappearingMessages);
+  const updateUnhingedMode    = useSiftStore(s => s.updateUnhingedMode);
+  const updateToneChecker     = useSiftStore(s => s.updateToneChecker);
   const setContactEmergency   = useSiftStore(s => s.setContactEmergency);
   const resetToSeed           = useSiftStore(s => s.resetToSeed);
   const s = settings;
@@ -242,6 +244,34 @@ export function Settings({ onShowThemes }: SettingsProps) {
                 </div>
               )}
             </>
+          )}
+        </div>
+
+        {/* Unhinged Mode */}
+        <div className="glass p-4" style={{ borderRadius: 20 }}>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 font-medium text-main">
+              <Flame size={16} style={{ color: '#f59e0b' }} /> Unhinged mode
+            </div>
+            <Switch on={s.unhingedMode.enabled} onClick={() => updateUnhingedMode({ enabled: !s.unhingedMode.enabled })} />
+          </div>
+          <p className="text-xs dim mt-1.5">Go wild. Bypass all filters & moderation. For when you wanna troll yourself 😈</p>
+        </div>
+
+        {/* Tone Checker */}
+        <div className="glass p-4 space-y-3" style={{ borderRadius: 20 }}>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 font-medium text-main">
+              <Brain size={16} style={{ color: '#8b5cf6' }} /> Message tone checker
+            </div>
+            <Switch on={s.toneChecker.enabled} onClick={() => updateToneChecker({ enabled: !s.toneChecker.enabled })} />
+          </div>
+          <p className="text-xs dim mt-1.5">AI analyzes if your message sounds polite, assertive, or aggressive before sending.</p>
+          {s.toneChecker.enabled && (
+            <label className="flex items-center justify-between text-sm text-main">
+              <span>Warn if message sounds aggressive</span>
+              <Switch on={s.toneChecker.warnOnAggressive} onClick={() => updateToneChecker({ warnOnAggressive: !s.toneChecker.warnOnAggressive })} />
+            </label>
           )}
         </div>
 
