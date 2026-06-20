@@ -3,8 +3,8 @@ name: Deploy to GitHub Pages
 # Publishes four static surfaces:
 #   /            -> MarkdownZipped/web  (the live compression studio, v1)
 #   /v2/         -> static PREVIEW of the SaaS frontend (saas/public)
-#   /sift/       -> Sift messaging-filter PWA (Sift/)
-#   /sift-home/  -> Sift marketing landing page (Sift/landing/)
+#   /strenes/    -> Strenes messaging-filter PWA (Strenes/)
+#   /strenes-home/ -> Strenes marketing landing page (Strenes/landing/)
 #
 # Deploys ONLY from the default branch (main).
 
@@ -17,12 +17,12 @@ on:
       - "MarkdownZipped/saas/public/**"
       - "MarkdownZipped/saas/src/plans.js"
       - "MarkdownZipped/saas/build-preview.mjs"
-      - "Sift/src/**"
-      - "Sift/public/**"
-      - "Sift/index.html"
-      - "Sift/vite.config.ts"
-      - "Sift/package.json"
-      - "Sift/landing/**"
+      - "Strenes/src/**"
+      - "Strenes/public/**"
+      - "Strenes/index.html"
+      - "Strenes/vite.config.ts"
+      - "Strenes/package.json"
+      - "Strenes/landing/**"
       - ".github/workflows/pages.yml"
   workflow_dispatch:
 
