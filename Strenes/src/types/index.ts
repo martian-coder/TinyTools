@@ -1,7 +1,10 @@
 export type Folder = 'primary' | 'business' | 'promotions' | 'review';
 export type Category = 'clean' | 'abusive' | 'spam' | 'business' | 'promo';
 export type BlockAction = 'review' | 'silentDrop' | 'askPerMessage';
-export type ThemeName = 'aurora' | 'sunset' | 'noir' | 'daylight';
+export type ThemeName = 'aurora' | 'sunset' | 'noir' | 'daylight' | 'terminal';
+export type DisappearingMessageMode = 'off' | 'onRead' | '1m' | '5m' | '1h' | '24h' | 'custom';
+export type MessageTone = 'polite' | 'neutral' | 'assertive' | 'aggressive' | 'harsh';
+export type DrunkModeAction = 'prevent' | 'warn';
 
 export type ModerationEngine = 'rules' | 'apple-fm' | 'gemini-nano' | 'executorch';
 
@@ -13,11 +16,19 @@ export interface ModerationVerdict {
   engine: ModerationEngine;
 }
 
+export interface ToneAnalysis {
+  tone: MessageTone;
+  confidence: number;
+  mightCauseAnxiety: boolean;
+  suggestion?: string;
+}
+
 export interface Contact {
   id: string;
   name: string;
   trusted: boolean;
   grad: string;
+  isEmergency?: boolean;
 }
 
 export interface Message {
@@ -42,6 +53,32 @@ export interface UserSettings {
   };
   business: { enabled: boolean };
   spam: { enabled: boolean; onBlock: BlockAction };
+  disappearingMessages: {
+    enabled: boolean;
+    defaultMode: DisappearingMessageMode;
+    customMinutes?: number;
+  };
+  dnd: {
+    enabled: boolean;
+    startHour: number;
+    endHour: number;
+    allowTrusted: boolean;
+    allowEmergency: boolean;
+    notifyButSilent: boolean;
+  };
+  drunkMode: {
+    enabled: boolean;
+    autoDetect: boolean;
+    action: DrunkModeAction;
+    typingSpeedThreshold: number;
+  };
+  unhingedMode: {
+    enabled: boolean;
+  };
+  toneChecker: {
+    enabled: boolean;
+    warnOnAggressive: boolean;
+  };
   theme: ThemeName;
   trustedIds: string[];
 }
