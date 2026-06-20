@@ -1,10 +1,12 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { ArrowLeft, ShieldCheck, Send, Loader2, Lock, Clock, Phone, PhoneOff, Mic, MicOff, Volume2, VolumeX, Sparkles, Check, X } from 'lucide-react';
+import { ArrowLeft, ShieldCheck, Send, Loader2, Lock, Clock, Phone, PhoneOff, Mic, MicOff, Volume2, VolumeX, Sparkles, Check, X, Brain, AlertCircle } from 'lucide-react';
 import { useSiftStore, selectConversation } from '../store';
 import { Avatar } from '../components/ui/Avatar';
 import { getModerator } from '../moderation';
 import { checkSpellingWithAI, applySuggestion } from '../moderation/spell-check';
-import type { ModerationVerdict, SpellCheckSuggestion } from '../types';
+import { analyzeTone } from '../moderation/tone-analyzer';
+import { analyzeTypingPattern, getDrunkDetectionLevel } from '../moderation/drunk-detection';
+import type { ModerationVerdict, SpellCheckSuggestion, ToneAnalysis } from '../types';
 
 type OutgoingState =
   | { kind: 'idle' }
@@ -38,6 +40,10 @@ export function Conversation() {
   const [callSecs, setCallSecs]              = useState(0);
   const [spellCheckSuggestions, setSpellCheckSuggestions] = useState<SpellCheckSuggestion[]>([]);
   const [pendingSendText, setPendingSendText] = useState<string | null>(null);
+  const [drunkWarning, setDrunkWarning]      = useState<'none' | 'mild' | 'moderate' | 'high'>('none');
+  const [toneResult, setToneResult]          = useState<ToneAnalysis | null>(null);
+  const [showToneAnalysis, setShowToneAnalysis] = useState(false);
+  const [draftStartTime, setDraftStartTime]  = useState<number>(0);
   const debounceRef               = useRef<ReturnType<typeof setTimeout> | null>(null);
   const timerRef                  = useRef<ReturnType<typeof setInterval> | null>(null);
   const bottomRef                 = useRef<HTMLDivElement>(null);
@@ -95,8 +101,36 @@ export function Conversation() {
   }, [guardActive, civility.sensitivity]);
 
   const onDraftChange = (text: string) => {
+    const now = Date.now();
+    if (!draftStartTime) setDraftStartTime(now);
+
     setDraft(text);
-    if (!text.trim()) { setOutgoing({ kind: 'idle' }); return; }
+
+    if (!text.trim()) {
+      setOutgoing({ kind: 'idle' });
+      setDrunkWarning('none');
+      setToneResult(null);
+      setShowToneAnalysis(false);
+      return;
+    }
+
+    if (settings.drunkMode.enabled && settings.drunkMode.autoDetect && text.length > 10) {
+      const typingTime = Math.max(now - draftStartTime, 100);
+      const pattern = analyzeTypingPattern(text, typingTime);
+      const level = getDrunkDetectionLevel(pattern);
+      setDrunkWarning(level);
+
+      if (level !== 'none' && settings.drunkMode.action === 'prevent') {
+        setOutgoing({ kind: 'idle' });
+        return;
+      }
+    }
+
+    if (settings.toneChecker.enabled && text.length > 10) {
+      const analysis = analyzeTone(text);
+      setToneResult(analysis);
+    }
+
     if (!guardActive)  { setOutgoing({ kind: 'idle' }); return; }
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => classify(text.trim()), 700);
@@ -106,6 +140,7 @@ export function Conversation() {
     const text = draft.trim();
     if (!text || !activeContactId) return;
     if (outgoing.kind === 'blocked' || outgoing.kind === 'checking') return;
+    if (drunkWarning !== 'none' && settings.drunkMode.action === 'prevent') return;
 
     if (settings.spellCheck.enabled && !pendingSendText) {
       setOutgoing({ kind: 'checking' });
@@ -129,6 +164,10 @@ export function Conversation() {
     }
     setDraft('');
     setOutgoing({ kind: 'idle' });
+    setDrunkWarning('none');
+    setToneResult(null);
+    setShowToneAnalysis(false);
+    setDraftStartTime(0);
   };
 
   const sendWithCorrections = (acceptSuggestions: boolean) => {
@@ -152,7 +191,7 @@ export function Conversation() {
 
   if (!contact) return null;
 
-  const sendDisabled = !draft.trim() || outgoing.kind === 'blocked' || outgoing.kind === 'checking';
+  const sendDisabled = !draft.trim() || outgoing.kind === 'blocked' || outgoing.kind === 'checking' || (drunkWarning !== 'none' && settings.drunkMode.action === 'prevent');
 
   return (
     <>
@@ -205,12 +244,23 @@ export function Conversation() {
       </div>
 
       {/* State hint + Input */}
-      <div className="px-3 pb-3 pt-1">
+      <div className="px-3 pb-3 pt-1 space-y-2">
         {outgoing.kind === 'blocked' && (
           <div className="flex items-center gap-1.5 px-1 pb-1.5 slide-up">
             <Lock size={11} style={{ color: '#f43f5e' }} />
             <span className="text-[11px]" style={{ color: '#f43f5e' }}>
               Can't send — {contact.name} blocks abusive messages
+            </span>
+          </div>
+        )}
+        {drunkWarning !== 'none' && (
+          <div className="glass p-2 flex items-center gap-2 slide-up" style={{ borderRadius: 12, borderLeft: '3px solid #f87171' }}>
+            <AlertCircle size={14} style={{ color: '#f87171', flexShrink: 0 }} />
+            <span className="text-[11px] text-main">
+              {drunkWarning === 'mild' && '🍺 Mild drunk typing detected'}
+              {drunkWarning === 'moderate' && '🍻 Moderate drunk typing detected'}
+              {drunkWarning === 'high' && '🍷 High drunk typing detected'}
+              {settings.drunkMode.action === 'prevent' && ' — message blocked'}
             </span>
           </div>
         )}
@@ -241,6 +291,16 @@ export function Conversation() {
             placeholder="Message"
             className="flex-1 bg-transparent px-3 text-sm text-main outline-none placeholder:dim"
           />
+          {settings.toneChecker.enabled && draft.length > 10 && (
+            <button
+              onClick={() => setShowToneAnalysis(true)}
+              className="grid place-items-center transition-all active:scale-90"
+              style={{ width: 38, height: 38, borderRadius: 999 }}
+              title="Analyze tone"
+            >
+              <Brain size={16} style={{ color: 'var(--accent)' }} />
+            </button>
+          )}
           <button
             onClick={() => sendOut()}
             disabled={sendDisabled}
@@ -267,6 +327,68 @@ export function Conversation() {
           </button>
         </div>
       </div>
+
+      {/* Tone Analysis Modal */}
+      {showToneAnalysis && toneResult && (
+        <div
+          className="absolute inset-0 z-50 flex items-center justify-center"
+          style={{ background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)' }}
+          onClick={() => setShowToneAnalysis(false)}
+        >
+          <div
+            className="glass p-5 max-w-xs"
+            style={{ borderRadius: 20 }}
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="flex items-center gap-2 mb-3">
+              <Brain size={18} style={{ color: 'var(--accent)' }} />
+              <div className="font-semibold text-main">Message Tone</div>
+            </div>
+            <div className="space-y-3">
+              <div>
+                <div className="text-xs dim mb-1">Detected tone</div>
+                <div className="text-sm font-medium text-main capitalize">{toneResult.tone}</div>
+              </div>
+              <div>
+                <div className="text-xs dim mb-1">Confidence</div>
+                <div className="flex items-center gap-2">
+                  <div className="flex-1 h-1.5 glass rounded-full overflow-hidden">
+                    <div
+                      className="h-full"
+                      style={{
+                        width: `${Math.round(toneResult.confidence * 100)}%`,
+                        background: toneResult.confidence > 0.7 ? '#f87171' : toneResult.confidence > 0.5 ? '#fbbf24' : '#22d3ee',
+                      }}
+                    />
+                  </div>
+                  <span className="text-xs font-medium">{Math.round(toneResult.confidence * 100)}%</span>
+                </div>
+              </div>
+              {toneResult.mightCauseAnxiety && (
+                <div className="p-2 rounded-lg" style={{ background: 'rgba(248, 113, 113, 0.15)', borderLeft: '3px solid #f87171' }}>
+                  <div className="flex items-center gap-2">
+                    <AlertCircle size={14} style={{ color: '#f87171', flexShrink: 0 }} />
+                    <span className="text-xs text-main">This message might upset someone.</span>
+                  </div>
+                </div>
+              )}
+              {toneResult.suggestion && (
+                <div>
+                  <div className="text-xs dim mb-1">Suggestion</div>
+                  <div className="text-xs text-main">{toneResult.suggestion}</div>
+                </div>
+              )}
+            </div>
+            <button
+              onClick={() => setShowToneAnalysis(false)}
+              className="w-full mt-4 px-3 py-2 text-xs font-medium text-main hover:bg-white hover:bg-opacity-5 transition"
+              style={{ borderRadius: 12 }}
+            >
+              Got it
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Spell Check Modal */}
       {pendingSendText && spellCheckSuggestions.length > 0 && (
