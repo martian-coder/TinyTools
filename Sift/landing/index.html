@@ -359,35 +359,46 @@
         <div class="phone-frame">
           <div class="phone-notch"></div>
           <div class="phone-screen" style="display:flex;flex-direction:column">
-            <!-- Conversation header with call button -->
+            <!-- Conversation header with aurora call button -->
             <div class="phone-hdr" style="padding:30px 10px 8px">
               <div class="ph-back">‹</div>
-              <div class="ph-av" style="background:linear-gradient(135deg,#7c83ff,#a855f7)"></div>
+              <div class="ph-av" style="background:linear-gradient(135deg,#e879f9,#7c83ff)"></div>
               <div style="flex:1;min-width:0">
-                <div class="ph-name">Sarah K.</div>
-                <div class="ph-sub" style="color:rgba(124,131,255,.8)">🛡️ Trusted &middot; filters off</div>
+                <div class="ph-name">Alex</div>
+                <div class="ph-sub" style="color:#f87171;font-size:7.5px">🔒 high civility filter</div>
               </div>
-              <!-- Aurora call button -->
+              <!-- ✦ Aurora call button ✦ -->
               <div class="ph-call-btn">
                 <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13.93a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.63 3h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8 10.91a16 16 0 0 0 6 6l.81-.81a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 21.73 18.82z"/></svg>
               </div>
             </div>
             <!-- Message thread -->
             <div class="msgs" style="flex:1;overflow:hidden;display:flex;flex-direction:column">
-              <div class="mi-in">Hey, joining the call? 📞</div>
-              <div class="mi-out">Yeah, 2 mins! 👍</div>
-              <div class="mi-in">No rush 😄</div>
-              <div class="mi-out">Can you send that doc?</div>
-              <div class="mi-held">
-                <div>omg just forget it already</div>
-                <div class="mt" style="color:#fbbf24">⏸ under review &middot; 10:42</div>
+              <!-- Clean incoming -->
+              <div class="mi-in">Hey, catch up later? 🙌</div>
+              <!-- Clean outgoing -->
+              <div class="mi-out">Sure! Calling in 5 📞</div>
+              <!-- Blurred incoming — held in review -->
+              <div class="mi-in" style="border:1px solid rgba(251,191,36,.3)">
+                <div class="blr">You&rsquo;re so stupid, why do—</div>
+                <div class="mt ty">⏸ Held in Review &middot; tap to reveal</div>
+              </div>
+              <!-- Blocked outgoing — civility guard fired -->
+              <div style="align-self:flex-end;max-width:82%;display:flex;flex-direction:column;align-items:flex-end">
+                <div class="mi-out" style="background:rgba(244,63,94,.09);border:1px solid rgba(244,63,94,.32);opacity:.65">
+                  You&rsquo;re being ridiculous
+                </div>
+                <div style="font-size:7px;color:#f87171;display:flex;align-items:center;gap:3px;margin-top:3px">
+                  <svg width="7" height="7" viewBox="0 0 24 24" fill="none" stroke="#f87171" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                  Can&rsquo;t send &mdash; abusive content
+                </div>
               </div>
             </div>
-            <!-- Input bar -->
+            <!-- Input bar in blocked state -->
             <div class="ph-input-bar">
-              <div class="ph-input-pill">Message</div>
-              <div class="ph-send-btn">
-                <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+              <div class="ph-input-pill" style="border-color:rgba(244,63,94,.3);color:rgba(238,241,255,.5)">You&rsquo;re being ridiculous</div>
+              <div class="ph-send-btn" style="background:rgba(244,63,94,.22)">
+                <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#f43f5e" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
               </div>
             </div>
           </div>
