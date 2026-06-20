@@ -1,6 +1,6 @@
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { ArrowLeft, ShieldCheck, Send, Loader2, Lock, Clock, Phone, PhoneOff, Mic, MicOff, Volume2, VolumeX, Sparkles, Check, X, Brain, AlertCircle } from 'lucide-react';
-import { useSiftStore, selectConversation } from '../store';
+import { useSiftStore } from '../store';
 import { Avatar } from '../components/ui/Avatar';
 import { getModerator } from '../moderation';
 import { checkSpellingWithAI, applySuggestion } from '../moderation/spell-check';
@@ -30,7 +30,19 @@ export function Conversation() {
   const setScreen            = useSiftStore(s => s.setScreen);
   const sendMessage          = useSiftStore(s => s.sendMessage);
   const sendOutgoingToReview = useSiftStore(s => s.sendOutgoingToReview);
-  const messages             = useSiftStore(s => activeContactId ? selectConversation(s, activeContactId) : []);
+  // Pull raw messages from store (stable reference via slice), then filter/sort in useMemo
+  // to avoid returning new array references from the Zustand selector (causes infinite loop).
+  const allMessages = useSiftStore(s => s.messages);
+  const messages = useMemo(() =>
+    activeContactId
+      ? allMessages
+          .filter(m => m.contactId === activeContactId && (
+            m.dir === 'out' || m.status === 'delivered' || m.status === 'approved'
+          ))
+          .sort((a, b) => a.ts - b.ts)
+      : [],
+    [allMessages, activeContactId]
+  );
 
   const [draft, setDraft]                    = useState('');
   const [outgoing, setOutgoing]              = useState<OutgoingState>({ kind: 'idle' });
