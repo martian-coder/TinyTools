@@ -1,4 +1,4 @@
-import { AlertTriangle, Briefcase, Forward, ShieldCheck, RotateCcw, Palette } from 'lucide-react';
+import { AlertTriangle, Briefcase, Forward, ShieldCheck, RotateCcw, Palette, Download, Brain } from 'lucide-react';
 import { useSiftStore } from '../store';
 import { Switch } from '../components/ui/Switch';
 import { Segment } from '../components/ui/Segment';
@@ -118,6 +118,52 @@ export function Settings({ onShowThemes }: SettingsProps) {
               <Switch on={c.trusted} onClick={() => toggleTrusted(c.id)} />
             </label>
           ))}
+        </div>
+
+        {/* Engine Status */}
+        <div className="glass p-4" style={{ borderRadius: 20 }}>
+          <div className="flex items-center gap-2 font-medium text-main mb-2">
+            <Brain size={16} className="text-[#7c83ff]" /> Moderation Engine
+          </div>
+          <div className="text-xs space-y-1">
+            <div className="flex justify-between">
+              <span className="dim">Primary:</span>
+              <span className="text-main font-medium">Gemini Nano (On-device)</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="dim">Fallback:</span>
+              <span className="text-main font-medium">Rules engine</span>
+            </div>
+            <p className="dim pt-1">💡 Message plaintext never leaves your device.</p>
+          </div>
+        </div>
+
+        {/* Data Management */}
+        <div className="glass p-4 space-y-2" style={{ borderRadius: 20 }}>
+          <div className="flex items-center gap-2 font-medium text-main mb-2">
+            <Download size={16} className="text-[#22d3ee]" /> Data Management
+          </div>
+          <button
+            onClick={() => {
+              const data = JSON.stringify({
+                contacts: useSiftStore.getState().contacts,
+                settings: useSiftStore.getState().settings,
+                messages: useSiftStore.getState().messages,
+                exportedAt: new Date().toISOString(),
+              }, null, 2);
+              const blob = new Blob([data], { type: 'application/json' });
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement('a');
+              a.href = url;
+              a.download = `sift-backup-${Date.now()}.json`;
+              a.click();
+              URL.revokeObjectURL(url);
+            }}
+            className="w-full flex items-center justify-center gap-2 text-sm text-main py-2 glass hover:bg-white hover:bg-opacity-10 transition"
+            style={{ borderRadius: 12 }}
+          >
+            <Download size={14} /> Export data
+          </button>
         </div>
 
         <button
