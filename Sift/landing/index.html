@@ -136,89 +136,79 @@
       background:radial-gradient(ellipse at 50% 60%, rgba(99,102,241,.28) 0%, transparent 70%);
       pointer-events:none;z-index:0;
     }
-    .phone-notch { position:absolute;top:0;left:50%;transform:translateX(-50%);width:90px;height:26px;background:#0d1022;border-radius:0 0 18px 18px;z-index:3; }
-    .phone-screen {
-      position:absolute;inset:0;overflow:hidden;border-radius:42px;z-index:1;
-      background:
-        radial-gradient(ellipse at 10% 12%, rgba(124,131,255,.28) 0%, transparent 48%),
-        radial-gradient(ellipse at 90% 42%, rgba(34,211,238,.2) 0%, transparent 48%),
-        radial-gradient(ellipse at 50% 92%, rgba(196,181,253,.22) 0%, transparent 55%),
-        #eaecf9;
-    }
+    .phone-notch { position:absolute;top:0;left:50%;transform:translateX(-50%);width:90px;height:26px;background:#3730a3;border-radius:0 0 18px 18px;z-index:3; }
+    .phone-screen { position:absolute;inset:0;overflow:hidden;border-radius:42px;z-index:1;background:#f4f6ff; }
     .phone-hdr {
-      padding: 30px 12px 8px;
-      background: rgba(255,255,255,.65);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-      border-bottom: 1px solid rgba(255,255,255,.82);
+      padding: 30px 12px 10px;
+      background: linear-gradient(135deg,#4338ca 0%,#6366f1 60%,#8b5cf6 100%);
       display: flex; align-items: center; gap: 7px;
     }
-    .ph-av { width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#a78bfa,#6366f1);flex-shrink:0; }
-    .ph-name { font-size:11px;font-weight:700;color:#1c2030; }
-    .ph-sub { font-size:8px;color:rgba(28,32,48,.52); }
-    .tabs { display:flex;gap:4px;padding:6px 10px;overflow-x:auto; }
-    .tab { font-size:7.5px;font-weight:700;padding:3px 9px;border-radius:99px;background:rgba(255,255,255,.58);color:rgba(28,32,48,.48);white-space:nowrap;border:1px solid rgba(255,255,255,.8); }
-    .tab.on { background:rgba(99,102,241,.13);color:#6366f1;border:1px solid rgba(99,102,241,.24); }
-    .tab.warn { background:rgba(217,119,6,.1);color:#d97706;border:1px solid rgba(217,119,6,.22); }
-    .msgs { padding: 8px 10px; display:flex;flex-direction:column;gap:7px; }
+    .ph-av { width:28px;height:28px;border-radius:50%;background:rgba(255,255,255,.22);border:1.5px solid rgba(255,255,255,.42);flex-shrink:0; }
+    .ph-name { font-size:11px;font-weight:700;color:#ffffff; }
+    .ph-sub { font-size:8px;color:rgba(255,255,255,.72); }
+    .tabs { display:flex;gap:4px;padding:6px 10px;overflow-x:auto;background:#ffffff;border-bottom:1px solid rgba(99,102,241,.08); }
+    .tab { font-size:7.5px;font-weight:700;padding:3px 10px;border-radius:99px;background:rgba(99,102,241,.07);color:rgba(28,32,48,.52);white-space:nowrap;border:1px solid rgba(99,102,241,.12); }
+    .tab.on { background:#6366f1;color:#fff;border-color:transparent;box-shadow:0 3px 10px -3px rgba(99,102,241,.5); }
+    .tab.warn { background:rgba(217,119,6,.09);color:#d97706;border:1px solid rgba(217,119,6,.2); }
+    .msgs { padding:8px 10px;display:flex;flex-direction:column;gap:7px; }
     .mi {
-      align-self:flex-start;
-      background:rgba(255,255,255,.68);
-      border:1px solid rgba(255,255,255,.88);
-      border-radius:12px 12px 12px 3px; padding:6px 9px;
+      align-self:flex-start;background:#ffffff;
+      border:1px solid rgba(99,102,241,.09);
+      border-radius:14px;padding:8px 10px;
       font-size:9.5px;color:#1c2030;max-width:78%;
+      box-shadow:0 2px 10px -3px rgba(99,102,241,.14);
     }
     .mt { font-size:7px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;margin-top:3px; }
     .tc { color:#059669; } .ty { color:#d97706; } .tr { color:#dc2626; } .tb { color:#0891b2; }
     .blr { filter:blur(2.5px);opacity:.45; }
     .chip-shield {
       display:inline-flex;align-items:center;gap:5px;
-      font-size:8px;color:rgba(99,102,241,.85);
-      background:rgba(99,102,241,.1);padding:4px 10px;
-      border-radius:99px;border:1px solid rgba(99,102,241,.22);
+      font-size:8px;color:rgba(255,255,255,.9);
+      background:rgba(255,255,255,.18);padding:4px 10px;
+      border-radius:99px;border:1px solid rgba(255,255,255,.32);
       margin:10px auto 0;display:flex;justify-content:center;
     }
     /* CONVERSATION MOCKUP ELEMENTS */
-    .ph-back { font-size:16px;color:#6366f1;font-weight:700;padding:0 4px;line-height:1;flex-shrink:0; }
+    .ph-back { font-size:16px;color:rgba(255,255,255,.88);font-weight:700;padding:0 4px;line-height:1;flex-shrink:0; }
     .ph-call-btn {
       width:28px;height:28px;border-radius:9px;flex-shrink:0;
-      background:linear-gradient(135deg,#6366f1,#06b6d4);
+      background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.38);
       display:grid;place-items:center;
-      box-shadow:0 4px 14px -4px rgba(99,102,241,.55);
     }
     .mi-in {
-      align-self:flex-start;
-      background:rgba(255,255,255,.68);border:1px solid rgba(255,255,255,.88);
-      border-radius:12px 12px 12px 3px;padding:6px 9px;
+      align-self:flex-start;background:#ffffff;border:1px solid rgba(99,102,241,.09);
+      border-radius:12px 12px 12px 3px;padding:8px 10px;
       font-size:9.5px;color:#1c2030;max-width:80%;
+      box-shadow:0 2px 10px -3px rgba(99,102,241,.12);
     }
     .mi-out {
       align-self:flex-end;
-      background:linear-gradient(135deg,rgba(99,102,241,.18),rgba(6,182,212,.12));
-      border-radius:12px 12px 3px 12px;padding:6px 9px;
-      font-size:9.5px;color:#1c2030;max-width:80%;
-      border:1px solid rgba(99,102,241,.2);
+      background:linear-gradient(135deg,#6366f1,#8b5cf6);
+      border-radius:12px 12px 3px 12px;padding:8px 10px;
+      font-size:9.5px;color:#ffffff;max-width:80%;
+      box-shadow:0 4px 14px -4px rgba(99,102,241,.55);
     }
     .mi-held {
       align-self:flex-end;background:rgba(217,119,6,.07);
-      border-radius:12px 12px 3px 12px;padding:6px 9px;
+      border-radius:12px 12px 3px 12px;padding:8px 10px;
       font-size:9.5px;color:#1c2030;max-width:80%;
-      border:1px solid rgba(217,119,6,.24);opacity:.85;
+      border:1px solid rgba(217,119,6,.22);
     }
     .ph-input-bar {
-      padding:8px 10px;border-top:1px solid rgba(255,255,255,.8);
+      padding:8px 10px;border-top:1px solid rgba(99,102,241,.08);
       display:flex;align-items:center;gap:6px;flex-shrink:0;
-      background:rgba(255,255,255,.55);
+      background:#ffffff;
     }
     .ph-input-pill {
-      flex:1;background:rgba(255,255,255,.72);border:1px solid rgba(255,255,255,.9);
+      flex:1;background:#f4f6ff;border:1px solid rgba(99,102,241,.12);
       border-radius:99px;padding:5px 10px;
-      font-size:8px;color:rgba(28,32,48,.36);
+      font-size:8px;color:rgba(28,32,48,.38);
     }
     .ph-send-btn {
       width:24px;height:24px;border-radius:50%;flex-shrink:0;
-      background:linear-gradient(135deg,#6366f1,#06b6d4);
+      background:linear-gradient(135deg,#6366f1,#8b5cf6);
       display:grid;place-items:center;
+      box-shadow:0 3px 10px -3px rgba(99,102,241,.55);
     }
 
     /* CAROUSEL */
@@ -438,7 +428,7 @@
                   <div class="ph-av" style="background:linear-gradient(135deg,#e879f9,#7c83ff)"></div>
                   <div style="flex:1;min-width:0">
                     <div class="ph-name">Alex</div>
-                    <div class="ph-sub" style="color:#dc2626;font-size:7.5px">🔒 high civility filter</div>
+                    <div class="ph-sub" style="color:rgba(255,200,200,.9);font-size:7.5px">🔒 high civility filter</div>
                   </div>
                   <div class="ph-call-btn">
                     <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13.93a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.63 3h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8 10.91a16 16 0 0 0 6 6l.81-.81a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 21.73 18.82z"/></svg>
@@ -447,12 +437,12 @@
                 <div class="msgs" style="flex:1;overflow:hidden;display:flex;flex-direction:column">
                   <div class="mi-in">Hey, catch up later? 🙌</div>
                   <div class="mi-out">Sure! Calling in 5 📞</div>
-                  <div class="mi-in" style="border:1px solid rgba(217,119,6,.28)">
+                  <div class="mi-in" style="border:1px solid rgba(217,119,6,.22);background:rgba(255,251,235,.9)">
                     <div class="blr">You&rsquo;re so stupid, why do—</div>
                     <div class="mt ty">⏸ Held in Review &middot; tap to reveal</div>
                   </div>
                   <div style="align-self:flex-end;max-width:82%;display:flex;flex-direction:column;align-items:flex-end">
-                    <div class="mi-out" style="background:rgba(220,38,38,.07);border:1px solid rgba(220,38,38,.26);opacity:.7">You&rsquo;re being ridiculous</div>
+                    <div class="mi-out" style="background:rgba(220,38,38,.1);border:1px solid rgba(220,38,38,.22);box-shadow:none;color:#991b1b;opacity:.8">You&rsquo;re being ridiculous</div>
                     <div style="font-size:7px;color:#dc2626;display:flex;align-items:center;gap:3px;margin-top:3px">
                       <svg width="7" height="7" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
                       Can&rsquo;t send &mdash; abusive content
@@ -460,8 +450,8 @@
                   </div>
                 </div>
                 <div class="ph-input-bar">
-                  <div class="ph-input-pill" style="border-color:rgba(220,38,38,.28);color:rgba(28,32,48,.48)">You&rsquo;re being ridiculous</div>
-                  <div class="ph-send-btn" style="background:rgba(220,38,38,.18)">
+                  <div class="ph-input-pill" style="border-color:rgba(220,38,38,.25);background:rgba(254,242,242,.8);color:rgba(153,27,27,.6)">You&rsquo;re being ridiculous</div>
+                  <div class="ph-send-btn" style="background:rgba(220,38,38,.15);box-shadow:none">
                     <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
                   </div>
                 </div>
@@ -474,9 +464,9 @@
               <div class="phone-screen" style="display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:50px 0 42px">
                 <div style="display:flex;flex-direction:column;align-items:center;gap:14px">
                   <div style="position:relative;width:90px;height:90px;display:flex;align-items:center;justify-content:center">
-                    <div style="position:absolute;inset:0;border-radius:50%;background:#6366f1;opacity:.14;animation:pulse 1.4s ease-in-out infinite"></div>
-                    <div style="position:absolute;width:72px;height:72px;border-radius:50%;background:#6366f1;opacity:.1;animation:pulse 1.4s ease-in-out infinite .35s"></div>
-                    <div style="width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,#a78bfa,#6366f1);border:2.5px solid rgba(99,102,241,.4);box-shadow:0 0 28px -6px rgba(99,102,241,.45);flex-shrink:0"></div>
+                    <div style="position:absolute;inset:0;border-radius:50%;background:#6366f1;opacity:.12;animation:pulse 1.4s ease-in-out infinite"></div>
+                    <div style="position:absolute;width:72px;height:72px;border-radius:50%;background:#6366f1;opacity:.08;animation:pulse 1.4s ease-in-out infinite .35s"></div>
+                    <div style="width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,#a78bfa,#6366f1);border:2.5px solid rgba(99,102,241,.5);box-shadow:0 6px 24px -6px rgba(99,102,241,.55);flex-shrink:0"></div>
                   </div>
                   <div style="text-align:center">
                     <div style="font-size:15px;font-weight:700;color:#1c2030;letter-spacing:-.4px">Alex</div>
@@ -485,20 +475,20 @@
                 </div>
                 <div style="display:flex;align-items:flex-end;gap:18px">
                   <div style="display:flex;flex-direction:column;align-items:center;gap:6px">
-                    <div style="width:44px;height:44px;border-radius:50%;background:rgba(255,255,255,.72);border:1px solid rgba(255,255,255,.9);display:grid;place-items:center;box-shadow:0 4px 12px -4px rgba(99,102,241,.15)">
-                      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#1c2030" stroke-width="2" stroke-linecap="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+                    <div style="width:44px;height:44px;border-radius:50%;background:#ffffff;border:1px solid rgba(99,102,241,.14);display:grid;place-items:center;box-shadow:0 2px 10px -3px rgba(99,102,241,.18)">
+                      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="2" stroke-linecap="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
                     </div>
                     <span style="font-size:7.5px;color:rgba(28,32,48,.52)">Mute</span>
                   </div>
                   <div style="display:flex;flex-direction:column;align-items:center;gap:6px">
-                    <div style="width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,#f43f5e,#e11d48);box-shadow:0 10px 28px -8px rgba(244,63,94,.6);display:grid;place-items:center">
+                    <div style="width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,#f43f5e,#e11d48);box-shadow:0 8px 24px -6px rgba(244,63,94,.55);display:grid;place-items:center">
                       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round"><path d="M10.68 13.31a16 16 0 0 0 3.41 2.6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7 2 2 0 0 1 1.72 2v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.42 19.42 0 0 1 4.26 8.4a2 2 0 0 1 2-2.18h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L10.68 13.31z"/><line x1="23" y1="1" x2="1" y2="23"/></svg>
                     </div>
                     <span style="font-size:7.5px;color:rgba(28,32,48,.52)">End</span>
                   </div>
                   <div style="display:flex;flex-direction:column;align-items:center;gap:6px">
-                    <div style="width:44px;height:44px;border-radius:50%;background:rgba(255,255,255,.72);border:1px solid rgba(255,255,255,.9);display:grid;place-items:center;box-shadow:0 4px 12px -4px rgba(99,102,241,.15)">
-                      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#1c2030" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+                    <div style="width:44px;height:44px;border-radius:50%;background:#ffffff;border:1px solid rgba(99,102,241,.14);display:grid;place-items:center;box-shadow:0 2px 10px -3px rgba(99,102,241,.18)">
+                      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
                     </div>
                     <span style="font-size:7.5px;color:rgba(28,32,48,.52)">Speaker</span>
                   </div>
@@ -511,8 +501,8 @@
               <div class="phone-notch"></div>
               <div class="phone-screen" style="display:flex;flex-direction:column">
                 <div class="phone-hdr" style="padding:30px 12px 8px">
-                  <div style="flex:1;font-size:13px;font-weight:800;color:#1c2030">Sift</div>
-                  <div style="display:inline-flex;align-items:center;gap:4px;font-size:7px;color:#059669;background:rgba(5,150,105,.09);padding:3px 8px;border-radius:99px;border:1px solid rgba(5,150,105,.22)">
+                  <div style="flex:1;font-size:13px;font-weight:800;color:#ffffff">Sift</div>
+                  <div style="display:inline-flex;align-items:center;gap:4px;font-size:7px;color:rgba(255,255,255,.9);background:rgba(255,255,255,.18);padding:3px 8px;border-radius:99px;border:1px solid rgba(255,255,255,.32)">
                     <svg width="7" height="7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>AI on
                   </div>
                 </div>
@@ -524,7 +514,7 @@
                 </div>
                 <div class="msgs">
                   <div class="mi">
-                    <div style="font-size:8.5px;font-weight:700;color:#6366f1;margin-bottom:2px">Sarah K. 🛡️</div>
+                    <div style="font-size:8.5px;font-weight:700;color:#4f46e5;margin-bottom:2px">Sarah K. 🛡️</div>
                     <div>Hey, lunch tomorrow? 🍜</div>
                     <div class="mt tc">✓ Delivered &middot; on-device AI</div>
                   </div>
@@ -551,33 +541,33 @@
             <div class="phone-frame">
               <div class="phone-notch"></div>
               <div class="phone-screen" style="display:flex;flex-direction:column;overflow:hidden">
-                <div class="phone-hdr" style="padding:30px 12px 8px">
-                  <div style="font-size:13px;font-weight:800;color:#1c2030">Settings</div>
+                <div class="phone-hdr" style="padding:30px 12px 10px">
+                  <div style="font-size:13px;font-weight:800;color:#ffffff">Settings</div>
                 </div>
                 <div style="padding:10px;display:flex;flex-direction:column;gap:7px;overflow:hidden">
-                  <div style="background:rgba(255,255,255,.65);border:1px solid rgba(255,255,255,.88);border-radius:14px;padding:10px">
+                  <div style="background:#ffffff;border:1px solid rgba(99,102,241,.09);border-radius:14px;padding:10px;box-shadow:0 2px 10px -3px rgba(99,102,241,.14)">
                     <div style="font-size:9px;font-weight:700;color:#1c2030;margin-bottom:7px">🛡️ Civility Filter</div>
-                    <div style="display:flex;gap:4px">
-                      <div style="flex:1;padding:4px;text-align:center;border-radius:8px;font-size:7.5px;background:rgba(255,255,255,.5);color:rgba(28,32,48,.38)">Low</div>
-                      <div style="flex:1;padding:4px;text-align:center;border-radius:8px;font-size:7.5px;background:rgba(99,102,241,.13);color:#6366f1;border:1px solid rgba(99,102,241,.24);font-weight:700">Medium</div>
-                      <div style="flex:1;padding:4px;text-align:center;border-radius:8px;font-size:7.5px;background:rgba(255,255,255,.5);color:rgba(28,32,48,.38)">High</div>
+                    <div style="display:flex;gap:4px;background:#f4f6ff;border-radius:9px;padding:3px">
+                      <div style="flex:1;padding:3px;text-align:center;border-radius:7px;font-size:7.5px;color:rgba(28,32,48,.4)">Low</div>
+                      <div style="flex:1;padding:3px;text-align:center;border-radius:7px;font-size:7.5px;background:#6366f1;color:#fff;font-weight:700;box-shadow:0 2px 6px -2px rgba(99,102,241,.5)">Medium</div>
+                      <div style="flex:1;padding:3px;text-align:center;border-radius:7px;font-size:7.5px;color:rgba(28,32,48,.4)">High</div>
                     </div>
                   </div>
-                  <div style="background:rgba(255,255,255,.65);border:1px solid rgba(255,255,255,.88);border-radius:14px;padding:10px;display:flex;justify-content:space-between;align-items:center">
+                  <div style="background:#ffffff;border:1px solid rgba(99,102,241,.09);border-radius:14px;padding:10px;display:flex;justify-content:space-between;align-items:center;box-shadow:0 2px 10px -3px rgba(99,102,241,.14)">
                     <div style="font-size:9px;font-weight:700;color:#1c2030">📢 Spam Filter</div>
-                    <div style="width:26px;height:14px;border-radius:7px;background:linear-gradient(135deg,#6366f1,#06b6d4);position:relative;flex-shrink:0">
-                      <div style="position:absolute;right:2px;top:2px;width:10px;height:10px;border-radius:50%;background:white"></div>
+                    <div style="width:26px;height:14px;border-radius:7px;background:linear-gradient(135deg,#6366f1,#8b5cf6);position:relative;flex-shrink:0;box-shadow:0 2px 6px -2px rgba(99,102,241,.4)">
+                      <div style="position:absolute;right:2px;top:2px;width:10px;height:10px;border-radius:50%;background:white;box-shadow:0 1px 3px rgba(0,0,0,.2)"></div>
                     </div>
                   </div>
-                  <div style="background:rgba(255,255,255,.65);border:1px solid rgba(255,255,255,.88);border-radius:14px;padding:10px;display:flex;justify-content:space-between;align-items:center">
+                  <div style="background:#ffffff;border:1px solid rgba(99,102,241,.09);border-radius:14px;padding:10px;display:flex;justify-content:space-between;align-items:center;box-shadow:0 2px 10px -3px rgba(99,102,241,.14)">
                     <div style="font-size:9px;font-weight:700;color:#1c2030">💼 Business Filter</div>
-                    <div style="width:26px;height:14px;border-radius:7px;background:linear-gradient(135deg,#6366f1,#06b6d4);position:relative;flex-shrink:0">
-                      <div style="position:absolute;right:2px;top:2px;width:10px;height:10px;border-radius:50%;background:white"></div>
+                    <div style="width:26px;height:14px;border-radius:7px;background:linear-gradient(135deg,#6366f1,#8b5cf6);position:relative;flex-shrink:0;box-shadow:0 2px 6px -2px rgba(99,102,241,.4)">
+                      <div style="position:absolute;right:2px;top:2px;width:10px;height:10px;border-radius:50%;background:white;box-shadow:0 1px 3px rgba(0,0,0,.2)"></div>
                     </div>
                   </div>
-                  <div style="background:rgba(99,102,241,.08);border:1px solid rgba(99,102,241,.18);border-radius:14px;padding:10px">
-                    <div style="font-size:9px;font-weight:700;color:#6366f1;margin-bottom:4px">🧠 AI Engine</div>
-                    <div style="font-size:7.5px;color:rgba(28,32,48,.55)">Gemini Nano &middot; on-device</div>
+                  <div style="background:rgba(99,102,241,.06);border:1px solid rgba(99,102,241,.14);border-radius:14px;padding:10px">
+                    <div style="font-size:9px;font-weight:700;color:#4f46e5;margin-bottom:4px">🧠 AI Engine</div>
+                    <div style="font-size:7.5px;color:rgba(28,32,48,.52)">Gemini Nano &middot; on-device</div>
                     <div style="font-size:7.5px;color:#059669;margin-top:3px;display:flex;align-items:center;gap:4px">
                       <div style="width:5px;height:5px;border-radius:50%;background:#059669;flex-shrink:0"></div>Active &middot; zero cloud calls
                     </div>
