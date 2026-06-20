@@ -1,4 +1,4 @@
-# Sift — AI Message Filter PWA
+# Strenes — AI Message Filter PWA
 
 > Every message that reaches you should spark joy. Filter out the noise, abuse, and spam — on-device, offline, and under your control.
 
@@ -18,9 +18,9 @@ A WhatsApp-style PWA where **you** control an on-device AI filter that screens e
 
 ---
 
-## 🎯 Why Sift?
+## 🎯 Why Strenes?
 
-| Feature | Sift | WhatsApp | iMessage | Telegram | Signal |
+| Feature | Strenes | WhatsApp | iMessage | Telegram | Signal |
 |---------|------|----------|----------|----------|--------|
 | AI message filtering | ✓ | ✗ | ✗ | ✗ | ✗ |
 | On-device AI | ✓ | ✗ | ✗ | ✗ | ✗ |
@@ -82,7 +82,7 @@ All classification flows through a swappable `Moderator` interface:
 ### Folder Structure
 
 ```
-Sift/
+Strenes/
 ├── src/                  # React PWA application
 │   ├── moderation/           # Swappable Moderator engine
 │   │   ├── types.ts          # Moderator interface, Sensitivity
@@ -116,7 +116,7 @@ Sift/
 ### Local Setup
 
 ```bash
-cd Sift
+cd Strenes
 npm install
 npm run dev
 # Opens http://localhost:5173
@@ -182,9 +182,9 @@ Change theme in Settings. Persists to localStorage.
 Free to use, install, and share. You **cannot**:
 - Fork or clone the source code
 - Redistribute or rebrand as a different product
-- Create competing products based on Sift's design/logic
+- Create competing products based on Strenes's design/logic
 
-© 2026 Sift. All rights reserved.
+© 2026 Strenes. All rights reserved.
 
 ---
 

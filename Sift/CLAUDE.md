@@ -1,7 +1,7 @@
-# Sift — Claude Context
+# Strenes — Claude Context
 
 ## What this is
-Sift is a WhatsApp-style messaging PWA where the **recipient** controls an AI filter that screens every incoming message on-device before it reaches them.
+Strenes is a WhatsApp-style messaging PWA where the **recipient** controls an AI filter that screens every incoming message on-device before it reaches them.
 
 ## Tech stack
 - **React 19 + Vite + TypeScript + Tailwind CSS v4**
