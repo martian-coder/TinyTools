@@ -846,9 +846,50 @@
               </div>
             </div>
 
+            <!-- ── 13: Style-Aware Spell Check ── -->
+            <div class="phone-frame">
+              <div class="phone-notch"></div>
+              <div class="phone-screen" style="display:flex;flex-direction:column">
+                <div class="phone-hdr" style="padding:30px 10px 8px;gap:8px">
+                  <div class="ph-back">‹</div>
+                  <div class="ph-av" style="background:linear-gradient(135deg,#fbbf24,#f59e0b);border:1.5px solid rgba(255,255,255,.4)"></div>
+                  <div style="flex:1;min-width:0">
+                    <div class="ph-name" style="color:#ffffff">Alex</div>
+                    <div class="ph-sub" style="color:rgba(255,255,255,.75);font-size:7.5px">Spell check enabled</div>
+                  </div>
+                  <div class="ph-call-btn">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13.93a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.63 3h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8 10.91a16 16 0 0 0 6 6l.81-.81a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 21.73 18.82z"/></svg>
+                  </div>
+                </div>
+                <div class="msgs" style="flex:1;overflow:hidden;display:flex;flex-direction:column;gap:6px;padding:10px">
+                  <div class="mi-in">hey watsapp bruuh</div>
+                  <div style="align-self:flex-end;max-width:82%;display:flex;flex-direction:column;gap:3px">
+                    <div style="background:rgba(251,191,36,.15);border:1px solid rgba(251,191,36,.3);border-radius:14px;padding:8px 11px;font-size:9.5px;color:#1c2030">
+                      ✨ Style-Aware Corrections
+                      <div style="font-size:8px;color:rgba(28,32,48,.6);margin-top:3px;line-height:1.4">
+                        watsapp → wassup<br>
+                        bruuh → bro
+                      </div>
+                    </div>
+                    <div style="display:flex;gap:6px;font-size:8px">
+                      <div style="background:rgba(28,32,48,.08);color:rgba(28,32,48,.8);border:1px solid rgba(28,32,48,.15);padding:4px 8px;border-radius:6px;cursor:pointer">Send as-is</div>
+                      <div style="background:rgba(251,191,36,.2);color:#d97706;border:1px solid rgba(251,191,36,.4);padding:4px 8px;border-radius:6px;cursor:pointer;font-weight:600">Fix & send</div>
+                    </div>
+                  </div>
+                </div>
+                <div class="ph-input-bar">
+                  <div class="ph-input-pill">hey watsapp bruuh</div>
+                  <div class="ph-send-btn">
+                    <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><polyline points="22 2 11 13 22 24 22 2"></polyline></svg>
+                  </div>
+                </div>
+              </div>
+            </div>
+
           </div><!-- /phone-carousel -->
           <div class="carousel-dots" id="carouselDots">
             <div class="cdot active"></div>
+            <div class="cdot"></div>
             <div class="cdot"></div>
             <div class="cdot"></div>
             <div class="cdot"></div>
@@ -1126,7 +1167,7 @@
   document.querySelectorAll('.rev').forEach(el => obs.observe(el));
 
   // Phone carousel — dot + label sync + auto-scroll
-  const labels = ['Civility guard & call', 'In-call with AI', 'Smart inbox sorting', 'Settings & AI engine', 'Review queue', 'Business folder', 'Trusted contact thread', 'Disappearing messages', 'Do Not Disturb mode', 'Terminal theme', 'Unhinged mode 🔥', 'Message tone analyzer 🧠'];
+  const labels = ['Civility guard & call', 'In-call with AI', 'Smart inbox sorting', 'Settings & AI engine', 'Review queue', 'Business folder', 'Trusted contact thread', 'Disappearing messages', 'Do Not Disturb mode', 'Terminal theme', 'Unhinged mode 🔥', 'Message tone analyzer 🧠', 'Style-aware spell check ✨'];
   const carousel = document.getElementById('phoneCarousel');
   const dots = document.querySelectorAll('.cdot');
   const labelEl = document.getElementById('carouselLabel');
