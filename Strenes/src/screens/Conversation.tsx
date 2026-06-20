@@ -3,7 +3,7 @@ import { ArrowLeft, ShieldCheck, Send, Loader2, Lock, Clock, Phone, PhoneOff, Mi
 import { useSiftStore, selectConversation } from '../store';
 import { Avatar } from '../components/ui/Avatar';
 import { getModerator } from '../moderation';
-import { checkSpelling, applySuggestion } from '../moderation/spell-check';
+import { checkSpellingWithAI, applySuggestion } from '../moderation/spell-check';
 import type { ModerationVerdict, SpellCheckSuggestion } from '../types';
 
 type OutgoingState =
@@ -102,13 +102,19 @@ export function Conversation() {
     debounceRef.current = setTimeout(() => classify(text.trim()), 700);
   };
 
-  const sendOut = () => {
+  const sendOut = async () => {
     const text = draft.trim();
     if (!text || !activeContactId) return;
     if (outgoing.kind === 'blocked' || outgoing.kind === 'checking') return;
 
     if (settings.spellCheck.enabled && !pendingSendText) {
-      const suggestions = checkSpelling(text);
+      setOutgoing({ kind: 'checking' });
+      const userMessageHistory = messages
+        .filter(m => m.dir === 'out')
+        .map(m => m.text)
+        .slice(-10);
+      const suggestions = await checkSpellingWithAI(text, userMessageHistory);
+      setOutgoing({ kind: 'idle' });
       if (suggestions.length > 0) {
         setSpellCheckSuggestions(suggestions);
         setPendingSendText(text);
@@ -231,12 +237,12 @@ export function Conversation() {
             ref={inputRef}
             value={draft}
             onChange={e => onDraftChange(e.target.value)}
-            onKeyDown={e => e.key === 'Enter' && !sendDisabled && sendOut()}
+            onKeyDown={e => e.key === 'Enter' && !sendDisabled && sendOut().catch(() => {})}
             placeholder="Message"
             className="flex-1 bg-transparent px-3 text-sm text-main outline-none placeholder:dim"
           />
           <button
-            onClick={sendOut}
+            onClick={() => sendOut()}
             disabled={sendDisabled}
             className="grid place-items-center transition-opacity"
             style={{
