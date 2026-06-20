@@ -576,9 +576,109 @@
               </div>
             </div>
 
+            <!-- ── 5: Review queue · held messages ── -->
+            <div class="phone-frame">
+              <div class="phone-notch"></div>
+              <div class="phone-screen" style="display:flex;flex-direction:column">
+                <div class="phone-hdr" style="padding:30px 12px 10px">
+                  <div style="flex:1;font-size:13px;font-weight:800;color:#ffffff">Sift</div>
+                </div>
+                <div class="tabs" style="background:linear-gradient(135deg,rgba(99,102,241,.08),rgba(139,92,246,.06))">
+                  <div class="tab">Primary</div>
+                  <div class="tab">Business</div>
+                  <div class="tab">Promos</div>
+                  <div class="tab warn on">Review 3</div>
+                </div>
+                <div class="msgs" style="gap:8px">
+                  <div class="mi" style="background:rgba(244,63,94,.07);border:1px solid rgba(244,63,94,.18)">
+                    <div style="font-size:8.5px;font-weight:700;color:#dc2626;margin-bottom:2px">+1 (555) 0142</div>
+                    <div class="blr">you're an idiot, I hate—</div>
+                    <div class="mt tr">🛑 Abusive · tap to review</div>
+                  </div>
+                  <div class="mi" style="background:rgba(251,191,36,.07);border:1px solid rgba(251,191,36,.2)">
+                    <div style="font-size:8.5px;font-weight:700;color:#d97706;margin-bottom:2px">GroupChat</div>
+                    <div class="blr">FORWARD THIS TO 10 PEOPLE 🔥</div>
+                    <div class="mt ty">📨 Spam · tap to review</div>
+                  </div>
+                  <div class="mi" style="background:rgba(99,102,241,.06);border:1px solid rgba(99,102,241,.14)">
+                    <div style="font-size:8.5px;font-weight:700;color:#4f46e5;margin-bottom:2px">Unknown</div>
+                    <div class="blr">some weird message</div>
+                    <div class="mt" style="color:#6366f1">❓ Borderline · high confidence</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- ── 6: Business folder ── -->
+            <div class="phone-frame">
+              <div class="phone-notch"></div>
+              <div class="phone-screen" style="display:flex;flex-direction:column">
+                <div class="phone-hdr" style="padding:30px 12px 10px">
+                  <div style="flex:1;font-size:13px;font-weight:800;color:#ffffff">Sift</div>
+                </div>
+                <div class="tabs" style="background:linear-gradient(135deg,rgba(99,102,241,.08),rgba(139,92,246,.06))">
+                  <div class="tab">Primary</div>
+                  <div class="tab on">Business</div>
+                  <div class="tab">Promos</div>
+                  <div class="tab warn">Review</div>
+                </div>
+                <div class="msgs" style="gap:8px">
+                  <div class="mi" style="border-left:3px solid #0891b2">
+                    <div style="font-size:8.5px;font-weight:700;color:#0891b2;margin-bottom:2px">Amazon Shipping</div>
+                    <div>Your package arrived — sign here</div>
+                    <div class="mt tb">📦 Delivery · sorted</div>
+                  </div>
+                  <div class="mi" style="border-left:3px solid #0891b2">
+                    <div style="font-size:8.5px;font-weight:700;color:#0891b2;margin-bottom:2px">Stripe</div>
+                    <div>Invoice #4821 • $299.00</div>
+                    <div class="mt tb">💳 Receipt · sorted</div>
+                  </div>
+                  <div class="mi" style="border-left:3px solid #0891b2">
+                    <div style="font-size:8.5px;font-weight:700;color:#0891b2;margin-bottom:2px">Calendar</div>
+                    <div>Reminder: Team standup in 10 min</div>
+                    <div class="mt tb">📅 Appointment · sorted</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- ── 7: Clean conversation thread ── -->
+            <div class="phone-frame">
+              <div class="phone-notch"></div>
+              <div class="phone-screen" style="display:flex;flex-direction:column">
+                <div class="phone-hdr" style="padding:30px 10px 8px;gap:8px">
+                  <div class="ph-back">‹</div>
+                  <div class="ph-av" style="background:linear-gradient(135deg,#34d399,#06b6d4);border:1.5px solid rgba(255,255,255,.4)"></div>
+                  <div style="flex:1;min-width:0">
+                    <div class="ph-name" style="color:#ffffff">Sarah K.</div>
+                    <div class="ph-sub" style="color:rgba(255,255,255,.75);font-size:7.5px">✓ Trusted · no filters</div>
+                  </div>
+                  <div class="ph-call-btn">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13.93a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.63 3h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8 10.91a16 16 0 0 0 6 6l.81-.81a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 21.73 18.82z"/></svg>
+                  </div>
+                </div>
+                <div class="msgs" style="flex:1;overflow:hidden;display:flex;flex-direction:column;gap:6px;padding:10px">
+                  <div class="mi-in">Hey! How was the trip? 🏖️</div>
+                  <div class="mi-out">Amazing!! Best time ever</div>
+                  <div class="mi-in">Send me those photos! 📸</div>
+                  <div class="mi-out">Uploading now 🎉</div>
+                  <div style="text-align:center;font-size:7.5px;color:rgba(28,32,48,.38);margin-top:auto">✓ All delivered · clean conversation</div>
+                </div>
+                <div class="ph-input-bar">
+                  <div class="ph-input-pill">Can't wait to see them!</div>
+                  <div class="ph-send-btn">
+                    <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><polyline points="22 2 11 13 22 24 22 2"></polyline></svg>
+                  </div>
+                </div>
+              </div>
+            </div>
+
           </div><!-- /phone-carousel -->
           <div class="carousel-dots" id="carouselDots">
             <div class="cdot active"></div>
+            <div class="cdot"></div>
+            <div class="cdot"></div>
+            <div class="cdot"></div>
             <div class="cdot"></div>
             <div class="cdot"></div>
             <div class="cdot"></div>
@@ -848,7 +948,7 @@
   document.querySelectorAll('.rev').forEach(el => obs.observe(el));
 
   // Phone carousel — dot + label sync + auto-scroll
-  const labels = ['Civility guard & call button', 'In-call overlay', 'Smart inbox folders', 'Settings & AI engine'];
+  const labels = ['Civility guard & call', 'In-call with AI', 'Smart inbox sorting', 'Settings & AI engine', 'Review queue', 'Business folder', 'Trusted contact thread'];
   const carousel = document.getElementById('phoneCarousel');
   const dots = document.querySelectorAll('.cdot');
   const labelEl = document.getElementById('carouselLabel');
