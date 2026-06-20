@@ -71,13 +71,13 @@ jobs:
           # /v2/ — static SaaS preview
           node MarkdownZipped/saas/build-preview.mjs \
             MarkdownZipped/saas/public _site/v2
-          # /sift/ — Sift PWA
-          mkdir -p _site/sift
-          cp -r Sift/dist/. _site/sift/
-          cp Sift/dist/index.html _site/sift/404.html
-          # /sift-home/ — Sift marketing landing page
-          mkdir -p _site/sift-home
-          cp -r Sift/landing/. _site/sift-home/
+          # /strenes/ — Strenes PWA
+          mkdir -p _site/strenes
+          cp -r Strenes/dist/. _site/strenes/
+          cp Strenes/dist/index.html _site/strenes/404.html
+          # /strenes-home/ — Strenes marketing landing page
+          mkdir -p _site/strenes-home
+          cp -r Strenes/landing/. _site/strenes-home/
           touch _site/.nojekyll
 
       - name: Upload Pages artifact
