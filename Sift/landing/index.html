@@ -281,6 +281,32 @@
     .stt { font-size:16px;font-weight:700;margin-bottom:8px; }
     .stx { font-size:14px;color:var(--dim);line-height:1.6; }
 
+    /* BUILT BY */
+    .built-by-strip { padding:36px 0;position:relative;z-index:1; }
+    .bb-inner {
+      display:flex;align-items:center;gap:20px;flex-wrap:wrap;
+      background:#fff;border:1px solid var(--border);border-radius:22px;
+      padding:26px 32px;box-shadow:0 8px 40px -12px rgba(99,102,241,.14);
+    }
+    .bb-logo { flex-shrink:0;display:grid;place-items:center;width:44px;height:44px;border-radius:13px;background:linear-gradient(135deg,rgba(99,102,241,.1),rgba(8,145,178,.08));border:1px solid rgba(99,102,241,.18); }
+    .bb-text { flex:1;min-width:140px; }
+    .bb-name { font-size:16px;font-weight:800;letter-spacing:-.4px;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text; }
+    .bb-desc { font-size:13px;color:var(--dim);margin-top:2px; }
+    .bb-divider { width:1px;height:40px;background:var(--border);flex-shrink:0; }
+    @media(max-width:640px){.bb-divider{display:none}}
+    .bb-stats { display:flex;gap:28px;flex-shrink:0; }
+    .bb-stat { display:flex;flex-direction:column;align-items:center;gap:2px; }
+    .bb-num { font-size:17px;font-weight:900;letter-spacing:-.5px;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text; }
+    .bb-label { font-size:10px;color:var(--dimmer);font-weight:600;white-space:nowrap; }
+    .bb-contact {
+      flex-shrink:0;padding:10px 22px;border-radius:99px;font-size:13px;font-weight:700;
+      background:linear-gradient(135deg,var(--accent),var(--accent2));
+      color:#fff;text-decoration:none;
+      box-shadow:0 4px 18px -4px rgba(99,102,241,.45);
+      transition:transform .2s,box-shadow .2s;
+    }
+    .bb-contact:hover { transform:translateY(-2px);box-shadow:0 8px 24px -4px rgba(99,102,241,.5); }
+
     /* INSTALL */
     #install { text-align:center; }
     .ic {
@@ -705,6 +731,31 @@
     </div>
   </div>
 </section>
+
+<!-- BUILT BY -->
+<div class="built-by-strip">
+  <div class="container">
+    <div class="bb-inner rev">
+      <div class="bb-logo">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="url(#bbgrad)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <defs><linearGradient id="bbgrad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#6366f1"/><stop offset="100%" stop-color="#0891b2"/></linearGradient></defs>
+          <path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/>
+        </svg>
+      </div>
+      <div class="bb-text">
+        <div class="bb-name">Martian Coders</div>
+        <div class="bb-desc">Experts in building world class products</div>
+      </div>
+      <div class="bb-divider"></div>
+      <div class="bb-stats">
+        <div class="bb-stat"><span class="bb-num">100%</span><span class="bb-label">On-device</span></div>
+        <div class="bb-stat"><span class="bb-num">PWA</span><span class="bb-label">Native feel</span></div>
+        <div class="bb-stat"><span class="bb-num">0</span><span class="bb-label">Compromises</span></div>
+      </div>
+      <a href="mailto:martian.coders.x@gmail.com" class="bb-contact">Get in touch</a>
+    </div>
+  </div>
+</div>
 
 <!-- INSTALL -->
 <section id="install">
