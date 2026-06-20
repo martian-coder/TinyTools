@@ -208,6 +208,24 @@
       display:grid;place-items:center;
     }
 
+    /* CAROUSEL */
+    .phone-carousel-wrap { display:flex;flex-direction:column;align-items:center;gap:16px; }
+    .phone-carousel {
+      width:255px;overflow-x:auto;scroll-snap-type:x mandatory;
+      display:flex;gap:20px;scrollbar-width:none;
+      -webkit-overflow-scrolling:touch;cursor:grab;
+    }
+    .phone-carousel:active { cursor:grabbing; }
+    .phone-carousel::-webkit-scrollbar { display:none; }
+    .phone-carousel .phone-frame { scroll-snap-align:center;flex-shrink:0; }
+    .phone-carousel .phone-frame:nth-child(2) { animation-delay:-2s; }
+    .phone-carousel .phone-frame:nth-child(3) { animation-delay:-4s; }
+    .phone-carousel .phone-frame:nth-child(4) { animation-delay:-6s; }
+    .carousel-dots { display:flex;justify-content:center;align-items:center;gap:6px; }
+    .cdot { height:6px;border-radius:3px;background:rgba(255,255,255,.2);transition:width .3s,background .3s;width:6px; }
+    .cdot.active { width:22px;background:var(--accent); }
+    .carousel-label { font-size:10.5px;font-weight:600;color:var(--dim);text-align:center;letter-spacing:.3px;min-height:16px; }
+
     /* STATS */
     .stats { padding:48px 0;border-top:1px solid var(--border);border-bottom:1px solid var(--border);margin-top:72px;position:relative;z-index:1; }
     .stats-g { display:grid;grid-template-columns:repeat(4,1fr);gap:24px;text-align:center; }
@@ -354,55 +372,177 @@
           </a>
         </div>
       </div>
-      <!-- Phone mockup -->
+      <!-- Phone carousel -->
       <div class="hero-phone">
-        <div class="phone-frame">
-          <div class="phone-notch"></div>
-          <div class="phone-screen" style="display:flex;flex-direction:column">
-            <!-- Conversation header with aurora call button -->
-            <div class="phone-hdr" style="padding:30px 10px 8px">
-              <div class="ph-back">‹</div>
-              <div class="ph-av" style="background:linear-gradient(135deg,#e879f9,#7c83ff)"></div>
-              <div style="flex:1;min-width:0">
-                <div class="ph-name">Alex</div>
-                <div class="ph-sub" style="color:#f87171;font-size:7.5px">🔒 high civility filter</div>
-              </div>
-              <!-- ✦ Aurora call button ✦ -->
-              <div class="ph-call-btn">
-                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13.93a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.63 3h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8 10.91a16 16 0 0 0 6 6l.81-.81a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 21.73 18.82z"/></svg>
-              </div>
-            </div>
-            <!-- Message thread -->
-            <div class="msgs" style="flex:1;overflow:hidden;display:flex;flex-direction:column">
-              <!-- Clean incoming -->
-              <div class="mi-in">Hey, catch up later? 🙌</div>
-              <!-- Clean outgoing -->
-              <div class="mi-out">Sure! Calling in 5 📞</div>
-              <!-- Blurred incoming — held in review -->
-              <div class="mi-in" style="border:1px solid rgba(251,191,36,.3)">
-                <div class="blr">You&rsquo;re so stupid, why do—</div>
-                <div class="mt ty">⏸ Held in Review &middot; tap to reveal</div>
-              </div>
-              <!-- Blocked outgoing — civility guard fired -->
-              <div style="align-self:flex-end;max-width:82%;display:flex;flex-direction:column;align-items:flex-end">
-                <div class="mi-out" style="background:rgba(244,63,94,.09);border:1px solid rgba(244,63,94,.32);opacity:.65">
-                  You&rsquo;re being ridiculous
+        <div class="phone-carousel-wrap">
+          <div class="carousel-label" id="carouselLabel">Civility guard &amp; call button</div>
+          <div class="phone-carousel" id="phoneCarousel">
+
+            <!-- ── 1: Conversation · call button · civility guard ── -->
+            <div class="phone-frame">
+              <div class="phone-notch"></div>
+              <div class="phone-screen" style="display:flex;flex-direction:column">
+                <div class="phone-hdr" style="padding:30px 10px 8px">
+                  <div class="ph-back">‹</div>
+                  <div class="ph-av" style="background:linear-gradient(135deg,#e879f9,#7c83ff)"></div>
+                  <div style="flex:1;min-width:0">
+                    <div class="ph-name">Alex</div>
+                    <div class="ph-sub" style="color:#f87171;font-size:7.5px">🔒 high civility filter</div>
+                  </div>
+                  <div class="ph-call-btn">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13.93a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.63 3h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8 10.91a16 16 0 0 0 6 6l.81-.81a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 21.73 18.82z"/></svg>
+                  </div>
                 </div>
-                <div style="font-size:7px;color:#f87171;display:flex;align-items:center;gap:3px;margin-top:3px">
-                  <svg width="7" height="7" viewBox="0 0 24 24" fill="none" stroke="#f87171" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-                  Can&rsquo;t send &mdash; abusive content
+                <div class="msgs" style="flex:1;overflow:hidden;display:flex;flex-direction:column">
+                  <div class="mi-in">Hey, catch up later? 🙌</div>
+                  <div class="mi-out">Sure! Calling in 5 📞</div>
+                  <div class="mi-in" style="border:1px solid rgba(251,191,36,.3)">
+                    <div class="blr">You&rsquo;re so stupid, why do—</div>
+                    <div class="mt ty">⏸ Held in Review &middot; tap to reveal</div>
+                  </div>
+                  <div style="align-self:flex-end;max-width:82%;display:flex;flex-direction:column;align-items:flex-end">
+                    <div class="mi-out" style="background:rgba(244,63,94,.09);border:1px solid rgba(244,63,94,.32);opacity:.65">You&rsquo;re being ridiculous</div>
+                    <div style="font-size:7px;color:#f87171;display:flex;align-items:center;gap:3px;margin-top:3px">
+                      <svg width="7" height="7" viewBox="0 0 24 24" fill="none" stroke="#f87171" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                      Can&rsquo;t send &mdash; abusive content
+                    </div>
+                  </div>
+                </div>
+                <div class="ph-input-bar">
+                  <div class="ph-input-pill" style="border-color:rgba(244,63,94,.3);color:rgba(238,241,255,.5)">You&rsquo;re being ridiculous</div>
+                  <div class="ph-send-btn" style="background:rgba(244,63,94,.22)">
+                    <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#f43f5e" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                  </div>
                 </div>
               </div>
             </div>
-            <!-- Input bar in blocked state -->
-            <div class="ph-input-bar">
-              <div class="ph-input-pill" style="border-color:rgba(244,63,94,.3);color:rgba(238,241,255,.5)">You&rsquo;re being ridiculous</div>
-              <div class="ph-send-btn" style="background:rgba(244,63,94,.22)">
-                <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#f43f5e" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+
+            <!-- ── 2: In-call overlay ── -->
+            <div class="phone-frame">
+              <div class="phone-notch"></div>
+              <div class="phone-screen" style="display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:50px 0 42px;background:rgba(9,14,28,.97)">
+                <div style="display:flex;flex-direction:column;align-items:center;gap:14px">
+                  <div style="position:relative;width:90px;height:90px;display:flex;align-items:center;justify-content:center">
+                    <div style="position:absolute;inset:0;border-radius:50%;background:var(--accent);opacity:.13;animation:pulse 1.4s ease-in-out infinite"></div>
+                    <div style="position:absolute;width:72px;height:72px;border-radius:50%;background:var(--accent);opacity:.19;animation:pulse 1.4s ease-in-out infinite .35s"></div>
+                    <div style="width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,#e879f9,#7c83ff);border:2.5px solid var(--accent);box-shadow:0 0 28px -6px var(--accent);flex-shrink:0"></div>
+                  </div>
+                  <div style="text-align:center">
+                    <div style="font-size:15px;font-weight:700;color:#eef1ff;letter-spacing:-.4px">Alex</div>
+                    <div style="font-size:10px;font-weight:600;margin-top:3px;color:var(--accent)">Calling&hellip;</div>
+                  </div>
+                </div>
+                <div style="display:flex;align-items:flex-end;gap:18px">
+                  <div style="display:flex;flex-direction:column;align-items:center;gap:6px">
+                    <div style="width:44px;height:44px;border-radius:50%;background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.15);display:grid;place-items:center">
+                      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+                    </div>
+                    <span style="font-size:7.5px;color:rgba(238,241,255,.42)">Mute</span>
+                  </div>
+                  <div style="display:flex;flex-direction:column;align-items:center;gap:6px">
+                    <div style="width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,#f43f5e,#e11d48);box-shadow:0 10px 30px -8px rgba(244,63,94,.75);display:grid;place-items:center">
+                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round"><path d="M10.68 13.31a16 16 0 0 0 3.41 2.6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7 2 2 0 0 1 1.72 2v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.42 19.42 0 0 1 4.26 8.4a2 2 0 0 1 2-2.18h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L10.68 13.31z"/><line x1="23" y1="1" x2="1" y2="23"/></svg>
+                    </div>
+                    <span style="font-size:7.5px;color:rgba(238,241,255,.42)">End</span>
+                  </div>
+                  <div style="display:flex;flex-direction:column;align-items:center;gap:6px">
+                    <div style="width:44px;height:44px;border-radius:50%;background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.15);display:grid;place-items:center">
+                      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+                    </div>
+                    <span style="font-size:7.5px;color:rgba(238,241,255,.42)">Speaker</span>
+                  </div>
+                </div>
               </div>
             </div>
+
+            <!-- ── 3: Smart inbox · folders ── -->
+            <div class="phone-frame">
+              <div class="phone-notch"></div>
+              <div class="phone-screen" style="display:flex;flex-direction:column">
+                <div class="phone-hdr" style="padding:30px 12px 8px">
+                  <div style="flex:1;font-size:13px;font-weight:800;color:var(--text)">Sift</div>
+                  <div style="display:inline-flex;align-items:center;gap:4px;font-size:7px;color:#34d399;background:rgba(52,211,153,.1);padding:3px 8px;border-radius:99px;border:1px solid rgba(52,211,153,.2)">
+                    <svg width="7" height="7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>AI on
+                  </div>
+                </div>
+                <div class="tabs">
+                  <div class="tab on">Primary</div>
+                  <div class="tab">Business</div>
+                  <div class="tab">Promos</div>
+                  <div class="tab warn">Review 2</div>
+                </div>
+                <div class="msgs">
+                  <div class="mi">
+                    <div style="font-size:8.5px;font-weight:700;color:var(--accent);margin-bottom:2px">Sarah K. 🛡️</div>
+                    <div>Hey, lunch tomorrow? 🍜</div>
+                    <div class="mt tc">✓ Delivered &middot; on-device AI</div>
+                  </div>
+                  <div class="mi">
+                    <div style="font-size:8.5px;font-weight:700;color:var(--text);margin-bottom:2px">Delivery Co.</div>
+                    <div>Your order #5510 shipped.</div>
+                    <div class="mt tb">&rarr; Business folder</div>
+                  </div>
+                  <div class="mi" style="border:1px solid rgba(251,191,36,.25)">
+                    <div style="font-size:8.5px;font-weight:700;color:#fbbf24;margin-bottom:2px">Unknown</div>
+                    <div class="blr">You&rsquo;re so stupid, I hate—</div>
+                    <div class="mt ty">⏸ Held in Review</div>
+                  </div>
+                  <div class="mi" style="opacity:.42;border:1px solid rgba(248,113,113,.18)">
+                    <div style="font-size:8.5px;font-weight:700;color:#f87171;margin-bottom:2px">Spam Bot</div>
+                    <div>Win $1000! Forward to&hellip;</div>
+                    <div class="mt tr">✗ Auto-rejected &middot; spam</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- ── 4: Settings · sensitivity dial & AI engine ── -->
+            <div class="phone-frame">
+              <div class="phone-notch"></div>
+              <div class="phone-screen" style="display:flex;flex-direction:column;overflow:hidden">
+                <div class="phone-hdr" style="padding:30px 12px 8px">
+                  <div style="font-size:13px;font-weight:800;color:var(--text)">Settings</div>
+                </div>
+                <div style="padding:10px;display:flex;flex-direction:column;gap:7px;overflow:hidden">
+                  <div style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:14px;padding:10px">
+                    <div style="font-size:9px;font-weight:700;color:var(--text);margin-bottom:7px">🛡️ Civility Filter</div>
+                    <div style="display:flex;gap:4px">
+                      <div style="flex:1;padding:4px;text-align:center;border-radius:8px;font-size:7.5px;background:rgba(255,255,255,.06);color:rgba(238,241,255,.38)">Low</div>
+                      <div style="flex:1;padding:4px;text-align:center;border-radius:8px;font-size:7.5px;background:rgba(124,131,255,.22);color:var(--accent);border:1px solid rgba(124,131,255,.35);font-weight:700">Medium</div>
+                      <div style="flex:1;padding:4px;text-align:center;border-radius:8px;font-size:7.5px;background:rgba(255,255,255,.06);color:rgba(238,241,255,.38)">High</div>
+                    </div>
+                  </div>
+                  <div style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:14px;padding:10px;display:flex;justify-content:space-between;align-items:center">
+                    <div style="font-size:9px;font-weight:700;color:var(--text)">📢 Spam Filter</div>
+                    <div style="width:26px;height:14px;border-radius:7px;background:linear-gradient(135deg,var(--accent),var(--accent2));position:relative;flex-shrink:0">
+                      <div style="position:absolute;right:2px;top:2px;width:10px;height:10px;border-radius:50%;background:white"></div>
+                    </div>
+                  </div>
+                  <div style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:14px;padding:10px;display:flex;justify-content:space-between;align-items:center">
+                    <div style="font-size:9px;font-weight:700;color:var(--text)">💼 Business Filter</div>
+                    <div style="width:26px;height:14px;border-radius:7px;background:linear-gradient(135deg,var(--accent),var(--accent2));position:relative;flex-shrink:0">
+                      <div style="position:absolute;right:2px;top:2px;width:10px;height:10px;border-radius:50%;background:white"></div>
+                    </div>
+                  </div>
+                  <div style="background:rgba(124,131,255,.08);border:1px solid rgba(124,131,255,.22);border-radius:14px;padding:10px">
+                    <div style="font-size:9px;font-weight:700;color:var(--accent);margin-bottom:4px">🧠 AI Engine</div>
+                    <div style="font-size:7.5px;color:rgba(238,241,255,.52)">Gemini Nano &middot; on-device</div>
+                    <div style="font-size:7.5px;color:#34d399;margin-top:3px;display:flex;align-items:center;gap:4px">
+                      <div style="width:5px;height:5px;border-radius:50%;background:#34d399;flex-shrink:0"></div>Active &middot; zero cloud calls
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div><!-- /phone-carousel -->
+          <div class="carousel-dots" id="carouselDots">
+            <div class="cdot active"></div>
+            <div class="cdot"></div>
+            <div class="cdot"></div>
+            <div class="cdot"></div>
           </div>
-        </div>
+        </div><!-- /phone-carousel-wrap -->
       </div>
     </div>
   </div>
@@ -626,6 +766,32 @@
   // Scroll-reveal
   const obs = new IntersectionObserver(es => es.forEach(e => { if(e.isIntersecting) e.target.classList.add('vis'); }), {threshold:.12});
   document.querySelectorAll('.rev').forEach(el => obs.observe(el));
+
+  // Phone carousel — dot + label sync
+  const labels = ['Civility guard & call button', 'In-call overlay', 'Smart inbox folders', 'Settings & AI engine'];
+  const carousel = document.getElementById('phoneCarousel');
+  const dots = document.querySelectorAll('.cdot');
+  const labelEl = document.getElementById('carouselLabel');
+  if (carousel) {
+    const frames = carousel.querySelectorAll('.phone-frame');
+    const io = new IntersectionObserver(entries => {
+      entries.forEach(entry => {
+        if (entry.intersectionRatio >= 0.5) {
+          const idx = Array.from(frames).indexOf(entry.target);
+          dots.forEach((d, i) => d.classList.toggle('active', i === idx));
+          if (labelEl) labelEl.textContent = labels[idx] || '';
+        }
+      });
+    }, { root: carousel, threshold: 0.5 });
+    frames.forEach(f => io.observe(f));
+
+    // Click dots to scroll
+    dots.forEach((d, i) => {
+      d.addEventListener('click', () => {
+        carousel.scrollTo({ left: i * (255 + 20), behavior: 'smooth' });
+      });
+    });
+  }
 </script>
 </body>
 </html>
