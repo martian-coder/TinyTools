@@ -11,8 +11,8 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       manifest: {
-        name: 'Sift — Smart Message Filter',
-        short_name: 'Sift',
+        name: 'Strenes — Smart Message Filter',
+        short_name: 'Strenes',
         description: 'AI-filtered messaging — you control what reaches you',
         theme_color: '#0b1020',
         background_color: '#0b1020',

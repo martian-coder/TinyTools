@@ -49,7 +49,7 @@ export function ChatList({ onShowThemes }: ChatListProps) {
 
   return (
     <>
-      <Header title="Sift" sub="private by design" onShowThemes={onShowThemes} />
+      <Header title="Strenes" sub="private by design" onShowThemes={onShowThemes} />
 
       {/* Folder pills */}
       <div className="px-3 py-2 flex gap-2 overflow-x-auto no-bar">
