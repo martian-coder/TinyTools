@@ -22,6 +22,7 @@ interface SiftState {
   setRevealed: (id: string) => void;
   setBanner: (msg: string | null) => void;
   sendMessage: (contactId: string, text: string) => void;
+  sendOutgoingToReview: (contactId: string, text: string, verdict: ModerationVerdict) => void;
   receiveMessage: (contactId: string, text: string, route: RouteResult, verdict: ModerationVerdict) => void;
   approveMessage: (id: string) => void;
   rejectMessage: (id: string) => void;
@@ -63,6 +64,14 @@ export const useSiftStore = create<SiftState>()(
           id: nid(), contactId, text, dir: 'out',
           ts: Date.now(), time: 'now',
           folder: 'primary', status: 'delivered',
+        }],
+      })),
+
+      sendOutgoingToReview: (contactId, text, verdict) => set(s => ({
+        messages: [...s.messages, {
+          id: nid(), contactId, text, dir: 'out',
+          ts: Date.now(), time: 'now',
+          folder: 'review', status: 'held', verdict,
         }],
       })),
 
@@ -146,5 +155,7 @@ export const useSiftStore = create<SiftState>()(
 // Selectors
 export const selectConversation = (s: SiftState, contactId: string) =>
   s.messages
-    .filter(m => m.contactId === contactId && (m.status === 'delivered' || m.dir === 'out' || m.status === 'approved'))
+    .filter(m => m.contactId === contactId && (
+      m.dir === 'out' || m.status === 'delivered' || m.status === 'approved'
+    ))
     .sort((a, b) => a.ts - b.ts);

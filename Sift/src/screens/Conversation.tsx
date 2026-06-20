@@ -1,76 +1,90 @@
-import { useState, useRef, useEffect } from 'react';
-import { ArrowLeft, ShieldCheck, Send, Loader2, AlertTriangle, X } from 'lucide-react';
+import { useState, useRef, useEffect, useCallback } from 'react';
+import { ArrowLeft, ShieldCheck, Send, Loader2, Lock, Clock } from 'lucide-react';
 import { useSiftStore, selectConversation } from '../store';
 import { Avatar } from '../components/ui/Avatar';
 import { getModerator } from '../moderation';
 import type { ModerationVerdict } from '../types';
 
-type OutgoingBlock = { text: string; verdict: ModerationVerdict };
+type OutgoingState =
+  | { kind: 'idle' }
+  | { kind: 'checking' }
+  | { kind: 'clean' }
+  | { kind: 'review';  verdict: ModerationVerdict }
+  | { kind: 'blocked'; verdict: ModerationVerdict };
 
 export function Conversation() {
-  const activeContactId = useSiftStore(s => s.activeContactId);
-  const contacts        = useSiftStore(s => s.contacts);
-  const settings        = useSiftStore(s => s.settings);
-  const setScreen       = useSiftStore(s => s.setScreen);
-  const sendMessage     = useSiftStore(s => s.sendMessage);
-  const messages        = useSiftStore(s => activeContactId ? selectConversation(s, activeContactId) : []);
+  const activeContactId      = useSiftStore(s => s.activeContactId);
+  const contacts             = useSiftStore(s => s.contacts);
+  const settings             = useSiftStore(s => s.settings);
+  const setScreen            = useSiftStore(s => s.setScreen);
+  const sendMessage          = useSiftStore(s => s.sendMessage);
+  const sendOutgoingToReview = useSiftStore(s => s.sendOutgoingToReview);
+  const messages             = useSiftStore(s => activeContactId ? selectConversation(s, activeContactId) : []);
 
-  const [draft, setDraft]           = useState('');
-  const [checking, setChecking]     = useState(false);
-  const [blocked, setBlocked]       = useState<OutgoingBlock | null>(null);
-  const bottomRef                   = useRef<HTMLDivElement>(null);
-  const inputRef                    = useRef<HTMLInputElement>(null);
+  const [draft, setDraft]         = useState('');
+  const [outgoing, setOutgoing]   = useState<OutgoingState>({ kind: 'idle' });
+  const debounceRef               = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const bottomRef                 = useRef<HTMLDivElement>(null);
+  const inputRef                  = useRef<HTMLInputElement>(null);
 
-  const contact = contacts.find(c => c.id === activeContactId);
+  const contact    = contacts.find(c => c.id === activeContactId);
+  const { civility } = settings;
+  const guardActive  = civility.enabled && civility.sensitivity !== 'low';
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages.length]);
 
-  if (!contact) return null;
-
-  const dispatchSend = (text: string) => {
-    if (!activeContactId) return;
-    sendMessage(activeContactId, text);
-    setDraft('');
-    setBlocked(null);
-  };
-
-  const sendOut = async () => {
-    const text = draft.trim();
-    if (!text || !activeContactId) return;
-
-    // Only check outgoing if civility filter is on and sensitivity is medium or high
-    const { civility } = settings;
-    if (!civility.enabled || civility.sensitivity === 'low') {
-      dispatchSend(text);
-      return;
-    }
-
-    setChecking(true);
+  // Debounced live classification — runs 700ms after the user stops typing
+  const classify = useCallback(async (text: string) => {
+    if (!text || !guardActive) { setOutgoing({ kind: 'idle' }); return; }
+    setOutgoing({ kind: 'checking' });
     try {
       const mod     = await getModerator();
       const verdict = await mod.classify(text, { sensitivity: civility.sensitivity });
-      if (verdict.category === 'abusive' || verdict.category === 'spam') {
-        setBlocked({ text, verdict });
+      const flagged = verdict.category === 'abusive' || verdict.category === 'spam';
+      if (!flagged) {
+        setOutgoing({ kind: 'clean' });
+      } else if (civility.sensitivity === 'high') {
+        setOutgoing({ kind: 'blocked', verdict });
       } else {
-        dispatchSend(text);
+        // medium + flagged → will go to review
+        setOutgoing({ kind: 'review', verdict });
       }
     } catch {
-      // If classification fails, let the message through
-      dispatchSend(text);
-    } finally {
-      setChecking(false);
+      setOutgoing({ kind: 'clean' }); // fail open
     }
+  }, [guardActive, civility.sensitivity]);
+
+  const onDraftChange = (text: string) => {
+    setDraft(text);
+    if (!text.trim()) { setOutgoing({ kind: 'idle' }); return; }
+    if (!guardActive)  { setOutgoing({ kind: 'idle' }); return; }
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => classify(text.trim()), 700);
   };
 
-  const dismiss = () => {
-    setBlocked(null);
-    inputRef.current?.focus();
+  const sendOut = () => {
+    const text = draft.trim();
+    if (!text || !activeContactId) return;
+    if (outgoing.kind === 'blocked') return;
+    if (outgoing.kind === 'checking') return;
+
+    if (outgoing.kind === 'review') {
+      sendOutgoingToReview(activeContactId, text, (outgoing as { kind: 'review'; verdict: ModerationVerdict }).verdict);
+    } else {
+      sendMessage(activeContactId, text);
+    }
+    setDraft('');
+    setOutgoing({ kind: 'idle' });
   };
 
-  const sensitivity = settings.civility.sensitivity;
-  const isHigh      = sensitivity === 'high';
+  if (!contact) return null;
+
+  const sendDisabled =
+    !draft.trim() ||
+    outgoing.kind === 'blocked' ||
+    outgoing.kind === 'checking';
 
   return (
     <>
@@ -80,16 +94,15 @@ export function Conversation() {
         <Avatar name={contact.name} grad={contact.grad} size={36} trusted={contact.trusted} />
         <div className="flex-1">
           <div className="font-semibold text-main leading-tight">{contact.name}</div>
-          {contact.trusted && (
-            <div className="text-[11px] flex items-center gap-1 accent-t">
-              <ShieldCheck size={11} /> Trusted · filters off
-            </div>
-          )}
+          {contact.trusted
+            ? <div className="text-[11px] flex items-center gap-1 accent-t"><ShieldCheck size={11} /> Trusted · filters off</div>
+            : civility.enabled && <div className="text-[11px] flex items-center gap-1 dim"><Lock size={10} /> {civility.sensitivity} civility filter</div>
+          }
         </div>
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto px-3 py-3 space-y-2 pb-24 no-bar">
+      <div className="flex-1 overflow-y-auto px-3 py-3 space-y-2 pb-4 no-bar">
         {messages.map(m => (
           <div key={m.id} className={`flex ${m.dir === 'out' ? 'justify-end' : 'justify-start'}`}>
             <div
@@ -98,84 +111,81 @@ export function Conversation() {
                 borderRadius: 18,
                 borderBottomRightRadius: m.dir === 'out' ? 6 : 18,
                 borderBottomLeftRadius:  m.dir === 'out' ? 18 : 6,
+                opacity: m.dir === 'out' && m.status === 'held' ? 0.7 : 1,
               }}
             >
               {m.text}
-              <div className={`text-[10px] mt-0.5 ${m.dir === 'out' ? 'out-time' : 'dim'}`}>{m.time}</div>
+              <div className={`text-[10px] mt-0.5 flex items-center gap-1 ${m.dir === 'out' ? 'out-time justify-end' : 'dim'}`}>
+                {m.dir === 'out' && m.status === 'held' && <><Clock size={9} /> under review · </>}
+                {m.time}
+              </div>
             </div>
           </div>
         ))}
         <div ref={bottomRef} />
       </div>
 
-      {/* Outgoing civility warning */}
-      {blocked && (
+      {/* Input area */}
+      <div className="px-3 pb-3 pt-1">
+
+        {/* State hint above input */}
+        {outgoing.kind === 'blocked' && (
+          <div className="flex items-center gap-1.5 px-1 pb-1.5 slide-up">
+            <Lock size={11} style={{ color: '#f43f5e' }} />
+            <span className="text-[11px]" style={{ color: '#f43f5e' }}>
+              Can't send — {contact.name} blocks abusive messages
+            </span>
+          </div>
+        )}
+        {outgoing.kind === 'review' && (
+          <div className="flex items-center gap-1.5 px-1 pb-1.5 slide-up">
+            <Clock size={11} style={{ color: '#fbbf24' }} />
+            <span className="text-[11px]" style={{ color: '#fbbf24' }}>
+              Will go to {contact.name}'s review folder
+            </span>
+          </div>
+        )}
+
         <div
-          className="mx-3 mb-2 p-3 slide-up"
+          className="glass2 flex items-center gap-2 p-1.5"
           style={{
-            borderRadius: 16,
-            background: isHigh ? 'rgba(244,63,94,0.12)' : 'rgba(251,191,36,0.10)',
-            border: `1px solid ${isHigh ? 'rgba(244,63,94,0.3)' : 'rgba(251,191,36,0.25)'}`,
+            borderRadius: 999,
+            border: outgoing.kind === 'blocked'
+              ? '1px solid rgba(244,63,94,0.35)'
+              : outgoing.kind === 'review'
+              ? '1px solid rgba(251,191,36,0.3)'
+              : undefined,
           }}
         >
-          <div className="flex items-start gap-2">
-            <AlertTriangle size={14} style={{ color: isHigh ? '#f43f5e' : '#fbbf24', flexShrink: 0, marginTop: 2 }} />
-            <div className="flex-1 min-w-0">
-              <div className="text-xs font-semibold text-main mb-0.5">
-                {isHigh ? 'Message blocked' : 'This may be too harsh'}
-              </div>
-              <div className="text-[11px] dim leading-relaxed">
-                {isHigh
-                  ? 'This contact has a high civility filter. Your message was flagged as potentially abusive and was not sent.'
-                  : 'This contact filters sensitive messages. Your message was flagged — they may not receive it.'}
-                {blocked.verdict.reason && (
-                  <span className="block mt-0.5 italic">{blocked.verdict.reason}</span>
-                )}
-              </div>
-              <div className="flex gap-2 mt-2">
-                <button
-                  onClick={() => dispatchSend(blocked.text)}
-                  className="text-[11px] px-2.5 py-1 rounded-full font-medium"
-                  style={{
-                    background: isHigh ? 'rgba(244,63,94,0.15)' : 'rgba(251,191,36,0.12)',
-                    color: isHigh ? '#f43f5e' : '#fbbf24',
-                  }}
-                >
-                  Send anyway
-                </button>
-                <button
-                  onClick={dismiss}
-                  className="text-[11px] px-2.5 py-1 rounded-full font-medium text-main"
-                  style={{ background: 'rgba(255,255,255,0.07)' }}
-                >
-                  Edit message
-                </button>
-              </div>
-            </div>
-            <button onClick={dismiss} className="dim shrink-0"><X size={12} /></button>
-          </div>
-        </div>
-      )}
-
-      {/* Input */}
-      <div className="px-3 pb-3 pt-1">
-        <div className="glass2 flex items-center gap-2 p-1.5" style={{ borderRadius: 999 }}>
           <input
             ref={inputRef}
             value={draft}
-            onChange={e => { setDraft(e.target.value); setBlocked(null); }}
-            onKeyDown={e => e.key === 'Enter' && !checking && sendOut()}
+            onChange={e => onDraftChange(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && !sendDisabled && sendOut()}
             placeholder="Message"
             className="flex-1 bg-transparent px-3 text-sm text-main outline-none placeholder:dim"
           />
           <button
             onClick={sendOut}
-            disabled={checking || !draft.trim()}
-            className="send-btn grid place-items-center"
-            style={{ width: 38, height: 38, borderRadius: 999, opacity: checking ? 0.7 : 1 }}
+            disabled={sendDisabled}
+            className="grid place-items-center transition-opacity"
+            style={{
+              width: 38, height: 38, borderRadius: 999,
+              background: outgoing.kind === 'blocked'
+                ? 'rgba(244,63,94,0.25)'
+                : outgoing.kind === 'review'
+                ? 'rgba(251,191,36,0.3)'
+                : 'linear-gradient(135deg,var(--accent),var(--accent2))',
+              opacity: sendDisabled ? 0.45 : 1,
+              cursor: sendDisabled ? 'not-allowed' : 'pointer',
+            }}
           >
-            {checking
+            {outgoing.kind === 'checking'
               ? <Loader2 size={16} color="#fff" className="animate-spin" />
+              : outgoing.kind === 'blocked'
+              ? <Lock size={15} color="#f43f5e" />
+              : outgoing.kind === 'review'
+              ? <Clock size={15} color="#fbbf24" />
               : <Send size={16} color="#fff" />
             }
           </button>
