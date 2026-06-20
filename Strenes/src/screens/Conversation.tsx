@@ -1,16 +1,21 @@
 import { useState, useRef, useEffect } from 'react';
-import { ArrowLeft, ShieldCheck, Send } from 'lucide-react';
+import { ArrowLeft, ShieldCheck, Send, AlertCircle, Zap } from 'lucide-react';
 import { useSiftStore, selectConversation } from '../store';
 import { Avatar } from '../components/ui/Avatar';
+import { analyzeTypingPattern, getDrunkDetectionLevel } from '../moderation/drunk-detection';
 
 export function Conversation() {
   const activeContactId = useSiftStore(s => s.activeContactId);
   const contacts        = useSiftStore(s => s.contacts);
   const setScreen       = useSiftStore(s => s.setScreen);
   const sendMessage     = useSiftStore(s => s.sendMessage);
+  const settings        = useSiftStore(s => s.settings);
   const messages        = useSiftStore(s => activeContactId ? selectConversation(s, activeContactId) : []);
 
   const [draft, setDraft] = useState('');
+  const [draftStartTime, setDraftStartTime] = useState(Date.now());
+  const [drunkWarning, setDrunkWarning] = useState<'none' | 'mild' | 'moderate' | 'high'>('none' as 'none' | 'mild' | 'moderate' | 'high');
+  const [showDrunkWarning, setShowDrunkWarning] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   const contact = contacts.find(c => c.id === activeContactId);
@@ -21,10 +26,52 @@ export function Conversation() {
 
   if (!contact) return null;
 
+  const checkDrunkMode = () => {
+    if (!settings.drunkMode.enabled && !settings.drunkMode.autoDetect) return false;
+
+    const pattern = analyzeTypingPattern(draft, Date.now() - draftStartTime);
+    const level = getDrunkDetectionLevel(pattern);
+    setDrunkWarning(level);
+
+    const hasWarning = level === 'mild' || level === 'moderate' || level === 'high';
+
+    if (hasWarning && settings.drunkMode.autoDetect) {
+      setShowDrunkWarning(true);
+      return true;
+    }
+
+    if (settings.drunkMode.enabled) {
+      return hasWarning;
+    }
+
+    return false;
+  };
+
   const sendOut = () => {
     if (!draft.trim() || !activeContactId) return;
+
+    if (checkDrunkMode()) {
+      if (settings.drunkMode.action === 'prevent') {
+        return;
+      }
+      if (settings.drunkMode.action === 'warn') {
+        setShowDrunkWarning(true);
+        return;
+      }
+    }
+
     sendMessage(activeContactId, draft.trim());
     setDraft('');
+    setDraftStartTime(Date.now());
+    setDrunkWarning('none');
+    setShowDrunkWarning(false);
+  };
+
+  const handleDraftChange = (text: string) => {
+    setDraft(text);
+    if (settings.drunkMode.autoDetect && text.length > 10) {
+      checkDrunkMode();
+    }
   };
 
   return (
@@ -63,19 +110,38 @@ export function Conversation() {
         <div ref={bottomRef} />
       </div>
 
+      {/* Drunk Warning */}
+      {showDrunkWarning && (drunkWarning === 'mild' || drunkWarning === 'moderate' || drunkWarning === 'high') && (
+        <div className="mx-3 mb-2 glass2 p-2 flex items-center gap-2 text-sm" style={{ borderRadius: 12 }}>
+          <AlertCircle size={16} className="flex-shrink-0" style={{ color: drunkWarning === 'high' ? '#ef4444' : '#f59e0b' }} />
+          <div>
+            <div className="font-semibold text-main">Slow down! 🍷</div>
+            <div className="dim text-xs">Your typing looks a bit rushed. Take a breath before sending.</div>
+            <div className="flex gap-2 mt-2">
+              <button onClick={() => setShowDrunkWarning(false)} className="text-xs accent-t hover:opacity-80">Got it</button>
+              <button onClick={sendOut} className="text-xs" style={{ color: '#ef4444' }}>Send anyway</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Input */}
       <div className="px-3 pb-3 pt-1">
         <div className="glass2 flex items-center gap-2 p-1.5" style={{ borderRadius: 999 }}>
           <input
             value={draft}
-            onChange={e => setDraft(e.target.value)}
-            onKeyDown={e => e.key === 'Enter' && sendOut()}
+            onChange={e => handleDraftChange(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && !showDrunkWarning && sendOut()}
             placeholder="Message"
             className="flex-1 bg-transparent px-3 text-sm text-main outline-none placeholder:dim"
           />
+          {(drunkWarning === 'mild' || drunkWarning === 'moderate' || drunkWarning === 'high') && (
+            <Zap size={16} style={{ color: drunkWarning === 'high' ? '#ef4444' : '#f59e0b', marginRight: 4 }} />
+          )}
           <button
             onClick={sendOut}
-            className="send-btn grid place-items-center"
+            disabled={showDrunkWarning && settings.drunkMode.action === 'prevent'}
+            className="send-btn grid place-items-center disabled:opacity-50"
             style={{ width: 38, height: 38, borderRadius: 999 }}
           >
             <Send size={16} color="#fff" />

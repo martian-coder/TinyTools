@@ -30,6 +30,10 @@ interface SiftState {
   updateCivility: (patch: Partial<UserSettings['civility']>) => void;
   updateSpam: (patch: Partial<UserSettings['spam']>) => void;
   updateBusiness: (patch: Partial<UserSettings['business']>) => void;
+  updateDND: (patch: Partial<UserSettings['dnd']>) => void;
+  updateDrunkMode: (patch: Partial<UserSettings['drunkMode']>) => void;
+  updateDisappearingMessages: (patch: Partial<UserSettings['disappearingMessages']>) => void;
+  setContactEmergency: (contactId: string, isEmergency: boolean) => void;
   toggleTrusted: (contactId: string) => void;
   setContactTrusted: (contactId: string, trusted: boolean) => void;
   resolvePendingAsk: (approve: boolean) => void;
@@ -101,6 +105,13 @@ export const useSiftStore = create<SiftState>()(
       updateCivility: patch => set(s => ({ settings: { ...s.settings, civility: { ...s.settings.civility, ...patch } } })),
       updateSpam:     patch => set(s => ({ settings: { ...s.settings, spam:     { ...s.settings.spam,     ...patch } } })),
       updateBusiness: patch => set(s => ({ settings: { ...s.settings, business: { ...s.settings.business, ...patch } } })),
+      updateDND:      patch => set(s => ({ settings: { ...s.settings, dnd:      { ...s.settings.dnd,      ...patch } } })),
+      updateDrunkMode: patch => set(s => ({ settings: { ...s.settings, drunkMode: { ...s.settings.drunkMode, ...patch } } })),
+      updateDisappearingMessages: patch => set(s => ({ settings: { ...s.settings, disappearingMessages: { ...s.settings.disappearingMessages, ...patch } } })),
+
+      setContactEmergency: (id, isEmergency) => set(s => ({
+        contacts: s.contacts.map(c => c.id === id ? { ...c, isEmergency } : c),
+      })),
 
       toggleTrusted: id => set(s => ({
         contacts: s.contacts.map(c => c.id === id ? { ...c, trusted: !c.trusted } : c),

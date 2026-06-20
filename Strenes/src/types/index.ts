@@ -2,6 +2,8 @@ export type Folder = 'primary' | 'business' | 'promotions' | 'review';
 export type Category = 'clean' | 'abusive' | 'spam' | 'business' | 'promo';
 export type BlockAction = 'review' | 'silentDrop' | 'askPerMessage';
 export type ThemeName = 'aurora' | 'sunset' | 'noir' | 'daylight';
+export type DisappearingMessageMode = 'off' | 'onRead' | '1m' | '5m' | '1h' | '24h' | 'custom';
+export type DrunkModeAction = 'prevent' | 'warn';
 
 export type ModerationEngine = 'rules' | 'apple-fm' | 'gemini-nano' | 'executorch';
 
@@ -18,6 +20,23 @@ export interface Contact {
   name: string;
   trusted: boolean;
   grad: string;
+  isEmergency?: boolean;
+}
+
+export interface DNDSettings {
+  enabled: boolean;
+  startHour: number;
+  endHour: number;
+  allowTrusted: boolean;
+  allowEmergency: boolean;
+  notifyButSilent: boolean;
+}
+
+export interface DrunkModeSettings {
+  enabled: boolean;
+  autoDetect: boolean;
+  action: DrunkModeAction;
+  typingSpeedThreshold: number;
 }
 
 export interface Message {
@@ -31,6 +50,9 @@ export interface Message {
   folder: Folder;
   status: 'delivered' | 'held' | 'dropped' | 'approved' | 'rejected';
   autoReply?: boolean;
+  disappearingMode?: DisappearingMessageMode;
+  disappearingExpiresAt?: number;
+  isRead?: boolean;
 }
 
 export interface UserSettings {
@@ -44,6 +66,13 @@ export interface UserSettings {
   spam: { enabled: boolean; onBlock: BlockAction };
   theme: ThemeName;
   trustedIds: string[];
+  disappearingMessages: {
+    enabled: boolean;
+    defaultMode: DisappearingMessageMode;
+    customMinutes?: number;
+  };
+  dnd: DNDSettings;
+  drunkMode: DrunkModeSettings;
 }
 
 export interface RouteResult {

@@ -1,4 +1,4 @@
-import { AlertTriangle, Briefcase, Forward, ShieldCheck, RotateCcw, Palette } from 'lucide-react';
+import { AlertTriangle, Briefcase, Forward, ShieldCheck, RotateCcw, Palette, Clock, Zap, Trash2 } from 'lucide-react';
 import { useSiftStore } from '../store';
 import { Switch } from '../components/ui/Switch';
 import { Segment } from '../components/ui/Segment';
@@ -9,13 +9,17 @@ interface SettingsProps {
 }
 
 export function Settings({ onShowThemes }: SettingsProps) {
-  const settings      = useSiftStore(s => s.settings);
-  const contacts      = useSiftStore(s => s.contacts);
-  const updateCivility = useSiftStore(s => s.updateCivility);
-  const updateSpam     = useSiftStore(s => s.updateSpam);
-  const updateBusiness = useSiftStore(s => s.updateBusiness);
-  const toggleTrusted  = useSiftStore(s => s.toggleTrusted);
-  const resetToSeed    = useSiftStore(s => s.resetToSeed);
+  const settings              = useSiftStore(s => s.settings);
+  const contacts              = useSiftStore(s => s.contacts);
+  const updateCivility        = useSiftStore(s => s.updateCivility);
+  const updateSpam            = useSiftStore(s => s.updateSpam);
+  const updateBusiness        = useSiftStore(s => s.updateBusiness);
+  const toggleTrusted         = useSiftStore(s => s.toggleTrusted);
+  const updateDND             = useSiftStore(s => s.updateDND);
+  const updateDrunkMode       = useSiftStore(s => s.updateDrunkMode);
+  const updateDisappearingMessages = useSiftStore(s => s.updateDisappearingMessages);
+  const setContactEmergency   = useSiftStore(s => s.setContactEmergency);
+  const resetToSeed           = useSiftStore(s => s.resetToSeed);
   const s = settings;
 
   return (
@@ -103,21 +107,142 @@ export function Settings({ onShowThemes }: SettingsProps) {
           )}
         </div>
 
-        {/* Trusted contacts */}
+        {/* Trusted & Emergency contacts */}
         <div className="glass p-4" style={{ borderRadius: 20 }}>
           <div className="flex items-center gap-2 font-medium text-main mb-1">
             <ShieldCheck size={16} className="cat-ic-emerald" /> Trusted contacts
           </div>
-          <p className="text-xs dim mb-2">Trusted people bypass every filter.</p>
+          <p className="text-xs dim mb-2">Trusted people bypass every filter. Emergency contacts reach you even in DND.</p>
           {contacts.map(c => (
-            <label key={c.id} className="flex items-center justify-between py-1.5">
-              <span className="flex items-center gap-2 text-sm text-main">
-                <Avatar name={c.name} grad={c.grad} size={28} />
-                {c.name}
-              </span>
-              <Switch on={c.trusted} onClick={() => toggleTrusted(c.id)} />
-            </label>
+            <div key={c.id}>
+              <label className="flex items-center justify-between py-1.5">
+                <span className="flex items-center gap-2 text-sm text-main">
+                  <Avatar name={c.name} grad={c.grad} size={28} />
+                  <div>
+                    <div>{c.name}</div>
+                    {c.isEmergency && <div className="text-[10px] dim">🚨 Emergency</div>}
+                  </div>
+                </span>
+                <Switch on={c.trusted} onClick={() => toggleTrusted(c.id)} />
+              </label>
+              {c.trusted && (
+                <label className="flex items-center gap-2 ml-10 py-1 text-xs text-main">
+                  <input
+                    type="checkbox"
+                    checked={c.isEmergency || false}
+                    onChange={e => setContactEmergency(c.id, e.target.checked)}
+                    className="w-4 h-4"
+                  />
+                  Emergency contact
+                </label>
+              )}
+            </div>
           ))}
+        </div>
+
+        {/* Disappearing Messages */}
+        <div className="glass p-4 space-y-3" style={{ borderRadius: 20 }}>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 font-medium text-main">
+              <Trash2 size={16} className="cat-ic-amber" /> Disappearing messages
+            </div>
+            <Switch on={s.disappearingMessages.enabled} onClick={() => updateDisappearingMessages({ enabled: !s.disappearingMessages.enabled })} />
+          </div>
+          {s.disappearingMessages.enabled && (
+            <>
+              <div>
+                <div className="text-xs dim mb-1.5">Default timer</div>
+                <Segment
+                  value={s.disappearingMessages.defaultMode}
+                  options={[
+                    { v: 'off', l: 'Off' },
+                    { v: 'onRead', l: 'On read' },
+                    { v: '1m', l: '1m' },
+                    { v: '5m', l: '5m' },
+                    { v: '1h', l: '1h' },
+                    { v: '24h', l: '24h' }
+                  ]}
+                  onChange={v => updateDisappearingMessages({ defaultMode: v as any })}
+                />
+              </div>
+            </>
+          )}
+        </div>
+
+        {/* Do Not Disturb */}
+        <div className="glass p-4 space-y-3" style={{ borderRadius: 20 }}>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 font-medium text-main">
+              <Clock size={16} className="cat-ic-sky" /> Do Not Disturb
+            </div>
+            <Switch on={s.dnd.enabled} onClick={() => updateDND({ enabled: !s.dnd.enabled })} />
+          </div>
+          {s.dnd.enabled && (
+            <>
+              <div className="space-y-2">
+                <div className="text-xs dim">Quiet hours</div>
+                <div className="flex gap-2 items-center">
+                  <input
+                    type="number"
+                    min="0"
+                    max="23"
+                    value={s.dnd.startHour}
+                    onChange={e => updateDND({ startHour: parseInt(e.target.value) })}
+                    className="w-16 glass2 px-2 py-1 text-sm text-main rounded"
+                  />
+                  <span className="dim text-sm">to</span>
+                  <input
+                    type="number"
+                    min="0"
+                    max="23"
+                    value={s.dnd.endHour}
+                    onChange={e => updateDND({ endHour: parseInt(e.target.value) })}
+                    className="w-16 glass2 px-2 py-1 text-sm text-main rounded"
+                  />
+                </div>
+              </div>
+              <label className="flex items-center justify-between text-sm text-main">
+                <span>Allow trusted contacts</span>
+                <Switch on={s.dnd.allowTrusted} onClick={() => updateDND({ allowTrusted: !s.dnd.allowTrusted })} />
+              </label>
+              <label className="flex items-center justify-between text-sm text-main">
+                <span>Allow emergency contacts</span>
+                <Switch on={s.dnd.allowEmergency} onClick={() => updateDND({ allowEmergency: !s.dnd.allowEmergency })} />
+              </label>
+              <label className="flex items-center justify-between text-sm text-main">
+                <span>Mute notifications (show msgs)</span>
+                <Switch on={s.dnd.notifyButSilent} onClick={() => updateDND({ notifyButSilent: !s.dnd.notifyButSilent })} />
+              </label>
+            </>
+          )}
+        </div>
+
+        {/* Drunk Mode */}
+        <div className="glass p-4 space-y-3" style={{ borderRadius: 20 }}>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 font-medium text-main">
+              <Zap size={16} className="cat-ic-rose" /> Drunk mode
+            </div>
+            <Switch on={s.drunkMode.enabled} onClick={() => updateDrunkMode({ enabled: !s.drunkMode.enabled })} />
+          </div>
+          {(s.drunkMode.enabled || s.drunkMode.autoDetect) && (
+            <>
+              <label className="flex items-center justify-between text-sm text-main">
+                <span>AI auto-detect suspicious typing</span>
+                <Switch on={s.drunkMode.autoDetect} onClick={() => updateDrunkMode({ autoDetect: !s.drunkMode.autoDetect })} />
+              </label>
+              {(s.drunkMode.enabled || s.drunkMode.autoDetect) && (
+                <div>
+                  <div className="text-xs dim mb-1.5">When detected</div>
+                  <Segment
+                    value={s.drunkMode.action}
+                    options={[{ v: 'warn', l: 'Warn' }, { v: 'prevent', l: 'Prevent' }]}
+                    onChange={v => updateDrunkMode({ action: v as 'warn' | 'prevent' })}
+                  />
+                </div>
+              )}
+            </>
+          )}
         </div>
 
         <button

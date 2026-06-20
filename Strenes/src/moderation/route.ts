@@ -1,6 +1,31 @@
-import type { ModerationVerdict, UserSettings, RouteResult } from '../types';
+import type { ModerationVerdict, UserSettings, RouteResult, Contact } from '../types';
 
-export function routeVerdict(verdict: ModerationVerdict, settings: UserSettings, trusted: boolean): RouteResult {
+export function isInDNDHours(settings: UserSettings): boolean {
+  if (!settings.dnd.enabled) return false;
+  const now = new Date();
+  const hour = now.getHours();
+  if (settings.dnd.startHour < settings.dnd.endHour) {
+    return hour >= settings.dnd.startHour && hour < settings.dnd.endHour;
+  }
+  return hour >= settings.dnd.startHour || hour < settings.dnd.endHour;
+}
+
+export function canReceiveInDND(contact: Contact, settings: UserSettings): boolean {
+  if (!isInDNDHours(settings)) return true;
+  if (contact.isEmergency && settings.dnd.allowEmergency) return true;
+  if (contact.trusted && settings.dnd.allowTrusted) return true;
+  return false;
+}
+
+export function routeVerdict(verdict: ModerationVerdict, settings: UserSettings, trusted: boolean, contact?: Contact): RouteResult {
+  // Check DND
+  if (contact && !canReceiveInDND(contact, settings)) {
+    if (settings.dnd.notifyButSilent) {
+      return { folder: 'primary', status: 'delivered' };
+    }
+    return { folder: 'primary', status: 'held' };
+  }
+
   if (trusted) return { folder: 'primary', status: 'delivered' };
 
   if (verdict.category === 'abusive') {
