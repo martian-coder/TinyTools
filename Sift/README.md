@@ -35,11 +35,19 @@ A WhatsApp-style PWA where **you** control an on-device AI filter that screens e
 
 ## 🚀 Try It Now
 
-**Live demo:** https://martian-coder.github.io/TinyTools/sift-home/
+**Marketing landing page:** https://martian-coder.github.io/TinyTools/sift-home/  
+→ 7-screen interactive carousel showcasing all features (civility guard, in-call, smart folders, settings, review queue, business categorization, trusted contacts)
 
-**Install PWA:** https://martian-coder.github.io/TinyTools/sift/
+**Live PWA app:** https://martian-coder.github.io/TinyTools/sift/  
+→ Add to home screen or bookmark to install. Works on Chrome, Edge, Samsung Internet, and Safari (iOS 16.4+).
 
-Add to home screen or bookmark to install. Works on Chrome, Edge, Samsung Internet, and Safari (iOS 16.4+).
+**Features preview:**
+- Real-time message moderation with on-device AI
+- Blur-to-reveal for held messages
+- Auto-routed business/promo/spam folders
+- Trusted contacts (bypass all filters)
+- Settings with civility sensitivity dial
+- In-call integration with Mute/Speaker/End controls
 
 ---
 
@@ -58,33 +66,47 @@ All classification flows through a swappable `Moderator` interface:
 
 ### Tech Stack
 
+**App (PWA):**
 - **React 19 + Vite** — Fast SPA, instant HMR
 - **TypeScript** — Type-safe moderation, routing, store
-- **Tailwind CSS v4** — Aurora glassmorphism design
+- **Tailwind CSS v4** — Aurora glassmorphism design with 4 themes
 - **Zustand v5** — Lightweight state (persists to localStorage)
 - **vite-plugin-pwa** — PWA manifest, service worker, offline support
+
+**Marketing landing page:**
+- **HTML5 + Vanilla JS** — No frameworks, lightweight carousel with auto-scroll
+- **CSS3 + custom properties** — Light glassmorphic design with purple gradient headers
+- **7-screen carousel** — Auto-advances every 3s, shows all key features
+- **Responsive** — Works on mobile, tablet, and desktop
 
 ### Folder Structure
 
 ```
-src/
-├── moderation/           # Swappable Moderator engine
-│   ├── types.ts          # Moderator interface, Sensitivity
-│   ├── rules.ts          # RulesModerator (wordlist-based)
-│   ├── gemini-nano.ts    # GeminiNanoModerator (Chrome Prompt API)
-│   ├── index.ts          # getModerator() factory chain
-│   └── route.ts          # routeVerdict(verdict, settings)
-├── screens/              # 4 main screens
-│   ├── ChatList.tsx      # Folder tabs + conversations
-│   ├── Conversation.tsx  # Single thread + review actions
-│   ├── Settings.tsx      # Theme, sensitivity, export
-│   └── Simulator.tsx     # Test moderation engine
-├── store/                # Zustand state
-├── theme/                # Design tokens (4 themes)
-├── types/                # Shared TypeScript types
-├── components/ui/        # Glass, Badge, Avatar, BottomNav, etc.
-├── seed/                 # Demo contacts + messages
-└── App.tsx               # Root: phone frame + router
+Sift/
+├── src/                  # React PWA application
+│   ├── moderation/           # Swappable Moderator engine
+│   │   ├── types.ts          # Moderator interface, Sensitivity
+│   │   ├── rules.ts          # RulesModerator (wordlist-based)
+│   │   ├── gemini-nano.ts    # GeminiNanoModerator (Chrome Prompt API)
+│   │   ├── index.ts          # getModerator() factory chain
+│   │   └── route.ts          # routeVerdict(verdict, settings)
+│   ├── screens/              # 4 main screens
+│   │   ├── ChatList.tsx      # Folder tabs + conversations
+│   │   ├── Conversation.tsx  # Single thread + review actions + call UI
+│   │   ├── Settings.tsx      # Theme, sensitivity, filter toggles
+│   │   └── Simulator.tsx     # Test moderation engine
+│   ├── store/                # Zustand state + selectors
+│   ├── theme/                # Design tokens (4 themes: aurora, sunset, noir, daylight)
+│   ├── types/                # Shared TypeScript types
+│   ├── components/ui/        # Glass, Badge, Avatar, BottomNav, Switch
+│   ├── seed/                 # Demo contacts + messages
+│   └── App.tsx               # Root: phone frame + router
+├── landing/              # Marketing landing page
+│   └── index.html        # 7-screen auto-scroll carousel, light glassmorphic design
+├── index.html
+├── vite.config.ts
+├── tsconfig.json
+└── package.json
 ```
 
 ---
@@ -143,8 +165,11 @@ Change theme in Settings. Persists to localStorage.
 ## 📦 Milestones
 
 - [x] **M0** — Scaffold: Vite + React + TS + PWA + Zustand + aurora UI
-- [x] **M1** — UI: all 4 screens, themes, animations, seed data
+- [x] **M1** — UI: all 4 screens, 4 themes, animations, seed data, call integration
 - [x] **M2** — Real AI: Moderator interface + Gemini Nano + RulesModerator fallback
+  - [x] Marketing landing page: 7-screen carousel, light glassmorphic design, auto-scroll
+  - [x] Premium phone previews: purple gradient header + white card UI
+  - [x] Feature showcase: civility guard, in-call, smart folders, settings, review queue, business, trusted contacts
 - [ ] **M3** — Backend: real message delivery + E2E encryption
 - [ ] **M4** — Polish: push notifications, accessibility, native builds (React Native + Expo)
 
