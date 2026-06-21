@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { AlertTriangle, Briefcase, Forward, ShieldCheck, RotateCcw, Palette, Download, Brain, Trash2, Clock, Zap, Flame, Sparkles, KeyRound, Eye, EyeOff } from 'lucide-react';
+import { AlertTriangle, Briefcase, Forward, ShieldCheck, RotateCcw, Palette, Download, Brain, Trash2, Clock, Zap, Flame, Sparkles, KeyRound, Eye, EyeOff, MessageSquare } from 'lucide-react';
 import { useSiftStore } from '../store';
 import { Switch } from '../components/ui/Switch';
 import { Segment } from '../components/ui/Segment';
@@ -23,6 +23,7 @@ export function Settings({ onShowThemes }: SettingsProps) {
   const updateToneChecker     = useSiftStore(s => s.updateToneChecker);
   const updateSpellCheck      = useSiftStore(s => s.updateSpellCheck);
   const updateAiReplies       = useSiftStore(s => s.updateAiReplies);
+  const updateSmsFallback     = useSiftStore(s => s.updateSmsFallback);
   const setContactEmergency   = useSiftStore(s => s.setContactEmergency);
   const resetToSeed           = useSiftStore(s => s.resetToSeed);
   const s = settings;
@@ -277,6 +278,17 @@ export function Settings({ onShowThemes }: SettingsProps) {
               </div>
             </>
           )}
+        </div>
+
+        {/* SMS Fallback */}
+        <div className="glass p-4 space-y-2" style={{ borderRadius: 20 }}>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 font-medium text-main">
+              <MessageSquare size={16} style={{ color: '#22d3ee' }} /> SMS Fallback
+            </div>
+            <Switch on={s.smsFallback?.enabled ?? false} onClick={() => updateSmsFallback({ enabled: !(s.smsFallback?.enabled ?? false) })} />
+          </div>
+          <p className="text-xs dim">When internet is down, offer to send messages via SMS. You'll be asked for consent every time — standard carrier rates may apply.</p>
         </div>
 
         {/* Trusted contacts */}

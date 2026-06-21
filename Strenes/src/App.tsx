@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { X, Palette, Check, Lock } from 'lucide-react';
 import { useSiftStore } from './store';
 import { THEMES } from './theme';
@@ -19,8 +19,20 @@ export default function App() {
   const resolvePendingAsk = useSiftStore(s => s.resolvePendingAsk);
   const banner         = useSiftStore(s => s.banner);
   const setBanner      = useSiftStore(s => s.setBanner);
+  const flushQueue     = useSiftStore(s => s.flushQueue);
 
   const [showThemes, setShowThemes] = useState(false);
+
+  // Flush queued messages as soon as connectivity returns
+  useEffect(() => {
+    const handler = () => {
+      flushQueue();
+      setBanner('Back online — queued messages sent via internet.');
+      setTimeout(() => setBanner(null), 3000);
+    };
+    window.addEventListener('online', handler);
+    return () => window.removeEventListener('online', handler);
+  }, [flushQueue, setBanner]);
 
   const themeVars = THEMES[theme].vars;
   const isConversation = activeScreen === 'conversation';
