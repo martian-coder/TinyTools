@@ -72,7 +72,7 @@ export const useSiftStore = create<SiftState>()(
       contacts:         SEED_CONTACTS,
       messages:         SEED_MESSAGES,
       settings:         DEFAULT_SETTINGS,
-      activeScreen:     'chats',
+      activeScreen:     'commander',
       activeFolder:     'primary',
       activeContactId:  null,
       pendingAsk:       null,
