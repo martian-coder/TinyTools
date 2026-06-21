@@ -1,6 +1,7 @@
 export type Folder = 'primary' | 'business' | 'promotions' | 'review';
 export type Category = 'clean' | 'abusive' | 'spam' | 'business' | 'promo';
 export type BlockAction = 'review' | 'silentDrop' | 'askPerMessage';
+export type MessageRoute = 'ip' | 'sms' | 'queued';
 export type ThemeName = 'aurora' | 'sunset' | 'noir' | 'daylight' | 'terminal';
 export type DisappearingMessageMode = 'off' | 'onRead' | '1m' | '5m' | '1h' | '24h' | 'custom';
 export type MessageTone = 'polite' | 'neutral' | 'assertive' | 'aggressive' | 'harsh';
@@ -50,6 +51,7 @@ export interface Message {
   status: 'delivered' | 'held' | 'dropped' | 'approved' | 'rejected';
   autoReply?: boolean;
   disappearsAt?: number;
+  route?: MessageRoute;
 }
 
 export interface UserSettings {
@@ -93,6 +95,9 @@ export interface UserSettings {
   aiReplies: {
     enabled: boolean;
     anthropicKey: string;
+  };
+  smsFallback: {
+    enabled: boolean;
   };
   theme: ThemeName;
   trustedIds: string[];

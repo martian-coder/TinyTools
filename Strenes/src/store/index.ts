@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { Contact, Message, UserSettings, Folder, RouteResult, ModerationVerdict } from '../types';
+import type { Contact, Message, MessageRoute, UserSettings, Folder, RouteResult, ModerationVerdict } from '../types';
 import { SEED_CONTACTS, SEED_MESSAGES, DEFAULT_SETTINGS } from '../seed';
 
 export type Screen = 'chats' | 'conversation' | 'settings' | 'simulator' | 'digest' | 'commander';
@@ -21,7 +21,8 @@ interface SiftState {
   openConversation: (contactId: string) => void;
   setRevealed: (id: string) => void;
   setBanner: (msg: string | null) => void;
-  sendMessage: (contactId: string, text: string) => void;
+  sendMessage: (contactId: string, text: string, route?: MessageRoute) => void;
+  flushQueue: () => void;
   sendOutgoingToReview: (contactId: string, text: string, verdict: ModerationVerdict) => void;
   receiveMessage: (contactId: string, text: string, route: RouteResult, verdict: ModerationVerdict) => void;
   approveMessage: (id: string) => void;
@@ -38,6 +39,7 @@ interface SiftState {
   updateToneChecker: (patch: Partial<UserSettings['toneChecker']>) => void;
   updateSpellCheck: (patch: Partial<UserSettings['spellCheck']>) => void;
   updateAiReplies: (patch: Partial<UserSettings['aiReplies']>) => void;
+  updateSmsFallback: (patch: Partial<UserSettings['smsFallback']>) => void;
   setContactEmergency: (contactId: string, isEmergency: boolean) => void;
   toggleTrusted: (contactId: string) => void;
   setContactTrusted: (contactId: string, trusted: boolean) => void;
@@ -83,13 +85,20 @@ export const useSiftStore = create<SiftState>()(
       setRevealed: id => set(s => ({ revealed: { ...s.revealed, [id]: true } })),
       setBanner: msg => set({ banner: msg }),
 
-      sendMessage: (contactId, text) => set(s => ({
+      sendMessage: (contactId, text, route = 'ip') => set(s => ({
         messages: [...s.messages, {
           id: nid(), contactId, text, dir: 'out',
           ts: Date.now(), time: 'now',
           folder: 'primary', status: 'delivered',
           disappearsAt: calcDisappearsAt(s.settings),
+          route,
         }],
+      })),
+
+      flushQueue: () => set(s => ({
+        messages: s.messages.map(m =>
+          m.route === 'queued' ? { ...m, route: 'ip' as MessageRoute } : m
+        ),
       })),
 
       sendOutgoingToReview: (contactId, text, verdict) => set(s => ({
@@ -144,6 +153,7 @@ export const useSiftStore = create<SiftState>()(
       updateToneChecker: patch => set(s => ({ settings: { ...s.settings, toneChecker: { ...s.settings.toneChecker, ...patch } } })),
       updateSpellCheck: patch => set(s => ({ settings: { ...s.settings, spellCheck: { ...s.settings.spellCheck, ...patch } } })),
       updateAiReplies: patch => set(s => ({ settings: { ...s.settings, aiReplies: { ...s.settings.aiReplies, ...patch } } })),
+      updateSmsFallback: patch => set(s => ({ settings: { ...s.settings, smsFallback: { ...s.settings.smsFallback, ...patch } } })),
 
       setContactEmergency: (id, isEmergency) => set(s => ({
         contacts: s.contacts.map(c => c.id === id ? { ...c, isEmergency } : c),

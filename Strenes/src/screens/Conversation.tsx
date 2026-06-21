@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
-import { ArrowLeft, ShieldCheck, Send, Loader2, Lock, Clock, Phone, PhoneOff, Mic, MicOff, Volume2, VolumeX, Sparkles, Check, X, Brain, AlertCircle, RefreshCw } from 'lucide-react';
+import { ArrowLeft, ShieldCheck, Send, Loader2, Lock, Clock, Phone, PhoneOff, Mic, MicOff, Volume2, VolumeX, Sparkles, Check, X, Brain, AlertCircle, RefreshCw, Wifi, MessageSquare, Timer } from 'lucide-react';
 import { useSiftStore } from '../store';
 import { Avatar } from '../components/ui/Avatar';
 import { getModerator } from '../moderation';
@@ -7,7 +7,7 @@ import { checkSpellingWithAI, applySuggestion } from '../moderation/spell-check'
 import { analyzeTone } from '../moderation/tone-analyzer';
 import { analyzeTypingPattern, getDrunkDetectionLevel } from '../moderation/drunk-detection';
 import { suggestReplies } from '../moderation/reply-suggest';
-import type { ModerationVerdict, SpellCheckSuggestion, ToneAnalysis } from '../types';
+import type { ModerationVerdict, MessageRoute, SpellCheckSuggestion, ToneAnalysis } from '../types';
 import type { SuggestionResult } from '../moderation/reply-suggest';
 
 type OutgoingState =
@@ -69,6 +69,7 @@ export function Conversation() {
   const [draftStartTime, setDraftStartTime]  = useState<number>(0);
   const [suggestions, setSuggestions]        = useState<SuggestionResult | null>(null);
   const [suggestLoading, setSuggestLoading]  = useState(false);
+  const [smsConsentText, setSmsConsentText]  = useState<string | null>(null);
   const suggestKeyRef = useRef<string>('');
   const debounceRef               = useRef<ReturnType<typeof setTimeout> | null>(null);
   const timerRef                  = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -190,6 +191,21 @@ export function Conversation() {
     debounceRef.current = setTimeout(() => classify(text.trim()), 700);
   };
 
+  const doSend = (text: string, route: MessageRoute) => {
+    if (!activeContactId) return;
+    if (outgoing.kind === 'review') {
+      sendOutgoingToReview(activeContactId, text, (outgoing as { kind: 'review'; verdict: ModerationVerdict }).verdict);
+    } else {
+      sendMessage(activeContactId, text, route);
+    }
+    setDraft('');
+    setOutgoing({ kind: 'idle' });
+    setDrunkWarning('none');
+    setToneResult(null);
+    setShowToneAnalysis(false);
+    setDraftStartTime(0);
+  };
+
   const sendOut = async () => {
     const text = draft.trim();
     if (!text || !activeContactId) return;
@@ -211,17 +227,18 @@ export function Conversation() {
       }
     }
 
-    if (outgoing.kind === 'review') {
-      sendOutgoingToReview(activeContactId, text, (outgoing as { kind: 'review'; verdict: ModerationVerdict }).verdict);
-    } else {
-      sendMessage(activeContactId, text);
+    // Offline routing: prompt SMS consent or queue
+    if (!navigator.onLine) {
+      if (settings.smsFallback?.enabled) {
+        setSmsConsentText(text);
+        setDraft('');
+        return;
+      }
+      doSend(text, 'queued');
+      return;
     }
-    setDraft('');
-    setOutgoing({ kind: 'idle' });
-    setDrunkWarning('none');
-    setToneResult(null);
-    setShowToneAnalysis(false);
-    setDraftStartTime(0);
+
+    doSend(text, 'ip');
   };
 
   const sendWithCorrections = (acceptSuggestions: boolean) => {
@@ -232,13 +249,7 @@ export function Conversation() {
         finalText = applySuggestion(finalText, s.original, s.suggested);
       }
     }
-    if (outgoing.kind === 'review') {
-      sendOutgoingToReview(activeContactId, finalText, (outgoing as { kind: 'review'; verdict: ModerationVerdict }).verdict);
-    } else {
-      sendMessage(activeContactId, finalText);
-    }
-    setDraft('');
-    setOutgoing({ kind: 'idle' });
+    doSend(finalText, navigator.onLine ? 'ip' : 'queued');
     setPendingSendText(null);
     setSpellCheckSuggestions([]);
   };
@@ -292,6 +303,9 @@ export function Conversation() {
                 {m.disappearsAt && m.disappearsAt > now && (
                   <><Clock size={9} style={{ opacity: 0.7 }} /> {Math.ceil((m.disappearsAt - now) / 1000)}s · </>
                 )}
+                {m.dir === 'out' && m.route === 'sms'    && <><MessageSquare size={9} /> SMS · </>}
+                {m.dir === 'out' && m.route === 'queued' && <><Timer size={9} /> queued · </>}
+                {m.dir === 'out' && m.route === 'ip'     && <Wifi size={9} />}
                 {m.time}
               </div>
             </div>
@@ -531,6 +545,51 @@ export function Conversation() {
                 style={{ borderRadius: 12, background: 'rgba(251,191,36,0.15)' }}
               >
                 <Check size={14} /> Fix & send
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* SMS Consent Modal */}
+      {smsConsentText && (
+        <div
+          className="absolute inset-0 z-50 flex items-center justify-center p-6"
+          style={{ background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)' }}
+        >
+          <div className="glass p-5 max-w-xs w-full" style={{ borderRadius: 20 }}>
+            <div className="flex items-center gap-2 mb-3">
+              <MessageSquare size={18} style={{ color: '#22d3ee' }} />
+              <div className="font-semibold text-main">No Internet Connection</div>
+            </div>
+            <p className="text-sm text-main mb-1">Send this message via <strong>SMS</strong> instead?</p>
+            <p className="text-xs dim mb-4">Standard carrier rates may apply. Your message will be delivered as a text.</p>
+            <div
+              className="text-xs text-main p-2.5 mb-4 glass"
+              style={{ borderRadius: 10, borderLeft: '3px solid var(--accent2)' }}
+            >
+              {smsConsentText}
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={() => {
+                  doSend(smsConsentText, 'queued');
+                  setSmsConsentText(null);
+                }}
+                className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium dim hover:bg-white hover:bg-opacity-5 transition"
+                style={{ borderRadius: 12 }}
+              >
+                <Timer size={13} /> Queue it
+              </button>
+              <button
+                onClick={() => {
+                  doSend(smsConsentText, 'sms');
+                  setSmsConsentText(null);
+                }}
+                className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-semibold text-main transition"
+                style={{ borderRadius: 12, background: 'rgba(34,211,238,0.15)' }}
+              >
+                <MessageSquare size={13} /> Send SMS
               </button>
             </div>
           </div>
