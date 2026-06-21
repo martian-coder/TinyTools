@@ -35,15 +35,24 @@ export function Conversation() {
   // Pull raw messages from store (stable reference via slice), then filter/sort in useMemo
   // to avoid returning new array references from the Zustand selector (causes infinite loop).
   const allMessages = useSiftStore(s => s.messages);
+
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, []);
+
   const messages = useMemo(() =>
     activeContactId
       ? allMessages
-          .filter(m => m.contactId === activeContactId && (
-            m.dir === 'out' || m.status === 'delivered' || m.status === 'approved'
-          ))
+          .filter(m =>
+            m.contactId === activeContactId &&
+            (m.dir === 'out' || m.status === 'delivered' || m.status === 'approved') &&
+            !(m.disappearsAt && now > m.disappearsAt)
+          )
           .sort((a, b) => a.ts - b.ts)
       : [],
-    [allMessages, activeContactId]
+    [allMessages, activeContactId, now]
   );
 
   const [draft, setDraft]                    = useState('');
@@ -280,6 +289,9 @@ export function Conversation() {
               {m.text}
               <div className={`text-[10px] mt-0.5 flex items-center gap-1 ${m.dir === 'out' ? 'out-time justify-end' : 'dim'}`}>
                 {m.dir === 'out' && m.status === 'held' && <><Clock size={9} /> under review · </>}
+                {m.disappearsAt && m.disappearsAt > now && (
+                  <><Clock size={9} style={{ opacity: 0.7 }} /> {Math.ceil((m.disappearsAt - now) / 1000)}s · </>
+                )}
                 {m.time}
               </div>
             </div>

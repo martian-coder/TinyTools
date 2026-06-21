@@ -48,6 +48,22 @@ interface SiftState {
 let idCounter = 200;
 const nid = () => `m${idCounter++}`;
 
+function calcDisappearsAt(settings: UserSettings): number | undefined {
+  const dm = settings.disappearingMessages;
+  if (!dm.enabled || dm.defaultMode === 'off') return undefined;
+  const now = Date.now();
+  const MODES: Record<string, number> = {
+    onRead: 30_000,
+    '1m':   60_000,
+    '5m':   5 * 60_000,
+    '1h':   60 * 60_000,
+    '24h':  24 * 60 * 60_000,
+    custom: (dm.customMinutes ?? 5) * 60_000,
+  };
+  const ttl = MODES[dm.defaultMode];
+  return ttl ? now + ttl : undefined;
+}
+
 export const useSiftStore = create<SiftState>()(
   persist(
     (set, get) => ({
@@ -72,6 +88,7 @@ export const useSiftStore = create<SiftState>()(
           id: nid(), contactId, text, dir: 'out',
           ts: Date.now(), time: 'now',
           folder: 'primary', status: 'delivered',
+          disappearsAt: calcDisappearsAt(s.settings),
         }],
       })),
 
@@ -84,11 +101,13 @@ export const useSiftStore = create<SiftState>()(
       })),
 
       receiveMessage: (contactId, text, route, verdict) => {
+        const { settings } = get();
         const newMsg: Message = {
           id: nid(), contactId, text, dir: 'in',
           ts: Date.now(), time: 'now',
           verdict, folder: route.folder, status: route.status,
           autoReply: route.autoReply,
+          disappearsAt: route.status === 'delivered' ? calcDisappearsAt(settings) : undefined,
         };
         set(s => {
           const messages = [...s.messages, newMsg];

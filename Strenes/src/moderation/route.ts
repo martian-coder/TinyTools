@@ -1,6 +1,40 @@
 import type { ModerationVerdict, UserSettings, RouteResult } from '../types';
 
-export function routeVerdict(verdict: ModerationVerdict, settings: UserSettings, trusted: boolean): RouteResult {
+function isDNDActive(dnd: UserSettings['dnd']): boolean {
+  if (!dnd.enabled) return false;
+  const hour = new Date().getHours();
+  const { startHour, endHour } = dnd;
+  return startHour <= endHour
+    ? hour >= startHour && hour < endHour
+    : hour >= startHour || hour < endHour;
+}
+
+export function routeVerdict(
+  verdict: ModerationVerdict,
+  settings: UserSettings,
+  trusted: boolean,
+  isEmergency = false,
+): RouteResult {
+  // Unhinged mode bypasses all filters
+  if (settings.unhingedMode.enabled) return { folder: 'primary', status: 'delivered' };
+
+  // Emergency contacts bypass DND (if allowed) and all filters
+  if (isEmergency && settings.dnd.allowEmergency) {
+    return { folder: 'primary', status: 'delivered' };
+  }
+
+  // DND — block non-emergency senders during quiet hours
+  if (isDNDActive(settings.dnd)) {
+    if (trusted && settings.dnd.allowTrusted) {
+      // fall through — trusted bypass below
+    } else {
+      return {
+        folder: 'primary',
+        status: settings.dnd.notifyButSilent ? 'held' : 'dropped',
+      };
+    }
+  }
+
   if (trusted) return { folder: 'primary', status: 'delivered' };
 
   if (verdict.category === 'abusive') {

@@ -73,8 +73,9 @@ export function Simulator() {
     );
     const [v] = await Promise.all([classify, minDelay]);
 
-    const r = routeVerdict(v, settings, tTrusted);
     const cid = (tName.trim().toLowerCase().replace(/[^a-z0-9]/g, '') || 'newnumber');
+    const existingContact = cById(cid);
+    const r = routeVerdict(v, settings, tTrusted, existingContact?.isEmergency ?? false);
 
     useSiftStore.setState(s => {
       const contacts = cById(cid)

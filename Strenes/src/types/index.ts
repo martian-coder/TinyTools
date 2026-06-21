@@ -49,6 +49,7 @@ export interface Message {
   folder: Folder;
   status: 'delivered' | 'held' | 'dropped' | 'approved' | 'rejected';
   autoReply?: boolean;
+  disappearsAt?: number;
 }
 
 export interface UserSettings {
