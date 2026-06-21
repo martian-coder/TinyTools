@@ -1,12 +1,13 @@
-import { MessageSquare, FlaskConical, Settings as SettingsIcon } from 'lucide-react';
+import { MessageSquare, FlaskConical, Settings as SettingsIcon, Bot } from 'lucide-react';
 import { useSiftStore } from '../../store';
 
-type Tab = 'chats' | 'simulator' | 'settings';
+type Tab = 'commander' | 'chats' | 'simulator' | 'settings';
 
 const TABS: { id: Tab; label: string; Icon: React.ComponentType<{ size?: number }> }[] = [
-  { id: 'chats',     label: 'Chats',    Icon: MessageSquare },
-  { id: 'simulator', label: 'Test',     Icon: FlaskConical  },
-  { id: 'settings',  label: 'Settings', Icon: SettingsIcon  },
+  { id: 'commander', label: 'Commander', Icon: Bot           },
+  { id: 'chats',     label: 'Chats',     Icon: MessageSquare },
+  { id: 'simulator', label: 'Test',      Icon: FlaskConical  },
+  { id: 'settings',  label: 'Settings',  Icon: SettingsIcon  },
 ];
 
 export function BottomNav() {
@@ -17,7 +18,8 @@ export function BottomNav() {
   const activeTab: Tab =
     activeScreen === 'conversation' ? 'chats' :
     activeScreen === 'settings'     ? 'settings' :
-    activeScreen === 'simulator'    ? 'simulator' : 'chats';
+    activeScreen === 'simulator'    ? 'simulator' :
+    activeScreen === 'commander'    ? 'commander' : 'chats';
 
   return (
     <div className="nav-wrap">

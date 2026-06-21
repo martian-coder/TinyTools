@@ -3,7 +3,7 @@ import { persist } from 'zustand/middleware';
 import type { Contact, Message, UserSettings, Folder, RouteResult, ModerationVerdict } from '../types';
 import { SEED_CONTACTS, SEED_MESSAGES, DEFAULT_SETTINGS } from '../seed';
 
-export type Screen = 'chats' | 'conversation' | 'settings' | 'simulator';
+export type Screen = 'chats' | 'conversation' | 'settings' | 'simulator' | 'digest' | 'commander';
 
 interface SiftState {
   contacts: Contact[];
@@ -22,6 +22,7 @@ interface SiftState {
   setRevealed: (id: string) => void;
   setBanner: (msg: string | null) => void;
   sendMessage: (contactId: string, text: string) => void;
+  sendOutgoingToReview: (contactId: string, text: string, verdict: ModerationVerdict) => void;
   receiveMessage: (contactId: string, text: string, route: RouteResult, verdict: ModerationVerdict) => void;
   approveMessage: (id: string) => void;
   rejectMessage: (id: string) => void;
@@ -35,6 +36,8 @@ interface SiftState {
   updateDisappearingMessages: (patch: Partial<UserSettings['disappearingMessages']>) => void;
   updateUnhingedMode: (patch: Partial<UserSettings['unhingedMode']>) => void;
   updateToneChecker: (patch: Partial<UserSettings['toneChecker']>) => void;
+  updateSpellCheck: (patch: Partial<UserSettings['spellCheck']>) => void;
+  updateAiReplies: (patch: Partial<UserSettings['aiReplies']>) => void;
   setContactEmergency: (contactId: string, isEmergency: boolean) => void;
   toggleTrusted: (contactId: string) => void;
   setContactTrusted: (contactId: string, trusted: boolean) => void;
@@ -69,6 +72,14 @@ export const useSiftStore = create<SiftState>()(
           id: nid(), contactId, text, dir: 'out',
           ts: Date.now(), time: 'now',
           folder: 'primary', status: 'delivered',
+        }],
+      })),
+
+      sendOutgoingToReview: (contactId, text, verdict) => set(s => ({
+        messages: [...s.messages, {
+          id: nid(), contactId, text, dir: 'out',
+          ts: Date.now(), time: 'now',
+          folder: 'review', status: 'held', verdict,
         }],
       })),
 
@@ -112,6 +123,8 @@ export const useSiftStore = create<SiftState>()(
       updateDisappearingMessages: patch => set(s => ({ settings: { ...s.settings, disappearingMessages: { ...s.settings.disappearingMessages, ...patch } } })),
       updateUnhingedMode: patch => set(s => ({ settings: { ...s.settings, unhingedMode: { ...s.settings.unhingedMode, ...patch } } })),
       updateToneChecker: patch => set(s => ({ settings: { ...s.settings, toneChecker: { ...s.settings.toneChecker, ...patch } } })),
+      updateSpellCheck: patch => set(s => ({ settings: { ...s.settings, spellCheck: { ...s.settings.spellCheck, ...patch } } })),
+      updateAiReplies: patch => set(s => ({ settings: { ...s.settings, aiReplies: { ...s.settings.aiReplies, ...patch } } })),
 
       setContactEmergency: (id, isEmergency) => set(s => ({
         contacts: s.contacts.map(c => c.id === id ? { ...c, isEmergency } : c),
@@ -161,5 +174,7 @@ export const useSiftStore = create<SiftState>()(
 // Selectors
 export const selectConversation = (s: SiftState, contactId: string) =>
   s.messages
-    .filter(m => m.contactId === contactId && (m.status === 'delivered' || m.dir === 'out' || m.status === 'approved'))
+    .filter(m => m.contactId === contactId && (
+      m.dir === 'out' || m.status === 'delivered' || m.status === 'approved'
+    ))
     .sort((a, b) => a.ts - b.ts);

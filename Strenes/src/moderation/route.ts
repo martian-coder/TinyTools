@@ -1,36 +1,6 @@
-import type { ModerationVerdict, UserSettings, RouteResult, Contact } from '../types';
+import type { ModerationVerdict, UserSettings, RouteResult } from '../types';
 
-export function isInDNDHours(settings: UserSettings): boolean {
-  if (!settings.dnd.enabled) return false;
-  const now = new Date();
-  const hour = now.getHours();
-  if (settings.dnd.startHour < settings.dnd.endHour) {
-    return hour >= settings.dnd.startHour && hour < settings.dnd.endHour;
-  }
-  return hour >= settings.dnd.startHour || hour < settings.dnd.endHour;
-}
-
-export function canReceiveInDND(contact: Contact, settings: UserSettings): boolean {
-  if (!isInDNDHours(settings)) return true;
-  if (contact.isEmergency && settings.dnd.allowEmergency) return true;
-  if (contact.trusted && settings.dnd.allowTrusted) return true;
-  return false;
-}
-
-export function routeVerdict(verdict: ModerationVerdict, settings: UserSettings, trusted: boolean, contact?: Contact): RouteResult {
-  // Unhinged mode: bypass all filters
-  if (settings.unhingedMode.enabled) {
-    return { folder: 'primary', status: 'delivered' };
-  }
-
-  // Check DND
-  if (contact && !canReceiveInDND(contact, settings)) {
-    if (settings.dnd.notifyButSilent) {
-      return { folder: 'primary', status: 'delivered' };
-    }
-    return { folder: 'primary', status: 'held' };
-  }
-
+export function routeVerdict(verdict: ModerationVerdict, settings: UserSettings, trusted: boolean): RouteResult {
   if (trusted) return { folder: 'primary', status: 'delivered' };
 
   if (verdict.category === 'abusive') {

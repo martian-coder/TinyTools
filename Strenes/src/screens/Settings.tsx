@@ -1,4 +1,5 @@
-import { AlertTriangle, Briefcase, Forward, ShieldCheck, RotateCcw, Palette, Clock, Zap, Trash2, Flame, Brain } from 'lucide-react';
+import { useState } from 'react';
+import { AlertTriangle, Briefcase, Forward, ShieldCheck, RotateCcw, Palette, Download, Brain, Trash2, Clock, Zap, Flame, Sparkles, KeyRound, Eye, EyeOff } from 'lucide-react';
 import { useSiftStore } from '../store';
 import { Switch } from '../components/ui/Switch';
 import { Segment } from '../components/ui/Segment';
@@ -20,9 +21,12 @@ export function Settings({ onShowThemes }: SettingsProps) {
   const updateDisappearingMessages = useSiftStore(s => s.updateDisappearingMessages);
   const updateUnhingedMode    = useSiftStore(s => s.updateUnhingedMode);
   const updateToneChecker     = useSiftStore(s => s.updateToneChecker);
+  const updateSpellCheck      = useSiftStore(s => s.updateSpellCheck);
+  const updateAiReplies       = useSiftStore(s => s.updateAiReplies);
   const setContactEmergency   = useSiftStore(s => s.setContactEmergency);
   const resetToSeed           = useSiftStore(s => s.resetToSeed);
   const s = settings;
+  const [showKey, setShowKey] = useState(false);
 
   return (
     <>
@@ -109,65 +113,23 @@ export function Settings({ onShowThemes }: SettingsProps) {
           )}
         </div>
 
-        {/* Trusted & Emergency contacts */}
-        <div className="glass p-4" style={{ borderRadius: 20 }}>
-          <div className="flex items-center gap-2 font-medium text-main mb-1">
-            <ShieldCheck size={16} className="cat-ic-emerald" /> Trusted contacts
-          </div>
-          <p className="text-xs dim mb-2">Trusted people bypass every filter. Emergency contacts reach you even in DND.</p>
-          {contacts.map(c => (
-            <div key={c.id}>
-              <label className="flex items-center justify-between py-1.5">
-                <span className="flex items-center gap-2 text-sm text-main">
-                  <Avatar name={c.name} grad={c.grad} size={28} />
-                  <div>
-                    <div>{c.name}</div>
-                    {c.isEmergency && <div className="text-[10px] dim">🚨 Emergency</div>}
-                  </div>
-                </span>
-                <Switch on={c.trusted} onClick={() => toggleTrusted(c.id)} />
-              </label>
-              {c.trusted && (
-                <label className="flex items-center gap-2 ml-10 py-1 text-xs text-main">
-                  <input
-                    type="checkbox"
-                    checked={c.isEmergency || false}
-                    onChange={e => setContactEmergency(c.id, e.target.checked)}
-                    className="w-4 h-4"
-                  />
-                  Emergency contact
-                </label>
-              )}
-            </div>
-          ))}
-        </div>
-
         {/* Disappearing Messages */}
         <div className="glass p-4 space-y-3" style={{ borderRadius: 20 }}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 font-medium text-main">
-              <Trash2 size={16} className="cat-ic-amber" /> Disappearing messages
+              <Trash2 size={16} className="cat-ic-amber" /> Disappearing Messages
             </div>
             <Switch on={s.disappearingMessages.enabled} onClick={() => updateDisappearingMessages({ enabled: !s.disappearingMessages.enabled })} />
           </div>
           {s.disappearingMessages.enabled && (
-            <>
-              <div>
-                <div className="text-xs dim mb-1.5">Default timer</div>
-                <Segment
-                  value={s.disappearingMessages.defaultMode}
-                  options={[
-                    { v: 'off', l: 'Off' },
-                    { v: 'onRead', l: 'On read' },
-                    { v: '1m', l: '1m' },
-                    { v: '5m', l: '5m' },
-                    { v: '1h', l: '1h' },
-                    { v: '24h', l: '24h' }
-                  ]}
-                  onChange={v => updateDisappearingMessages({ defaultMode: v as any })}
-                />
-              </div>
-            </>
+            <div>
+              <div className="text-xs dim mb-1.5">When messages auto-delete</div>
+              <Segment
+                value={s.disappearingMessages.defaultMode}
+                options={[{ v: 'off', l: 'Off' }, { v: 'onRead', l: 'On read' }, { v: '1m', l: '1m' }, { v: '5m', l: '5m' }, { v: '1h', l: '1h' }, { v: '24h', l: '24h' }]}
+                onChange={v => updateDisappearingMessages({ defaultMode: v as any })}
+              />
+            </div>
           )}
         </div>
 
@@ -180,27 +142,15 @@ export function Settings({ onShowThemes }: SettingsProps) {
             <Switch on={s.dnd.enabled} onClick={() => updateDND({ enabled: !s.dnd.enabled })} />
           </div>
           {s.dnd.enabled && (
-            <>
-              <div className="space-y-2">
-                <div className="text-xs dim">Quiet hours</div>
-                <div className="flex gap-2 items-center">
-                  <input
-                    type="number"
-                    min="0"
-                    max="23"
-                    value={s.dnd.startHour}
-                    onChange={e => updateDND({ startHour: parseInt(e.target.value) })}
-                    className="w-16 glass2 px-2 py-1 text-sm text-main rounded"
-                  />
-                  <span className="dim text-sm">to</span>
-                  <input
-                    type="number"
-                    min="0"
-                    max="23"
-                    value={s.dnd.endHour}
-                    onChange={e => updateDND({ endHour: parseInt(e.target.value) })}
-                    className="w-16 glass2 px-2 py-1 text-sm text-main rounded"
-                  />
+            <div className="space-y-2">
+              <div className="flex gap-2 items-center">
+                <div className="flex-1">
+                  <label className="text-xs dim block mb-1">Start hour</label>
+                  <input type="number" min="0" max="23" value={s.dnd.startHour} onChange={e => updateDND({ startHour: parseInt(e.target.value) })} className="w-full glass px-3 py-2 text-sm text-main rounded-lg" />
+                </div>
+                <div className="flex-1">
+                  <label className="text-xs dim block mb-1">End hour</label>
+                  <input type="number" min="0" max="23" value={s.dnd.endHour} onChange={e => updateDND({ endHour: parseInt(e.target.value) })} className="w-full glass px-3 py-2 text-sm text-main rounded-lg" />
                 </div>
               </div>
               <label className="flex items-center justify-between text-sm text-main">
@@ -212,10 +162,10 @@ export function Settings({ onShowThemes }: SettingsProps) {
                 <Switch on={s.dnd.allowEmergency} onClick={() => updateDND({ allowEmergency: !s.dnd.allowEmergency })} />
               </label>
               <label className="flex items-center justify-between text-sm text-main">
-                <span>Mute notifications (show msgs)</span>
+                <span>Notify but silent</span>
                 <Switch on={s.dnd.notifyButSilent} onClick={() => updateDND({ notifyButSilent: !s.dnd.notifyButSilent })} />
               </label>
-            </>
+            </div>
           )}
         </div>
 
@@ -223,56 +173,181 @@ export function Settings({ onShowThemes }: SettingsProps) {
         <div className="glass p-4 space-y-3" style={{ borderRadius: 20 }}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 font-medium text-main">
-              <Zap size={16} className="cat-ic-rose" /> Drunk mode
+              <Zap size={16} className="cat-ic-rose" /> Drunk Mode
             </div>
             <Switch on={s.drunkMode.enabled} onClick={() => updateDrunkMode({ enabled: !s.drunkMode.enabled })} />
           </div>
-          {(s.drunkMode.enabled || s.drunkMode.autoDetect) && (
+          {s.drunkMode.enabled && (
             <>
               <label className="flex items-center justify-between text-sm text-main">
-                <span>AI auto-detect suspicious typing</span>
+                <span>Auto-detect from typing</span>
                 <Switch on={s.drunkMode.autoDetect} onClick={() => updateDrunkMode({ autoDetect: !s.drunkMode.autoDetect })} />
               </label>
-              {(s.drunkMode.enabled || s.drunkMode.autoDetect) && (
-                <div>
-                  <div className="text-xs dim mb-1.5">When detected</div>
-                  <Segment
-                    value={s.drunkMode.action}
-                    options={[{ v: 'warn', l: 'Warn' }, { v: 'prevent', l: 'Prevent' }]}
-                    onChange={v => updateDrunkMode({ action: v as 'warn' | 'prevent' })}
-                  />
-                </div>
-              )}
+              <div>
+                <div className="text-xs dim mb-1.5">When drunk detected</div>
+                <Segment
+                  value={s.drunkMode.action}
+                  options={[{ v: 'warn', l: 'Warn' }, { v: 'prevent', l: 'Prevent' }]}
+                  onChange={v => updateDrunkMode({ action: v as 'warn' | 'prevent' })}
+                />
+              </div>
             </>
           )}
         </div>
 
         {/* Unhinged Mode */}
-        <div className="glass p-4" style={{ borderRadius: 20 }}>
+        <div className="glass p-4 space-y-2" style={{ borderRadius: 20 }}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 font-medium text-main">
-              <Flame size={16} style={{ color: '#f59e0b' }} /> Unhinged mode
+              <Flame size={16} className="cat-ic-rose" /> Unhinged Mode
             </div>
             <Switch on={s.unhingedMode.enabled} onClick={() => updateUnhingedMode({ enabled: !s.unhingedMode.enabled })} />
           </div>
-          <p className="text-xs dim mt-1.5">Go wild. Bypass all filters & moderation. For when you wanna troll yourself 😈</p>
+          <p className="text-xs dim">Go wild. Bypass all filters & moderation. For when you wanna troll yourself 😈</p>
         </div>
 
         {/* Tone Checker */}
         <div className="glass p-4 space-y-3" style={{ borderRadius: 20 }}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 font-medium text-main">
-              <Brain size={16} style={{ color: '#8b5cf6' }} /> Message tone checker
+              <Brain size={16} className="text-[#7c83ff]" /> Tone Checker
             </div>
             <Switch on={s.toneChecker.enabled} onClick={() => updateToneChecker({ enabled: !s.toneChecker.enabled })} />
           </div>
-          <p className="text-xs dim mt-1.5">AI analyzes if your message sounds polite, assertive, or aggressive before sending.</p>
           {s.toneChecker.enabled && (
-            <label className="flex items-center justify-between text-sm text-main">
-              <span>Warn if message sounds aggressive</span>
-              <Switch on={s.toneChecker.warnOnAggressive} onClick={() => updateToneChecker({ warnOnAggressive: !s.toneChecker.warnOnAggressive })} />
-            </label>
+            <>
+              <label className="flex items-center justify-between text-sm text-main">
+                <span>Warn on aggressive tone</span>
+                <Switch on={s.toneChecker.warnOnAggressive} onClick={() => updateToneChecker({ warnOnAggressive: !s.toneChecker.warnOnAggressive })} />
+              </label>
+              <p className="text-xs dim">AI analyzes if your message sounds polite, assertive, or aggressive before sending.</p>
+            </>
           )}
+        </div>
+
+        {/* Spell Check */}
+        <div className="glass p-4 space-y-2" style={{ borderRadius: 20 }}>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 font-medium text-main">
+              <Sparkles size={16} className="cat-ic-amber" /> Style-Aware Spell Check
+            </div>
+            <Switch on={s.spellCheck.enabled} onClick={() => updateSpellCheck({ enabled: !s.spellCheck.enabled })} />
+          </div>
+          <p className="text-xs dim">Detects typos & suggests corrections in your style. "ubcan" → "bro can" 🎯</p>
+        </div>
+
+        {/* AI Reply Suggestions */}
+        <div className="glass p-4 space-y-3" style={{ borderRadius: 20 }}>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 font-medium text-main">
+              <Sparkles size={16} style={{ color: 'var(--accent2)' }} /> AI Reply Suggestions
+            </div>
+            <Switch on={s.aiReplies?.enabled ?? false} onClick={() => updateAiReplies({ enabled: !(s.aiReplies?.enabled ?? false) })} />
+          </div>
+          {s.aiReplies?.enabled && (
+            <>
+              <p className="text-xs dim">Shows 3 short reply options when you open a chat. Works on-device (Gemini Nano) or with your Claude API key for higher quality.</p>
+              <div>
+                <div className="text-xs dim mb-1.5 flex items-center gap-1.5">
+                  <KeyRound size={11} /> Claude API key <span className="opacity-60">(optional)</span>
+                </div>
+                <div className="flex gap-2 items-center glass rounded-xl px-3 py-2" style={{ borderRadius: 14 }}>
+                  <input
+                    type={showKey ? 'text' : 'password'}
+                    value={s.aiReplies?.anthropicKey ?? ''}
+                    onChange={e => updateAiReplies({ anthropicKey: e.target.value })}
+                    placeholder="sk-ant-..."
+                    className="flex-1 bg-transparent text-sm text-main outline-none placeholder:dim min-w-0"
+                    autoComplete="off"
+                    spellCheck={false}
+                  />
+                  <button onClick={() => setShowKey(v => !v)} style={{ color: 'var(--dim)', flexShrink: 0 }}>
+                    {showKey ? <EyeOff size={14} /> : <Eye size={14} />}
+                  </button>
+                </div>
+              </div>
+              <div className="flex items-center gap-1.5 text-[11px]">
+                <div
+                  className="w-1.5 h-1.5 rounded-full shrink-0"
+                  style={{ background: s.aiReplies.anthropicKey ? 'var(--accent)' : 'var(--accent2)' }}
+                />
+                <span className="dim">
+                  {s.aiReplies.anthropicKey ? 'Using Claude API — best quality' : 'Using on-device AI (Gemini Nano) — no key needed'}
+                </span>
+              </div>
+            </>
+          )}
+        </div>
+
+        {/* Trusted contacts */}
+        <div className="glass p-4" style={{ borderRadius: 20 }}>
+          <div className="flex items-center gap-2 font-medium text-main mb-1">
+            <ShieldCheck size={16} className="cat-ic-emerald" /> Trusted contacts
+          </div>
+          <p className="text-xs dim mb-2">Trusted people bypass every filter.</p>
+          {contacts.map(c => (
+            <div key={c.id} className="space-y-1.5">
+              <label className="flex items-center justify-between py-1.5">
+                <span className="flex items-center gap-2 text-sm text-main">
+                  <Avatar name={c.name} grad={c.grad} size={28} />
+                  {c.name}
+                </span>
+                <Switch on={c.trusted} onClick={() => toggleTrusted(c.id)} />
+              </label>
+              {c.trusted && (
+                <label className="flex items-center justify-between text-xs text-main pl-10">
+                  <span>Emergency contact</span>
+                  <Switch on={c.isEmergency ?? false} onClick={() => setContactEmergency(c.id, !(c.isEmergency ?? false))} />
+                </label>
+              )}
+            </div>
+          ))}
+        </div>
+
+        {/* Engine Status */}
+        <div className="glass p-4" style={{ borderRadius: 20 }}>
+          <div className="flex items-center gap-2 font-medium text-main mb-2">
+            <Brain size={16} className="text-[#7c83ff]" /> Moderation Engine
+          </div>
+          <div className="text-xs space-y-1">
+            <div className="flex justify-between">
+              <span className="dim">Primary:</span>
+              <span className="text-main font-medium">Gemini Nano (On-device)</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="dim">Fallback:</span>
+              <span className="text-main font-medium">Rules engine</span>
+            </div>
+            <p className="dim pt-1">💡 Message plaintext never leaves your device.</p>
+          </div>
+        </div>
+
+        {/* Data Management */}
+        <div className="glass p-4 space-y-2" style={{ borderRadius: 20 }}>
+          <div className="flex items-center gap-2 font-medium text-main mb-2">
+            <Download size={16} className="text-[#22d3ee]" /> Data Management
+          </div>
+          <button
+            onClick={() => {
+              const data = JSON.stringify({
+                contacts: useSiftStore.getState().contacts,
+                settings: useSiftStore.getState().settings,
+                messages: useSiftStore.getState().messages,
+                exportedAt: new Date().toISOString(),
+              }, null, 2);
+              const blob = new Blob([data], { type: 'application/json' });
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement('a');
+              a.href = url;
+              a.download = `sift-backup-${Date.now()}.json`;
+              a.click();
+              URL.revokeObjectURL(url);
+            }}
+            className="w-full flex items-center justify-center gap-2 text-sm text-main py-2 glass hover:bg-white hover:bg-opacity-10 transition"
+            style={{ borderRadius: 12 }}
+          >
+            <Download size={14} /> Export data
+          </button>
         </div>
 
         <button

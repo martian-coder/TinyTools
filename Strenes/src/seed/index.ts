@@ -38,4 +38,6 @@ export const DEFAULT_SETTINGS: UserSettings = {
   drunkMode: { enabled: false, autoDetect: true, action: 'prevent', typingSpeedThreshold: 80 },
   unhingedMode: { enabled: false },
   toneChecker: { enabled: true, warnOnAggressive: true },
+  spellCheck: { enabled: true },
+  aiReplies: { enabled: true, anthropicKey: '' },
 };

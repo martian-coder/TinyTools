@@ -7,6 +7,8 @@ import { ChatList } from './screens/ChatList';
 import { Conversation } from './screens/Conversation';
 import { Settings } from './screens/Settings';
 import { Simulator } from './screens/Simulator';
+import { Digest } from './screens/Digest';
+import { Commander } from './screens/Commander';
 import type { ThemeName } from './types';
 
 export default function App() {
@@ -43,6 +45,8 @@ export default function App() {
 
         {/* Screen */}
         <div key={activeScreen} className="flex-1 flex flex-col overflow-hidden screen">
+          {activeScreen === 'commander'    && <Commander />}
+          {activeScreen === 'digest'       && <Digest />}
           {activeScreen === 'chats'       && <ChatList    onShowThemes={() => setShowThemes(true)} />}
           {activeScreen === 'conversation' && <Conversation />}
           {activeScreen === 'settings'    && <Settings    onShowThemes={() => setShowThemes(true)} />}
