@@ -37,6 +37,7 @@ interface SiftState {
   updateUnhingedMode: (patch: Partial<UserSettings['unhingedMode']>) => void;
   updateToneChecker: (patch: Partial<UserSettings['toneChecker']>) => void;
   updateSpellCheck: (patch: Partial<UserSettings['spellCheck']>) => void;
+  updateAiReplies: (patch: Partial<UserSettings['aiReplies']>) => void;
   setContactEmergency: (contactId: string, isEmergency: boolean) => void;
   toggleTrusted: (contactId: string) => void;
   setContactTrusted: (contactId: string, trusted: boolean) => void;
@@ -123,6 +124,7 @@ export const useSiftStore = create<SiftState>()(
       updateUnhingedMode: patch => set(s => ({ settings: { ...s.settings, unhingedMode: { ...s.settings.unhingedMode, ...patch } } })),
       updateToneChecker: patch => set(s => ({ settings: { ...s.settings, toneChecker: { ...s.settings.toneChecker, ...patch } } })),
       updateSpellCheck: patch => set(s => ({ settings: { ...s.settings, spellCheck: { ...s.settings.spellCheck, ...patch } } })),
+      updateAiReplies: patch => set(s => ({ settings: { ...s.settings, aiReplies: { ...s.settings.aiReplies, ...patch } } })),
 
       setContactEmergency: (id, isEmergency) => set(s => ({
         contacts: s.contacts.map(c => c.id === id ? { ...c, isEmergency } : c),

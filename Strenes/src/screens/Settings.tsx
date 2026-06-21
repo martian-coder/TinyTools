@@ -1,4 +1,5 @@
-import { AlertTriangle, Briefcase, Forward, ShieldCheck, RotateCcw, Palette, Download, Brain, Trash2, Clock, Zap, Flame, Sparkles } from 'lucide-react';
+import { useState } from 'react';
+import { AlertTriangle, Briefcase, Forward, ShieldCheck, RotateCcw, Palette, Download, Brain, Trash2, Clock, Zap, Flame, Sparkles, KeyRound, Eye, EyeOff } from 'lucide-react';
 import { useSiftStore } from '../store';
 import { Switch } from '../components/ui/Switch';
 import { Segment } from '../components/ui/Segment';
@@ -21,9 +22,11 @@ export function Settings({ onShowThemes }: SettingsProps) {
   const updateUnhingedMode    = useSiftStore(s => s.updateUnhingedMode);
   const updateToneChecker     = useSiftStore(s => s.updateToneChecker);
   const updateSpellCheck      = useSiftStore(s => s.updateSpellCheck);
+  const updateAiReplies       = useSiftStore(s => s.updateAiReplies);
   const setContactEmergency   = useSiftStore(s => s.setContactEmergency);
   const resetToSeed           = useSiftStore(s => s.resetToSeed);
   const s = settings;
+  const [showKey, setShowKey] = useState(false);
 
   return (
     <>
@@ -231,6 +234,49 @@ export function Settings({ onShowThemes }: SettingsProps) {
             <Switch on={s.spellCheck.enabled} onClick={() => updateSpellCheck({ enabled: !s.spellCheck.enabled })} />
           </div>
           <p className="text-xs dim">Detects typos & suggests corrections in your style. "ubcan" → "bro can" 🎯</p>
+        </div>
+
+        {/* AI Reply Suggestions */}
+        <div className="glass p-4 space-y-3" style={{ borderRadius: 20 }}>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 font-medium text-main">
+              <Sparkles size={16} style={{ color: 'var(--accent2)' }} /> AI Reply Suggestions
+            </div>
+            <Switch on={s.aiReplies?.enabled ?? false} onClick={() => updateAiReplies({ enabled: !(s.aiReplies?.enabled ?? false) })} />
+          </div>
+          {s.aiReplies?.enabled && (
+            <>
+              <p className="text-xs dim">Shows 3 short reply options when you open a chat. Works on-device (Gemini Nano) or with your Claude API key for higher quality.</p>
+              <div>
+                <div className="text-xs dim mb-1.5 flex items-center gap-1.5">
+                  <KeyRound size={11} /> Claude API key <span className="opacity-60">(optional)</span>
+                </div>
+                <div className="flex gap-2 items-center glass rounded-xl px-3 py-2" style={{ borderRadius: 14 }}>
+                  <input
+                    type={showKey ? 'text' : 'password'}
+                    value={s.aiReplies?.anthropicKey ?? ''}
+                    onChange={e => updateAiReplies({ anthropicKey: e.target.value })}
+                    placeholder="sk-ant-..."
+                    className="flex-1 bg-transparent text-sm text-main outline-none placeholder:dim min-w-0"
+                    autoComplete="off"
+                    spellCheck={false}
+                  />
+                  <button onClick={() => setShowKey(v => !v)} style={{ color: 'var(--dim)', flexShrink: 0 }}>
+                    {showKey ? <EyeOff size={14} /> : <Eye size={14} />}
+                  </button>
+                </div>
+              </div>
+              <div className="flex items-center gap-1.5 text-[11px]">
+                <div
+                  className="w-1.5 h-1.5 rounded-full shrink-0"
+                  style={{ background: s.aiReplies.anthropicKey ? 'var(--accent)' : 'var(--accent2)' }}
+                />
+                <span className="dim">
+                  {s.aiReplies.anthropicKey ? 'Using Claude API — best quality' : 'Using on-device AI (Gemini Nano) — no key needed'}
+                </span>
+              </div>
+            </>
+          )}
         </div>
 
         {/* Trusted contacts */}

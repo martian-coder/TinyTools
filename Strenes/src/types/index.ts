@@ -89,6 +89,10 @@ export interface UserSettings {
   spellCheck: {
     enabled: boolean;
   };
+  aiReplies: {
+    enabled: boolean;
+    anthropicKey: string;
+  };
   theme: ThemeName;
   trustedIds: string[];
 }

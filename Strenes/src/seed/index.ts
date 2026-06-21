@@ -39,4 +39,5 @@ export const DEFAULT_SETTINGS: UserSettings = {
   unhingedMode: { enabled: false },
   toneChecker: { enabled: true, warnOnAggressive: true },
   spellCheck: { enabled: true },
+  aiReplies: { enabled: true, anthropicKey: '' },
 };

@@ -1,12 +1,14 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
-import { ArrowLeft, ShieldCheck, Send, Loader2, Lock, Clock, Phone, PhoneOff, Mic, MicOff, Volume2, VolumeX, Sparkles, Check, X, Brain, AlertCircle } from 'lucide-react';
+import { ArrowLeft, ShieldCheck, Send, Loader2, Lock, Clock, Phone, PhoneOff, Mic, MicOff, Volume2, VolumeX, Sparkles, Check, X, Brain, AlertCircle, RefreshCw } from 'lucide-react';
 import { useSiftStore } from '../store';
 import { Avatar } from '../components/ui/Avatar';
 import { getModerator } from '../moderation';
 import { checkSpellingWithAI, applySuggestion } from '../moderation/spell-check';
 import { analyzeTone } from '../moderation/tone-analyzer';
 import { analyzeTypingPattern, getDrunkDetectionLevel } from '../moderation/drunk-detection';
+import { suggestReplies } from '../moderation/reply-suggest';
 import type { ModerationVerdict, SpellCheckSuggestion, ToneAnalysis } from '../types';
+import type { SuggestionResult } from '../moderation/reply-suggest';
 
 type OutgoingState =
   | { kind: 'idle' }
@@ -56,6 +58,9 @@ export function Conversation() {
   const [toneResult, setToneResult]          = useState<ToneAnalysis | null>(null);
   const [showToneAnalysis, setShowToneAnalysis] = useState(false);
   const [draftStartTime, setDraftStartTime]  = useState<number>(0);
+  const [suggestions, setSuggestions]        = useState<SuggestionResult | null>(null);
+  const [suggestLoading, setSuggestLoading]  = useState(false);
+  const suggestKeyRef = useRef<string>('');
   const debounceRef               = useRef<ReturnType<typeof setTimeout> | null>(null);
   const timerRef                  = useRef<ReturnType<typeof setInterval> | null>(null);
   const bottomRef                 = useRef<HTMLDivElement>(null);
@@ -68,6 +73,34 @@ export function Conversation() {
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages.length]);
+
+  // Fetch AI reply suggestions when the latest message is incoming
+  const fetchSuggestions = useCallback(async () => {
+    if (!settings.aiReplies?.enabled) { setSuggestions(null); return; }
+    const lastMsg = messages[messages.length - 1];
+    if (!lastMsg || lastMsg.dir !== 'in') return;
+
+    // Build a de-dup key so we don't re-fetch for the same message
+    const key = `${lastMsg.id}:${settings.aiReplies.anthropicKey.slice(0, 8)}`;
+    if (suggestKeyRef.current === key) return;
+    suggestKeyRef.current = key;
+
+    setSuggestions(null);
+    setSuggestLoading(true);
+
+    const history = messages.slice(-8).map(m => ({
+      role: m.dir === 'in' ? 'incoming' as const : 'outgoing' as const,
+      text: m.text,
+    }));
+
+    const result = await suggestReplies(history, contact?.name ?? 'them', settings.aiReplies.anthropicKey);
+    setSuggestions(result);
+    setSuggestLoading(false);
+  }, [messages, settings.aiReplies, contact?.name]);
+
+  useEffect(() => {
+    fetchSuggestions();
+  }, [fetchSuggestions]);
 
   // Call timer
   useEffect(() => {
@@ -254,6 +287,47 @@ export function Conversation() {
         ))}
         <div ref={bottomRef} />
       </div>
+
+      {/* AI Reply Suggestions */}
+      {settings.aiReplies?.enabled && (suggestLoading || suggestions) && !draft && (
+        <div className="px-3 pb-1">
+          <div className="flex items-center gap-1.5 mb-1.5">
+            <Sparkles size={11} style={{ color: 'var(--accent)' }} />
+            <span className="text-[10px] font-semibold" style={{ color: 'var(--accent)' }}>
+              {suggestions?.engine === 'claude' ? 'Claude AI' : 'On-device AI'} · Suggestions
+            </span>
+            {!suggestLoading && (
+              <button
+                onClick={() => { suggestKeyRef.current = ''; fetchSuggestions(); }}
+                className="ml-auto"
+                style={{ color: 'var(--accent)', opacity: 0.7 }}
+              >
+                <RefreshCw size={11} />
+              </button>
+            )}
+          </div>
+          <div className="flex gap-2 overflow-x-auto no-bar pb-0.5">
+            {suggestLoading ? (
+              [1, 2, 3].map(i => (
+                <div
+                  key={i}
+                  className="shrink-0 h-7 rounded-full"
+                  style={{ width: 80 + i * 20, background: 'var(--glass)', opacity: 0.5, animation: 'pulse 1.4s ease-in-out infinite' }}
+                />
+              ))
+            ) : suggestions?.replies.map((r, i) => (
+              <button
+                key={i}
+                onClick={() => setDraft(r)}
+                className="shrink-0 px-3 py-1 text-xs font-medium text-main glass rounded-full active:scale-95 transition-transform"
+                style={{ border: '1px solid var(--border2)' }}
+              >
+                {r}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* State hint + Input */}
       <div className="px-3 pb-3 pt-1 space-y-2">
