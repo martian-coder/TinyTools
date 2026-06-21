@@ -4,7 +4,7 @@ import { useSiftStore } from '../store';
 import { parseIntent } from '../moderation/commander';
 import type { Message } from '../types';
 
-/* ── Message model ──────────────────────────────────────────────────── */
+/* ── Types ──────────────────────────────────────────────────────────── */
 
 interface Chip {
   label: string;
@@ -23,41 +23,155 @@ interface CmdMsg {
 let _id = 0;
 const nid = () => `cm${++_id}`;
 
-/* ── Word-by-word streaming hook ────────────────────────────────────── */
+/* ── Streaming queue hook ───────────────────────────────────────────── */
+// Supports multiple addAI() calls that stream one after another,
+// with a short typing-pause gap between each message.
 
 function useChat() {
   const [msgs, setMsgs] = useState<CmdMsg[]>([]);
-  const queueRef = useRef<{ id: string; words: string[] } | null>(null);
+  const streamRef  = useRef<{ id: string; words: string[] } | null>(null);
+  const pendingRef = useRef<{ text: string; chips?: Chip[] }[]>([]);
+  const pauseRef   = useRef(0); // ticks to wait before starting next
 
   useEffect(() => {
     const t = setInterval(() => {
-      if (!queueRef.current) return;
-      const { id, words } = queueRef.current;
-      if (words.length === 0) {
-        queueRef.current = null;
-        setMsgs(prev => prev.map(m => m.id === id ? { ...m, streaming: false } : m));
-        return;
+      if (streamRef.current) {
+        const { id, words } = streamRef.current;
+        if (words.length === 0) {
+          streamRef.current = null;
+          setMsgs(prev => prev.map(m => m.id === id ? { ...m, streaming: false } : m));
+          pauseRef.current = 9; // ~380ms breathing room between bubbles
+        } else {
+          const [word, ...rest] = words;
+          streamRef.current = { id, words: rest };
+          setMsgs(prev =>
+            prev.map(m => m.id === id ? { ...m, text: m.text ? m.text + ' ' + word : word } : m)
+          );
+        }
+      } else if (pauseRef.current > 0) {
+        pauseRef.current--;
+      } else if (pendingRef.current.length > 0) {
+        const next = pendingRef.current.shift()!;
+        const id   = nid();
+        setMsgs(prev => [...prev, { id, role: 'ai', text: '', chips: next.chips, streaming: true }]);
+        streamRef.current = { id, words: next.text.split(' ') };
       }
-      const [word, ...rest] = words;
-      queueRef.current = { id, words: rest };
-      setMsgs(prev =>
-        prev.map(m => m.id === id ? { ...m, text: m.text ? m.text + ' ' + word : word } : m)
-      );
     }, 42);
     return () => clearInterval(t);
   }, []);
 
   const addAI = useCallback((text: string, chips?: Chip[]) => {
-    const id = nid();
-    setMsgs(prev => [...prev, { id, role: 'ai', text: '', chips, streaming: true }]);
-    queueRef.current = { id, words: text.split(' ') };
+    // Start immediately if nothing is in flight; otherwise queue it
+    if (!streamRef.current && pauseRef.current === 0 && pendingRef.current.length === 0) {
+      const id = nid();
+      setMsgs(prev => [...prev, { id, role: 'ai', text: '', chips, streaming: true }]);
+      streamRef.current = { id, words: text.split(' ') };
+    } else {
+      pendingRef.current.push({ text, chips });
+    }
   }, []);
 
   const addUser = useCallback((text: string) => {
+    // Flush pending queue so the user message appears immediately after current bubble
     setMsgs(prev => [...prev, { id: nid(), role: 'user', text }]);
   }, []);
 
   return { msgs, addAI, addUser };
+}
+
+/* ── Bubble component ───────────────────────────────────────────────── */
+// Groups consecutive same-role messages (iMessage-style corners + tight gap).
+
+function Bubble({
+  m, isFirst, isLast, onChip,
+}: {
+  m: CmdMsg;
+  isFirst: boolean;
+  isLast: boolean;
+  onChip: (chip: Chip) => void;
+}) {
+  const isAI = m.role === 'ai';
+
+  // Corner radius: full on far side, grouped on near side
+  const br = isAI
+    ? {
+        borderTopLeftRadius:    isFirst ? 18 : 6,
+        borderBottomLeftRadius: isLast  ? 4  : 6,
+        borderTopRightRadius:    18,
+        borderBottomRightRadius: 18,
+      }
+    : {
+        borderTopRightRadius:    isFirst ? 18 : 6,
+        borderBottomRightRadius: isLast  ? 4  : 6,
+        borderTopLeftRadius:     18,
+        borderBottomLeftRadius:  18,
+      };
+
+  // Vertical gap: tight within a burst, full between role-switches
+  const mt = isFirst ? undefined : 'mt-[3px]';
+
+  return (
+    <div className={`flex ${isAI ? 'justify-start' : 'justify-end'} ${mt ?? ''}`}>
+      <div className={isAI ? 'max-w-[87%]' : 'max-w-[80%]'}>
+        {isAI ? (
+          <>
+            <div
+              className="glass px-4 py-2.5 text-sm text-main leading-relaxed"
+              style={br}
+            >
+              {m.text}
+              {/* blinking cursor while streaming */}
+              {m.streaming && m.text && (
+                <span
+                  className="inline-block ml-0.5 w-[2px] h-[13px] align-text-bottom"
+                  style={{ background: 'var(--accent)', opacity: 0.85, animation: 'pulse 0.9s ease-in-out infinite' }}
+                />
+              )}
+              {/* loading dot when bubble is empty but streaming */}
+              {m.streaming && !m.text && (
+                <span className="flex items-center gap-1 py-0.5">
+                  {[0, 1, 2].map(i => (
+                    <span
+                      key={i}
+                      className="inline-block w-1.5 h-1.5 rounded-full"
+                      style={{
+                        background: 'var(--accent)', opacity: 0.5,
+                        animation: `pulse 1.1s ease-in-out ${i * 0.22}s infinite`,
+                      }}
+                    />
+                  ))}
+                </span>
+              )}
+            </div>
+
+            {/* Action chips — appear only after the bubble finishes streaming */}
+            {!m.streaming && m.chips && m.chips.length > 0 && (
+              <div className="flex flex-wrap gap-1.5 mt-2">
+                {m.chips.map((chip, i) => (
+                  <button
+                    key={i}
+                    onClick={() => onChip(chip)}
+                    className="flex items-center gap-1 text-xs font-semibold px-3 py-1.5 glass active:scale-95 transition-transform"
+                    style={{ borderRadius: 999, color: 'var(--accent)', border: '1px solid var(--border2)' }}
+                  >
+                    {chip.label}
+                    <ChevronRight size={11} />
+                  </button>
+                ))}
+              </div>
+            )}
+          </>
+        ) : (
+          <div
+            className="px-4 py-2.5 text-sm bubble-out"
+            style={br}
+          >
+            {m.text}
+          </div>
+        )}
+      </div>
+    </div>
+  );
 }
 
 /* ── Screen ─────────────────────────────────────────────────────────── */
@@ -74,10 +188,10 @@ export function Commander() {
   const setScreen        = useSiftStore(s => s.setScreen);
 
   const { msgs, addAI, addUser } = useChat();
-  const [draft, setDraft]       = useState('');
-  const [busy, setBusy]         = useState(false);
-  const bottomRef               = useRef<HTMLDivElement>(null);
-  const briefedRef              = useRef(false);
+  const [draft, setDraft]        = useState('');
+  const [busy, setBusy]          = useState(false);
+  const bottomRef                = useRef<HTMLDivElement>(null);
+  const briefedRef               = useRef(false);
 
   const unread = useMemo(() => {
     const ins = allMessages.filter(
@@ -103,7 +217,7 @@ export function Commander() {
     [allMessages]
   );
 
-  /* Briefing on first mount */
+  /* ── Briefing: one bubble per sender, not one giant paragraph ── */
   useEffect(() => {
     if (briefedRef.current) return;
     briefedRef.current = true;
@@ -111,35 +225,34 @@ export function Commander() {
     const total = unread.reduce((s, t) => s + t.count, 0);
 
     if (total === 0 && heldMessages.length === 0) {
-      addAI(
-        "All clear! No new messages right now. Head to the Chats tab to start a conversation, or use the Test tab to simulate incoming messages."
-      );
+      addAI("All clear — no new messages right now.");
+      addAI("Head to Chats to start a conversation, or use the Test tab to simulate incoming messages.");
       return;
     }
 
-    const parts: string[] = [];
+    // Opening line
+    const senders = unread.length;
+    addAI(
+      `You have ${total} message${total !== 1 ? 's' : ''} from ${senders} sender${senders !== 1 ? 's' : ''}.`
+    );
 
-    if (total > 0) {
-      parts.push(
-        `You have ${total} message${total > 1 ? 's' : ''} from ${unread.length} sender${unread.length > 1 ? 's' : ''}.`
-      );
-      for (const { contact, latest, count } of unread.slice(0, 5)) {
-        const name    = contact?.name ?? 'Unknown';
-        const preview = latest.text.length > 55 ? latest.text.slice(0, 52) + '…' : latest.text;
-        const extra   = count > 1 ? ` (${count} messages)` : '';
-        parts.push(`${name}${extra}: "${preview}"`);
-      }
-      if (unread.length > 5) parts.push(`…and ${unread.length - 5} more senders.`);
+    // One bubble per sender
+    for (const { contact, latest, count } of unread.slice(0, 5)) {
+      const name    = contact?.name ?? 'Unknown';
+      const preview = latest.text.length > 52 ? latest.text.slice(0, 49) + '…' : latest.text;
+      const badge   = count > 1 ? ` · ${count} msgs` : '';
+      addAI(`${name}${badge} — "${preview}"`);
+    }
+
+    if (unread.length > 5) {
+      addAI(`…and ${unread.length - 5} more conversations.`);
     }
 
     if (heldMessages.length > 0) {
-      parts.push(
-        `${heldMessages.length} message${heldMessages.length > 1 ? 's are' : ' is'} held for review.`
-      );
+      addAI(`${heldMessages.length} message${heldMessages.length !== 1 ? 's' : ''} waiting in your review queue.`);
     }
 
-    parts.push("Tell me what to do — try 'reply Maya yes', 'open Alex', 'show held messages', or 'approve all'.");
-
+    // CTA with chips
     const chips: Chip[] = [
       ...unread.slice(0, 3).filter(t => t.contact).map(t => ({
         label:     `Open ${t.contact!.name}`,
@@ -149,14 +262,18 @@ export function Commander() {
       ...(heldMessages.length > 0 ? [{ label: 'Show held', action: 'show_review' as const }] : []),
     ];
 
-    addAI(parts.join(' '), chips.length > 0 ? chips : undefined);
+    addAI(
+      "What should I do? Say 'reply [name] [message]', 'open [name]', 'approve all', or ask anything.",
+      chips.length > 0 ? chips : undefined
+    );
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  /* Scroll to bottom on new messages */
+  /* Scroll to bottom when messages grow */
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [msgs.length]);
 
+  /* Chip action handler */
   const runChip = useCallback((chip: Chip) => {
     if (chip.action === 'open' && chip.contactId) {
       openConversation(chip.contactId);
@@ -166,6 +283,7 @@ export function Commander() {
     }
   }, [openConversation, setFolder, setScreen]);
 
+  /* Command dispatch */
   const handleSend = useCallback(async () => {
     const text = draft.trim();
     if (!text || busy) return;
@@ -182,13 +300,13 @@ export function Commander() {
     switch (intent.type) {
       case 'reply': {
         sendMessage(intent.contactId, intent.text);
-        response = `Sent to ${intent.contactName}: "${intent.text}" ✓`;
+        response = `Sent to ${intent.contactName} ✓`;
         chips = [{ label: `Open ${intent.contactName}`, action: 'open', contactId: intent.contactId }];
         break;
       }
       case 'open': {
         response = `Opening ${intent.contactName}'s chat…`;
-        setTimeout(() => openConversation(intent.contactId), 700);
+        setTimeout(() => openConversation(intent.contactId), 650);
         break;
       }
       case 'approve': {
@@ -197,8 +315,8 @@ export function Commander() {
           : heldMessages;
         targets.forEach(m => approveMessage(m.id));
         response = targets.length > 0
-          ? `Approved ${targets.length} message${targets.length > 1 ? 's' : ''} ✓`
-          : "No held messages to approve.";
+          ? `Approved ${targets.length} message${targets.length !== 1 ? 's' : ''} ✓`
+          : "Nothing to approve right now.";
         break;
       }
       case 'reject': {
@@ -207,26 +325,26 @@ export function Commander() {
           : heldMessages;
         targets.forEach(m => rejectMessage(m.id));
         response = targets.length > 0
-          ? `Rejected ${targets.length} message${targets.length > 1 ? 's' : ''} ✓`
-          : "No held messages to reject.";
+          ? `Rejected ${targets.length} message${targets.length !== 1 ? 's' : ''} ✓`
+          : "Nothing to reject right now.";
         break;
       }
       case 'show_review': {
         const n = heldMessages.length;
         if (n > 0) {
-          response = `You have ${n} held message${n > 1 ? 's' : ''}. Opening review queue…`;
+          response = `${n} held message${n !== 1 ? 's' : ''} — opening review queue…`;
           chips = heldMessages.slice(0, 3).map(m => {
             const c = contacts.find(x => x.id === m.contactId);
             return { label: c?.name ?? 'Unknown', action: 'open' as const, contactId: m.contactId };
           });
-          setTimeout(() => { setFolder('review'); setScreen('chats'); }, 900);
+          setTimeout(() => { setFolder('review'); setScreen('chats'); }, 850);
         } else {
-          response = "Your review queue is empty — nothing held right now.";
+          response = "Your review queue is empty.";
         }
         break;
       }
       default: {
-        response = "I didn't quite catch that. Try: 'reply Maya yes I'll be there', 'open Alex', 'show held messages', 'approve all', or 'reject all'.";
+        response = "Try: 'reply Maya yes', 'open Alex', 'show held', 'approve all', or 'reject all'.";
       }
     }
 
@@ -237,6 +355,17 @@ export function Commander() {
     sendMessage, approveMessage, rejectMessage, openConversation,
     setFolder, setScreen, addUser, addAI,
   ]);
+
+  /* Compute burst groups for iMessage-style corners */
+  const rendered = msgs.map((m, i) => {
+    const prev = msgs[i - 1];
+    const next = msgs[i + 1];
+    return {
+      m,
+      isFirst: !prev || prev.role !== m.role,
+      isLast:  !next || next.role !== m.role,
+    };
+  });
 
   return (
     <>
@@ -258,67 +387,20 @@ export function Commander() {
         </div>
       </div>
 
-      {/* Chat area */}
+      {/* Chat */}
       <div className="flex-1 overflow-y-auto px-3 pt-3 pb-2 no-bar">
-        <div className="space-y-3">
-          {msgs.map(m =>
-            m.role === 'ai' ? (
-              <div key={m.id} className="flex justify-start">
-                <div className="max-w-[87%]">
-                  <div
-                    className="glass px-4 py-3 text-sm text-main leading-relaxed"
-                    style={{ borderRadius: 18, borderBottomLeftRadius: 4 }}
-                  >
-                    {m.text}
-                    {m.streaming && (
-                      <span
-                        className="inline-block ml-0.5 w-[2px] h-3.5 align-text-bottom"
-                        style={{ background: 'var(--accent)', opacity: 0.8, animation: 'pulse 0.9s ease-in-out infinite' }}
-                      />
-                    )}
-                    {!m.text && m.streaming && (
-                      <span
-                        className="inline-block w-2 h-2 rounded-full"
-                        style={{ background: 'var(--accent)', opacity: 0.6, animation: 'pulse 1s ease-in-out infinite' }}
-                      />
-                    )}
-                  </div>
+        <div>
+          {rendered.map(({ m, isFirst, isLast }) => (
+            <div key={m.id} className={isFirst ? 'mt-3 first:mt-0' : ''}>
+              <Bubble m={m} isFirst={isFirst} isLast={isLast} onChip={runChip} />
+            </div>
+          ))}
 
-                  {/* Action chips — only shown after streaming finishes */}
-                  {!m.streaming && m.chips && m.chips.length > 0 && (
-                    <div className="flex flex-wrap gap-1.5 mt-2">
-                      {m.chips.map((chip, i) => (
-                        <button
-                          key={i}
-                          onClick={() => runChip(chip)}
-                          className="flex items-center gap-1 text-xs font-semibold px-3 py-1.5 glass active:scale-95 transition-transform"
-                          style={{ borderRadius: 999, color: 'var(--accent)', border: '1px solid var(--border2)' }}
-                        >
-                          {chip.label}
-                          <ChevronRight size={11} />
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-            ) : (
-              <div key={m.id} className="flex justify-end">
-                <div
-                  className="max-w-[78%] px-4 py-2.5 text-sm bubble-out"
-                  style={{ borderRadius: 18, borderBottomRightRadius: 4 }}
-                >
-                  {m.text}
-                </div>
-              </div>
-            )
-          )}
-
-          {/* Processing indicator */}
+          {/* Thinking indicator */}
           {busy && (
-            <div className="flex justify-start">
+            <div className="mt-3 flex justify-start">
               <div
-                className="glass px-4 py-3 flex items-center gap-2"
+                className="glass px-4 py-3 flex items-center gap-1.5"
                 style={{ borderRadius: 18, borderBottomLeftRadius: 4 }}
               >
                 <Loader2 size={13} className="animate-spin" style={{ color: 'var(--accent)' }} />
@@ -331,7 +413,7 @@ export function Commander() {
         </div>
       </div>
 
-      {/* Input bar */}
+      {/* Input */}
       <div className="px-3 pb-3 pt-1">
         <div className="glass2 flex items-center gap-2 p-1.5" style={{ borderRadius: 999 }}>
           <input
