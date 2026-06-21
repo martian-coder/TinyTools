@@ -1,0 +1,103 @@
+name: Build & Release Android APK
+
+# Builds a debug APK from the Strenes Capacitor Android project.
+# Runs on every push to main that touches app code, and can be
+# triggered manually. Creates/updates a rolling "android-latest"
+# release so the landing page download link always points to the
+# freshest build.
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "Strenes/src/**"
+      - "Strenes/public/**"
+      - "Strenes/index.html"
+      - "Strenes/vite.config.ts"
+      - "Strenes/package.json"
+      - "Strenes/android/**"
+      - "Strenes/capacitor.config.ts"
+      - ".github/workflows/build-apk.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-apk:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Accept Android SDK licenses
+        run: yes | sdkmanager --licenses || true
+
+      - name: Install Android build tools & platform
+        run: |
+          sdkmanager "platforms;android-36" "build-tools;36.0.0"
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: Strenes/package-lock.json
+
+      - name: Install dependencies
+        working-directory: Strenes
+        run: npm ci
+
+      - name: Build web app
+        working-directory: Strenes
+        env:
+          # Capacitor Android loads assets from /android_asset/public/ so no
+          # base path prefix is needed when bundled inside the APK.
+          VITE_BASE: "/"
+        run: npm run build
+
+      - name: Sync web assets into Android project
+        working-directory: Strenes
+        run: npx cap copy android
+
+      - name: Make gradlew executable
+        working-directory: Strenes/android
+        run: chmod +x gradlew
+
+      - name: Build debug APK
+        working-directory: Strenes/android
+        run: ./gradlew assembleDebug --no-daemon
+
+      - name: Rename APK
+        run: |
+          cp Strenes/android/app/build/outputs/apk/debug/app-debug.apk strenes.apk
+
+      - name: Create / update rolling release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: android-latest
+          name: "Strenes — Latest Android Build"
+          body: |
+            **Strenes debug APK** — built automatically from the latest `main` commit.
+
+            Install on any Android device (Android 7.0+):
+            1. Download `strenes.apk` below
+            2. Open the file on your device
+            3. Allow "Install from unknown sources" if prompted
+            4. Tap **Install**
+
+            > This is a debug build for evaluation. A signed release will follow.
+          prerelease: false
+          make_latest: true
+          files: strenes.apk
