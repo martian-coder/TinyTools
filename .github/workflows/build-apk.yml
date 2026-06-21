@@ -69,7 +69,7 @@ jobs:
 
       - name: Sync web assets into Android project
         working-directory: Strenes
-        run: npx cap copy android
+        run: npx cap sync android
 
       - name: Make gradlew executable
         working-directory: Strenes/android
