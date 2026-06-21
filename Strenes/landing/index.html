@@ -482,6 +482,84 @@
           <div class="carousel-label" id="carouselLabel">Civility guard — live demo</div>
           <div class="phone-carousel" id="phoneCarousel">
 
+            <!-- ── 0: Commander — AI inbox assistant ── -->
+            <div class="phone-frame">
+              <div class="phone-notch"></div>
+              <div class="phone-screen" style="display:flex;flex-direction:column;background:#0b1020">
+                <!-- Header -->
+                <div style="padding:28px 11px 9px;display:flex;align-items:center;gap:7px;background:rgba(255,255,255,0.03);border-bottom:1px solid rgba(255,255,255,0.07)">
+                  <div style="width:26px;height:26px;border-radius:8px;background:linear-gradient(135deg,#7c83ff,#22d3ee);display:grid;place-items:center;flex-shrink:0">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="10" rx="2"/><path d="M12 11V6"/><circle cx="12" cy="4" r="2"/><path d="M8 15h.01M12 15h.01M16 15h.01"/></svg>
+                  </div>
+                  <div>
+                    <div style="font-size:10.5px;font-weight:700;color:#eef1ff">Commander</div>
+                    <div style="font-size:7px;color:rgba(238,241,255,0.42)">your AI inbox assistant</div>
+                  </div>
+                </div>
+
+                <!-- Chat bubbles -->
+                <div style="flex:1;overflow:hidden;padding:8px 9px 4px;display:flex;flex-direction:column;gap:2px">
+
+                  <!-- AI burst: briefing -->
+                  <div style="max-width:90%;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:14px 14px 14px 4px;padding:7px 10px;font-size:8px;color:#eef1ff;line-height:1.38">
+                    You have 4 messages from 3 senders.
+                  </div>
+                  <div style="max-width:90%;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:6px 14px 14px 6px;padding:7px 10px;font-size:8px;color:#eef1ff;line-height:1.38">
+                    Maya · 2 msgs — "Are you coming tonight?"
+                  </div>
+                  <div style="max-width:90%;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:6px 14px 14px 6px;padding:7px 10px;font-size:8px;color:#eef1ff;line-height:1.38">
+                    Alex — "Let's catch up tomorrow 👋"
+                  </div>
+                  <div style="max-width:90%;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:6px 14px 14px 14px;padding:7px 10px;font-size:8px;color:#eef1ff;line-height:1.38">
+                    1 message waiting in review queue.
+                  </div>
+
+                  <!-- Action chips -->
+                  <div style="display:flex;flex-wrap:wrap;gap:3px;margin-top:3px;margin-bottom:6px">
+                    <div style="display:inline-flex;align-items:center;gap:2px;padding:3.5px 8px;background:rgba(124,131,255,0.1);border:1px solid rgba(124,131,255,0.28);border-radius:99px;font-size:7px;font-weight:700;color:#a5b4fc">Open Maya ›</div>
+                    <div style="display:inline-flex;align-items:center;gap:2px;padding:3.5px 8px;background:rgba(124,131,255,0.1);border:1px solid rgba(124,131,255,0.28);border-radius:99px;font-size:7px;font-weight:700;color:#a5b4fc">Open Alex ›</div>
+                    <div style="display:inline-flex;align-items:center;gap:2px;padding:3.5px 8px;background:rgba(124,131,255,0.1);border:1px solid rgba(124,131,255,0.28);border-radius:99px;font-size:7px;font-weight:700;color:#a5b4fc">Show held ›</div>
+                  </div>
+
+                  <!-- User command -->
+                  <div style="align-self:flex-end;max-width:80%;background:linear-gradient(135deg,#4f46e5,#7c83ff);border-radius:14px 14px 4px 14px;padding:7px 10px;font-size:8px;color:#fff;line-height:1.38;box-shadow:0 4px 14px -4px rgba(124,131,255,0.55)">
+                    reply Maya yes I'll be there!
+                  </div>
+
+                  <!-- AI confirm -->
+                  <div style="max-width:70%;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:4px 14px 14px 4px;padding:7px 10px;font-size:8px;color:#eef1ff;line-height:1.38">
+                    Sent to Maya ✓
+                  </div>
+                </div>
+
+                <!-- Input bar -->
+                <div class="ph-input-bar">
+                  <div class="ph-input-pill">Reply Maya, open Alex, show held…</div>
+                  <div class="ph-send-btn"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><polyline points="22 2 11 13 22 24 22 2"/></svg></div>
+                </div>
+
+                <!-- Bottom nav -->
+                <div style="display:flex;justify-content:space-around;padding:5px 6px 6px;border-top:1px solid rgba(255,255,255,0.07);background:rgba(255,255,255,0.02)">
+                  <div style="display:flex;flex-direction:column;align-items:center;gap:1.5px">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#7c83ff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="10" rx="2"/><path d="M12 11V6"/><circle cx="12" cy="4" r="2"/><path d="M8 15h.01M12 15h.01M16 15h.01"/></svg>
+                    <div style="font-size:6px;font-weight:700;color:#7c83ff">Commander</div>
+                  </div>
+                  <div style="display:flex;flex-direction:column;align-items:center;gap:1.5px;opacity:0.35">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#eef1ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                    <div style="font-size:6px;font-weight:600;color:rgba(238,241,255,0.5)">Chats</div>
+                  </div>
+                  <div style="display:flex;flex-direction:column;align-items:center;gap:1.5px;opacity:0.35">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#eef1ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3L6.5 9.5 3 18.5a1 1 0 0 0 .9 1.5h14.2a1 1 0 0 0 .9-1.5L15.5 9.5 13 3"/><line x1="6.5" y1="9.5" x2="17.5" y2="9.5"/></svg>
+                    <div style="font-size:6px;font-weight:600;color:rgba(238,241,255,0.5)">Test</div>
+                  </div>
+                  <div style="display:flex;flex-direction:column;align-items:center;gap:1.5px;opacity:0.35">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#eef1ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93A10 10 0 0 0 4.93 19.07M21.5 12H19M5 12H2.5M12 2.5V5M12 19v2.5"/></svg>
+                    <div style="font-size:6px;font-weight:600;color:rgba(238,241,255,0.5)">Settings</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             <!-- ── 1: Conversation · civility guard ── -->
             <div class="phone-frame">
               <div class="phone-notch"></div>
@@ -1008,7 +1086,7 @@
             <div class="cdot active"></div><div class="cdot"></div><div class="cdot"></div><div class="cdot"></div>
             <div class="cdot"></div><div class="cdot"></div><div class="cdot"></div><div class="cdot"></div>
             <div class="cdot"></div><div class="cdot"></div><div class="cdot"></div><div class="cdot"></div>
-            <div class="cdot"></div><div class="cdot"></div>
+            <div class="cdot"></div><div class="cdot"></div><div class="cdot"></div>
           </div>
         </div><!-- /phone-carousel-wrap -->
       </div>
@@ -1022,7 +1100,7 @@
     <div class="stats-g">
       <div class="rev"><div class="sn">100%</div><div class="sl">On-device — zero servers</div></div>
       <div class="rev d1"><div class="sn">0</div><div class="sl">Cloud calls ever made</div></div>
-      <div class="rev d2"><div class="sn">14</div><div class="sl">Feature showcases</div></div>
+      <div class="rev d2"><div class="sn">15</div><div class="sl">Feature showcases</div></div>
       <div class="rev d3"><div class="sn">&infin;</div><div class="sl">Your privacy, intact</div></div>
     </div>
   </div>
@@ -1229,6 +1307,7 @@
 
   // Phone carousel
   const labels = [
+    'Commander — AI inbox assistant',
     'Civility guard — live demo',
     'In-call overlay with AI',
     'Full settings — all options',
