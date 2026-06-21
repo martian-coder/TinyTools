@@ -3,7 +3,7 @@ import { persist } from 'zustand/middleware';
 import type { Contact, Message, UserSettings, Folder, RouteResult, ModerationVerdict } from '../types';
 import { SEED_CONTACTS, SEED_MESSAGES, DEFAULT_SETTINGS } from '../seed';
 
-export type Screen = 'chats' | 'conversation' | 'settings' | 'simulator';
+export type Screen = 'chats' | 'conversation' | 'settings' | 'simulator' | 'digest';
 
 interface SiftState {
   contacts: Contact[];
