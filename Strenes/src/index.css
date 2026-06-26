@@ -126,7 +126,8 @@ input, textarea { font-family: inherit; }
 @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
 
 /* ─── Bottom nav ─────────────────────────────────────────────────── */
-.nav-wrap { position: absolute; left: 0; right: 0; bottom: 0; padding: 3px 12px calc(3px + env(safe-area-inset-bottom)); display: flex; justify-content: center; z-index: 20; }
+.phone { --nav-height: 56px; }
+.nav-wrap { position: fixed; left: 0; right: 0; bottom: env(safe-area-inset-bottom, 0); padding: 6px 12px; display: flex; justify-content: center; z-index: 20; height: var(--nav-height); }
 .nav { background: var(--glass2); backdrop-filter: blur(28px) saturate(170%); -webkit-backdrop-filter: blur(28px) saturate(170%); border: 1px solid var(--line); border-radius: 18px; padding: 3px; box-shadow: 0 20px 40px -16px rgba(0,0,0,.5); gap: 2px; display: flex; }
 .nav-item { display: flex; align-items: center; justify-content: center; color: var(--dim); width: 40px; height: 40px; border-radius: 14px; transition: .2s; }
 .nav-on { color: #fff; background: linear-gradient(135deg, var(--accent), var(--accent2)); box-shadow: 0 8px 20px -8px var(--accent); }

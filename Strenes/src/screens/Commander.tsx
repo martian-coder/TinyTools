@@ -241,13 +241,43 @@ export function Commander() {
       `You have ${total} message${total !== 1 ? 's' : ''} from ${senders} sender${senders !== 1 ? 's' : ''}.`
     );
 
+    /* Generate AI summaries instead of showing raw text */
     for (const { contact, latest, count } of unread.slice(0, 5)) {
-      const name    = contact?.name ?? 'Unknown';
-      const preview = latest.text.length > 52 ? latest.text.slice(0, 49) + '…' : latest.text;
-      const badge   = count > 1 ? ` · ${count} msgs` : '';
-      addAI(`${name}${badge} — "${preview}"`, [
-        { label: `Open ${name}`, action: 'open' as const, contactId: contact?.id ?? '' },
-      ]);
+      const name = contact?.name ?? 'Unknown';
+      const text = latest.text.toLowerCase();
+      let summary = 'is chatting';
+
+      if (latest.verdict) {
+        if (latest.verdict.category === 'business') {
+          summary = 'has a business message';
+        } else if (latest.verdict.category === 'promo') {
+          summary = 'sent a promotion';
+        } else if (latest.verdict.category === 'spam') {
+          summary = 'sent spam';
+        } else if (latest.verdict.category === 'abusive') {
+          summary = 'is ranting/being rude';
+        }
+      } else {
+        /* Heuristic: guess from keywords */
+        if (/meeting|call|schedule|time|when|sync|catch/.test(text)) {
+          summary = 'wants to set a meeting';
+        } else if (/urgent|asap|important|help|need|emergency/.test(text)) {
+          summary = 'needs something urgent';
+        } else if (/procrastinat|lazy|chill|just chilling|no rush|whenever|relax|chill/.test(text)) {
+          summary = 'is just procrastinating';
+        } else if (/traffic|delay|stuck|late|sorry/.test(text)) {
+          summary = 'is stuck/running late';
+        } else if (/angry|mad|frustrated|upset|hate|pissed/.test(text)) {
+          summary = 'is ranting about something';
+        } else if (/question|how|what|why|where|when/.test(text)) {
+          summary = 'is asking a question';
+        } else if (/thanks|cool|ok|sounds|good|yes|sure|perfect/.test(text)) {
+          summary = 'is just chatting';
+        }
+      }
+
+      const badge = count > 1 ? ` · ${count} msgs` : '';
+      addAI(`${name}${badge} — ${summary}`);
     }
 
     if (unread.length > 5) {
@@ -258,7 +288,7 @@ export function Commander() {
       addAI(`${heldMessages.length} message${heldMessages.length !== 1 ? 's' : ''} waiting in your review queue.`);
     }
 
-    addAI("What should I do? Say 'reply [name] [message]', 'open [name]', 'approve all', or ask anything.");
+    addAI("Type a command: 'reply [name] [msg]', 'open [name]', 'approve all', 'trust [name]', etc.");
   }, [unread, heldMessages, addAI]);
 
   /* ── Briefing: one bubble per sender, only once on mount ── */
@@ -584,8 +614,8 @@ export function Commander() {
         </div>
       )}
 
-      {/* Input */}
-      <div className="px-3 pb-3 pt-1">
+      {/* Input + nav spacing */}
+      <div className="px-3 pt-1" style={{ paddingBottom: 'calc(3px + 56px + env(safe-area-inset-bottom, 0))' }}>
         <div className="glass2 flex items-center gap-2 p-1.5" style={{ borderRadius: 999 }}>
           <input
             value={draft}
