@@ -28,8 +28,8 @@ export function BottomNav() {
           const active = activeTab === id;
           return (
             <button key={id} onClick={() => setScreen(id)} className={`nav-item ${active ? 'nav-on' : ''}`} style={{ position: 'relative' }}>
-              <Icon size={20} />
-              <span style={{ fontSize: 11 }}>{label}</span>
+              <Icon size={17} />
+              <span style={{ fontSize: 9 }}>{label}</span>
               {id === 'chats' && reviewCount > 0 && (
                 <span className="rev-dot" style={{ position: 'absolute', top: 4, right: 8 }}>
                   {reviewCount}

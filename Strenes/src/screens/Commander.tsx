@@ -12,6 +12,11 @@ interface Chip {
   contactId?: string;
 }
 
+interface SuggestChip {
+  label: string;
+  command: string;
+}
+
 interface CmdMsg {
   id: string;
   role: 'ai' | 'user';
@@ -152,7 +157,7 @@ function Bubble({
                     key={i}
                     onClick={() => onChip(chip)}
                     className="flex items-center gap-1 text-xs font-semibold px-3 py-1.5 glass active:scale-95 transition-transform"
-                    style={{ borderRadius: 999, color: 'var(--accent)', border: '1px solid var(--border2)' }}
+                    style={{ borderRadius: 999, color: 'var(--accent)', border: '1px solid var(--line)' }}
                   >
                     {chip.label}
                     <ChevronRight size={11} />
@@ -177,15 +182,19 @@ function Bubble({
 /* ── Screen ─────────────────────────────────────────────────────────── */
 
 export function Commander() {
-  const contacts         = useSiftStore(s => s.contacts);
-  const allMessages      = useSiftStore(s => s.messages);
-  const settings         = useSiftStore(s => s.settings);
-  const sendMessage      = useSiftStore(s => s.sendMessage);
-  const approveMessage   = useSiftStore(s => s.approveMessage);
-  const rejectMessage    = useSiftStore(s => s.rejectMessage);
-  const openConversation = useSiftStore(s => s.openConversation);
-  const setFolder        = useSiftStore(s => s.setFolder);
-  const setScreen        = useSiftStore(s => s.setScreen);
+  const contacts          = useSiftStore(s => s.contacts);
+  const allMessages       = useSiftStore(s => s.messages);
+  const settings          = useSiftStore(s => s.settings);
+  const sendMessage       = useSiftStore(s => s.sendMessage);
+  const approveMessage    = useSiftStore(s => s.approveMessage);
+  const rejectMessage     = useSiftStore(s => s.rejectMessage);
+  const openConversation  = useSiftStore(s => s.openConversation);
+  const setFolder         = useSiftStore(s => s.setFolder);
+  const setScreen         = useSiftStore(s => s.setScreen);
+  const setContactTrusted = useSiftStore(s => s.setContactTrusted);
+  const updateCivility    = useSiftStore(s => s.updateCivility);
+  const updateSpam        = useSiftStore(s => s.updateSpam);
+  const updateDND         = useSiftStore(s => s.updateDND);
 
   const { msgs, addAI, addUser } = useChat();
   const [draft, setDraft]        = useState('');
@@ -217,11 +226,8 @@ export function Commander() {
     [allMessages]
   );
 
-  /* ── Briefing: one bubble per sender, not one giant paragraph ── */
-  useEffect(() => {
-    if (briefedRef.current) return;
-    briefedRef.current = true;
-
+  /* ── Briefing helper (reused for initial load + 'summary' query) ── */
+  const doBriefing = useCallback(() => {
     const total = unread.reduce((s, t) => s + t.count, 0);
 
     if (total === 0 && heldMessages.length === 0) {
@@ -230,18 +236,86 @@ export function Commander() {
       return;
     }
 
-    // Opening line
     const senders = unread.length;
     addAI(
       `You have ${total} message${total !== 1 ? 's' : ''} from ${senders} sender${senders !== 1 ? 's' : ''}.`
     );
 
-    // One bubble per sender
-    for (const { contact, latest, count } of unread.slice(0, 5)) {
-      const name    = contact?.name ?? 'Unknown';
-      const preview = latest.text.length > 52 ? latest.text.slice(0, 49) + '…' : latest.text;
-      const badge   = count > 1 ? ` · ${count} msgs` : '';
-      addAI(`${name}${badge} — "${preview}"`);
+    /* Categorize by priority based on verdict category */
+    type Priority = 'high' | 'medium' | 'low';
+    interface SenderGroup {
+      contact: typeof contacts[0] | undefined;
+      count: number;
+      priority: Priority;
+      summary: string;
+      chip: Chip;
+    }
+
+    const groups: SenderGroup[] = unread.slice(0, 5).map(({ contact, latest, count }) => {
+      const name = contact?.name ?? 'Unknown';
+      const verdict = latest.verdict;
+      const text = latest.text.toLowerCase();
+
+      let priority: Priority = 'low';
+      let summary = 'is chatting';
+
+      if (verdict) {
+        if (verdict.category === 'business') {
+          priority = 'high';
+          summary = 'has a business message';
+        } else if (verdict.category === 'promo') {
+          priority = 'medium';
+          summary = 'sent a promotion';
+        } else if (verdict.category === 'spam') {
+          priority = 'low';
+          summary = 'sent spam';
+        } else if (verdict.category === 'abusive') {
+          priority = 'high';
+          summary = 'sent an abusive message';
+        } else {
+          priority = 'low';
+          summary = 'is chatting';
+        }
+      } else {
+        /* Heuristic fallback: guess intent from text */
+        if (/meet|call|schedule|time|when|meeting|sync/.test(text)) {
+          priority = 'high';
+          summary = 'wants to set a meeting';
+        } else if (/urgent|asap|important|help|need|emergency/.test(text)) {
+          priority = 'high';
+          summary = 'needs something urgent';
+        } else if (/thanks|cool|ok|sounds|good|yes|sure/.test(text)) {
+          priority = 'low';
+          summary = 'is responding positively';
+        } else if (/question\?|how|what|why|where/.test(text)) {
+          priority = 'medium';
+          summary = 'is asking a question';
+        }
+      }
+
+      return {
+        contact,
+        count,
+        priority,
+        summary,
+        chip: { label: `Open ${name}`, action: 'open' as const, contactId: contact?.id ?? '' },
+      };
+    });
+
+    /* Sort by priority: high → medium → low */
+    const priorityOrder = { high: 0, medium: 1, low: 2 };
+    groups.sort((a, b) => priorityOrder[a.priority] - priorityOrder[b.priority]);
+
+    /* Render grouped by priority */
+    let currentPriority: Priority | null = null;
+    for (const g of groups) {
+      if (g.priority !== currentPriority) {
+        const label = g.priority === 'high' ? '🔴 High Priority' : g.priority === 'medium' ? '🟡 Medium' : '⚪ Other';
+        addAI(label);
+        currentPriority = g.priority;
+      }
+      const badge = g.count > 1 ? ` (${g.count})` : '';
+      addAI(`${g.contact?.name ?? 'Unknown'}${badge} — ${g.summary}`, [g.chip]);
     }
 
     if (unread.length > 5) {
@@ -249,23 +323,17 @@ export function Commander() {
     }
 
     if (heldMessages.length > 0) {
-      addAI(`${heldMessages.length} message${heldMessages.length !== 1 ? 's' : ''} waiting in your review queue.`);
+      addAI(`⚠️  ${heldMessages.length} message${heldMessages.length !== 1 ? 's' : ''} in review queue.`);
     }
 
-    // CTA with chips
-    const chips: Chip[] = [
-      ...unread.slice(0, 3).filter(t => t.contact).map(t => ({
-        label:     `Open ${t.contact!.name}`,
-        action:    'open' as const,
-        contactId: t.contact!.id,
-      })),
-      ...(heldMessages.length > 0 ? [{ label: 'Show held', action: 'show_review' as const }] : []),
-    ];
+    addAI("Type a command or click a name to open. E.g., 'reply Alex yes', 'trust Maya', 'my settings'.");
+  }, [unread, heldMessages, addAI]);
 
-    addAI(
-      "What should I do? Say 'reply [name] [message]', 'open [name]', 'approve all', or ask anything.",
-      chips.length > 0 ? chips : undefined
-    );
+  /* ── Briefing: one bubble per sender, only once on mount ── */
+  useEffect(() => {
+    if (briefedRef.current) return;
+    briefedRef.current = true;
+    doBriefing();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   /* Scroll to bottom when messages grow */
@@ -273,7 +341,7 @@ export function Commander() {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [msgs.length]);
 
-  /* Chip action handler */
+  /* Inline chip action handler */
   const runChip = useCallback((chip: Chip) => {
     if (chip.action === 'open' && chip.contactId) {
       openConversation(chip.contactId);
@@ -283,78 +351,250 @@ export function Commander() {
     }
   }, [openConversation, setFolder, setScreen]);
 
-  /* Command dispatch */
-  const handleSend = useCallback(async () => {
-    const text = draft.trim();
-    if (!text || busy) return;
-    setDraft('');
+  /* ── Core command execution ── */
+  const executeCommand = useCallback(async (text: string) => {
     addUser(text);
     setBusy(true);
 
     const apiKey = settings.aiReplies?.anthropicKey ?? '';
     const intent = await parseIntent(text, contacts, heldMessages, apiKey);
 
-    let response = '';
-    let chips: Chip[] | undefined;
+    const responses: { text: string; chips?: Chip[] }[] = [];
 
     switch (intent.type) {
       case 'reply': {
         sendMessage(intent.contactId, intent.text);
-        response = `Sent to ${intent.contactName} ✓`;
-        chips = [{ label: `Open ${intent.contactName}`, action: 'open', contactId: intent.contactId }];
+        responses.push({
+          text: `Sent to ${intent.contactName} ✓`,
+          chips: [{ label: `Open ${intent.contactName}`, action: 'open', contactId: intent.contactId }],
+        });
         break;
       }
+
       case 'open': {
-        response = `Opening ${intent.contactName}'s chat…`;
+        responses.push({ text: `Opening ${intent.contactName}'s chat…` });
         setTimeout(() => openConversation(intent.contactId), 650);
         break;
       }
+
       case 'approve': {
         const targets = intent.messageId
           ? heldMessages.filter(m => m.id === intent.messageId)
           : heldMessages;
         targets.forEach(m => approveMessage(m.id));
-        response = targets.length > 0
-          ? `Approved ${targets.length} message${targets.length !== 1 ? 's' : ''} ✓`
-          : "Nothing to approve right now.";
+        responses.push({
+          text: targets.length > 0
+            ? `Approved ${targets.length} message${targets.length !== 1 ? 's' : ''} ✓`
+            : "Nothing to approve right now.",
+        });
         break;
       }
+
       case 'reject': {
         const targets = intent.messageId
           ? heldMessages.filter(m => m.id === intent.messageId)
           : heldMessages;
         targets.forEach(m => rejectMessage(m.id));
-        response = targets.length > 0
-          ? `Rejected ${targets.length} message${targets.length !== 1 ? 's' : ''} ✓`
-          : "Nothing to reject right now.";
+        responses.push({
+          text: targets.length > 0
+            ? `Rejected ${targets.length} message${targets.length !== 1 ? 's' : ''} ✓`
+            : "Nothing to reject right now.",
+        });
         break;
       }
+
       case 'show_review': {
         const n = heldMessages.length;
         if (n > 0) {
-          response = `${n} held message${n !== 1 ? 's' : ''} — opening review queue…`;
-          chips = heldMessages.slice(0, 3).map(m => {
+          const chips = heldMessages.slice(0, 3).map(m => {
             const c = contacts.find(x => x.id === m.contactId);
             return { label: c?.name ?? 'Unknown', action: 'open' as const, contactId: m.contactId };
           });
+          responses.push({ text: `${n} held message${n !== 1 ? 's' : ''} — opening review queue…`, chips });
           setTimeout(() => { setFolder('review'); setScreen('chats'); }, 850);
         } else {
-          response = "Your review queue is empty.";
+          responses.push({ text: "Your review queue is empty." });
         }
         break;
       }
+
+      case 'set_rule': {
+        switch (intent.rule) {
+          case 'trust': {
+            if (intent.contactId) {
+              setContactTrusted(intent.contactId, true);
+              responses.push({
+                text: `${intent.contactName} trusted — their messages will bypass the civility filter.`,
+                chips: [{ label: `Open ${intent.contactName}`, action: 'open', contactId: intent.contactId }],
+              });
+            } else {
+              responses.push({ text: "Which contact should I trust? Try 'trust Maya'." });
+            }
+            break;
+          }
+          case 'distrust': {
+            if (intent.contactId) {
+              setContactTrusted(intent.contactId, false);
+              responses.push({ text: `${intent.contactName} removed from trusted contacts — messages will be filtered again.` });
+            } else {
+              responses.push({ text: "Which contact? Try 'don't trust Dave'." });
+            }
+            break;
+          }
+          case 'sensitivity': {
+            if (intent.value && ['low', 'medium', 'high'].includes(intent.value)) {
+              const v = intent.value as 'low' | 'medium' | 'high';
+              updateCivility({ sensitivity: v });
+              const desc = v === 'high'
+                ? 'will catch borderline language too'
+                : v === 'low'
+                ? 'will only block clear violations'
+                : 'balances sensitivity and permissiveness';
+              responses.push({ text: `Civility sensitivity set to ${v} — filter ${desc}.` });
+            } else {
+              responses.push({ text: "Try 'set sensitivity to low', 'medium', or 'high'." });
+            }
+            break;
+          }
+          case 'civility_toggle': {
+            const on = intent.value === 'on';
+            updateCivility({ enabled: on });
+            responses.push({ text: `Civility filter ${on ? 'enabled' : 'disabled'}.` });
+            break;
+          }
+          case 'spam_toggle': {
+            const on = intent.value === 'on';
+            updateSpam({ enabled: on });
+            responses.push({ text: `Spam filter ${on ? 'enabled' : 'disabled'}.` });
+            break;
+          }
+          case 'dnd_toggle': {
+            const on = intent.value === 'on';
+            updateDND({ enabled: on });
+            responses.push({ text: `Do Not Disturb ${on ? 'enabled — notifications paused' : 'disabled — back to normal'}.` });
+            break;
+          }
+        }
+        break;
+      }
+
+      case 'query': {
+        switch (intent.subject) {
+          case 'capabilities': {
+            setBusy(false);
+            addAI("Here's what I can do:");
+            addAI("· Reply — 'reply Maya sounds good' · Open — 'open Alex'");
+            addAI("· Approve / reject held messages — 'approve all', 'reject all'");
+            addAI("· Trust contacts — 'trust Sarah' / 'don't trust Dave'");
+            addAI("· Adjust the filter — 'set sensitivity to high', 'turn off spam filter'");
+            addAI("· Questions — 'how many held?', 'messages from Alex', 'summary', 'my settings'");
+            return;
+          }
+          case 'held_count': {
+            const n = heldMessages.length;
+            if (n === 0) {
+              responses.push({ text: "Review queue is empty — nothing held right now." });
+            } else {
+              responses.push({
+                text: `${n} message${n !== 1 ? 's' : ''} waiting in your review queue.`,
+                chips: [{ label: 'Show held', action: 'show_review' as const }],
+              });
+            }
+            break;
+          }
+          case 'contact_messages': {
+            if (intent.contactId) {
+              const contactMsgs = allMessages
+                .filter(m => m.contactId === intent.contactId && m.dir === 'in')
+                .sort((a, b) => b.ts - a.ts)
+                .slice(0, 4);
+              if (contactMsgs.length === 0) {
+                responses.push({ text: `No incoming messages from ${intent.contactName}.` });
+              } else {
+                responses.push({ text: `Recent from ${intent.contactName}:` });
+                for (const cm of contactMsgs.slice(0, 3)) {
+                  const preview = cm.text.length > 80 ? cm.text.slice(0, 77) + '…' : cm.text;
+                  responses.push({ text: `"${preview}"` });
+                }
+                responses.push({
+                  text: `Showing last ${Math.min(contactMsgs.length, 3)} of ${contactMsgs.length} message${contactMsgs.length !== 1 ? 's' : ''}.`,
+                  chips: [{ label: `Open ${intent.contactName}`, action: 'open', contactId: intent.contactId }],
+                });
+              }
+            } else {
+              responses.push({ text: "Which contact? Try 'messages from Maya'." });
+            }
+            break;
+          }
+          case 'summary': {
+            setBusy(false);
+            doBriefing();
+            return;
+          }
+          case 'settings': {
+            const civ  = settings.civility;
+            const spam = settings.spam;
+            const dnd  = settings.dnd;
+            responses.push({ text: "Your current filter settings:" });
+            responses.push({
+              text: `Civility: ${civ.enabled ? `on · ${civ.sensitivity} sensitivity` : 'off'} · Spam: ${spam.enabled ? 'on' : 'off'} · DND: ${dnd?.enabled ? 'on' : 'off'}`,
+            });
+            const trusted = contacts.filter(c => c.trusted);
+            responses.push({
+              text: trusted.length > 0
+                ? `Trusted (bypass filter): ${trusted.map(c => c.name).join(', ')}`
+                : 'No trusted contacts — all incoming messages go through the filter.',
+            });
+            break;
+          }
+        }
+        break;
+      }
+
       default: {
-        response = "Try: 'reply Maya yes', 'open Alex', 'show held', 'approve all', or 'reject all'.";
+        responses.push({
+          text: "Try: 'reply Maya yes', 'open Alex', 'approve all', 'trust Sarah', 'set sensitivity to high', or 'my settings'.",
+        });
       }
     }
 
     setBusy(false);
-    addAI(response, chips);
+    for (const r of responses) addAI(r.text, r.chips);
   }, [
-    draft, busy, contacts, heldMessages, settings.aiReplies,
+    contacts, heldMessages, allMessages, settings,
     sendMessage, approveMessage, rejectMessage, openConversation,
-    setFolder, setScreen, addUser, addAI,
+    setFolder, setScreen, setContactTrusted, updateCivility, updateSpam, updateDND,
+    addUser, addAI, doBriefing,
   ]);
+
+  /* Send handler */
+  const handleSend = useCallback(() => {
+    const text = draft.trim();
+    if (!text || busy) return;
+    setDraft('');
+    executeCommand(text);
+  }, [draft, busy, executeCommand]);
+
+  /* Suggestion chip tap runner */
+  const runSuggestChip = useCallback((command: string) => {
+    if (busy) return;
+    executeCommand(command);
+  }, [busy, executeCommand]);
+
+  /* Contextual suggestion chips above the input bar */
+  const suggestionChips = useMemo<SuggestChip[]>(() => {
+    const chips: SuggestChip[] = [];
+    if (heldMessages.length > 0) {
+      chips.push({ label: `Approve all (${heldMessages.length})`, command: 'approve all' });
+      chips.push({ label: 'Show held', command: 'show held' });
+    }
+    for (const { contact } of unread.slice(0, 2)) {
+      if (contact) chips.push({ label: `Open ${contact.name}`, command: `open ${contact.name}` });
+    }
+    chips.push({ label: 'My settings', command: 'my settings' });
+    chips.push({ label: 'Help', command: 'help' });
+    return chips.slice(0, 5);
+  }, [heldMessages, unread]);
 
   /* Compute burst groups for iMessage-style corners */
   const rendered = msgs.map((m, i) => {
@@ -413,6 +653,23 @@ export function Commander() {
         </div>
       </div>
 
+      {/* Suggestion chips — contextual quick-tap row */}
+      {suggestionChips.length > 0 && (
+        <div className="px-3 pb-1 flex gap-1.5 overflow-x-auto no-bar">
+          {suggestionChips.map((sc, i) => (
+            <button
+              key={i}
+              onClick={() => runSuggestChip(sc.command)}
+              disabled={busy}
+              className="flex-shrink-0 text-[10px] font-medium px-2 py-0.5 glass active:scale-95 transition-transform disabled:opacity-40"
+              style={{ borderRadius: 999, color: 'var(--accent)', border: '1px solid var(--line)' }}
+            >
+              {sc.label}
+            </button>
+          ))}
+        </div>
+      )}
+
       {/* Input */}
       <div className="px-3 pb-3 pt-1">
         <div className="glass2 flex items-center gap-2 p-1.5" style={{ borderRadius: 999 }}>
@@ -420,7 +677,7 @@ export function Commander() {
             value={draft}
             onChange={e => setDraft(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && !busy && handleSend()}
-            placeholder="Reply Maya, open Alex, show held…"
+            placeholder="Reply Maya, trust Sarah, open Alex, my settings…"
             className="flex-1 bg-transparent px-3 text-sm text-main outline-none placeholder:dim"
             disabled={busy}
           />
