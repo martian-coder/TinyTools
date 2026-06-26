@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { X, Palette, Check, Lock } from 'lucide-react';
+import { X, Palette, Check, Lock, Shield } from 'lucide-react';
 import { useSiftStore } from './store';
 import { THEMES } from './theme';
 import { BottomNav } from './components/ui/BottomNav';
@@ -52,6 +52,25 @@ export default function App() {
           >
             <span>{banner}</span>
             <button onClick={() => setBanner(null)}><X size={14} /></button>
+          </div>
+        )}
+
+        {/* Branded header */}
+        {activeScreen !== 'conversation' && (
+          <div className="px-3 pt-2.5 pb-1.5 flex items-center gap-2">
+            <div
+              className="grid place-items-center"
+              style={{
+                width: 26, height: 26, borderRadius: 8,
+                background: 'linear-gradient(135deg,var(--accent),var(--accent2))',
+              }}
+            >
+              <Shield size={13} color="#fff" />
+            </div>
+            <div>
+              <div className="font-bold text-main leading-tight" style={{ fontSize: 13 }}>Strenes</div>
+              <div className="text-[9px] dim leading-tight">Private messaging</div>
+            </div>
           </div>
         )}
 
