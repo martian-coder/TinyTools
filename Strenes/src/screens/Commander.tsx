@@ -241,11 +241,81 @@ export function Commander() {
       `You have ${total} message${total !== 1 ? 's' : ''} from ${senders} sender${senders !== 1 ? 's' : ''}.`
     );
 
-    for (const { contact, latest, count } of unread.slice(0, 5)) {
-      const name    = contact?.name ?? 'Unknown';
-      const preview = latest.text.length > 52 ? latest.text.slice(0, 49) + '…' : latest.text;
-      const badge   = count > 1 ? ` · ${count} msgs` : '';
-      addAI(`${name}${badge} — "${preview}"`);
+    /* Categorize by priority based on verdict category */
+    type Priority = 'high' | 'medium' | 'low';
+    interface SenderGroup {
+      contact: typeof contacts[0] | undefined;
+      count: number;
+      priority: Priority;
+      summary: string;
+      chip: Chip;
+    }
+
+    const groups: SenderGroup[] = unread.slice(0, 5).map(({ contact, latest, count }) => {
+      const name = contact?.name ?? 'Unknown';
+      const verdict = latest.verdict;
+      const text = latest.text.toLowerCase();
+
+      let priority: Priority = 'low';
+      let summary = 'is chatting';
+
+      if (verdict) {
+        if (verdict.category === 'business') {
+          priority = 'high';
+          summary = 'has a business message';
+        } else if (verdict.category === 'promo') {
+          priority = 'medium';
+          summary = 'sent a promotion';
+        } else if (verdict.category === 'spam') {
+          priority = 'low';
+          summary = 'sent spam';
+        } else if (verdict.category === 'abusive') {
+          priority = 'high';
+          summary = 'sent an abusive message';
+        } else {
+          priority = 'low';
+          summary = 'is chatting';
+        }
+      } else {
+        /* Heuristic fallback: guess intent from text */
+        if (/meet|call|schedule|time|when|meeting|sync/.test(text)) {
+          priority = 'high';
+          summary = 'wants to set a meeting';
+        } else if (/urgent|asap|important|help|need|emergency/.test(text)) {
+          priority = 'high';
+          summary = 'needs something urgent';
+        } else if (/thanks|cool|ok|sounds|good|yes|sure/.test(text)) {
+          priority = 'low';
+          summary = 'is responding positively';
+        } else if (/question\?|how|what|why|where/.test(text)) {
+          priority = 'medium';
+          summary = 'is asking a question';
+        }
+      }
+
+      return {
+        contact,
+        count,
+        priority,
+        summary,
+        chip: { label: `Open ${name}`, action: 'open' as const, contactId: contact?.id ?? '' },
+      };
+    });
+
+    /* Sort by priority: high → medium → low */
+    const priorityOrder = { high: 0, medium: 1, low: 2 };
+    groups.sort((a, b) => priorityOrder[a.priority] - priorityOrder[b.priority]);
+
+    /* Render grouped by priority */
+    let currentPriority: Priority | null = null;
+    for (const g of groups) {
+      if (g.priority !== currentPriority) {
+        const label = g.priority === 'high' ? '🔴 High Priority' : g.priority === 'medium' ? '🟡 Medium' : '⚪ Other';
+        addAI(label);
+        currentPriority = g.priority;
+      }
+      const badge = g.count > 1 ? ` (${g.count})` : '';
+      addAI(`${g.contact?.name ?? 'Unknown'}${badge} — ${g.summary}`, [g.chip]);
     }
 
     if (unread.length > 5) {
@@ -253,22 +323,10 @@ export function Commander() {
     }
 
     if (heldMessages.length > 0) {
-      addAI(`${heldMessages.length} message${heldMessages.length !== 1 ? 's' : ''} waiting in your review queue.`);
+      addAI(`⚠️  ${heldMessages.length} message${heldMessages.length !== 1 ? 's' : ''} in review queue.`);
     }
 
-    const chips: Chip[] = [
-      ...unread.slice(0, 3).filter(t => t.contact).map(t => ({
-        label:     `Open ${t.contact!.name}`,
-        action:    'open' as const,
-        contactId: t.contact!.id,
-      })),
-      ...(heldMessages.length > 0 ? [{ label: 'Show held', action: 'show_review' as const }] : []),
-    ];
-
-    addAI(
-      "What should I do? Say 'reply [name] [message]', 'open [name]', 'approve all', or ask anything.",
-      chips.length > 0 ? chips : undefined
-    );
+    addAI("Type a command or click a name to open. E.g., 'reply Alex yes', 'trust Maya', 'my settings'.");
   }, [unread, heldMessages, addAI]);
 
   /* ── Briefing: one bubble per sender, only once on mount ── */
