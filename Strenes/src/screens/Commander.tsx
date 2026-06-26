@@ -596,19 +596,21 @@ export function Commander() {
       </div>
 
       {/* Suggestion chips — contextual quick-tap row */}
-      <div className="px-3 pb-1.5 flex gap-2 overflow-x-auto no-bar">
-        {suggestionChips.map((sc, i) => (
-          <button
-            key={i}
-            onClick={() => runSuggestChip(sc.command)}
-            disabled={busy}
-            className="flex-shrink-0 text-xs font-medium px-3 py-1.5 glass active:scale-95 transition-transform disabled:opacity-40"
-            style={{ borderRadius: 999, color: 'var(--accent)', border: '1px solid var(--line)' }}
-          >
-            {sc.label}
-          </button>
-        ))}
-      </div>
+      {suggestionChips.length > 0 && (
+        <div className="px-3 pb-1 flex gap-1.5 overflow-x-auto no-bar">
+          {suggestionChips.map((sc, i) => (
+            <button
+              key={i}
+              onClick={() => runSuggestChip(sc.command)}
+              disabled={busy}
+              className="flex-shrink-0 text-[10px] font-medium px-2 py-0.5 glass active:scale-95 transition-transform disabled:opacity-40"
+              style={{ borderRadius: 999, color: 'var(--accent)', border: '1px solid var(--line)' }}
+            >
+              {sc.label}
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* Input */}
       <div className="px-3 pb-3 pt-1">
