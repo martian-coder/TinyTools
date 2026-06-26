@@ -591,7 +591,7 @@ export function Commander() {
             value={draft}
             onChange={e => setDraft(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && !busy && handleSend()}
-            placeholder="Reply Maya, trust Sarah, open Alex, my settings…"
+            placeholder="Reply, open, trust, approve, my settings…"
             className="flex-1 bg-transparent px-3 text-sm text-main outline-none placeholder:dim"
             disabled={busy}
           />
