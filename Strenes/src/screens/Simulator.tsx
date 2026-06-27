@@ -98,20 +98,7 @@ export function Simulator() {
 
   return (
     <>
-      <div className="glass-h px-4 pt-4 pb-3 flex items-center justify-between">
-        <div className="flex items-center gap-2.5">
-          <div className="grid place-items-center"
-            style={{ width: 34, height: 34, borderRadius: 11, background: 'linear-gradient(135deg,var(--accent),var(--accent2))', boxShadow: '0 6px 18px -6px var(--accent)' }}>
-            <ShieldCheck size={18} color="#fff" />
-          </div>
-          <div>
-            <div className="font-semibold text-main leading-tight tracking-tight">Test the filter</div>
-            <div className="text-[11px] dim leading-tight">send yourself an incoming message</div>
-          </div>
-        </div>
-      </div>
-
-      <div className="flex-1 overflow-y-auto px-4 pb-28 no-bar space-y-4 pt-1">
+      <div className="flex-1 overflow-y-auto px-4 pb-28 no-bar space-y-4 pt-3">
         {/* Quick examples */}
         <div className="flex flex-wrap gap-1.5">
           {EXAMPLES.map(e => (

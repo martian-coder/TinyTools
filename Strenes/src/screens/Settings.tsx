@@ -1,15 +1,11 @@
 import { useState } from 'react';
-import { AlertTriangle, Briefcase, Forward, ShieldCheck, RotateCcw, Palette, Download, Brain, Trash2, Clock, Zap, Flame, Sparkles, KeyRound, Eye, EyeOff, MessageSquare } from 'lucide-react';
+import { AlertTriangle, Briefcase, Forward, ShieldCheck, RotateCcw, Download, Brain, Trash2, Clock, Zap, Flame, Sparkles, KeyRound, Eye, EyeOff, MessageSquare } from 'lucide-react';
 import { useSiftStore } from '../store';
 import { Switch } from '../components/ui/Switch';
 import { Segment } from '../components/ui/Segment';
 import { Avatar } from '../components/ui/Avatar';
 
-interface SettingsProps {
-  onShowThemes: () => void;
-}
-
-export function Settings({ onShowThemes }: SettingsProps) {
+export function Settings() {
   const settings              = useSiftStore(s => s.settings);
   const contacts              = useSiftStore(s => s.contacts);
   const updateCivility        = useSiftStore(s => s.updateCivility);
@@ -31,21 +27,6 @@ export function Settings({ onShowThemes }: SettingsProps) {
 
   return (
     <>
-      <div className="glass-h px-4 pt-4 pb-3 flex items-center justify-between">
-        <div className="flex items-center gap-2.5">
-          <div className="grid place-items-center"
-            style={{ width: 34, height: 34, borderRadius: 11, background: 'linear-gradient(135deg,var(--accent),var(--accent2))', boxShadow: '0 6px 18px -6px var(--accent)' }}>
-            <ShieldCheck size={18} color="#fff" />
-          </div>
-          <div>
-            <div className="font-semibold text-main leading-tight tracking-tight">Settings</div>
-            <div className="text-[11px] dim leading-tight">you're in control of the filter</div>
-          </div>
-        </div>
-        <button onClick={onShowThemes} className="glass grid place-items-center" style={{ width: 34, height: 34, borderRadius: 11 }}>
-          <Palette size={16} className="text-main" />
-        </button>
-      </div>
 
       <div className="flex-1 overflow-y-auto px-3 pb-28 no-bar space-y-3 pt-1">
 

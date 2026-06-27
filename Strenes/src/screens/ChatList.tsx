@@ -1,4 +1,4 @@
-import { ShieldCheck, Inbox, Briefcase, Megaphone, Check, X, Eye, Forward, ChevronRight, Palette } from 'lucide-react';
+import { ShieldCheck, Inbox, Briefcase, Megaphone, Check, X, Eye, Forward, ChevronRight } from 'lucide-react';
 import { useSiftStore } from '../store';
 import { Avatar } from '../components/ui/Avatar';
 import { CategoryBadge } from '../components/ui/Badge';
@@ -11,11 +11,7 @@ const FOLDERS: { id: Folder; label: string; Icon: React.ComponentType<{ size?: n
   { id: 'review',     label: 'Review',     Icon: ShieldCheck },
 ];
 
-interface ChatListProps {
-  onShowThemes: () => void;
-}
-
-export function ChatList({ onShowThemes }: ChatListProps) {
+export function ChatList() {
   const messages          = useSiftStore(s => s.messages);
   const contacts          = useSiftStore(s => s.contacts);
   const activeFolder      = useSiftStore(s => s.activeFolder);
@@ -49,8 +45,6 @@ export function ChatList({ onShowThemes }: ChatListProps) {
 
   return (
     <>
-      <Header title="Strenes" sub="private by design" onShowThemes={onShowThemes} />
-
       {/* Folder pills */}
       <div className="px-3 py-2 flex gap-2 overflow-x-auto no-bar">
         {FOLDERS.map(f => {
@@ -175,32 +169,6 @@ function ReviewFolder({
           ))}
         </div>
       )}
-    </div>
-  );
-}
-
-function Header({ title, sub, onShowThemes }: { title: string; sub: string; onShowThemes: () => void }) {
-  return (
-    <div className="glass-h px-4 pt-4 pb-3 flex items-center justify-between">
-      <div className="flex items-center gap-2.5">
-        <div
-          className="grid place-items-center"
-          style={{ width: 34, height: 34, borderRadius: 11, background: 'linear-gradient(135deg,var(--accent),var(--accent2))', boxShadow: '0 6px 18px -6px var(--accent)' }}
-        >
-          <ShieldCheck size={18} color="#fff" />
-        </div>
-        <div>
-          <div className="font-semibold text-main leading-tight tracking-tight">{title}</div>
-          <div className="text-[11px] dim leading-tight">{sub}</div>
-        </div>
-      </div>
-      <button
-        onClick={onShowThemes}
-        className="glass grid place-items-center"
-        style={{ width: 34, height: 34, borderRadius: 11 }}
-      >
-        <Palette size={16} className="text-main" />
-      </button>
     </div>
   );
 }
