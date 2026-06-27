@@ -46,7 +46,7 @@ function senderStatus(r: RouteResult, sensitivity: string): { label: string; sub
 export function Simulator() {
   const settings  = useSiftStore(s => s.settings);
   const contacts  = useSiftStore(s => s.contacts);
-  const receiveMsg = useSiftStore(s => s.receiveMessage);
+  const checkAndReceiveMsg = useSiftStore(s => s.checkAndReceiveMessage);
   const setBanner = useSiftStore(s => s.setBanner);
   const setScreen = useSiftStore(s => s.setScreen);
   const setFolder = useSiftStore(s => s.setFolder);
@@ -89,7 +89,8 @@ export function Simulator() {
       return { contacts };
     });
 
-    receiveMsg(cid, txt, r, v);
+    const apiKey = settings.aiReplies?.anthropicKey ?? '';
+    await checkAndReceiveMsg(cid, txt, r, v, apiKey);
     setTResult({ v, r, text: txt }); setTScan(false);
     if (r.ask) setBanner('A message was filtered — review it.');
   };

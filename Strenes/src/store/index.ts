@@ -49,6 +49,7 @@ interface SiftState {
   toggleDynamicRule: (ruleId: string) => void;
   updateDynamicRule: (ruleId: string, patch: Partial<Omit<DynamicRule, 'id' | 'contactId' | 'createdAt'>>) => void;
   getDynamicRulesForContact: (contactId: string) => DynamicRule[];
+  checkAndReceiveMessage: (contactId: string, text: string, route: RouteResult, verdict: ModerationVerdict, apiKey: string) => Promise<void>;
   resetToSeed: () => void;
 }
 
@@ -237,6 +238,36 @@ export const useSiftStore = create<SiftState>()(
       getDynamicRulesForContact: (contactId) => {
         const { settings } = get();
         return settings.dynamicRules.filter(r => r.contactId === contactId && r.enabled);
+      },
+
+      checkAndReceiveMessage: async (contactId, text, route, verdict, apiKey) => {
+        // Import here to avoid circular dependencies
+        const { checkRuleMatch } = await import('../moderation/rules-check');
+
+        const state = get();
+        const rules = state.getDynamicRulesForContact(contactId);
+
+        let finalRoute = route;
+
+        // Check each rule against the message
+        for (const rule of rules) {
+          try {
+            const result = await checkRuleMatch(text, rule, apiKey);
+            if (result.matches) {
+              // If rule action is 'block' or 'review', hold the message
+              if (rule.action === 'block' || rule.action === 'review') {
+                finalRoute = { folder: 'review', status: 'held', ask: false };
+                break;
+              }
+            }
+          } catch (error) {
+            console.error('Error checking rule match:', error);
+            // Fall back to heuristic on error
+          }
+        }
+
+        // Now call receiveMessage with potentially modified route
+        state.receiveMessage(contactId, text, finalRoute, verdict);
       },
 
       resetToSeed: () => set({
