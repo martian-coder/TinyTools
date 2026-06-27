@@ -182,19 +182,20 @@ function Bubble({
 /* ── Screen ─────────────────────────────────────────────────────────── */
 
 export function Commander() {
-  const contacts          = useSiftStore(s => s.contacts);
-  const allMessages       = useSiftStore(s => s.messages);
-  const settings          = useSiftStore(s => s.settings);
-  const sendMessage       = useSiftStore(s => s.sendMessage);
-  const approveMessage    = useSiftStore(s => s.approveMessage);
-  const rejectMessage     = useSiftStore(s => s.rejectMessage);
-  const openConversation  = useSiftStore(s => s.openConversation);
-  const setFolder         = useSiftStore(s => s.setFolder);
-  const setScreen         = useSiftStore(s => s.setScreen);
-  const setContactTrusted = useSiftStore(s => s.setContactTrusted);
-  const updateCivility    = useSiftStore(s => s.updateCivility);
-  const updateSpam        = useSiftStore(s => s.updateSpam);
-  const updateDND         = useSiftStore(s => s.updateDND);
+  const contacts           = useSiftStore(s => s.contacts);
+  const allMessages        = useSiftStore(s => s.messages);
+  const settings           = useSiftStore(s => s.settings);
+  const sendMessage        = useSiftStore(s => s.sendMessage);
+  const approveMessage     = useSiftStore(s => s.approveMessage);
+  const rejectMessage      = useSiftStore(s => s.rejectMessage);
+  const openConversation   = useSiftStore(s => s.openConversation);
+  const setFolder          = useSiftStore(s => s.setFolder);
+  const setScreen          = useSiftStore(s => s.setScreen);
+  const setContactTrusted  = useSiftStore(s => s.setContactTrusted);
+  const updateCivility     = useSiftStore(s => s.updateCivility);
+  const updateSpam         = useSiftStore(s => s.updateSpam);
+  const updateDND          = useSiftStore(s => s.updateDND);
+  const addDynamicRule     = useSiftStore(s => s.addDynamicRule);
 
   const { msgs, addAI, addUser } = useChat();
   const [draft, setDraft]        = useState('');
@@ -513,9 +514,22 @@ export function Commander() {
         break;
       }
 
+      case 'dynamic_rule': {
+        if (intent.action === 'add' && intent.contactId && intent.condition && intent.ruleAction) {
+          addDynamicRule(intent.contactId, intent.condition, intent.ruleAction);
+          const action = intent.ruleAction === 'block' ? 'block messages' : 'hold for review';
+          responses.push({
+            text: `Rule set for ${intent.contactName} — will ${action} if message mentions "${intent.condition}".`,
+          });
+        } else {
+          responses.push({ text: "Usage: 'block [name] if [condition]' or 'review [name] when [condition]'." });
+        }
+        break;
+      }
+
       default: {
         responses.push({
-          text: "Try: 'reply Maya yes', 'open Alex', 'approve all', 'trust Sarah', 'set sensitivity to high', or 'my settings'.",
+          text: "Try: 'reply Maya yes', 'open Alex', 'approve all', 'trust Sarah', 'block Maya if mentions money', or 'my settings'.",
         });
       }
     }
@@ -525,7 +539,7 @@ export function Commander() {
   }, [
     contacts, heldMessages, allMessages, settings,
     sendMessage, approveMessage, rejectMessage, openConversation,
-    setFolder, setScreen, setContactTrusted, updateCivility, updateSpam, updateDND,
+    setFolder, setScreen, setContactTrusted, updateCivility, updateSpam, updateDND, addDynamicRule,
     addUser, addAI, doBriefing,
   ]);
 

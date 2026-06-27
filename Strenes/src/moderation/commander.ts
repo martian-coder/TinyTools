@@ -23,11 +23,19 @@ export interface QueryIntent {
   contactId?: string;
   contactName?: string;
 }
+export interface DynamicRuleIntent {
+  type: 'dynamic_rule';
+  action: 'add' | 'remove';
+  contactId?: string;
+  contactName?: string;
+  condition?: string;
+  ruleAction?: 'block' | 'review';
+}
 export interface UnknownIntent { type: 'unknown'; query: string }
 
 export type Intent =
   | ReplyIntent | OpenIntent | ApproveIntent | RejectIntent
-  | ShowReviewIntent | SetRuleIntent | QueryIntent | UnknownIntent;
+  | ShowReviewIntent | SetRuleIntent | QueryIntent | DynamicRuleIntent | UnknownIntent;
 
 function matchContact(name: string, contacts: Contact[]): Contact | undefined {
   const lower = name.toLowerCase().trim();
@@ -114,6 +122,34 @@ function parseHeuristic(text: string, contacts: Contact[]): Intent {
   if (/^(?:my\s+(?:settings?|rules?)|(?:show\s+)?settings?|what\s+are\s+my\s+rules?)/i.test(t))
     return { type: 'query', subject: 'settings' };
 
+  // dynamic rule: block if/when
+  const blockM = t.match(/^(?:block|rule:?\s+block)\s+([a-z']+)\s+(?:if|when)\s+(.+)/i);
+  if (blockM) {
+    const c = matchContact(blockM[1], contacts);
+    if (c) return {
+      type: 'dynamic_rule',
+      action: 'add',
+      contactId: c.id,
+      contactName: c.name,
+      condition: blockM[2],
+      ruleAction: 'block',
+    };
+  }
+
+  // dynamic rule: review if/when
+  const reviewM = t.match(/^(?:review|check|rule:?\s+review)\s+([a-z']+)\s+(?:if|when)\s+(.+)/i);
+  if (reviewM) {
+    const c = matchContact(reviewM[1], contacts);
+    if (c) return {
+      type: 'dynamic_rule',
+      action: 'add',
+      contactId: c.id,
+      contactName: c.name,
+      condition: reviewM[2],
+      ruleAction: 'review',
+    };
+  }
+
   // legacy patterns
   if (/(?:review|pending|held|waiting|queue|filter)/i.test(t)) return { type: 'show_review' };
   if (/(?:approve|allow|let\s+(?:in|through)|accept)/i.test(t))   return { type: 'approve' };
@@ -155,6 +191,7 @@ async function parseViaAnthropic(
     '{"type":"query","subject":"contact_messages","contactId":"<id>","contactName":"<name>"}\n' +
     '{"type":"query","subject":"summary"}\n' +
     '{"type":"query","subject":"settings"}\n' +
+    '{"type":"dynamic_rule","action":"add","contactId":"<id>","contactName":"<name>","condition":"<condition>","ruleAction":"block|review"}\n' +
     '{"type":"unknown","query":"<original input>"}';
 
   try {
