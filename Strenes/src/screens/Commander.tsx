@@ -484,11 +484,10 @@ export function Commander() {
           addDynamicRule(intent.contactId, intent.condition, intent.ruleAction);
           const action = intent.ruleAction === 'block' ? 'block' : 'review';
           responses.push({
-            text: `Rule set for ${intent.contactName} — will ${action} if message "${intent.condition}".`,
-            chips: [{ label: `Open ${intent.contactName}`, action: 'open', contactId: intent.contactId }],
+            text: `✓ Rule set: will ${action} messages from ${intent.contactName} if "${intent.condition}"`,
           });
         } else {
-          responses.push({ text: "Try: 'block Maya if mentions money' or 'review Alex when discussing work'." });
+          responses.push({ text: "Try: 'block Maya mentions money' or 'review Dad when discussing work'." });
         }
         break;
       }
