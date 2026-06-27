@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { Contact, Message, MessageRoute, UserSettings, Folder, RouteResult, ModerationVerdict } from '../types';
+import type { Contact, Message, MessageRoute, UserSettings, Folder, RouteResult, ModerationVerdict, DynamicRule } from '../types';
 import { SEED_CONTACTS, SEED_MESSAGES, DEFAULT_SETTINGS } from '../seed';
 
 export type Screen = 'chats' | 'conversation' | 'settings' | 'simulator' | 'digest' | 'commander';
@@ -44,6 +44,11 @@ interface SiftState {
   toggleTrusted: (contactId: string) => void;
   setContactTrusted: (contactId: string, trusted: boolean) => void;
   resolvePendingAsk: (approve: boolean) => void;
+  addDynamicRule: (contactId: string, condition: string, action: 'block' | 'review') => void;
+  removeDynamicRule: (ruleId: string) => void;
+  toggleDynamicRule: (ruleId: string) => void;
+  updateDynamicRule: (ruleId: string, patch: Partial<Omit<DynamicRule, 'id' | 'contactId' | 'createdAt'>>) => void;
+  getDynamicRulesForContact: (contactId: string) => DynamicRule[];
   resetToSeed: () => void;
 }
 
@@ -185,6 +190,53 @@ export const useSiftStore = create<SiftState>()(
         if (approve) get().approveMessage(pendingAsk.messageId);
         else         get().rejectMessage(pendingAsk.messageId);
         set({ pendingAsk: null });
+      },
+
+      addDynamicRule: (contactId, condition, action) => set(s => ({
+        settings: {
+          ...s.settings,
+          dynamicRules: [
+            ...s.settings.dynamicRules,
+            {
+              id: `rule-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
+              contactId,
+              condition,
+              action,
+              enabled: true,
+              createdAt: Date.now(),
+            },
+          ],
+        },
+      })),
+
+      removeDynamicRule: (ruleId) => set(s => ({
+        settings: {
+          ...s.settings,
+          dynamicRules: s.settings.dynamicRules.filter(r => r.id !== ruleId),
+        },
+      })),
+
+      toggleDynamicRule: (ruleId) => set(s => ({
+        settings: {
+          ...s.settings,
+          dynamicRules: s.settings.dynamicRules.map(r =>
+            r.id === ruleId ? { ...r, enabled: !r.enabled } : r
+          ),
+        },
+      })),
+
+      updateDynamicRule: (ruleId, patch) => set(s => ({
+        settings: {
+          ...s.settings,
+          dynamicRules: s.settings.dynamicRules.map(r =>
+            r.id === ruleId ? { ...r, ...patch } : r
+          ),
+        },
+      })),
+
+      getDynamicRulesForContact: (contactId) => {
+        const { settings } = get();
+        return settings.dynamicRules.filter(r => r.contactId === contactId && r.enabled);
       },
 
       resetToSeed: () => set({

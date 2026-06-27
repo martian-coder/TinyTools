@@ -192,10 +192,7 @@ async function parseViaAnthropic(
     '{"type":"query","subject":"contact_messages","contactId":"<id>","contactName":"<name>"}\n' +
     '{"type":"query","subject":"summary"}\n' +
     '{"type":"query","subject":"settings"}\n' +
-<<<<<<< Updated upstream
-=======
     '{"type":"dynamic_rule","action":"add","contactId":"<id>","contactName":"<name>","condition":"<natural language condition>","ruleAction":"block|review"}\n' +
->>>>>>> Stashed changes
     '{"type":"unknown","query":"<original input>"}';
 
   try {

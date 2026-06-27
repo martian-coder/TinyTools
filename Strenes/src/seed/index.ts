@@ -41,4 +41,5 @@ export const DEFAULT_SETTINGS: UserSettings = {
   spellCheck: { enabled: true },
   aiReplies: { enabled: true, anthropicKey: '' },
   smsFallback: { enabled: false },
+  dynamicRules: [],
 };

@@ -31,6 +31,15 @@ export interface ToneAnalysis {
   suggestion?: string;
 }
 
+export interface DynamicRule {
+  id: string;
+  contactId: string;
+  condition: string;
+  action: 'block' | 'review';
+  enabled: boolean;
+  createdAt: number;
+}
+
 export interface Contact {
   id: string;
   name: string;
@@ -101,6 +110,7 @@ export interface UserSettings {
   };
   theme: ThemeName;
   trustedIds: string[];
+  dynamicRules: DynamicRule[];
 }
 
 export interface RouteResult {

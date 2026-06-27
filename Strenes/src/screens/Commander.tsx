@@ -195,6 +195,7 @@ export function Commander() {
   const updateCivility    = useSiftStore(s => s.updateCivility);
   const updateSpam        = useSiftStore(s => s.updateSpam);
   const updateDND         = useSiftStore(s => s.updateDND);
+  const addDynamicRule    = useSiftStore(s => s.addDynamicRule);
 
   const { msgs, addAI, addUser } = useChat();
   const [draft, setDraft]        = useState('');
@@ -478,6 +479,20 @@ export function Commander() {
         break;
       }
 
+      case 'dynamic_rule': {
+        if (intent.action === 'add' && intent.contactId && intent.condition && intent.ruleAction) {
+          addDynamicRule(intent.contactId, intent.condition, intent.ruleAction);
+          const action = intent.ruleAction === 'block' ? 'block' : 'review';
+          responses.push({
+            text: `Rule set for ${intent.contactName} — will ${action} if message "${intent.condition}".`,
+            chips: [{ label: `Open ${intent.contactName}`, action: 'open', contactId: intent.contactId }],
+          });
+        } else {
+          responses.push({ text: "Try: 'block Maya if mentions money' or 'review Alex when discussing work'." });
+        }
+        break;
+      }
+
       case 'query': {
         switch (intent.subject) {
           case 'capabilities': {
@@ -487,6 +502,7 @@ export function Commander() {
             addAI("· Approve / reject held messages — 'approve all', 'reject all'");
             addAI("· Trust contacts — 'trust Sarah' / 'don't trust Dave'");
             addAI("· Adjust the filter — 'set sensitivity to high', 'turn off spam filter'");
+            addAI("· Dynamic rules — 'block Maya if mentions money', 'review Alex when discussing work'");
             addAI("· Questions — 'how many held?', 'messages from Alex', 'summary', 'my settings'");
             return;
           }
@@ -564,7 +580,7 @@ export function Commander() {
     contacts, heldMessages, allMessages, settings,
     sendMessage, approveMessage, rejectMessage, openConversation,
     setFolder, setScreen, setContactTrusted, updateCivility, updateSpam, updateDND,
-    addUser, addAI, doBriefing,
+    addDynamicRule, addUser, addAI, doBriefing,
   ]);
 
   /* Send handler */
