@@ -23,11 +23,19 @@ export interface QueryIntent {
   contactId?: string;
   contactName?: string;
 }
+export interface DynamicRuleIntent {
+  type: 'dynamic_rule';
+  action: 'add' | 'remove';
+  contactId?: string;
+  contactName?: string;
+  condition?: string;
+  ruleAction?: 'block' | 'review';
+}
 export interface UnknownIntent { type: 'unknown'; query: string }
 
 export type Intent =
   | ReplyIntent | OpenIntent | ApproveIntent | RejectIntent
-  | ShowReviewIntent | SetRuleIntent | QueryIntent | UnknownIntent;
+  | ShowReviewIntent | SetRuleIntent | QueryIntent | DynamicRuleIntent | UnknownIntent;
 
 function matchContact(name: string, contacts: Contact[]): Contact | undefined {
   const lower = name.toLowerCase().trim();
@@ -114,6 +122,35 @@ function parseHeuristic(text: string, contacts: Contact[]): Intent {
   if (/^(?:my\s+(?:settings?|rules?)|(?:show\s+)?settings?|what\s+are\s+my\s+rules?)/i.test(t))
     return { type: 'query', subject: 'settings' };
 
+  // dynamic rule: block [contact] [condition]
+  // Matches: "block Maya mentions money", "block Maya if she asks for payment", "don't allow alex when talking about work"
+  const blockM = t.match(/^(?:block|don't?\s+allow|prevent|disallow|stop)\s+([a-z']+)(?:\s+(?:if|when|mentions?|discusses?|talks?\s+about|says?)?\s+(.+))?/i);
+  if (blockM && blockM[2]) {
+    const c = matchContact(blockM[1], contacts);
+    if (c) return {
+      type: 'dynamic_rule',
+      action: 'add',
+      contactId: c.id,
+      contactName: c.name,
+      condition: blockM[2],
+      ruleAction: 'block',
+    };
+  }
+
+  // dynamic rule: review [contact] [condition]
+  // Matches: "review Maya mentions money", "review Maya when discussing work", "check alex if talking about politics"
+  const reviewM = t.match(/^(?:review|check|flag|monitor)\s+([a-z']+)(?:\s+(?:if|when|mentions?|discusses?|talks?\s+about|says?)?\s+(.+))?/i);
+  if (reviewM && reviewM[2]) {
+    const c = matchContact(reviewM[1], contacts);
+    if (c) return {
+      type: 'dynamic_rule',
+      action: 'add',
+      contactId: c.id,
+      contactName: c.name,
+      condition: reviewM[2],
+      ruleAction: 'review',
+    };
+  }
   // legacy patterns
   if (/(?:review|pending|held|waiting|queue|filter)/i.test(t)) return { type: 'show_review' };
   if (/(?:approve|allow|let\s+(?:in|through)|accept)/i.test(t))   return { type: 'approve' };
@@ -155,6 +192,10 @@ async function parseViaAnthropic(
     '{"type":"query","subject":"contact_messages","contactId":"<id>","contactName":"<name>"}\n' +
     '{"type":"query","subject":"summary"}\n' +
     '{"type":"query","subject":"settings"}\n' +
+<<<<<<< Updated upstream
+=======
+    '{"type":"dynamic_rule","action":"add","contactId":"<id>","contactName":"<name>","condition":"<natural language condition>","ruleAction":"block|review"}\n' +
+>>>>>>> Stashed changes
     '{"type":"unknown","query":"<original input>"}';
 
   try {
