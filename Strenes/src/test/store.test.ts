@@ -1,6 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { useSiftStore } from '../store';
-import type { Contact, Message, DynamicRule } from '../types';
 
 describe('Store - State Management', () => {
   beforeEach(() => {
@@ -23,6 +22,7 @@ describe('Store - State Management', () => {
         toneChecker: { enabled: true, warnOnAggressive: true },
         spellCheck: { enabled: true },
         aiReplies: { enabled: true, anthropicKey: '' },
+        aiModeration: { provider: 'gemini-nano', anthropicKey: '' },
         smsFallback: { enabled: false },
         dynamicRules: [],
       },
