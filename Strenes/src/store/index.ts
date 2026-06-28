@@ -39,6 +39,7 @@ interface SiftState {
   updateToneChecker: (patch: Partial<UserSettings['toneChecker']>) => void;
   updateSpellCheck: (patch: Partial<UserSettings['spellCheck']>) => void;
   updateAiReplies: (patch: Partial<UserSettings['aiReplies']>) => void;
+  updateAiModeration: (patch: Partial<UserSettings['aiModeration']>) => void;
   updateSmsFallback: (patch: Partial<UserSettings['smsFallback']>) => void;
   setContactEmergency: (contactId: string, isEmergency: boolean) => void;
   toggleTrusted: (contactId: string) => void;
@@ -159,6 +160,7 @@ export const useSiftStore = create<SiftState>()(
       updateToneChecker: patch => set(s => ({ settings: { ...s.settings, toneChecker: { ...s.settings.toneChecker, ...patch } } })),
       updateSpellCheck: patch => set(s => ({ settings: { ...s.settings, spellCheck: { ...s.settings.spellCheck, ...patch } } })),
       updateAiReplies: patch => set(s => ({ settings: { ...s.settings, aiReplies: { ...s.settings.aiReplies, ...patch } } })),
+      updateAiModeration: patch => set(s => ({ settings: { ...s.settings, aiModeration: { ...s.settings.aiModeration, ...patch } } })),
       updateSmsFallback: patch => set(s => ({ settings: { ...s.settings, smsFallback: { ...s.settings.smsFallback, ...patch } } })),
 
       setContactEmergency: (id, isEmergency) => set(s => ({

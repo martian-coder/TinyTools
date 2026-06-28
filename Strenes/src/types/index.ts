@@ -7,7 +7,8 @@ export type DisappearingMessageMode = 'off' | 'onRead' | '1m' | '5m' | '1h' | '2
 export type MessageTone = 'polite' | 'neutral' | 'assertive' | 'aggressive' | 'harsh';
 export type DrunkModeAction = 'prevent' | 'warn';
 
-export type ModerationEngine = 'rules' | 'apple-fm' | 'gemini-nano' | 'executorch';
+export type ModerationEngine = 'rules' | 'apple-fm' | 'gemini-nano' | 'executorch' | 'anthropic-claude';
+export type AIProvider = 'gemini-nano' | 'anthropic-claude';
 
 export interface SpellCheckSuggestion {
   original: string;
@@ -103,6 +104,10 @@ export interface UserSettings {
   };
   aiReplies: {
     enabled: boolean;
+    anthropicKey: string;
+  };
+  aiModeration: {
+    provider: AIProvider;
     anthropicKey: string;
   };
   smsFallback: {

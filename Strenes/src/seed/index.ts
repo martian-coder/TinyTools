@@ -40,6 +40,7 @@ export const DEFAULT_SETTINGS: UserSettings = {
   toneChecker: { enabled: true, warnOnAggressive: true },
   spellCheck: { enabled: true },
   aiReplies: { enabled: true, anthropicKey: '' },
+  aiModeration: { provider: 'gemini-nano', anthropicKey: '' },
   smsFallback: { enabled: false },
   dynamicRules: [],
 };

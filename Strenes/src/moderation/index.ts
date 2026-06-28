@@ -1,10 +1,12 @@
 import type { Moderator, ModerationEngine } from './types';
 import { RulesModerator } from './rules';
 import { GeminiNanoModerator } from './gemini-nano';
+import { createAnthropicModerator } from './anthropic';
 
 export type { Moderator, Sensitivity } from './types';
 export { classifyByRules, moderate, RulesModerator } from './rules';
 export { GeminiNanoModerator } from './gemini-nano';
+export { createAnthropicModerator } from './anthropic';
 export { routeVerdict } from './route';
 
 /**
@@ -12,20 +14,26 @@ export { routeVerdict } from './route';
  * use the first that reports itself available; RulesModerator anchors the chain
  * and is always available, so getModerator() never fails.
  *
- * AppleFMModerator (iOS Foundation Models) and ExecuTorchModerator are
- * native-only engines from the spec — they have no web surface, so on this PWA
- * the realistic on-device model is Gemini Nano via Chrome's Prompt API. The
- * chain is structured so they can slot in unchanged on a native build.
+ * Default chain: Gemini Nano (on-device, no network, Google AI) → Rules (fast heuristic).
+ * If user opts into Anthropic Claude during setup and provides an API key,
+ * AnthropicModerator is probed first.
  *
- * Hard rule: no engine in any path makes a network call that sees plaintext.
+ * Hard rule: fallback to RulesModerator if anything fails (network, API key, model).
  */
-const CHAIN: Moderator[] = [GeminiNanoModerator, RulesModerator];
-
 let cached: Moderator | null = null;
 
-export async function getModerator(): Promise<Moderator> {
+export async function getModerator(anthropicKey?: string): Promise<Moderator> {
   if (cached) return cached;
-  for (const m of CHAIN) {
+
+  const chain: Moderator[] = [];
+  if (anthropicKey) {
+    const anthropic = createAnthropicModerator(anthropicKey);
+    if (anthropic) chain.push(anthropic);
+  }
+  chain.push(GeminiNanoModerator);
+  chain.push(RulesModerator);
+
+  for (const m of chain) {
     try {
       if (await m.isAvailable()) {
         cached = m;
@@ -50,4 +58,5 @@ export const ENGINE_LABELS: Record<ModerationEngine, string> = {
   'apple-fm': 'Apple Intelligence',
   'gemini-nano': 'Gemini Nano',
   'executorch': 'ExecuTorch',
+  'anthropic-claude': 'Claude (API)',
 };
