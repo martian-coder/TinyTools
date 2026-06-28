@@ -9,6 +9,7 @@ import { Settings } from './screens/Settings';
 import { Simulator } from './screens/Simulator';
 import { Digest } from './screens/Digest';
 import { Commander } from './screens/Commander';
+import { Onboarding } from './screens/Onboarding';
 import type { ThemeName } from './types';
 
 export default function App() {
@@ -20,6 +21,7 @@ export default function App() {
   const banner         = useSiftStore(s => s.banner);
   const setBanner      = useSiftStore(s => s.setBanner);
   const flushQueue     = useSiftStore(s => s.flushQueue);
+  const onboardingComplete = useSiftStore(s => s.settings._onboardingComplete);
 
   const [showThemes, setShowThemes] = useState(false);
 
@@ -36,6 +38,10 @@ export default function App() {
 
   const themeVars = THEMES[theme].vars;
   const isConversation = activeScreen === 'conversation';
+
+  if (!onboardingComplete) {
+    return <Onboarding />;
+  }
 
   return (
     <div

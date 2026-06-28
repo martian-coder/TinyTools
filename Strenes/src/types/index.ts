@@ -116,6 +116,7 @@ export interface UserSettings {
   theme: ThemeName;
   trustedIds: string[];
   dynamicRules: DynamicRule[];
+  _onboardingComplete?: boolean;
 }
 
 export interface RouteResult {
