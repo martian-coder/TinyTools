@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useSiftStore } from '../store';
-import { setupRecaptcha, signInWithPhone } from '../services/firebase';
+import { setupRecaptcha, signInWithPhone } from '../services/backend';
 import { Phone, Lock, CheckCircle } from 'lucide-react';
 
 export function Auth() {

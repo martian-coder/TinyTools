@@ -12,7 +12,7 @@ import { Commander } from './screens/Commander';
 import { Onboarding } from './screens/Onboarding';
 import { Auth } from './screens/Auth';
 import { Contacts } from './screens/Contacts';
-import { onAuthChange } from './services/firebase';
+import { onAuthChange } from './services/backend';
 import type { ThemeName } from './types';
 
 export default function App() {

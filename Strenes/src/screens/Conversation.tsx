@@ -7,7 +7,7 @@ import { checkSpellingWithAI, applySuggestion } from '../moderation/spell-check'
 import { analyzeTone } from '../moderation/tone-analyzer';
 import { analyzeTypingPattern, getDrunkDetectionLevel } from '../moderation/drunk-detection';
 import { suggestReplies } from '../moderation/reply-suggest';
-import { sendMessage as firebaseSendMessage, onIncomingMessages } from '../services/firebase';
+import { sendMessage as backendSendMessage, onIncomingMessages } from '../services/backend';
 import type { ModerationVerdict, MessageRoute, SpellCheckSuggestion, ToneAnalysis } from '../types';
 import type { SuggestionResult } from '../moderation/reply-suggest';
 
@@ -236,9 +236,9 @@ export function Conversation() {
       sendMessage(activeContactId, text, route);
       if (navigator.onLine && route === 'ip') {
         try {
-          await firebaseSendMessage(currentUserId, activeContactId, text);
+          await backendSendMessage(currentUserId, activeContactId, text);
         } catch (err) {
-          console.error('Error sending Firebase message:', err);
+          console.error('Error sending message:', err);
         }
       }
     }

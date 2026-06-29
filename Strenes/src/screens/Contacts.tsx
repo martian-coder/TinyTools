@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useSiftStore } from '../store';
 import { UserPlus, Users, Search } from 'lucide-react';
-import { onUserSearch, addContact, onContactsChange } from '../services/firebase';
+import { onUserSearch, addContact, onContactsChange } from '../services/backend';
 
 export function Contacts() {
   const currentUserId = useSiftStore(s => s.currentUserId);
