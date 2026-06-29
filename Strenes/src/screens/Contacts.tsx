@@ -2,11 +2,9 @@ import { useState, useEffect } from 'react';
 import { useSiftStore } from '../store';
 import { UserPlus, Users, Search } from 'lucide-react';
 import { onUserSearch, addContact, onContactsChange } from '../services/firebase';
-import type { Contact } from '../types';
 
 export function Contacts() {
   const currentUserId = useSiftStore(s => s.currentUserId);
-  const contacts = useSiftStore(s => s.contacts);
   const [searchPhone, setSearchPhone] = useState('');
   const [searchResult, setSearchResult] = useState<any>(null);
   const [loading, setLoading] = useState(false);

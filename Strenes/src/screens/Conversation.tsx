@@ -7,6 +7,7 @@ import { checkSpellingWithAI, applySuggestion } from '../moderation/spell-check'
 import { analyzeTone } from '../moderation/tone-analyzer';
 import { analyzeTypingPattern, getDrunkDetectionLevel } from '../moderation/drunk-detection';
 import { suggestReplies } from '../moderation/reply-suggest';
+import { sendMessage as firebaseSendMessage, onIncomingMessages } from '../services/firebase';
 import type { ModerationVerdict, MessageRoute, SpellCheckSuggestion, ToneAnalysis } from '../types';
 import type { SuggestionResult } from '../moderation/reply-suggest';
 
@@ -29,9 +30,11 @@ export function Conversation() {
   const activeContactId      = useSiftStore(s => s.activeContactId);
   const contacts             = useSiftStore(s => s.contacts);
   const settings             = useSiftStore(s => s.settings);
+  const currentUserId        = useSiftStore(s => s.currentUserId);
   const setScreen            = useSiftStore(s => s.setScreen);
   const sendMessage          = useSiftStore(s => s.sendMessage);
   const sendOutgoingToReview = useSiftStore(s => s.sendOutgoingToReview);
+  const receiveMessage       = useSiftStore(s => s.receiveMessage);
   // Pull raw messages from store (stable reference via slice), then filter/sort in useMemo
   // to avoid returning new array references from the Zustand selector (causes infinite loop).
   const allMessages = useSiftStore(s => s.messages);
@@ -123,6 +126,40 @@ export function Conversation() {
     return () => { if (timerRef.current) clearInterval(timerRef.current); };
   }, [callState]);
 
+  // Firebase message receiving with AI filtering
+  useEffect(() => {
+    if (!activeContactId || !currentUserId) return;
+
+    const unsubscribe = onIncomingMessages(currentUserId, async (incomingData) => {
+      if (incomingData.from !== activeContactId) return;
+
+      const text = incomingData.text;
+      try {
+        const mod = await getModerator();
+        const verdict = await mod.classify(text, { sensitivity: settings.civility.sensitivity });
+
+        const isSpam = verdict.category === 'spam';
+        const isAbusive = verdict.category === 'abusive';
+        let folder: 'primary' | 'review' = 'primary';
+        let status: 'delivered' | 'held' = 'delivered';
+
+        if (isAbusive && settings.civility.enabled) {
+          folder = 'review';
+          status = 'held';
+        } else if (isSpam && settings.spam.enabled) {
+          folder = 'review';
+          status = 'held';
+        }
+
+        receiveMessage(activeContactId, text, { folder, status, ask: false }, verdict);
+      } catch {
+        receiveMessage(activeContactId, text, { folder: 'primary', status: 'delivered', ask: false }, { category: 'clean', confidence: 0, engine: 'rules' });
+      }
+    });
+
+    return unsubscribe;
+  }, [activeContactId, currentUserId, settings.civility.sensitivity, settings.civility.enabled, settings.spam.enabled, receiveMessage]);
+
   const startCall = () => {
     setCallState('ringing');
     setMuted(false);
@@ -191,12 +228,19 @@ export function Conversation() {
     debounceRef.current = setTimeout(() => classify(text.trim()), 700);
   };
 
-  const doSend = (text: string, route: MessageRoute) => {
-    if (!activeContactId) return;
+  const doSend = async (text: string, route: MessageRoute) => {
+    if (!activeContactId || !currentUserId) return;
     if (outgoing.kind === 'review') {
       sendOutgoingToReview(activeContactId, text, (outgoing as { kind: 'review'; verdict: ModerationVerdict }).verdict);
     } else {
       sendMessage(activeContactId, text, route);
+      if (navigator.onLine && route === 'ip') {
+        try {
+          await firebaseSendMessage(currentUserId, activeContactId, text);
+        } catch (err) {
+          console.error('Error sending Firebase message:', err);
+        }
+      }
     }
     setDraft('');
     setOutgoing({ kind: 'idle' });
@@ -234,14 +278,14 @@ export function Conversation() {
         setDraft('');
         return;
       }
-      doSend(text, 'queued');
+      await doSend(text, 'queued');
       return;
     }
 
-    doSend(text, 'ip');
+    await doSend(text, 'ip');
   };
 
-  const sendWithCorrections = (acceptSuggestions: boolean) => {
+  const sendWithCorrections = async (acceptSuggestions: boolean) => {
     if (!pendingSendText || !activeContactId) return;
     let finalText = pendingSendText;
     if (acceptSuggestions) {
@@ -249,7 +293,7 @@ export function Conversation() {
         finalText = applySuggestion(finalText, s.original, s.suggested);
       }
     }
-    doSend(finalText, navigator.onLine ? 'ip' : 'queued');
+    await doSend(finalText, navigator.onLine ? 'ip' : 'queued');
     setPendingSendText(null);
     setSpellCheckSuggestions([]);
   };
@@ -573,7 +617,7 @@ export function Conversation() {
             <div className="flex gap-2">
               <button
                 onClick={() => {
-                  doSend(smsConsentText, 'queued');
+                  doSend(smsConsentText, 'queued').catch(() => {});
                   setSmsConsentText(null);
                 }}
                 className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium dim hover:bg-white hover:bg-opacity-5 transition"
@@ -583,7 +627,7 @@ export function Conversation() {
               </button>
               <button
                 onClick={() => {
-                  doSend(smsConsentText, 'sms');
+                  doSend(smsConsentText, 'sms').catch(() => {});
                   setSmsConsentText(null);
                 }}
                 className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-semibold text-main transition"

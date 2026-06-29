@@ -1,6 +1,7 @@
 import { initializeApp } from 'firebase/app';
-import { getAuth, RecaptchaVerifier, signInWithPhoneNumber, signOut, onAuthStateChanged, Auth, User } from 'firebase/auth';
-import { getDatabase, Database, ref, push, onValue, set, query, orderByChild, limitToLast } from 'firebase/database';
+import { getAuth, RecaptchaVerifier, signInWithPhoneNumber, signOut, onAuthStateChanged } from 'firebase/auth';
+import type { User } from 'firebase/auth';
+import { getDatabase, ref, push, onValue, set, query, orderByChild, limitToLast } from 'firebase/database';
 
 /**
  * Firebase Configuration
@@ -19,7 +20,7 @@ export const firebaseConfig = {
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
-export const auth = getAuth(app);
+export const auth = getAuth(app) as any;
 export const db = getDatabase(app);
 
 // Disable persistence for web (we use localStorage instead)
@@ -29,6 +30,7 @@ auth.setPersistence = () => Promise.resolve();
  * Phone Number Authentication
  */
 export async function setupRecaptcha(containerId: string): Promise<RecaptchaVerifier> {
+  // @ts-ignore Firebase types compatibility
   return new RecaptchaVerifier(containerId, {
     size: 'invisible',
     callback: () => {

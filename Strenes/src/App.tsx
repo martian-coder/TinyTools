@@ -11,6 +11,7 @@ import { Digest } from './screens/Digest';
 import { Commander } from './screens/Commander';
 import { Onboarding } from './screens/Onboarding';
 import { Auth } from './screens/Auth';
+import { Contacts } from './screens/Contacts';
 import { onAuthChange } from './services/firebase';
 import type { ThemeName } from './types';
 
@@ -122,6 +123,7 @@ export default function App() {
           {activeScreen === 'conversation' && <Conversation />}
           {activeScreen === 'settings'    && <Settings    onShowThemes={() => setShowThemes(true)} />}
           {activeScreen === 'simulator'   && <Simulator />}
+          {activeScreen === 'contacts'    && <Contacts />}
         </div>
 
         {/* Bottom nav */}

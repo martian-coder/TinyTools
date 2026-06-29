@@ -1,11 +1,12 @@
-import { MessageSquare, FlaskConical, Settings as SettingsIcon, Bot } from 'lucide-react';
+import { MessageSquare, FlaskConical, Settings as SettingsIcon, Bot, Users } from 'lucide-react';
 import { useSiftStore } from '../../store';
 
-type Tab = 'commander' | 'chats' | 'simulator' | 'settings';
+type Tab = 'commander' | 'chats' | 'contacts' | 'simulator' | 'settings';
 
 const TABS: { id: Tab; label: string; Icon: React.ComponentType<{ size?: number }> }[] = [
   { id: 'commander', label: 'Commander', Icon: Bot           },
   { id: 'chats',     label: 'Chats',     Icon: MessageSquare },
+  { id: 'contacts',  label: 'Contacts',  Icon: Users         },
   { id: 'simulator', label: 'Test',      Icon: FlaskConical  },
   { id: 'settings',  label: 'Settings',  Icon: SettingsIcon  },
 ];
@@ -18,6 +19,7 @@ export function BottomNav() {
   const activeTab: Tab =
     activeScreen === 'conversation' ? 'chats' :
     activeScreen === 'settings'     ? 'settings' :
+    activeScreen === 'contacts'     ? 'contacts' :
     activeScreen === 'simulator'    ? 'simulator' :
     activeScreen === 'commander'    ? 'commander' : 'chats';
 
