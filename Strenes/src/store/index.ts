@@ -6,6 +6,8 @@ import { SEED_CONTACTS, SEED_MESSAGES, DEFAULT_SETTINGS } from '../seed';
 export type Screen = 'chats' | 'conversation' | 'settings' | 'simulator' | 'digest' | 'commander';
 
 interface SiftState {
+  currentUserId: string | null;
+  currentUserPhone: string | null;
   contacts: Contact[];
   messages: Message[];
   settings: UserSettings;
@@ -16,6 +18,8 @@ interface SiftState {
   revealed: Record<string, boolean>;
   banner: string | null;
 
+  setCurrentUser: (userId: string, phone: string) => void;
+  clearCurrentUser: () => void;
   setScreen: (s: Screen) => void;
   setFolder: (f: Folder) => void;
   openConversation: (contactId: string) => void;
@@ -76,6 +80,8 @@ function calcDisappearsAt(settings: UserSettings): number | undefined {
 export const useSiftStore = create<SiftState>()(
   persist(
     (set, get) => ({
+      currentUserId:    null,
+      currentUserPhone: null,
       contacts:         SEED_CONTACTS,
       messages:         SEED_MESSAGES,
       settings:         DEFAULT_SETTINGS,
@@ -86,6 +92,8 @@ export const useSiftStore = create<SiftState>()(
       revealed:         {},
       banner:           null,
 
+      setCurrentUser: (userId, phone) => set({ currentUserId: userId, currentUserPhone: phone }),
+      clearCurrentUser: () => set({ currentUserId: null, currentUserPhone: null }),
       setScreen: s  => set({ activeScreen: s }),
       setFolder: f  => set({ activeFolder: f }),
       openConversation: id => set({ activeContactId: id, activeScreen: 'conversation' }),
@@ -273,6 +281,7 @@ export const useSiftStore = create<SiftState>()(
       },
 
       resetToSeed: () => set({
+        currentUserId: null, currentUserPhone: null,
         contacts: SEED_CONTACTS, messages: SEED_MESSAGES, settings: DEFAULT_SETTINGS,
         activeScreen: 'chats', activeFolder: 'primary', activeContactId: null,
         pendingAsk: null, revealed: {}, banner: null,

@@ -10,6 +10,8 @@ import { Simulator } from './screens/Simulator';
 import { Digest } from './screens/Digest';
 import { Commander } from './screens/Commander';
 import { Onboarding } from './screens/Onboarding';
+import { Auth } from './screens/Auth';
+import { onAuthChange } from './services/firebase';
 import type { ThemeName } from './types';
 
 export default function App() {
@@ -22,8 +24,22 @@ export default function App() {
   const setBanner      = useSiftStore(s => s.setBanner);
   const flushQueue     = useSiftStore(s => s.flushQueue);
   const onboardingComplete = useSiftStore(s => s.settings._onboardingComplete);
+  const currentUserId  = useSiftStore(s => s.currentUserId);
+  const setCurrentUser = useSiftStore(s => s.setCurrentUser);
 
   const [showThemes, setShowThemes] = useState(false);
+  const [authLoading, setAuthLoading] = useState(true);
+
+  // Listen to Firebase auth state
+  useEffect(() => {
+    const unsubscribe = onAuthChange((user) => {
+      if (user) {
+        setCurrentUser(user.uid, user.phoneNumber || '');
+      }
+      setAuthLoading(false);
+    });
+    return unsubscribe;
+  }, [setCurrentUser]);
 
   // Flush queued messages as soon as connectivity returns
   useEffect(() => {
@@ -39,6 +55,24 @@ export default function App() {
   const themeVars = THEMES[theme].vars;
   const isConversation = activeScreen === 'conversation';
 
+  // Show loading screen while checking auth
+  if (authLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-[var(--base)] to-[var(--base-dark)]">
+        <div className="text-center">
+          <div className="text-2xl font-bold text-[var(--text)]">Strenes</div>
+          <div className="text-sm text-[var(--text-secondary)] mt-2">Loading...</div>
+        </div>
+      </div>
+    );
+  }
+
+  // Show auth screen if not logged in
+  if (!currentUserId) {
+    return <Auth />;
+  }
+
+  // Show onboarding if setup incomplete
   if (!onboardingComplete) {
     return <Onboarding />;
   }
