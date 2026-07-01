@@ -33,6 +33,18 @@ export default function App() {
 
   // Listen to Firebase auth state
   useEffect(() => {
+    // Check for demo mode first
+    const demoMode = new URLSearchParams(window.location.search).get('demo') === '1' ||
+                     localStorage.getItem('__demo_mode') === '1';
+
+    if (demoMode && !currentUserId) {
+      // Use mock user for demo/testing
+      setCurrentUser('demo-user-123', '+1 (555) 123-4567');
+      setAuthLoading(false);
+      localStorage.setItem('__demo_mode', '1');
+      return;
+    }
+
     const unsubscribe = onAuthChange((user) => {
       if (user) {
         setCurrentUser(user.uid, user.phoneNumber || '');
@@ -40,7 +52,7 @@ export default function App() {
       setAuthLoading(false);
     });
     return unsubscribe;
-  }, [setCurrentUser]);
+  }, [setCurrentUser, currentUserId]);
 
   // Flush queued messages as soon as connectivity returns
   useEffect(() => {
