@@ -197,6 +197,7 @@ export function Commander() {
   const updateSpam        = useSiftStore(s => s.updateSpam);
   const updateDND         = useSiftStore(s => s.updateDND);
   const addDynamicRule    = useSiftStore(s => s.addDynamicRule);
+  const removeDynamicRule = useSiftStore(s => s.removeDynamicRule);
   const muteContact       = useSiftStore(s => s.muteContact);
   const unmuteContact     = useSiftStore(s => s.unmuteContact);
   const updateSettings    = useSiftStore(s => s.updateSettings);
@@ -461,10 +462,34 @@ export function Commander() {
           const who = intent.contactId === '*' ? 'anyone' : intent.contactName;
           const when = intent.expiresAt ? ` · active ${formatUntil(intent.expiresAt)}` : '';
           responses.push({
-            text: `✓ Rule set: will ${action} messages from ${who} matching "${intent.condition}"${when}`,
+            text: `✓ Rule set: will ${action} messages from ${who} matching "${intent.condition}"${when}. Say 'my rules' to manage.`,
           });
+        } else if (intent.action === 'remove') {
+          const now = Date.now();
+          const active = settings.dynamicRules.filter(r => r.enabled && (!r.expiresAt || r.expiresAt > now));
+          if (intent.ruleRef === 'all') {
+            active.forEach(r => removeDynamicRule(r.id));
+            responses.push({ text: active.length > 0 ? `✓ Cleared ${active.length} rule${active.length !== 1 ? 's' : ''}.` : 'No active rules to clear.' });
+          } else if (intent.ruleRef && /^\d+$/.test(intent.ruleRef)) {
+            const rule = active[parseInt(intent.ruleRef, 10) - 1];
+            if (rule) {
+              removeDynamicRule(rule.id);
+              responses.push({ text: `✓ Removed rule ${intent.ruleRef}: "${rule.condition}"` });
+            } else {
+              responses.push({ text: `No rule #${intent.ruleRef}. Say 'my rules' to see the list.` });
+            }
+          } else if (intent.ruleRef) {
+            const kw = intent.ruleRef.toLowerCase();
+            const rule = active.find(r => r.condition.toLowerCase().includes(kw));
+            if (rule) {
+              removeDynamicRule(rule.id);
+              responses.push({ text: `✓ Removed rule: "${rule.condition}"` });
+            } else {
+              responses.push({ text: `Couldn't find a rule about "${intent.ruleRef}". Say 'my rules' to see the list.` });
+            }
+          }
         } else {
-          responses.push({ text: "Try: 'no ranting messages today', 'block Maya mentions money', 'review Dad about work for this week'." });
+          responses.push({ text: "Just tell me the rule in your own words — e.g. 'hold anything asking me for money', 'no rants today'." });
         }
         break;
       }
@@ -506,7 +531,8 @@ export function Commander() {
             addAI("· Approve / reject held messages — 'approve all', 'reject all'");
             addAI("· Trust contacts — 'trust Sarah' / 'don't trust Dave'");
             addAI("· Mute updates — 'mute Maya for 4 hours', 'hide Dad today', 'unmute Maya'");
-            addAI("· Temporary rules — 'no ranting messages today', 'block promos for today', 'review Alex about work for this week'");
+            addAI("· Rules in your own words — 'hold anything asking me for money', 'no rants today', 'never show me chain forwards'. I evaluate each incoming message against them with on-device AI.");
+            addAI("· Manage rules — 'my rules', 'remove rule 2', 'clear all rules'");
             addAI("· Summary tone — 'summaries should be professional' (or casual / brief)");
             addAI("· Adjust the filter — 'set sensitivity to high', 'turn off spam filter'");
             addAI("· Questions — 'how many held?', 'messages from Alex', 'summary', 'my settings'");
@@ -553,6 +579,22 @@ export function Commander() {
             doBriefing();
             return;
           }
+          case 'rules': {
+            const now = Date.now();
+            const active = settings.dynamicRules.filter(r => r.enabled && (!r.expiresAt || r.expiresAt > now));
+            if (active.length === 0) {
+              responses.push({ text: "No active rules. Just tell me one in your own words — e.g. 'hold anything asking me for money', 'no rants from Jay this week'." });
+            } else {
+              responses.push({ text: `${active.length} active rule${active.length !== 1 ? 's' : ''}:` });
+              active.slice(0, 8).forEach((r, i) => {
+                const who = r.contactId === '*' ? 'anyone' : (contacts.find(c => c.id === r.contactId)?.name ?? r.contactId);
+                const when = r.expiresAt ? ` · ${formatUntil(r.expiresAt)}` : '';
+                responses.push({ text: `${i + 1}. ${r.action} ${who}: "${r.condition}"${when}` });
+              });
+              responses.push({ text: "Say 'remove rule 1' or 'clear all rules' to manage them." });
+            }
+            break;
+          }
           case 'settings': {
             const civ  = settings.civility;
             const spam = settings.spam;
@@ -593,7 +635,7 @@ export function Commander() {
 
       default: {
         responses.push({
-          text: "Try: 'reply Maya yes', 'open Alex', 'approve all', 'trust Sarah', 'set sensitivity to high', or 'my settings'.",
+          text: "I didn't catch that. You can state any rule in your own words — 'hold anything asking me for money', 'mute Jay for 4 hours' — or try 'reply Maya yes', 'my rules', 'help'.",
         });
       }
     }
@@ -604,7 +646,7 @@ export function Commander() {
     contacts, heldMessages, allMessages, settings,
     sendMessage, approveMessage, rejectMessage, openConversation,
     setFolder, setScreen, setContactTrusted, updateCivility, updateSpam, updateDND,
-    addDynamicRule, muteContact, unmuteContact, updateSettings, addUser, addAI, doBriefing,
+    addDynamicRule, removeDynamicRule, muteContact, unmuteContact, updateSettings, addUser, addAI, doBriefing,
   ]);
 
   /* Send handler */

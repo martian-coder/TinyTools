@@ -19,7 +19,7 @@ export interface SetRuleIntent {
 }
 export interface QueryIntent {
   type: 'query';
-  subject: 'capabilities' | 'held_count' | 'contact_messages' | 'summary' | 'settings';
+  subject: 'capabilities' | 'held_count' | 'contact_messages' | 'summary' | 'settings' | 'rules';
   contactId?: string;
   contactName?: string;
 }
@@ -33,6 +33,8 @@ export interface DynamicRuleIntent {
   ruleAction?: 'block' | 'review';
   /** Epoch ms when the rule should stop applying; absent = permanent. */
   expiresAt?: number;
+  /** For action 'remove': 'all', a 1-based index from the rules list, or a keyword. */
+  ruleRef?: string;
 }
 export interface MuteIntent {
   type: 'mute';
@@ -134,6 +136,20 @@ function parseHeuristic(text: string, contacts: Contact[]): Intent {
   if (muteM) {
     const c = matchContact(muteM[1], contacts);
     if (c) return { type: 'mute', contactId: c.id, contactName: c.name, untilTs: expiresAt ?? endOfDay() };
+  }
+
+  // rule management: "my rules", "remove rule 2", "clear all rules"
+  if (/^(?:show\s+|list\s+)?(?:my\s+|active\s+)?rules\s*$/i.test(rest)) {
+    return { type: 'query', subject: 'rules' };
+  }
+  const clearRulesM = rest.match(/^(?:clear|remove|delete|cancel)\s+(?:all\s+)?(?:my\s+)?rules\s*$/i);
+  if (clearRulesM) {
+    return { type: 'dynamic_rule', action: 'remove', ruleRef: 'all' };
+  }
+  const removeRuleM = rest.match(/^(?:remove|delete|cancel|drop)\s+rule\s*(?:#|number\s*)?(\d+)\s*$/i)
+    ?? rest.match(/^(?:remove|delete|cancel)\s+(?:the\s+)?rule\s+about\s+(.+)$/i);
+  if (removeRuleM) {
+    return { type: 'dynamic_rule', action: 'remove', ruleRef: removeRuleM[1] };
   }
 
   // global temporal content rule: "no ranting messages today", "block promos for today"
@@ -262,6 +278,32 @@ function parseHeuristic(text: string, contacts: Contact[]): Intent {
       };
     }
   }
+  // Free-form rule catch-all: any leftover statement of preference about
+  // messages becomes a rule in the user's own words. The condition is stored
+  // verbatim and judged per-message by the LLM evaluation chain (Claude →
+  // on-device Gemini Nano → heuristics) — no fixed rule grammar.
+  const ruleish =
+    /^(?:if|when(?:ever)?|never|no\b|don'?t|do\s+not|hold|only|hide|stop|filter|block|silence|keep|reject|flag|quarantine)\b/i.test(rest) ||
+    /\b(?:any(?:one|body|thing)|everyone|all\s+messages?|messages?\s+(?:about|asking|with|containing|that))\b/i.test(rest);
+  if (ruleish && rest.split(/\s+/).length >= 3) {
+    // A contact named anywhere in the rule scopes it; otherwise it's global.
+    let target: Contact | undefined;
+    for (const c of contacts) {
+      const first = c.name.split(/\s+/)[0].toLowerCase().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      if (first.length >= 2 && new RegExp(`\\b${first}\\b`, 'i').test(rest)) { target = c; break; }
+    }
+    const wantsBlock = /\b(?:block|drop|delete|reject|never\s+(?:show|deliver)|don'?t\s+deliver|discard)\b/i.test(rest);
+    return {
+      type: 'dynamic_rule',
+      action: 'add',
+      contactId: target?.id ?? '*',
+      contactName: target?.name ?? 'everyone',
+      condition: rest,
+      ruleAction: wantsBlock ? 'block' : 'review',
+      expiresAt,
+    };
+  }
+
   // legacy patterns
   if (/(?:review|pending|held|waiting|queue|filter)/i.test(t)) return { type: 'show_review' };
   if (/(?:approve|allow|let\s+(?:in|through)|accept)/i.test(t))   return { type: 'approve' };
@@ -303,11 +345,17 @@ async function parseViaAnthropic(
     '{"type":"query","subject":"contact_messages","contactId":"<id>","contactName":"<name>"}\n' +
     '{"type":"query","subject":"summary"}\n' +
     '{"type":"query","subject":"settings"}\n' +
-    '{"type":"dynamic_rule","action":"add","contactId":"<id or * for all contacts>","contactName":"<name or everyone>","condition":"<natural language condition>","ruleAction":"block|review","durationMinutes":<optional number, e.g. 240 for "4 hours", 1440 for "today">}\n' +
+    '{"type":"query","subject":"rules"}  // "my rules", "list rules"\n' +
+    '{"type":"dynamic_rule","action":"add","contactId":"<id or * for all contacts>","contactName":"<name or everyone>","condition":"<the preference in natural language>","ruleAction":"block|review","durationMinutes":<optional number, e.g. 240 for "4 hours", 1440 for "today">}\n' +
+    '{"type":"dynamic_rule","action":"remove","ruleRef":"all|<1-based rule number>|<keyword>"}\n' +
     '{"type":"mute","contactId":"<id>","contactName":"<name>","durationMinutes":<number, default 720>}  // "mute X", "hide X for 4 hrs", "no updates from X today"\n' +
     '{"type":"unmute","contactId":"<id>","contactName":"<name>"}\n' +
     '{"type":"summary_style","style":"professional|casual|brief"}  // "summaries should be professional"\n' +
-    '{"type":"unknown","query":"<original input>"}';
+    '{"type":"unknown","query":"<original input>"}\n\n' +
+    'IMPORTANT: ANY preference about which messages the user wants to see, hide, hold, or block ' +
+    'is a dynamic_rule add — keep the condition in the user\'s own words (it is evaluated per-message ' +
+    'by an AI later, so free-form conditions like "asking me for money" or "guilt-tripping me" are fine). ' +
+    'Prefer ruleAction "review" unless the user clearly wants messages gone.';
 
   try {
     const res = await fetch('https://api.anthropic.com/v1/messages', {
