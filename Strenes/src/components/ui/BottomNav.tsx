@@ -29,9 +29,8 @@ export function BottomNav() {
         {TABS.map(({ id, label, Icon }) => {
           const active = activeTab === id;
           return (
-            <button key={id} onClick={() => setScreen(id)} className={`nav-item ${active ? 'nav-on' : ''}`} style={{ position: 'relative' }}>
-              <Icon size={17} />
-              <span style={{ fontSize: 9 }}>{label}</span>
+            <button key={id} onClick={() => setScreen(id)} className={`nav-item ${active ? 'nav-on' : ''}`} style={{ position: 'relative' }} title={label}>
+              <Icon size={19} />
               {id === 'chats' && reviewCount > 0 && (
                 <span className="rev-dot" style={{ position: 'absolute', top: 4, right: 8 }}>
                   {reviewCount}

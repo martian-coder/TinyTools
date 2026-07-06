@@ -107,7 +107,7 @@ export const useSiftStore = create<SiftState>()(
       contacts:         SEED_CONTACTS,
       messages:         SEED_MESSAGES,
       settings:         DEFAULT_SETTINGS,
-      activeScreen:     'chats',
+      activeScreen:     'commander',
       activeFolder:     'primary',
       activeContactId:  null,
       pendingAsk:       null,
@@ -356,7 +356,7 @@ export const useSiftStore = create<SiftState>()(
       }),
     }),
     {
-      name: 'sift-v2',
+      name: 'sift-v3',
       partialize: s => ({ contacts: s.contacts, messages: s.messages, settings: s.settings }),
     }
   )

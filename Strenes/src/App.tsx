@@ -181,9 +181,9 @@ export default function App() {
         <div key={activeScreen} className="flex-1 flex flex-col overflow-hidden screen">
           {activeScreen === 'commander'    && <Commander />}
           {activeScreen === 'digest'       && <Digest />}
-          {activeScreen === 'chats'       && <ChatList    onShowThemes={() => setShowThemes(true)} />}
+          {activeScreen === 'chats'       && <ChatList />}
           {activeScreen === 'conversation' && <Conversation />}
-          {activeScreen === 'settings'    && <Settings    onShowThemes={() => setShowThemes(true)} />}
+          {activeScreen === 'settings'    && <Settings />}
           {activeScreen === 'simulator'   && <Simulator />}
           {activeScreen === 'contacts'    && <Contacts />}
         </div>

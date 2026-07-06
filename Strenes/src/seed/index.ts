@@ -31,7 +31,7 @@ export const DEFAULT_SETTINGS: UserSettings = {
   civility: { enabled: true, sensitivity: 'medium', onBlock: 'review', notifySender: true },
   business: { enabled: true },
   spam:     { enabled: true, onBlock: 'review' },
-  theme:    'aurora',
+  theme:    'daylight',
   trustedIds: ['dad'],
   disappearingMessages: { enabled: false, defaultMode: 'off', customMinutes: 60 },
   dnd: { enabled: false, startHour: 22, endHour: 7, allowTrusted: true, allowEmergency: true, notifyButSilent: false },
