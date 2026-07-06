@@ -1,4 +1,5 @@
 import type { DynamicRule } from '../types';
+import { isRant } from './insights';
 
 export async function checkRuleMatch(
   message: string,
@@ -44,7 +45,15 @@ function checkRuleMatchHeuristic(message: string, rule: DynamicRule): { matches:
   const msgLower = message.toLowerCase();
   const ruleLower = rule.condition.toLowerCase();
 
-  const keywordMatch = ruleLower.match(/(?:mentions?|discusses?|talks?\s+about|says?)\s+(.+?)(?:\s+or|$)/);
+  // Built-in behavioral conditions ("no ranting messages today").
+  if (/\brant|venting|complain/i.test(ruleLower) && isRant(message)) {
+    return { matches: true, reason: 'Reads as a rant' };
+  }
+  if (/\bnegativ/i.test(ruleLower) && isRant(message)) {
+    return { matches: true, reason: 'Negative venting' };
+  }
+
+  const keywordMatch = ruleLower.match(/(?:mentions?|discusses?|talks?\s+about|says?)\s+(.+)$/);
   if (keywordMatch) {
     const keywords = keywordMatch[1].split(/\s+or\s+|\s*,\s*/);
     for (const kw of keywords) {

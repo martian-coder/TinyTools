@@ -43,4 +43,6 @@ export const DEFAULT_SETTINGS: UserSettings = {
   aiModeration: { provider: 'gemini-nano', anthropicKey: '' },
   smsFallback: { enabled: false },
   dynamicRules: [],
+  commander: { summaryStyle: 'casual' },
+  mutes: {},
 };

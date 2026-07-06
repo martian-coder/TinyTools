@@ -34,12 +34,17 @@ export interface ToneAnalysis {
 
 export interface DynamicRule {
   id: string;
+  /** Target contact id, or '*' for a rule that applies to every sender. */
   contactId: string;
   condition: string;
   action: 'block' | 'review';
   enabled: boolean;
   createdAt: number;
+  /** Epoch ms after which the rule stops applying ("for 4 hours", "today"). Absent = permanent. */
+  expiresAt?: number;
 }
+
+export type SummaryStyle = 'professional' | 'casual' | 'brief';
 
 export interface Contact {
   id: string;
@@ -120,6 +125,12 @@ export interface UserSettings {
   theme: ThemeName;
   trustedIds: string[];
   dynamicRules: DynamicRule[];
+  /** Commander preferences. Optional so settings persisted before this feature still load. */
+  commander?: {
+    summaryStyle: SummaryStyle;
+  };
+  /** contactId → epoch ms until which their updates are hidden from Commander briefings. */
+  mutes?: Record<string, number>;
   _onboardingComplete?: boolean;
 }
 

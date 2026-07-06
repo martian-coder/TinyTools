@@ -90,9 +90,11 @@ export function Simulator() {
     });
 
     const apiKey = settings.aiReplies?.anthropicKey ?? '';
-    await checkAndReceiveMsg(cid, txt, r, v, apiKey);
-    setTResult({ v, r, text: txt }); setTScan(false);
-    if (r.ask) setBanner('A message was filtered — review it.');
+    // Dynamic rules ("no rants today") can escalate the route — display the
+    // route the message actually took, not the pre-rule one.
+    const finalRoute = await checkAndReceiveMsg(cid, txt, r, v, apiKey);
+    setTResult({ v, r: finalRoute, text: txt }); setTScan(false);
+    if (finalRoute.ask) setBanner('A message was filtered — review it.');
   };
 
   const st = tResult ? senderStatus(tResult.r, settings.civility.sensitivity) : null;

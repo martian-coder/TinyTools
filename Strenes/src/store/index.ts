@@ -50,12 +50,14 @@ interface SiftState {
   toggleTrusted: (contactId: string) => void;
   setContactTrusted: (contactId: string, trusted: boolean) => void;
   resolvePendingAsk: (approve: boolean) => void;
-  addDynamicRule: (contactId: string, condition: string, action: 'block' | 'review') => void;
+  addDynamicRule: (contactId: string, condition: string, action: 'block' | 'review', expiresAt?: number) => void;
+  muteContact: (contactId: string, untilTs: number) => void;
+  unmuteContact: (contactId: string) => void;
   removeDynamicRule: (ruleId: string) => void;
   toggleDynamicRule: (ruleId: string) => void;
   updateDynamicRule: (ruleId: string, patch: Partial<Omit<DynamicRule, 'id' | 'contactId' | 'createdAt'>>) => void;
   getDynamicRulesForContact: (contactId: string) => DynamicRule[];
-  checkAndReceiveMessage: (contactId: string, text: string, route: RouteResult, verdict: ModerationVerdict, apiKey: string) => Promise<void>;
+  checkAndReceiveMessage: (contactId: string, text: string, route: RouteResult, verdict: ModerationVerdict, apiKey: string) => Promise<RouteResult>;
   resetToSeed: () => void;
 }
 
@@ -251,11 +253,12 @@ export const useSiftStore = create<SiftState>()(
         set({ pendingAsk: null });
       },
 
-      addDynamicRule: (contactId, condition, action) => set(s => ({
+      addDynamicRule: (contactId, condition, action, expiresAt) => set(s => ({
         settings: {
           ...s.settings,
           dynamicRules: [
-            ...s.settings.dynamicRules,
+            // Drop rules that have already expired while we're here.
+            ...s.settings.dynamicRules.filter(r => !r.expiresAt || r.expiresAt > Date.now()),
             {
               id: `rule-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
               contactId,
@@ -263,6 +266,7 @@ export const useSiftStore = create<SiftState>()(
               action,
               enabled: true,
               createdAt: Date.now(),
+              expiresAt,
             },
           ],
         },
@@ -295,8 +299,23 @@ export const useSiftStore = create<SiftState>()(
 
       getDynamicRulesForContact: (contactId) => {
         const { settings } = get();
-        return settings.dynamicRules.filter(r => r.contactId === contactId && r.enabled);
+        const now = Date.now();
+        return settings.dynamicRules.filter(r =>
+          (r.contactId === contactId || r.contactId === '*') &&
+          r.enabled &&
+          (!r.expiresAt || r.expiresAt > now)
+        );
       },
+
+      muteContact: (contactId, untilTs) => set(s => ({
+        settings: { ...s.settings, mutes: { ...(s.settings.mutes ?? {}), [contactId]: untilTs } },
+      })),
+
+      unmuteContact: (contactId) => set(s => {
+        const mutes = { ...(s.settings.mutes ?? {}) };
+        delete mutes[contactId];
+        return { settings: { ...s.settings, mutes } };
+      }),
 
       checkAndReceiveMessage: async (contactId, text, route, verdict, apiKey) => {
         // Import here to avoid circular dependencies
@@ -326,6 +345,7 @@ export const useSiftStore = create<SiftState>()(
 
         // Now call receiveMessage with potentially modified route
         state.receiveMessage(contactId, text, finalRoute, verdict);
+        return finalRoute;
       },
 
       resetToSeed: () => set({

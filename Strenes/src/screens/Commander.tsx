@@ -1,7 +1,8 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { Bot, Send, ChevronRight, Loader2 } from 'lucide-react';
 import { useSiftStore } from '../store';
-import { parseIntent } from '../moderation/commander';
+import { parseIntent, formatUntil } from '../moderation/commander';
+import { describeSender, priorityFor } from '../moderation/insights';
 import type { Message } from '../types';
 
 /* ── Types ──────────────────────────────────────────────────────────── */
@@ -196,6 +197,9 @@ export function Commander() {
   const updateSpam        = useSiftStore(s => s.updateSpam);
   const updateDND         = useSiftStore(s => s.updateDND);
   const addDynamicRule    = useSiftStore(s => s.addDynamicRule);
+  const muteContact       = useSiftStore(s => s.muteContact);
+  const unmuteContact     = useSiftStore(s => s.unmuteContact);
+  const updateSettings    = useSiftStore(s => s.updateSettings);
 
   const { msgs, addAI, addUser } = useChat();
   const [draft, setDraft]        = useState('');
@@ -229,76 +233,42 @@ export function Commander() {
 
   /* ── Briefing helper (reused for initial load + 'summary' query) ── */
   const doBriefing = useCallback(() => {
-    const total = unread.reduce((s, t) => s + t.count, 0);
+    const style = settings.commander?.summaryStyle ?? 'casual';
+    const mutes = settings.mutes ?? {};
+    const now   = Date.now();
+
+    // Muted contacts are excluded from the briefing until their mute expires.
+    const visible = unread.filter(({ contact }) =>
+      !(contact && mutes[contact.id] && mutes[contact.id] > now));
+    const mutedCount = unread.length - visible.length;
+
+    const total = visible.reduce((s, t) => s + t.count, 0);
 
     if (total === 0 && heldMessages.length === 0) {
-      addAI("All clear — no new messages right now.");
-      addAI("Head to Chats to start a conversation, or use the Test tab to simulate incoming messages.");
+      addAI(style === 'professional' ? 'No new messages to report.' : "All clear — no new messages right now.");
+      if (mutedCount > 0) {
+        addAI(`🔇 ${mutedCount} contact${mutedCount !== 1 ? 's are' : ' is'} muted. Say 'unmute <name>' to bring them back.`);
+      } else {
+        addAI("Head to Chats to start a conversation, or use the Test tab to simulate incoming messages.");
+      }
       return;
     }
 
-    const senders = unread.length;
+    const senders = visible.length;
     addAI(
-      `You have ${total} message${total !== 1 ? 's' : ''} from ${senders} sender${senders !== 1 ? 's' : ''}.`
+      style === 'professional'
+        ? `Briefing: ${total} message${total !== 1 ? 's' : ''} from ${senders} sender${senders !== 1 ? 's' : ''}.`
+        : `You have ${total} message${total !== 1 ? 's' : ''} from ${senders} sender${senders !== 1 ? 's' : ''}.`
     );
 
-    /* Categorize by priority based on verdict category */
     type Priority = 'high' | 'medium' | 'low';
-    interface SenderGroup {
-      contact: typeof contacts[0] | undefined;
-      count: number;
-      priority: Priority;
-      summary: string;
-      chip: Chip;
-    }
 
-    const groups: SenderGroup[] = unread.slice(0, 5).map(({ contact, latest, count }) => {
+    const groups = visible.slice(0, 5).map(({ contact, latest, count }) => {
       const name = contact?.name ?? 'Unknown';
-      const verdict = latest.verdict;
-      const text = latest.text.toLowerCase();
-
-      let priority: Priority = 'low';
-      let summary = 'is chatting';
-
-      if (verdict) {
-        if (verdict.category === 'business') {
-          priority = 'high';
-          summary = 'has a business message';
-        } else if (verdict.category === 'promo') {
-          priority = 'medium';
-          summary = 'sent a promotion';
-        } else if (verdict.category === 'spam') {
-          priority = 'low';
-          summary = 'sent spam';
-        } else if (verdict.category === 'abusive') {
-          priority = 'high';
-          summary = 'sent an abusive message';
-        } else {
-          priority = 'low';
-          summary = 'is chatting';
-        }
-      } else {
-        /* Heuristic fallback: guess intent from text */
-        if (/meet|call|schedule|time|when|meeting|sync/.test(text)) {
-          priority = 'high';
-          summary = 'wants to set a meeting';
-        } else if (/urgent|asap|important|help|need|emergency/.test(text)) {
-          priority = 'high';
-          summary = 'needs something urgent';
-        } else if (/thanks|cool|ok|sounds|good|yes|sure/.test(text)) {
-          priority = 'low';
-          summary = 'is responding positively';
-        } else if (/question\?|how|what|why|where/.test(text)) {
-          priority = 'medium';
-          summary = 'is asking a question';
-        }
-      }
-
+      const { kind, summary } = describeSender(latest, style);
+      const priority: Priority = priorityFor(kind, latest.verdict?.category);
       return {
-        contact,
-        count,
-        priority,
-        summary,
+        contact, count, priority, summary,
         chip: { label: `Open ${name}`, action: 'open' as const, contactId: contact?.id ?? '' },
       };
     });
@@ -316,19 +286,24 @@ export function Commander() {
         currentPriority = g.priority;
       }
       const badge = g.count > 1 ? ` (${g.count})` : '';
-      addAI(`${g.contact?.name ?? 'Unknown'}${badge} — ${g.summary}`, [g.chip]);
+      const name = g.contact?.name ?? 'Unknown';
+      addAI(style === 'brief' ? `${name}${badge}: ${g.summary}` : `${name}${badge} — ${g.summary}`, [g.chip]);
     }
 
-    if (unread.length > 5) {
-      addAI(`…and ${unread.length - 5} more conversations.`);
+    if (visible.length > 5) {
+      addAI(`…and ${visible.length - 5} more conversations.`);
+    }
+
+    if (mutedCount > 0) {
+      addAI(`🔇 ${mutedCount} contact${mutedCount !== 1 ? 's' : ''} muted — updates hidden.`);
     }
 
     if (heldMessages.length > 0) {
       addAI(`⚠️  ${heldMessages.length} message${heldMessages.length !== 1 ? 's' : ''} in review queue.`);
     }
 
-    addAI("Type a command or click a name to open. E.g., 'reply Alex yes', 'trust Maya', 'my settings'.");
-  }, [unread, heldMessages, addAI]);
+    addAI("Try: 'mute Maya for 4 hours', 'no rants today', 'summaries should be professional', 'reply Alex yes'.");
+  }, [unread, heldMessages, addAI, settings]);
 
   /* ── Briefing: one bubble per sender, only once on mount ── */
   useEffect(() => {
@@ -481,14 +456,44 @@ export function Commander() {
 
       case 'dynamic_rule': {
         if (intent.action === 'add' && intent.contactId && intent.condition && intent.ruleAction) {
-          addDynamicRule(intent.contactId, intent.condition, intent.ruleAction);
-          const action = intent.ruleAction === 'block' ? 'block' : 'review';
+          addDynamicRule(intent.contactId, intent.condition, intent.ruleAction, intent.expiresAt);
+          const action = intent.ruleAction === 'block' ? 'block' : 'hold for review';
+          const who = intent.contactId === '*' ? 'anyone' : intent.contactName;
+          const when = intent.expiresAt ? ` · active ${formatUntil(intent.expiresAt)}` : '';
           responses.push({
-            text: `✓ Rule set: will ${action} messages from ${intent.contactName} if "${intent.condition}"`,
+            text: `✓ Rule set: will ${action} messages from ${who} matching "${intent.condition}"${when}`,
           });
         } else {
-          responses.push({ text: "Try: 'block Maya mentions money' or 'review Dad when discussing work'." });
+          responses.push({ text: "Try: 'no ranting messages today', 'block Maya mentions money', 'review Dad about work for this week'." });
         }
+        break;
+      }
+
+      case 'mute': {
+        muteContact(intent.contactId, intent.untilTs);
+        responses.push({
+          text: `🔇 ${intent.contactName} muted ${formatUntil(intent.untilTs)} — their updates are hidden from briefings. Messages still arrive quietly in Chats.`,
+        });
+        break;
+      }
+
+      case 'unmute': {
+        unmuteContact(intent.contactId);
+        responses.push({
+          text: `🔊 ${intent.contactName} unmuted — their updates are back in your briefings.`,
+          chips: [{ label: `Open ${intent.contactName}`, action: 'open', contactId: intent.contactId }],
+        });
+        break;
+      }
+
+      case 'summary_style': {
+        updateSettings({ commander: { summaryStyle: intent.style } });
+        const sample = intent.style === 'professional'
+          ? 'e.g. "Maya has shared a personal opinion"'
+          : intent.style === 'brief'
+          ? 'e.g. "Maya: opinion"'
+          : 'e.g. "Maya is sharing an opinion"';
+        responses.push({ text: `✓ Summaries will be ${intent.style} from now on (${sample}). Say 'summary' to see it.` });
         break;
       }
 
@@ -500,8 +505,10 @@ export function Commander() {
             addAI("· Reply — 'reply Maya sounds good' · Open — 'open Alex'");
             addAI("· Approve / reject held messages — 'approve all', 'reject all'");
             addAI("· Trust contacts — 'trust Sarah' / 'don't trust Dave'");
+            addAI("· Mute updates — 'mute Maya for 4 hours', 'hide Dad today', 'unmute Maya'");
+            addAI("· Temporary rules — 'no ranting messages today', 'block promos for today', 'review Alex about work for this week'");
+            addAI("· Summary tone — 'summaries should be professional' (or casual / brief)");
             addAI("· Adjust the filter — 'set sensitivity to high', 'turn off spam filter'");
-            addAI("· Dynamic rules — 'block Maya if mentions money', 'review Alex when discussing work'");
             addAI("· Questions — 'how many held?', 'messages from Alex', 'summary', 'my settings'");
             return;
           }
@@ -560,6 +567,24 @@ export function Commander() {
                 ? `Trusted (bypass filter): ${trusted.map(c => c.name).join(', ')}`
                 : 'No trusted contacts — all incoming messages go through the filter.',
             });
+            const now = Date.now();
+            const activeMutes = Object.entries(settings.mutes ?? {}).filter(([, until]) => until > now);
+            if (activeMutes.length > 0) {
+              const names = activeMutes.map(([id, until]) => {
+                const c = contacts.find(x => x.id === id);
+                return `${c?.name ?? id} (${formatUntil(until)})`;
+              });
+              responses.push({ text: `🔇 Muted: ${names.join(', ')}` });
+            }
+            const activeRules = settings.dynamicRules.filter(r => r.enabled && (!r.expiresAt || r.expiresAt > now));
+            if (activeRules.length > 0) {
+              const lines = activeRules.slice(0, 4).map(r => {
+                const who = r.contactId === '*' ? 'anyone' : (contacts.find(c => c.id === r.contactId)?.name ?? r.contactId);
+                return `${r.action} ${who}: "${r.condition}"${r.expiresAt ? ` (${formatUntil(r.expiresAt)})` : ''}`;
+              });
+              responses.push({ text: `Rules: ${lines.join(' · ')}` });
+            }
+            responses.push({ text: `Summary style: ${settings.commander?.summaryStyle ?? 'casual'}` });
             break;
           }
         }
@@ -579,7 +604,7 @@ export function Commander() {
     contacts, heldMessages, allMessages, settings,
     sendMessage, approveMessage, rejectMessage, openConversation,
     setFolder, setScreen, setContactTrusted, updateCivility, updateSpam, updateDND,
-    addDynamicRule, addUser, addAI, doBriefing,
+    addDynamicRule, muteContact, unmuteContact, updateSettings, addUser, addAI, doBriefing,
   ]);
 
   /* Send handler */
@@ -606,6 +631,7 @@ export function Commander() {
     for (const { contact } of unread.slice(0, 2)) {
       if (contact) chips.push({ label: `Open ${contact.name}`, command: `open ${contact.name}` });
     }
+    chips.push({ label: 'No rants today', command: 'no ranting messages today' });
     chips.push({ label: 'My settings', command: 'my settings' });
     chips.push({ label: 'Help', command: 'help' });
     return chips.slice(0, 5);
@@ -692,7 +718,7 @@ export function Commander() {
             value={draft}
             onChange={e => setDraft(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && !busy && handleSend()}
-            placeholder="Reply Maya, trust Sarah, open Alex, my settings…"
+            placeholder="Mute Maya 4 hrs, no rants today, reply Alex…"
             className="flex-1 bg-transparent px-3 text-sm text-main outline-none placeholder:dim"
             disabled={busy}
           />

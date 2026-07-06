@@ -26,16 +26,73 @@ export interface QueryIntent {
 export interface DynamicRuleIntent {
   type: 'dynamic_rule';
   action: 'add' | 'remove';
+  /** '*' targets every sender ("no ranting messages today"). */
   contactId?: string;
   contactName?: string;
   condition?: string;
   ruleAction?: 'block' | 'review';
+  /** Epoch ms when the rule should stop applying; absent = permanent. */
+  expiresAt?: number;
 }
+export interface MuteIntent {
+  type: 'mute';
+  contactId: string;
+  contactName: string;
+  /** Epoch ms until which the contact's updates are hidden. */
+  untilTs: number;
+}
+export interface UnmuteIntent { type: 'unmute'; contactId: string; contactName: string }
+export interface SummaryStyleIntent { type: 'summary_style'; style: 'professional' | 'casual' | 'brief' }
 export interface UnknownIntent { type: 'unknown'; query: string }
 
 export type Intent =
   | ReplyIntent | OpenIntent | ApproveIntent | RejectIntent
-  | ShowReviewIntent | SetRuleIntent | QueryIntent | DynamicRuleIntent | UnknownIntent;
+  | ShowReviewIntent | SetRuleIntent | QueryIntent | DynamicRuleIntent
+  | MuteIntent | UnmuteIntent | SummaryStyleIntent | UnknownIntent;
+
+/**
+ * Parse a duration phrase out of a command. Returns the expiry timestamp and
+ * the input with the phrase removed (so conditions don't keep "for today").
+ * Understands: "for 4 hours/hrs/h", "for 30 minutes/min/m", "for 2 days",
+ * "for today"/"today", "until tomorrow", "for the rest of the day", "this week".
+ */
+export function extractDuration(text: string): { expiresAt?: number; rest: string } {
+  const now = new Date();
+  const endOfDay = () => new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1).getTime();
+
+  const patterns: Array<[RegExp, (m: RegExpMatchArray) => number]> = [
+    [/\bfor\s+(?:the\s+)?next\s+(\d+(?:\.\d+)?)\s*(hours?|hrs?|h)\b/i, m => Date.now() + parseFloat(m[1]) * 3_600_000],
+    [/\bfor\s+(\d+(?:\.\d+)?)\s*(hours?|hrs?|h)\b/i, m => Date.now() + parseFloat(m[1]) * 3_600_000],
+    [/\bfor\s+(?:the\s+)?next\s+(\d+)\s*(minutes?|mins?|m)\b/i, m => Date.now() + parseInt(m[1]) * 60_000],
+    [/\bfor\s+(\d+)\s*(minutes?|mins?|m)\b/i, m => Date.now() + parseInt(m[1]) * 60_000],
+    [/\bfor\s+(\d+)\s*(days?|d)\b/i, m => Date.now() + parseInt(m[1]) * 86_400_000],
+    [/\b(\d+(?:\.\d+)?)\s*(hours?|hrs?)\b/i, m => Date.now() + parseFloat(m[1]) * 3_600_000],
+    [/\b(?:for\s+)?(?:the\s+rest\s+of\s+(?:the\s+)?day|today|till?\s+tonight|until\s+tonight)\b/i, () => endOfDay()],
+    [/\buntil\s+tomorrow\b/i, () => endOfDay()],
+    [/\b(?:for\s+)?this\s+week\b/i, () => Date.now() + 7 * 86_400_000],
+  ];
+
+  for (const [re, calc] of patterns) {
+    const m = text.match(re);
+    if (m) {
+      return { expiresAt: calc(m), rest: text.replace(re, ' ').replace(/\s{2,}/g, ' ').trim() };
+    }
+  }
+  return { rest: text };
+}
+
+export function formatUntil(ts: number): string {
+  const mins = Math.round((ts - Date.now()) / 60_000);
+  if (mins < 90) return `for ${mins} min`;
+  const hours = Math.round(mins / 60);
+  if (hours <= 36) {
+    const endOfToday = new Date();
+    endOfToday.setHours(23, 59, 0, 0);
+    if (Math.abs(ts - endOfToday.getTime()) < 90 * 60_000) return 'until end of day';
+    return `for ${hours} hr${hours !== 1 ? 's' : ''}`;
+  }
+  return `until ${new Date(ts).toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' })}`;
+}
 
 function matchContact(name: string, contacts: Contact[]): Contact | undefined {
   const lower = name.toLowerCase().trim();
@@ -48,6 +105,52 @@ function matchContact(name: string, contacts: Contact[]): Contact | undefined {
 
 function parseHeuristic(text: string, contacts: Contact[]): Intent {
   const t = text.trim();
+  const { expiresAt, rest } = extractDuration(t);
+  const endOfDay = () => {
+    const n = new Date();
+    return new Date(n.getFullYear(), n.getMonth(), n.getDate() + 1).getTime();
+  };
+
+  // summary style: "summary should be professional", "casual summaries"
+  const styleM = t.match(/summar(?:y|ies).{0,24}?\b(professional|formal|casual|friendly|brief|short)\b|\b(professional|formal|casual|friendly|brief|short)\b.{0,10}summar(?:y|ies)/i);
+  if (styleM) {
+    const raw = (styleM[1] || styleM[2] || '').toLowerCase();
+    const style = (raw === 'formal' ? 'professional' : raw === 'friendly' ? 'casual' : raw === 'short' ? 'brief' : raw) as 'professional' | 'casual' | 'brief';
+    return { type: 'summary_style', style };
+  }
+
+  // unmute: "unmute maya", "show maya's updates again"
+  const unmuteM = rest.match(/^(?:unmute|unsnooze|unhide)\s+([a-z']+)/i)
+    ?? rest.match(/^show\s+([a-z']+)(?:'s)?\s+(?:updates?|messages?)\s+again/i);
+  if (unmuteM) {
+    const c = matchContact(unmuteM[1], contacts);
+    if (c) return { type: 'unmute', contactId: c.id, contactName: c.name };
+  }
+
+  // mute: "mute maya for 4 hours", "hide dad today", "don't show maya updates",
+  // "block maya for 4 hours" (bare block + duration = snooze, not a content rule)
+  const muteM = rest.match(/^(?:mute|snooze|silence|hide|block)\s+([a-z']+)\s*$/i)
+    ?? rest.match(/^(?:don'?t|do\s+not|no)\s+(?:show\s+)?(?:updates?\s+(?:from|for)\s+)?([a-z']+)(?:'s)?\s+(?:updates?|messages?)?\s*$/i);
+  if (muteM) {
+    const c = matchContact(muteM[1], contacts);
+    if (c) return { type: 'mute', contactId: c.id, contactName: c.name, untilTs: expiresAt ?? endOfDay() };
+  }
+
+  // global temporal content rule: "no ranting messages today", "block promos for today"
+  const globalM = rest.match(/^(?:no|block|hide|stop|mute)\s+(rant(?:ing|s)?|negativity|negative|vent(?:ing)?|promo(?:tion)?s?|marketing|spam|forwards?|politic(?:s|al)?)\s*(?:messages?|stuff|content|updates?)?\s*$/i);
+  if (globalM) {
+    const cat = globalM[1].toLowerCase();
+    const condition = /rant|vent|negativ/.test(cat) ? 'ranting'
+      : /promo|marketing/.test(cat) ? 'mentions sale, discount, offer, promotion'
+      : /spam|forward/.test(cat) ? 'mentions forward, winner, free, click here'
+      : 'mentions politics';
+    return {
+      type: 'dynamic_rule', action: 'add',
+      contactId: '*', contactName: 'everyone',
+      condition, ruleAction: 'review',
+      expiresAt: expiresAt ?? endOfDay(),
+    };
+  }
 
   // reply
   const rm = t.match(/^(?:reply(?:\s+to)?|respond\s+to|tell|message|text|msg|send(?:\s+to)?)\s+([a-z']+)\s+(.+)/i);
@@ -127,14 +230,18 @@ function parseHeuristic(text: string, contacts: Contact[]): Intent {
   const blockM = t.match(/^(?:block|don't?\s+allow|prevent|disallow|stop)\s+([a-z']+)(?:\s+(?:if|when|mentions?|discusses?|talks?\s+about|says?)?\s+(.+))?/i);
   if (blockM && blockM[2]) {
     const c = matchContact(blockM[1], contacts);
-    if (c) return {
-      type: 'dynamic_rule',
-      action: 'add',
-      contactId: c.id,
-      contactName: c.name,
-      condition: blockM[2],
-      ruleAction: 'block',
-    };
+    if (c) {
+      const { expiresAt: exp, rest: cond } = extractDuration(blockM[2]);
+      return {
+        type: 'dynamic_rule',
+        action: 'add',
+        contactId: c.id,
+        contactName: c.name,
+        condition: cond || blockM[2],
+        ruleAction: 'block',
+        expiresAt: exp,
+      };
+    }
   }
 
   // dynamic rule: review [contact] [condition]
@@ -142,14 +249,18 @@ function parseHeuristic(text: string, contacts: Contact[]): Intent {
   const reviewM = t.match(/^(?:review|check|flag|monitor)\s+([a-z']+)(?:\s+(?:if|when|mentions?|discusses?|talks?\s+about|says?)?\s+(.+))?/i);
   if (reviewM && reviewM[2]) {
     const c = matchContact(reviewM[1], contacts);
-    if (c) return {
-      type: 'dynamic_rule',
-      action: 'add',
-      contactId: c.id,
-      contactName: c.name,
-      condition: reviewM[2],
-      ruleAction: 'review',
-    };
+    if (c) {
+      const { expiresAt: exp, rest: cond } = extractDuration(reviewM[2]);
+      return {
+        type: 'dynamic_rule',
+        action: 'add',
+        contactId: c.id,
+        contactName: c.name,
+        condition: cond || reviewM[2],
+        ruleAction: 'review',
+        expiresAt: exp,
+      };
+    }
   }
   // legacy patterns
   if (/(?:review|pending|held|waiting|queue|filter)/i.test(t)) return { type: 'show_review' };
@@ -192,7 +303,10 @@ async function parseViaAnthropic(
     '{"type":"query","subject":"contact_messages","contactId":"<id>","contactName":"<name>"}\n' +
     '{"type":"query","subject":"summary"}\n' +
     '{"type":"query","subject":"settings"}\n' +
-    '{"type":"dynamic_rule","action":"add","contactId":"<id>","contactName":"<name>","condition":"<natural language condition>","ruleAction":"block|review"}\n' +
+    '{"type":"dynamic_rule","action":"add","contactId":"<id or * for all contacts>","contactName":"<name or everyone>","condition":"<natural language condition>","ruleAction":"block|review","durationMinutes":<optional number, e.g. 240 for "4 hours", 1440 for "today">}\n' +
+    '{"type":"mute","contactId":"<id>","contactName":"<name>","durationMinutes":<number, default 720>}  // "mute X", "hide X for 4 hrs", "no updates from X today"\n' +
+    '{"type":"unmute","contactId":"<id>","contactName":"<name>"}\n' +
+    '{"type":"summary_style","style":"professional|casual|brief"}  // "summaries should be professional"\n' +
     '{"type":"unknown","query":"<original input>"}';
 
   try {
@@ -216,7 +330,15 @@ async function parseViaAnthropic(
     const raw  = data.content?.find(b => b.type === 'text')?.text ?? '';
     const m    = raw.match(/\{[\s\S]*?\}/);
     if (!m) return parseHeuristic(text, contacts);
-    return JSON.parse(m[0]) as Intent;
+    const parsed = JSON.parse(m[0]) as Intent & { durationMinutes?: number };
+    // The model reports durations in minutes; convert to timestamps here.
+    if (parsed.type === 'mute') {
+      const mins = parsed.durationMinutes ?? 720;
+      (parsed as MuteIntent).untilTs = Date.now() + mins * 60_000;
+    } else if (parsed.type === 'dynamic_rule' && parsed.durationMinutes) {
+      (parsed as DynamicRuleIntent).expiresAt = Date.now() + parsed.durationMinutes * 60_000;
+    }
+    return parsed;
   } catch {
     return parseHeuristic(text, contacts);
   }
