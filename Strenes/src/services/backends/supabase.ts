@@ -1,10 +1,22 @@
 import { createClient } from '@supabase/supabase-js';
-import type { Backend, BackendMessage, BackendContact, BackendUser } from './types';
+import type { Backend, BackendAuthUser, BackendMessage, BackendContact, BackendUser } from './types';
+import { normalizePhone } from '../../utils/phone';
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://your-project.supabase.co';
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'your-anon-key';
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
+function rowToUser(data: any): BackendUser {
+  return {
+    id: data.id,
+    phone: data.phone,
+    displayName: data.display_name,
+    createdAt: data.created_at,
+    lastSeen: data.last_seen,
+    online: data.online,
+  };
+}
 
 export const supabaseBackend: Backend = {
   // Auth - using Supabase built-in phone auth
@@ -14,21 +26,26 @@ export const supabaseBackend: Backend = {
   },
 
   async signInWithPhone(phoneNumber: string) {
-    const { data, error } = await supabase.auth.signInWithOtp({
-      phone: phoneNumber,
-    });
+    const phone = normalizePhone(phoneNumber);
+    const { error } = await supabase.auth.signInWithOtp({ phone });
     if (error) throw error;
-    return { confirmationResult: data };
+    // Carry the phone forward: verifyOtp needs it and signInWithOtp's
+    // response contains no user object at this stage.
+    return { confirmationResult: { phone } };
   },
 
-  async confirmCode(result: any, code: string) {
+  async confirmCode(result, code: string): Promise<BackendAuthUser> {
+    const phone = result?.confirmationResult?.phone;
+    if (!phone) throw new Error('Missing phone number — restart sign-in.');
     const { data, error } = await supabase.auth.verifyOtp({
-      phone: result.user?.phone || '',
+      phone,
       token: code,
       type: 'sms',
     });
     if (error) throw error;
-    return data;
+    const user = data.user ?? data.session?.user;
+    if (!user) throw new Error('Verification succeeded but no session was returned.');
+    return { userId: user.id, phone };
   },
 
   async logOut() {
@@ -37,25 +54,45 @@ export const supabaseBackend: Backend = {
   },
 
   onAuthChange(callback: (user: any) => void): () => void {
+    // Report the persisted session immediately so a page reload doesn't
+    // bounce the user back to the sign-in screen while the SDK warms up.
+    supabase.auth.getSession().then(({ data }) => {
+      callback(data.session?.user
+        ? { uid: data.session.user.id, phoneNumber: data.session.user.phone || '' }
+        : null);
+    });
     const { data } = supabase.auth.onAuthStateChange((_, session) => {
-      callback(session?.user || null);
+      callback(session?.user
+        ? { uid: session.user.id, phoneNumber: session.user.phone || '' }
+        : null);
     });
     return () => data?.subscription?.unsubscribe();
   },
 
   // User Profile
   async createUserProfile(userId: string, phoneNumber: string, displayName: string = '') {
+    const phone = normalizePhone(phoneNumber);
     const { error } = await supabase
       .from('users')
       .upsert({
         id: userId,
-        phone: phoneNumber,
-        display_name: displayName || phoneNumber,
+        phone,
+        display_name: displayName || phone,
         created_at: Date.now(),
         last_seen: Date.now(),
         online: true,
       });
     if (error) throw error;
+  },
+
+  async getUserProfile(userId: string): Promise<BackendUser | null> {
+    const { data, error } = await supabase
+      .from('users')
+      .select('*')
+      .eq('id', userId)
+      .maybeSingle();
+    if (error || !data) return null;
+    return rowToUser(data);
   },
 
   async updateUserStatus(userId: string, online: boolean) {
@@ -67,19 +104,14 @@ export const supabaseBackend: Backend = {
   },
 
   onUserStatusChange(userId: string, callback: (data: BackendUser) => void): () => void {
-    // Poll for user status changes (simple implementation)
     const interval = setInterval(async () => {
       const { data } = await supabase
         .from('users')
         .select('*')
         .eq('id', userId)
-        .single();
-
-      if (data) {
-        callback(data as BackendUser);
-      }
-    }, 2000);
-
+        .maybeSingle();
+      if (data) callback(rowToUser(data));
+    }, 5000);
     return () => clearInterval(interval);
   },
 
@@ -100,55 +132,57 @@ export const supabaseBackend: Backend = {
     return data?.[0]?.id || '';
   },
 
-  onIncomingMessages(userId: string, callback: (message: BackendMessage) => void): () => void {
-    let lastProcessed = new Set<string>();
+  onIncomingMessages(userId: string, callback: (message: BackendMessage) => void | Promise<void>): () => void {
+    const processed = new Set<string>();
     let isActive = true;
+    let polling = false;
 
-    // Poll for new messages
     const pollMessages = async () => {
-      if (!isActive) return;
+      if (!isActive || polling) return;
+      polling = true;
+      try {
+        const { data: messages, error } = await supabase
+          .from('messages')
+          .select('*')
+          .eq('to_user_id', userId)
+          .eq('delivered', false)
+          .order('timestamp', { ascending: true });
 
-      const { data: messages, error } = await supabase
-        .from('messages')
-        .select('*')
-        .eq('to_user_id', userId)
-        .eq('delivered', false);
-
-      if (error) {
-        console.error('Error fetching messages:', error);
-        return;
-      }
-
-      for (const msg of messages || []) {
-        if (!lastProcessed.has(msg.id)) {
-          lastProcessed.add(msg.id);
-
-          callback({
-            id: msg.id,
-            from: msg.from_user_id,
-            to: msg.to_user_id,
-            text: msg.text,
-            timestamp: msg.timestamp,
-            delivered: msg.delivered,
-          });
-
-          // Mark as delivered
-          await supabase
-            .from('messages')
-            .update({ delivered: true })
-            .eq('id', msg.id);
-
-          // Delete after delay
-          setTimeout(() => {
-            supabase.from('messages').delete().eq('id', msg.id);
-          }, 1000);
+        if (error) {
+          console.error('Error fetching messages:', error);
+          return;
         }
+
+        for (const msg of messages || []) {
+          if (!isActive || processed.has(msg.id)) continue;
+          try {
+            // The callback persisting the message locally is the only durable
+            // copy — await it BEFORE removing the relay copy so a crash or
+            // classification error never loses a message (it retries next poll).
+            await callback({
+              id: msg.id,
+              from: msg.from_user_id,
+              to: msg.to_user_id,
+              text: msg.text,
+              timestamp: msg.timestamp,
+              delivered: msg.delivered,
+            });
+            processed.add(msg.id);
+            await supabase.from('messages').update({ delivered: true }).eq('id', msg.id);
+            await supabase.from('messages').delete().eq('id', msg.id);
+          } catch (err) {
+            console.error('Message handling failed, will retry:', err);
+          }
+        }
+        // Bound memory on long sessions.
+        if (processed.size > 500) processed.clear();
+      } finally {
+        polling = false;
       }
     };
 
-    // Poll every 1 second
-    const interval = setInterval(pollMessages, 1000);
-    pollMessages(); // Check immediately
+    const interval = setInterval(pollMessages, 2000);
+    pollMessages();
 
     return () => {
       isActive = false;
@@ -163,9 +197,9 @@ export const supabaseBackend: Backend = {
       .upsert({
         user_id: userId,
         contact_user_id: contactUserId,
-        contact_phone: contactPhone,
+        contact_phone: normalizePhone(contactPhone),
         added_at: Date.now(),
-      });
+      }, { onConflict: 'user_id,contact_user_id' });
     if (error) throw error;
   },
 
@@ -175,9 +209,11 @@ export const supabaseBackend: Backend = {
     const fetchContacts = async () => {
       if (!isActive) return;
 
+      // Two plain queries instead of a PostgREST embedded join: the schema has
+      // no FK from contacts.contact_user_id → users.id, so `users!...` embeds 400.
       const { data: contacts, error } = await supabase
         .from('contacts')
-        .select('*, users!contact_user_id(online, display_name)')
+        .select('*')
         .eq('user_id', userId);
 
       if (error) {
@@ -185,24 +221,34 @@ export const supabaseBackend: Backend = {
         return;
       }
 
+      const ids = (contacts || []).map((c: any) => c.contact_user_id);
+      const profiles: Record<string, any> = {};
+      if (ids.length > 0) {
+        const { data: users } = await supabase
+          .from('users')
+          .select('id, display_name, online, phone')
+          .in('id', ids);
+        for (const u of users || []) profiles[u.id] = u;
+      }
+
       const contactMap: Record<string, BackendContact> = {};
       (contacts || []).forEach((contact: any) => {
+        const profile = profiles[contact.contact_user_id];
         contactMap[contact.contact_user_id] = {
           userId: contact.user_id,
           contactUserId: contact.contact_user_id,
-          phone: contact.contact_phone,
+          phone: profile?.phone ?? contact.contact_phone,
           addedAt: contact.added_at,
-          displayName: contact.users?.display_name,
-          online: contact.users?.online,
+          displayName: profile?.display_name,
+          online: profile?.online,
         };
       });
 
-      callback(contactMap);
+      if (isActive) callback(contactMap);
     };
 
-    // Poll every 2 seconds
-    const interval = setInterval(fetchContacts, 2000);
-    fetchContacts(); // Fetch immediately
+    const interval = setInterval(fetchContacts, 5000);
+    fetchContacts();
 
     return () => {
       isActive = false;
@@ -214,31 +260,19 @@ export const supabaseBackend: Backend = {
     let isActive = true;
 
     const search = async () => {
-      if (!isActive) return;
-
       const { data, error } = await supabase
         .from('users')
         .select('*')
-        .eq('phone', phoneNumber)
-        .single();
+        .eq('phone', normalizePhone(phoneNumber))
+        .maybeSingle();
 
-      if (error && error.code !== 'PGRST116') {
+      if (!isActive) return;
+      if (error) {
         console.error('Search error:', error);
+        callback(null);
         return;
       }
-
-      if (isActive && data) {
-        callback({
-          id: data.id,
-          phone: data.phone,
-          displayName: data.display_name,
-          createdAt: data.created_at,
-          lastSeen: data.last_seen,
-          online: data.online,
-        });
-      } else if (isActive) {
-        callback(null);
-      }
+      callback(data ? rowToUser(data) : null);
     };
 
     search();

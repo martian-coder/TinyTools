@@ -47,6 +47,10 @@ export interface Contact {
   trusted: boolean;
   grad: string;
   isEmergency?: boolean;
+  /** E.164 phone number, present for contacts synced from the backend. */
+  phone?: string;
+  /** Live presence, synced from the backend contact list. */
+  online?: boolean;
 }
 
 export interface Message {

@@ -1,8 +1,9 @@
 import { initializeApp } from 'firebase/app';
 import { getAuth, RecaptchaVerifier, signInWithPhoneNumber, signOut, onAuthStateChanged } from 'firebase/auth';
 import type { User } from 'firebase/auth';
-import { getDatabase, ref, push, onValue, set, query, orderByChild, limitToLast } from 'firebase/database';
-import type { Backend, BackendMessage } from './types';
+import { getDatabase, ref, push, onValue, set, get, query, orderByChild, limitToLast } from 'firebase/database';
+import type { Backend, BackendAuthUser, BackendMessage, BackendUser } from './types';
+import { normalizePhone } from '../../utils/phone';
 
 export const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY || 'YOUR_API_KEY_HERE',
@@ -29,12 +30,18 @@ export const firebaseBackend: Backend = {
 
   async signInWithPhone(phoneNumber: string, recaptchaVerifier: any) {
     return {
-      confirmationResult: await signInWithPhoneNumber(auth, phoneNumber, recaptchaVerifier as RecaptchaVerifier),
+      confirmationResult: await signInWithPhoneNumber(auth, normalizePhone(phoneNumber), recaptchaVerifier as RecaptchaVerifier),
     };
   },
 
-  async confirmCode(confirmationResult: any, code: string) {
-    return confirmationResult.confirm(code);
+  async confirmCode(result, code: string): Promise<BackendAuthUser> {
+    const confirmation = result?.confirmationResult;
+    if (!confirmation?.confirm) throw new Error('Missing verification state — restart sign-in.');
+    const credential = await confirmation.confirm(code);
+    return {
+      userId: credential.user.uid,
+      phone: credential.user.phoneNumber || '',
+    };
   },
 
   async logOut() {
@@ -46,13 +53,32 @@ export const firebaseBackend: Backend = {
   },
 
   async createUserProfile(userId: string, phoneNumber: string, displayName: string = '') {
+    const phone = normalizePhone(phoneNumber);
     return set(ref(db, `users/${userId}`), {
-      phone: phoneNumber,
-      displayName: displayName || phoneNumber,
+      phone,
+      displayName: displayName || phone,
       createdAt: Date.now(),
       lastSeen: Date.now(),
       online: true,
     });
+  },
+
+  async getUserProfile(userId: string): Promise<BackendUser | null> {
+    try {
+      const snapshot = await get(ref(db, `users/${userId}`));
+      if (!snapshot.exists()) return null;
+      const data = snapshot.val();
+      return {
+        id: userId,
+        phone: data.phone,
+        displayName: data.displayName,
+        createdAt: data.createdAt,
+        lastSeen: data.lastSeen,
+        online: data.online,
+      };
+    } catch {
+      return null;
+    }
   },
 
   async updateUserStatus(userId: string, online: boolean) {
@@ -78,30 +104,34 @@ export const firebaseBackend: Backend = {
     return messageRef.key as string;
   },
 
-  onIncomingMessages(userId: string, callback: (message: BackendMessage) => void): () => void {
+  onIncomingMessages(userId: string, callback: (message: BackendMessage) => void | Promise<void>): () => void {
     const messagesRef = ref(db, 'messages');
     const q = query(messagesRef, orderByChild('to'), limitToLast(100));
+    const processed = new Set<string>();
 
     const unsubscribe = onValue(q, (snapshot) => {
       snapshot.forEach((childSnapshot) => {
         const message = childSnapshot.val() as any;
-        if (message.to === userId && !message.delivered) {
-          callback({
-            id: childSnapshot.key as string,
-            from: message.from,
-            to: message.to,
-            text: message.text,
-            timestamp: message.timestamp,
-            delivered: message.delivered,
-          });
+        const messageId = childSnapshot.key as string;
+        if (message.to !== userId || message.delivered || processed.has(messageId)) return;
+        processed.add(messageId);
 
-          const messageId = childSnapshot.key as string;
+        // Only remove the relay copy after the local store confirms it —
+        // that local write is the single durable copy of the message.
+        Promise.resolve(callback({
+          id: messageId,
+          from: message.from,
+          to: message.to,
+          text: message.text,
+          timestamp: message.timestamp,
+          delivered: message.delivered,
+        })).then(() => {
           set(ref(db, `messages/${messageId}/delivered`), true);
-
-          setTimeout(() => {
-            set(ref(db, `messages/${messageId}`), null);
-          }, 1000);
-        }
+          set(ref(db, `messages/${messageId}`), null);
+        }).catch((err) => {
+          processed.delete(messageId);
+          console.error('Message handling failed, will retry:', err);
+        });
       });
     });
 
@@ -127,13 +157,14 @@ export const firebaseBackend: Backend = {
     const usersRef = ref(db, 'users');
     let isActive = true;
 
+    const target = normalizePhone(phoneNumber);
     const unsubscribe = onValue(usersRef, (snapshot) => {
       if (!isActive) return;
 
       let found: any = null;
       snapshot.forEach((childSnapshot) => {
         const user = childSnapshot.val();
-        if (user.phone === phoneNumber) {
+        if (normalizePhone(user.phone || '') === target) {
           found = { id: childSnapshot.key, ...user };
         }
       });

@@ -20,6 +20,7 @@ interface SiftState {
 
   setCurrentUser: (userId: string, phone: string) => void;
   clearCurrentUser: () => void;
+  upsertContact: (contact: { id: string; name: string; phone?: string; online?: boolean }) => void;
   setScreen: (s: Screen) => void;
   setFolder: (f: Folder) => void;
   openConversation: (contactId: string) => void;
@@ -59,7 +60,26 @@ interface SiftState {
 }
 
 let idCounter = 200;
-const nid = () => `m${idCounter++}`;
+const nid = () => `m${idCounter++}-${Date.now().toString(36)}`;
+
+/** Human timestamp for the chat list / bubbles ("9:41" style, matches seed data). */
+const nowTime = () =>
+  new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: false });
+
+const CONTACT_GRADS = [
+  'linear-gradient(135deg,#7c83ff,#22d3ee)',
+  'linear-gradient(135deg,#fb7185,#fb923c)',
+  'linear-gradient(135deg,#34d399,#06b6d4)',
+  'linear-gradient(135deg,#a78bfa,#f472b6)',
+  'linear-gradient(135deg,#38bdf8,#6366f1)',
+];
+
+/** Deterministic gradient per contact id so avatars are stable across sessions. */
+function gradFor(id: string): string {
+  let h = 0;
+  for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) >>> 0;
+  return CONTACT_GRADS[h % CONTACT_GRADS.length];
+}
 
 function calcDisappearsAt(settings: UserSettings): number | undefined {
   const dm = settings.disappearingMessages;
@@ -94,6 +114,20 @@ export const useSiftStore = create<SiftState>()(
 
       setCurrentUser: (userId, phone) => set({ currentUserId: userId, currentUserPhone: phone }),
       clearCurrentUser: () => set({ currentUserId: null, currentUserPhone: null }),
+
+      upsertContact: ({ id, name, phone, online }) => set(s => {
+        const existing = s.contacts.find(c => c.id === id);
+        if (existing) {
+          return {
+            contacts: s.contacts.map(c =>
+              c.id === id ? { ...c, name: name || c.name, phone: phone ?? c.phone, online } : c
+            ),
+          };
+        }
+        return {
+          contacts: [...s.contacts, { id, name: name || phone || 'Unknown', phone, online, trusted: false, grad: gradFor(id) }],
+        };
+      }),
       setScreen: s  => set({ activeScreen: s }),
       setFolder: f  => set({ activeFolder: f }),
       openConversation: id => set({ activeContactId: id, activeScreen: 'conversation' }),
@@ -103,23 +137,37 @@ export const useSiftStore = create<SiftState>()(
       sendMessage: (contactId, text, route = 'ip') => set(s => ({
         messages: [...s.messages, {
           id: nid(), contactId, text, dir: 'out',
-          ts: Date.now(), time: 'now',
+          ts: Date.now(), time: nowTime(),
           folder: 'primary', status: 'delivered',
           disappearsAt: calcDisappearsAt(s.settings),
           route,
         }],
       })),
 
-      flushQueue: () => set(s => ({
-        messages: s.messages.map(m =>
-          m.route === 'queued' ? { ...m, route: 'ip' as MessageRoute } : m
-        ),
-      })),
+      flushQueue: () => {
+        const { messages, currentUserId } = get();
+        const queued = messages.filter(m => m.route === 'queued' && m.dir === 'out');
+        set(s => ({
+          messages: s.messages.map(m =>
+            m.route === 'queued' ? { ...m, route: 'ip' as MessageRoute } : m
+          ),
+        }));
+        // Actually deliver the queued messages through the relay, not just
+        // relabel them. Backend import is dynamic to avoid a module cycle.
+        if (currentUserId && queued.length > 0) {
+          import('../services/backend').then(({ sendMessage }) => {
+            for (const m of queued) {
+              sendMessage(currentUserId, m.contactId, m.text).catch(err =>
+                console.error('Failed to flush queued message:', err));
+            }
+          });
+        }
+      },
 
       sendOutgoingToReview: (contactId, text, verdict) => set(s => ({
         messages: [...s.messages, {
           id: nid(), contactId, text, dir: 'out',
-          ts: Date.now(), time: 'now',
+          ts: Date.now(), time: nowTime(),
           folder: 'review', status: 'held', verdict,
         }],
       })),
@@ -128,7 +176,7 @@ export const useSiftStore = create<SiftState>()(
         const { settings } = get();
         const newMsg: Message = {
           id: nid(), contactId, text, dir: 'in',
-          ts: Date.now(), time: 'now',
+          ts: Date.now(), time: nowTime(),
           verdict, folder: route.folder, status: route.status,
           autoReply: route.autoReply,
           disappearsAt: route.status === 'delivered' ? calcDisappearsAt(settings) : undefined,

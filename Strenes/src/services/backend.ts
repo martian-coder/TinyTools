@@ -17,6 +17,7 @@ export const {
   logOut,
   onAuthChange,
   createUserProfile,
+  getUserProfile,
   updateUserStatus,
   onUserStatusChange,
   sendMessage,
@@ -27,4 +28,4 @@ export const {
 } = backend;
 
 // Re-export types
-export type { Backend, BackendUser, BackendMessage, BackendContact } from './backends/types';
+export type { Backend, BackendUser, BackendAuthUser, BackendMessage, BackendContact } from './backends/types';

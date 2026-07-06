@@ -1,5 +1,31 @@
 @import "tailwindcss";
 
+/* ─── Token defaults ─────────────────────────────────────────────── */
+/* Aurora defaults at :root so screens rendered OUTSIDE the themed app
+   wrapper (Auth, Onboarding, the boot loader) are still styled. The themed
+   wrapper overrides these via inline style when the app proper mounts. */
+:root {
+  --base: #0b1020;
+  --g1: rgba(124,131,255,.55);
+  --g2: rgba(34,211,238,.38);
+  --g3: rgba(168,85,247,.45);
+  --accent: #7c83ff;
+  --accent2: #22d3ee;
+  --text: #eef1ff;
+  --dim: rgba(238,241,255,.55);
+  --glass: rgba(255,255,255,.07);
+  --glass2: rgba(255,255,255,.13);
+  --line: rgba(255,255,255,.14);
+  --in: rgba(255,255,255,.10);
+  /* Aliases used by the auth/onboarding/contacts screens. */
+  --base-dark: #060912;
+  --text-secondary: var(--dim);
+  --surface: var(--glass);
+  --surface-hover: var(--glass2);
+  --border: var(--line);
+  --accent-hover: var(--accent2);
+}
+
 /* ─── Layout ─────────────────────────────────────────────────────── */
 * { box-sizing: border-box; }
 html, body { margin: 0; padding: 0; height: 100%; overflow: hidden;

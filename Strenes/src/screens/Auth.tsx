@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { useSiftStore } from '../store';
-import { setupRecaptcha, signInWithPhone } from '../services/backend';
+import { setupRecaptcha, signInWithPhone, confirmCode, createUserProfile } from '../services/backend';
+import type { BackendAuthUser } from '../services/backend';
+import { isValidPhone, normalizePhone } from '../utils/phone';
 import { Phone, Lock, CheckCircle } from 'lucide-react';
 
 export function Auth() {
@@ -11,17 +13,23 @@ export function Auth() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [confirmationResult, setConfirmationResult] = useState<any>(null);
+  const [authUser, setAuthUser] = useState<BackendAuthUser | null>(null);
 
-  const { setScreen, updateSettings } = useSiftStore();
+  const { setScreen, setCurrentUser } = useSiftStore();
 
   const handlePhoneSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    setLoading(true);
 
+    if (!isValidPhone(phoneNumber)) {
+      setError('Enter a valid phone number with country code, e.g. +1 555 123 4567');
+      return;
+    }
+
+    setLoading(true);
     try {
       const recaptchaVerifier = await setupRecaptcha('recaptcha-container');
-      const result = await signInWithPhone(phoneNumber, recaptchaVerifier);
+      const result = await signInWithPhone(normalizePhone(phoneNumber), recaptchaVerifier);
       setConfirmationResult(result);
       setStep('code');
     } catch (err: any) {
@@ -37,9 +45,10 @@ export function Auth() {
     setLoading(true);
 
     try {
-      await confirmationResult.confirm(code);
+      const user = await confirmCode(confirmationResult, code);
+      setAuthUser(user);
       setStep('profile');
-    } catch (err: any) {
+    } catch {
       setError('Invalid code. Please try again.');
     } finally {
       setLoading(false);
@@ -48,12 +57,18 @@ export function Auth() {
 
   const handleProfileSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!authUser) {
+      setError('Session expired — please sign in again.');
+      setStep('phone');
+      return;
+    }
     setError('');
     setLoading(true);
 
     try {
-      // Profile setup complete, mark auth as done
-      updateSettings({ _onboardingComplete: true });
+      // Register the profile so other devices can find this user by phone.
+      await createUserProfile(authUser.userId, authUser.phone, displayName.trim());
+      setCurrentUser(authUser.userId, authUser.phone);
       setScreen('chats');
     } catch (err: any) {
       setError(err.message || 'Failed to complete profile');

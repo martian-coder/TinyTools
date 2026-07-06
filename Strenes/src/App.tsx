@@ -12,7 +12,8 @@ import { Commander } from './screens/Commander';
 import { Onboarding } from './screens/Onboarding';
 import { Auth } from './screens/Auth';
 import { Contacts } from './screens/Contacts';
-import { onAuthChange } from './services/backend';
+import { onAuthChange, onIncomingMessages, getUserProfile, updateUserStatus } from './services/backend';
+import { getModerator, routeVerdict } from './moderation';
 import type { ThemeName } from './types';
 
 export default function App() {
@@ -53,6 +54,55 @@ export default function App() {
     });
     return unsubscribe;
   }, [setCurrentUser, currentUserId]);
+
+  // Global incoming-message pipeline: every message addressed to this user —
+  // no matter which screen is open — is classified on-device, routed through
+  // routeVerdict(), checked against dynamic rules, and stored locally. This is
+  // the single place backend messages enter the app.
+  useEffect(() => {
+    if (!currentUserId) return;
+
+    const unsubscribe = onIncomingMessages(currentUserId, async (msg) => {
+      const state = useSiftStore.getState();
+      const { settings } = state;
+
+      // Materialize unknown senders as local contacts so the chat renders.
+      let contact = state.contacts.find(c => c.id === msg.from);
+      if (!contact) {
+        const profile = await getUserProfile(msg.from).catch(() => null);
+        state.upsertContact({
+          id: msg.from,
+          name: profile?.displayName || profile?.phone || 'Unknown',
+          phone: profile?.phone,
+          online: profile?.online,
+        });
+        contact = useSiftStore.getState().contacts.find(c => c.id === msg.from);
+      }
+
+      const mod = await getModerator(settings.aiModeration.anthropicKey || undefined);
+      const verdict = await mod.classify(msg.text, { sensitivity: settings.civility.sensitivity });
+      const trusted = !!contact?.trusted || settings.trustedIds.includes(msg.from);
+      const route = routeVerdict(verdict, settings, trusted, contact?.isEmergency);
+      await state.checkAndReceiveMessage(
+        msg.from, msg.text, route, verdict,
+        settings.aiModeration.anthropicKey || settings.aiReplies.anthropicKey,
+      );
+    });
+
+    return unsubscribe;
+  }, [currentUserId]);
+
+  // Presence: mark online while the app is open, offline on the way out.
+  useEffect(() => {
+    if (!currentUserId) return;
+    updateUserStatus(currentUserId, true).catch(() => {});
+    const markOffline = () => { updateUserStatus(currentUserId, false).catch(() => {}); };
+    window.addEventListener('beforeunload', markOffline);
+    return () => {
+      window.removeEventListener('beforeunload', markOffline);
+      markOffline();
+    };
+  }, [currentUserId]);
 
   // Flush queued messages as soon as connectivity returns
   useEffect(() => {

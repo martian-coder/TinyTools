@@ -1,43 +1,75 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useSiftStore } from '../store';
 import { UserPlus, Users, Search } from 'lucide-react';
 import { onUserSearch, addContact, onContactsChange } from '../services/backend';
+import { isValidPhone } from '../utils/phone';
 
 export function Contacts() {
   const currentUserId = useSiftStore(s => s.currentUserId);
+  const upsertContact = useSiftStore(s => s.upsertContact);
+  const openConversation = useSiftStore(s => s.openConversation);
   const [searchPhone, setSearchPhone] = useState('');
   const [searchResult, setSearchResult] = useState<any>(null);
+  const [searchDone, setSearchDone] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [firebaseContacts, setFirebaseContacts] = useState<any>({});
+  const [backendContacts, setBackendContacts] = useState<Record<string, any>>({});
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const activeSearchRef = useRef<(() => void) | null>(null);
 
-  // Load Firebase contacts
+  // Keep backend contacts flowing into both this screen and the local store,
+  // so the chat list and conversation screen can render them.
   useEffect(() => {
     if (!currentUserId) return;
-    const unsubscribe = onContactsChange(currentUserId, setFirebaseContacts);
+    const unsubscribe = onContactsChange(currentUserId, (contacts) => {
+      setBackendContacts(contacts);
+      for (const [id, c] of Object.entries<any>(contacts)) {
+        upsertContact({
+          id,
+          name: c.displayName || c.phone || 'Unknown',
+          phone: c.phone,
+          online: c.online,
+        });
+      }
+    });
     return unsubscribe;
-  }, [currentUserId]);
+  }, [currentUserId, upsertContact]);
+
+  useEffect(() => () => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    activeSearchRef.current?.();
+  }, []);
 
   const handleSearch = (phone: string) => {
     setSearchPhone(phone);
     setSearchResult(null);
+    setSearchDone(false);
 
-    if (phone.length < 5) return;
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    activeSearchRef.current?.();
+    activeSearchRef.current = null;
+
+    if (!isValidPhone(phone)) {
+      setLoading(false);
+      return;
+    }
 
     setLoading(true);
-    const unsubscribe = onUserSearch(phone, (user) => {
-      if (user && user.id !== currentUserId) {
-        setSearchResult(user);
+    debounceRef.current = setTimeout(() => {
+      let answered = false;
+      activeSearchRef.current = onUserSearch(phone, (user) => {
+        answered = true;
         setLoading(false);
-      }
-    });
-
-    // Cleanup after timeout
-    const timeout = setTimeout(() => {
-      unsubscribe();
-      setLoading(false);
-    }, 5000);
-
-    return () => clearTimeout(timeout);
+        setSearchDone(true);
+        setSearchResult(user && user.id !== currentUserId ? user : null);
+      });
+      // Flaky network: don't leave the spinner hanging forever.
+      setTimeout(() => {
+        if (!answered) {
+          setLoading(false);
+          setSearchDone(true);
+        }
+      }, 8000);
+    }, 400);
   };
 
   const handleAddContact = async (contactUser: any) => {
@@ -45,9 +77,15 @@ export function Contacts() {
 
     try {
       await addContact(currentUserId, contactUser.id, contactUser.phone);
+      upsertContact({
+        id: contactUser.id,
+        name: contactUser.displayName || contactUser.phone,
+        phone: contactUser.phone,
+        online: contactUser.online,
+      });
       setSearchPhone('');
       setSearchResult(null);
-      // Contact added (Firebase listener will update)
+      setSearchDone(false);
     } catch (err) {
       console.error('Error adding contact:', err);
     }
@@ -66,7 +104,7 @@ export function Contacts() {
           <Search size={16} className="text-[var(--text-secondary)]" />
           <input
             type="tel"
-            placeholder="Search by phone..."
+            placeholder="Search by phone, e.g. +15551234567"
             value={searchPhone}
             onChange={(e) => handleSearch(e.target.value)}
             className="flex-1 bg-transparent text-[var(--text)] placeholder-[var(--text-secondary)] focus:outline-none"
@@ -75,6 +113,12 @@ export function Contacts() {
 
         {loading && (
           <div className="text-xs text-[var(--text-secondary)]">Searching...</div>
+        )}
+
+        {searchDone && !searchResult && !loading && (
+          <div className="text-xs text-[var(--text-secondary)]">
+            No user found with that number. They need to sign up first.
+          </div>
         )}
 
         {searchResult && (
@@ -101,12 +145,16 @@ export function Contacts() {
 
       {/* Contacts List */}
       <div className="flex-1 overflow-y-auto">
-        {Object.entries(firebaseContacts).length > 0 ? (
+        {Object.entries(backendContacts).length > 0 ? (
           <div className="divide-y divide-[var(--border)]">
-            {Object.entries(firebaseContacts).map(([contactId, contactData]: [string, any]) => (
-              <div key={contactId} className="px-4 py-3 hover:bg-[var(--surface)] cursor-pointer">
+            {Object.entries(backendContacts).map(([contactId, contactData]: [string, any]) => (
+              <button
+                key={contactId}
+                onClick={() => openConversation(contactId)}
+                className="w-full text-left px-4 py-3 hover:bg-[var(--surface)] cursor-pointer"
+              >
                 <div className="font-medium text-[var(--text)]">
-                  {contactData.displayName || 'Unknown'}
+                  {contactData.displayName || contactData.phone || 'Unknown'}
                 </div>
                 <div className="text-xs text-[var(--text-secondary)]">
                   {contactData.phone}
@@ -114,7 +162,7 @@ export function Contacts() {
                 <div className={`text-xs mt-1 ${contactData.online ? 'text-green-400' : 'text-[var(--text-secondary)]'}`}>
                   {contactData.online ? '● Online' : '● Offline'}
                 </div>
-              </div>
+              </button>
             ))}
           </div>
         ) : (
