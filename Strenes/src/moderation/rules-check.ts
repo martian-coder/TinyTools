@@ -70,6 +70,7 @@ async function checkViaAnthropic(
   try {
     const res = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
+      signal: AbortSignal.timeout(10_000),
       headers: {
         'x-api-key': apiKey,
         'anthropic-version': '2023-06-01',

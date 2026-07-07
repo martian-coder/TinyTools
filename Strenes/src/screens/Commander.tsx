@@ -342,8 +342,17 @@ export function Commander() {
     addUser(text);
     setBusy(true);
 
+    // Whatever happens below — model hang, parser bug, network failure — the
+    // spinner must clear and the user must get a reply.
+    try {
+
     const apiKey = settings.aiReplies?.anthropicKey ?? '';
-    const intent = await parseIntent(text, contacts, heldMessages, apiKey);
+    let intent: Awaited<ReturnType<typeof parseIntent>>;
+    try {
+      intent = await parseIntent(text, contacts, heldMessages, apiKey);
+    } catch {
+      intent = { type: 'unknown', query: text };
+    }
 
     const responses: { text: string; chips?: Chip[] }[] = [];
 
@@ -656,8 +665,13 @@ export function Commander() {
       }
     }
 
-    setBusy(false);
     for (const r of responses) addAI(r.text, r.chips);
+
+    } catch {
+      addAI("Something went wrong handling that — please try again.");
+    } finally {
+      setBusy(false);
+    }
   }, [
     contacts, heldMessages, allMessages, settings,
     sendMessage, approveMessage, rejectMessage, openConversation,
