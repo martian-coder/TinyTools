@@ -121,17 +121,35 @@ function parseHeuristic(text: string, contacts: Contact[]): Intent {
     return { type: 'summary_style', style };
   }
 
-  // unmute: "unmute maya", "show maya's updates again"
-  const unmuteM = rest.match(/^(?:unmute|unsnooze|unhide)\s+([a-z']+)/i)
-    ?? rest.match(/^show\s+([a-z']+)(?:'s)?\s+(?:updates?|messages?)\s+again/i);
+  // unmute: "unmute maya", "unmute all", "show maya's updates again"
+  const unmuteM = rest.match(/^(?:unmute|unsnooze|unhide)(?:\s+([a-z']+))?\s*(?:msgs?|messages?|updates?)?\s*$/i);
   if (unmuteM) {
-    const c = matchContact(unmuteM[1], contacts);
+    const word = (unmuteM[1] || 'all').toLowerCase();
+    if (['all', 'everything', 'everyone'].includes(word)) {
+      return { type: 'unmute', contactId: '*', contactName: 'everyone' };
+    }
+    const c = matchContact(word, contacts);
+    if (c) return { type: 'unmute', contactId: c.id, contactName: c.name };
+  }
+  const unmuteAgainM = rest.match(/^show\s+([a-z']+)(?:'s)?\s+(?:updates?|messages?)\s+again/i);
+  if (unmuteAgainM) {
+    const c = matchContact(unmuteAgainM[1], contacts);
     if (c) return { type: 'unmute', contactId: c.id, contactName: c.name };
   }
 
-  // mute: "mute maya for 4 hours", "hide dad today", "don't show maya updates",
-  // "block maya for 4 hours" (bare block + duration = snooze, not a content rule)
-  const muteM = rest.match(/^(?:mute|snooze|silence|hide|block)\s+([a-z']+)\s*$/i)
+  // global mute: "mute all msgs for 2 hrs", "silence everything today",
+  // "mute messages", "dnd for 2 hours", "quiet time for 1 hour"
+  const muteAllM =
+    rest.match(/^(?:mute|snooze|silence|hide|pause)\s+(?:all|everything|everyone)(?:\s+(?:msgs?|messages?|updates?|chats?|notifications?))?\s*$/i)
+    ?? rest.match(/^(?:mute|snooze|silence|pause)\s+(?:msgs?|messages?|updates?|notifications?)\s*$/i)
+    ?? rest.match(/^(?:dnd|do\s+not\s+disturb|quiet\s+time|quiet)\s*$/i);
+  if (muteAllM) {
+    return { type: 'mute', contactId: '*', contactName: 'everyone', untilTs: expiresAt ?? endOfDay() };
+  }
+
+  // mute one contact: "mute maya for 4 hours", "hide dad today", "mute jay's msgs",
+  // "don't show maya updates", "block maya for 4 hours" (bare block + duration = snooze)
+  const muteM = rest.match(/^(?:mute|snooze|silence|hide|block)\s+([a-z']+)(?:'s)?\s*(?:msgs?|messages?|updates?|chats?)?\s*$/i)
     ?? rest.match(/^(?:don'?t|do\s+not|no)\s+(?:show\s+)?(?:updates?\s+(?:from|for)\s+)?([a-z']+)(?:'s)?\s+(?:updates?|messages?)?\s*$/i);
   if (muteM) {
     const c = matchContact(muteM[1], contacts);
@@ -348,8 +366,8 @@ async function parseViaAnthropic(
     '{"type":"query","subject":"rules"}  // "my rules", "list rules"\n' +
     '{"type":"dynamic_rule","action":"add","contactId":"<id or * for all contacts>","contactName":"<name or everyone>","condition":"<the preference in natural language>","ruleAction":"block|review","durationMinutes":<optional number, e.g. 240 for "4 hours", 1440 for "today">}\n' +
     '{"type":"dynamic_rule","action":"remove","ruleRef":"all|<1-based rule number>|<keyword>"}\n' +
-    '{"type":"mute","contactId":"<id>","contactName":"<name>","durationMinutes":<number, default 720>}  // "mute X", "hide X for 4 hrs", "no updates from X today"\n' +
-    '{"type":"unmute","contactId":"<id>","contactName":"<name>"}\n' +
+    '{"type":"mute","contactId":"<id or * to mute everything>","contactName":"<name or everyone>","durationMinutes":<number, default 720>}  // "mute X", "mute all msgs for 2 hrs", "dnd for 2 hours"\n' +
+    '{"type":"unmute","contactId":"<id or * for unmute all>","contactName":"<name or everyone>"}\n' +
     '{"type":"summary_style","style":"professional|casual|brief"}  // "summaries should be professional"\n' +
     '{"type":"unknown","query":"<original input>"}\n\n' +
     'IMPORTANT: ANY preference about which messages the user wants to see, hide, hold, or block ' +

@@ -238,6 +238,15 @@ export function Commander() {
     const mutes = settings.mutes ?? {};
     const now   = Date.now();
 
+    // Global snooze: everything is muted until the timestamp passes.
+    if (mutes['*'] && mutes['*'] > now) {
+      addAI(`🔇 All updates are muted ${formatUntil(mutes['*'])}. Say 'unmute all' to resume.`);
+      if (heldMessages.length > 0) {
+        addAI(`⚠️  ${heldMessages.length} message${heldMessages.length !== 1 ? 's' : ''} in review queue.`);
+      }
+      return;
+    }
+
     // Muted contacts are excluded from the briefing until their mute expires.
     const visible = unread.filter(({ contact }) =>
       !(contact && mutes[contact.id] && mutes[contact.id] > now));
@@ -497,17 +506,24 @@ export function Commander() {
       case 'mute': {
         muteContact(intent.contactId, intent.untilTs);
         responses.push({
-          text: `🔇 ${intent.contactName} muted ${formatUntil(intent.untilTs)} — their updates are hidden from briefings. Messages still arrive quietly in Chats.`,
+          text: intent.contactId === '*'
+            ? `🔇 All updates muted ${formatUntil(intent.untilTs)} — briefings stay quiet until then. Messages still arrive in Chats. Say 'unmute all' to resume early.`
+            : `🔇 ${intent.contactName} muted ${formatUntil(intent.untilTs)} — their updates are hidden from briefings. Messages still arrive quietly in Chats.`,
         });
         break;
       }
 
       case 'unmute': {
-        unmuteContact(intent.contactId);
-        responses.push({
-          text: `🔊 ${intent.contactName} unmuted — their updates are back in your briefings.`,
-          chips: [{ label: `Open ${intent.contactName}`, action: 'open', contactId: intent.contactId }],
-        });
+        if (intent.contactId === '*') {
+          Object.keys(settings.mutes ?? {}).forEach(id => unmuteContact(id));
+          responses.push({ text: '🔊 All updates unmuted — your briefings are back.' });
+        } else {
+          unmuteContact(intent.contactId);
+          responses.push({
+            text: `🔊 ${intent.contactName} unmuted — their updates are back in your briefings.`,
+            chips: [{ label: `Open ${intent.contactName}`, action: 'open', contactId: intent.contactId }],
+          });
+        }
         break;
       }
 
@@ -530,7 +546,7 @@ export function Commander() {
             addAI("· Reply — 'reply Maya sounds good' · Open — 'open Alex'");
             addAI("· Approve / reject held messages — 'approve all', 'reject all'");
             addAI("· Trust contacts — 'trust Sarah' / 'don't trust Dave'");
-            addAI("· Mute updates — 'mute Maya for 4 hours', 'hide Dad today', 'unmute Maya'");
+            addAI("· Mute updates — 'mute Maya for 4 hours', 'mute all msgs for 2 hrs', 'dnd for 2 hours', 'unmute all'");
             addAI("· Rules in your own words — 'hold anything asking me for money', 'no rants today', 'never show me chain forwards'. I evaluate each incoming message against them with on-device AI.");
             addAI("· Manage rules — 'my rules', 'remove rule 2', 'clear all rules'");
             addAI("· Summary tone — 'summaries should be professional' (or casual / brief)");
@@ -613,8 +629,8 @@ export function Commander() {
             const activeMutes = Object.entries(settings.mutes ?? {}).filter(([, until]) => until > now);
             if (activeMutes.length > 0) {
               const names = activeMutes.map(([id, until]) => {
-                const c = contacts.find(x => x.id === id);
-                return `${c?.name ?? id} (${formatUntil(until)})`;
+                const label = id === '*' ? 'Everyone' : (contacts.find(x => x.id === id)?.name ?? id);
+                return `${label} (${formatUntil(until)})`;
               });
               responses.push({ text: `🔇 Muted: ${names.join(', ')}` });
             }
