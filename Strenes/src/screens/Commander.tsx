@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
-import { Bot, Send, ChevronRight, Loader2 } from 'lucide-react';
+import { Send, ChevronRight, Loader2 } from 'lucide-react';
 import { useSiftStore } from '../store';
 import { parseIntent, formatUntil } from '../moderation/commander';
 import { describeSender, priorityFor } from '../moderation/insights';
@@ -708,23 +708,7 @@ export function Commander() {
 
   return (
     <>
-      {/* Header */}
-      <div className="glass-h px-4 pt-4 pb-3 flex items-center gap-2.5">
-        <div
-          className="grid place-items-center"
-          style={{
-            width: 34, height: 34, borderRadius: 11,
-            background: 'linear-gradient(135deg,var(--accent),var(--accent2))',
-            boxShadow: '0 6px 18px -6px var(--accent)',
-          }}
-        >
-          <Bot size={17} color="#fff" />
-        </div>
-        <div>
-          <div className="font-semibold text-main leading-tight tracking-tight">Commander</div>
-          <div className="text-[11px] dim leading-tight">your AI inbox assistant</div>
-        </div>
-      </div>
+      {/* Screen title lives in the app header (App.tsx) — no local header. */}
 
       {/* Chat */}
       <div className="flex-1 overflow-y-auto px-3 pt-3 pb-2 no-bar">
@@ -770,7 +754,9 @@ export function Commander() {
       )}
 
       {/* Input */}
-      <div className="px-3 pb-3 pt-1">
+      {/* The bottom nav is position:fixed — reserve its height so it never
+          covers the input box. */}
+      <div className="px-3 pt-1" style={{ paddingBottom: 'calc(var(--nav-height) + 16px)' }}>
         <div className="glass2 flex items-center gap-2 p-1.5" style={{ borderRadius: 999 }}>
           <input
             value={draft}

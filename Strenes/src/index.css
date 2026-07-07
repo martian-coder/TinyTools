@@ -26,6 +26,17 @@
   --accent-hover: var(--accent2);
 }
 
+/* Re-declare the aliases on the themed wrapper so they track the ACTIVE
+   theme's tokens (a :root alias would freeze at the aurora defaults). */
+.app-bg {
+  --text-secondary: var(--dim);
+  --surface: var(--glass);
+  --surface-hover: var(--glass2);
+  --border: var(--line);
+  --accent-hover: var(--accent2);
+  --base-dark: var(--base);
+}
+
 /* ─── Layout ─────────────────────────────────────────────────────── */
 * { box-sizing: border-box; }
 html, body { margin: 0; padding: 0; height: 100%; overflow: hidden;

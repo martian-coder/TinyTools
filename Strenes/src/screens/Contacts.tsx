@@ -92,11 +92,8 @@ export function Contacts() {
   };
 
   return (
-    <div className="flex flex-col h-full bg-[var(--base)]">
-      {/* Header */}
-      <div className="px-4 py-3 border-b border-[var(--border)]">
-        <h1 className="text-lg font-bold text-[var(--text)]">Contacts</h1>
-      </div>
+    <div className="flex flex-col h-full">
+      {/* Screen title lives in the app header (App.tsx) — no local header. */}
 
       {/* Search */}
       <div className="px-4 py-3 space-y-2 border-b border-[var(--border)]">
@@ -143,8 +140,8 @@ export function Contacts() {
         )}
       </div>
 
-      {/* Contacts List */}
-      <div className="flex-1 overflow-y-auto">
+      {/* Contacts List — bottom padding clears the fixed nav pill */}
+      <div className="flex-1 overflow-y-auto" style={{ paddingBottom: 'calc(var(--nav-height) + 16px)' }}>
         {Object.entries(backendContacts).length > 0 ? (
           <div className="divide-y divide-[var(--border)]">
             {Object.entries(backendContacts).map(([contactId, contactData]: [string, any]) => (

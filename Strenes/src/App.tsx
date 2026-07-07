@@ -16,6 +16,16 @@ import { onAuthChange, onIncomingMessages, getUserProfile, updateUserStatus } fr
 import { getModerator, routeVerdict } from './moderation';
 import type { ThemeName } from './types';
 
+/** Header title + tagline per screen — the app shows one header, not one per screen. */
+const SCREEN_TITLES: Record<string, { title: string; sub: string }> = {
+  commander: { title: 'Commander', sub: 'your AI inbox assistant' },
+  chats:     { title: 'Chats',     sub: 'private by design' },
+  contacts:  { title: 'Contacts',  sub: 'find people by phone' },
+  simulator: { title: 'Test',      sub: 'try the filter on any message' },
+  settings:  { title: 'Settings',  sub: 'filters, rules & themes' },
+  digest:    { title: 'Digest',    sub: 'your daily summary' },
+};
+
 export default function App() {
   const activeScreen   = useSiftStore(s => s.activeScreen);
   const theme          = useSiftStore(s => s.settings.theme);
@@ -158,7 +168,7 @@ export default function App() {
           </div>
         )}
 
-        {/* Branded header */}
+        {/* App header — one header for the whole app, titled by the current screen */}
         {activeScreen !== 'conversation' && (
           <div className="px-3 pt-2.5 pb-1.5 flex items-center gap-2">
             <div
@@ -171,8 +181,12 @@ export default function App() {
               <Shield size={13} color="#fff" />
             </div>
             <div>
-              <div className="font-bold text-main leading-tight" style={{ fontSize: 13 }}>Strenes</div>
-              <div className="text-[9px] dim leading-tight">Private messaging</div>
+              <div className="font-bold text-main leading-tight" style={{ fontSize: 13 }}>
+                {SCREEN_TITLES[activeScreen]?.title ?? 'Strenes'}
+              </div>
+              <div className="text-[9px] dim leading-tight">
+                {SCREEN_TITLES[activeScreen]?.sub ?? 'Private messaging'}
+              </div>
             </div>
           </div>
         )}
