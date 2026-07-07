@@ -4,6 +4,7 @@
  */
 
 import type { Contact, Message } from '../types';
+import { promptNano } from './nano';
 
 export interface ReplyIntent      { type: 'reply';       contactId: string; contactName: string; text: string }
 export interface OpenIntent       { type: 'open';        contactId: string; contactName: string }
@@ -105,7 +106,12 @@ function matchContact(name: string, contacts: Contact[]): Contact | undefined {
   );
 }
 
-function parseHeuristic(text: string, contacts: Contact[]): Intent {
+/**
+ * Precise command grammar — deterministic patterns for well-formed commands.
+ * Returns null when nothing matches so the caller can escalate to the
+ * on-device LLM before falling back to the rule catch-all.
+ */
+function parsePrecise(text: string, contacts: Contact[]): Intent | null {
   const t = text.trim();
   const { expiresAt, rest } = extractDuration(t);
   const endOfDay = () => {
@@ -296,6 +302,18 @@ function parseHeuristic(text: string, contacts: Contact[]): Intent {
       };
     }
   }
+  return null;
+}
+
+/**
+ * Last-resort interpretation: the free-form rule catch-all plus legacy
+ * one-word patterns. Runs after both the precise grammar and the on-device
+ * LLM have had their chance.
+ */
+function parseFallback(text: string, contacts: Contact[]): Intent {
+  const t = text.trim();
+  const { expiresAt, rest } = extractDuration(t);
+
   // Free-form rule catch-all: any leftover statement of preference about
   // messages becomes a rule in the user's own words. The condition is stored
   // verbatim and judged per-message by the LLM evaluation chain (Claude →
@@ -328,6 +346,157 @@ function parseHeuristic(text: string, contacts: Contact[]): Intent {
   if (/(?:reject|block|dismiss|ignore|decline|delete|discard)/i.test(t)) return { type: 'reject' };
 
   return { type: 'unknown', query: t };
+}
+
+function parseHeuristic(text: string, contacts: Contact[]): Intent {
+  return parsePrecise(text, contacts) ?? parseFallback(text, contacts);
+}
+
+/**
+ * Validate and normalize an intent produced by a language model. Models can
+ * hallucinate ids, types, or shapes — everything they emit passes through
+ * here before it can touch the store. Returns null when unusable.
+ */
+function sanitizeIntent(p: any, contacts: Contact[]): Intent | null {
+  if (!p || typeof p.type !== 'string') return null;
+
+  const findContact = (): { id: string; name: string } | null => {
+    if (p.contactId === '*') return { id: '*', name: p.contactName || 'everyone' };
+    const c = contacts.find(x => x.id === p.contactId)
+      ?? (typeof p.contactName === 'string' ? matchContact(p.contactName, contacts) : undefined)
+      ?? (typeof p.contactId === 'string' ? matchContact(p.contactId, contacts) : undefined);
+    return c ? { id: c.id, name: c.name } : null;
+  };
+  const minutes = typeof p.durationMinutes === 'number' && p.durationMinutes > 0 && p.durationMinutes < 60 * 24 * 30
+    ? p.durationMinutes : undefined;
+
+  switch (p.type) {
+    case 'reply': {
+      const c = findContact();
+      if (!c || c.id === '*' || typeof p.text !== 'string' || !p.text.trim()) return null;
+      return { type: 'reply', contactId: c.id, contactName: c.name, text: p.text.trim() };
+    }
+    case 'open': {
+      const c = findContact();
+      if (!c || c.id === '*') return null;
+      return { type: 'open', contactId: c.id, contactName: c.name };
+    }
+    case 'approve': return { type: 'approve', messageId: typeof p.messageId === 'string' ? p.messageId : undefined };
+    case 'reject': return { type: 'reject', messageId: typeof p.messageId === 'string' ? p.messageId : undefined };
+    case 'show_review': return { type: 'show_review' };
+    case 'set_rule': {
+      if (!['trust', 'distrust', 'sensitivity', 'civility_toggle', 'spam_toggle', 'dnd_toggle'].includes(p.rule)) return null;
+      const needsContact = p.rule === 'trust' || p.rule === 'distrust';
+      const c = needsContact ? findContact() : null;
+      if (needsContact && (!c || c.id === '*')) return null;
+      return { type: 'set_rule', rule: p.rule, contactId: c?.id, contactName: c?.name, value: p.value };
+    }
+    case 'query': {
+      if (!['capabilities', 'held_count', 'contact_messages', 'summary', 'settings', 'rules'].includes(p.subject)) return null;
+      const c = p.subject === 'contact_messages' ? findContact() : null;
+      if (p.subject === 'contact_messages' && (!c || c.id === '*')) return null;
+      return { type: 'query', subject: p.subject, contactId: c?.id ?? undefined, contactName: c?.name ?? undefined };
+    }
+    case 'dynamic_rule': {
+      if (p.action === 'remove') {
+        return { type: 'dynamic_rule', action: 'remove', ruleRef: p.ruleRef != null ? String(p.ruleRef) : 'all' };
+      }
+      if (typeof p.condition !== 'string' || !p.condition.trim()) return null;
+      const c = findContact();
+      return {
+        type: 'dynamic_rule', action: 'add',
+        contactId: c?.id ?? '*', contactName: c?.name ?? 'everyone',
+        condition: p.condition.trim(),
+        ruleAction: p.ruleAction === 'block' ? 'block' : 'review',
+        expiresAt: minutes ? Date.now() + minutes * 60_000 : (typeof p.expiresAt === 'number' ? p.expiresAt : undefined),
+      };
+    }
+    case 'mute': {
+      const c = findContact();
+      return {
+        type: 'mute',
+        contactId: c?.id ?? '*', contactName: c?.name ?? 'everyone',
+        untilTs: typeof p.untilTs === 'number' && p.untilTs > Date.now()
+          ? p.untilTs
+          : Date.now() + (minutes ?? 720) * 60_000,
+      };
+    }
+    case 'unmute': {
+      const c = findContact();
+      return { type: 'unmute', contactId: c?.id ?? '*', contactName: c?.name ?? 'everyone' };
+    }
+    case 'summary_style': {
+      if (!['professional', 'casual', 'brief'].includes(p.style)) return null;
+      return { type: 'summary_style', style: p.style };
+    }
+    default:
+      return null; // includes 'unknown' — caller decides the fallback
+  }
+}
+
+// Flat schema so the on-device model's constrained decoding stays reliable.
+const NANO_INTENT_SCHEMA = {
+  type: 'object',
+  required: ['type'],
+  additionalProperties: false,
+  properties: {
+    type: { type: 'string', enum: ['reply', 'open', 'approve', 'reject', 'show_review', 'set_rule', 'query', 'dynamic_rule', 'mute', 'unmute', 'summary_style', 'unknown'] },
+    contactId: { type: 'string' },
+    contactName: { type: 'string' },
+    text: { type: 'string' },
+    condition: { type: 'string' },
+    ruleAction: { type: 'string', enum: ['block', 'review'] },
+    durationMinutes: { type: 'number' },
+    style: { type: 'string', enum: ['professional', 'casual', 'brief'] },
+    rule: { type: 'string', enum: ['trust', 'distrust', 'sensitivity', 'civility_toggle', 'spam_toggle', 'dnd_toggle'] },
+    value: { type: 'string' },
+    subject: { type: 'string', enum: ['capabilities', 'held_count', 'contact_messages', 'summary', 'settings', 'rules'] },
+    ruleRef: { type: 'string' },
+    action: { type: 'string', enum: ['add', 'remove'] },
+  },
+} as const;
+
+/**
+ * On-device interpretation via Gemini Nano — lets the user phrase a command
+ * any way they like without an API key. Only consulted when the precise
+ * grammar didn't match; output is sanitized before use.
+ */
+async function parseViaNano(text: string, contacts: Contact[]): Promise<Intent | null> {
+  const system = [
+    'You convert one messaging-app command into a single JSON intent. Return ONLY JSON.',
+    'Contacts:',
+    contacts.slice(0, 30).map(c => `id:${c.id} name:"${c.name}"`).join('\n') || '(none)',
+    '',
+    'Intent shapes (pick exactly one):',
+    '{"type":"reply","contactId":"<id>","text":"<reply>"}',
+    '{"type":"open","contactId":"<id>"}',
+    '{"type":"approve"} {"type":"reject"} {"type":"show_review"}',
+    '{"type":"set_rule","rule":"trust|distrust","contactId":"<id>"}',
+    '{"type":"set_rule","rule":"sensitivity","value":"low|medium|high"}',
+    '{"type":"set_rule","rule":"civility_toggle|spam_toggle|dnd_toggle","value":"on|off"}',
+    '{"type":"query","subject":"capabilities|held_count|summary|settings|rules"}',
+    '{"type":"query","subject":"contact_messages","contactId":"<id>"}',
+    '{"type":"dynamic_rule","action":"add","contactId":"<id or *>","condition":"<the preference in the user\'s words>","ruleAction":"block|review","durationMinutes":<optional>}',
+    '{"type":"dynamic_rule","action":"remove","ruleRef":"all|<number>|<keyword>"}',
+    '{"type":"mute","contactId":"<id or * for everything>","durationMinutes":<number>}',
+    '{"type":"unmute","contactId":"<id or *>"}',
+    '{"type":"summary_style","style":"professional|casual|brief"}',
+    '{"type":"unknown"}',
+    '',
+    'Guidance: wanting quiet/peace/no notifications => mute (contactId "*" unless a contact is named).',
+    'Any preference about which messages to see, hide, hold or block => dynamic_rule add, condition in the user\'s own words.',
+    'durationMinutes: "2 hours"=120, "today"=until end of day estimate 720. If genuinely unsure => {"type":"unknown"}.',
+  ].join('\n');
+
+  const raw = await promptNano(system, text, NANO_INTENT_SCHEMA);
+  if (!raw) return null;
+  const m = raw.match(/\{[\s\S]*\}/);
+  if (!m) return null;
+  try {
+    return sanitizeIntent(JSON.parse(m[0]), contacts);
+  } catch {
+    return null;
+  }
 }
 
 async function parseViaAnthropic(
@@ -396,20 +565,22 @@ async function parseViaAnthropic(
     const raw  = data.content?.find(b => b.type === 'text')?.text ?? '';
     const m    = raw.match(/\{[\s\S]*?\}/);
     if (!m) return parseHeuristic(text, contacts);
-    const parsed = JSON.parse(m[0]) as Intent & { durationMinutes?: number };
-    // The model reports durations in minutes; convert to timestamps here.
-    if (parsed.type === 'mute') {
-      const mins = parsed.durationMinutes ?? 720;
-      (parsed as MuteIntent).untilTs = Date.now() + mins * 60_000;
-    } else if (parsed.type === 'dynamic_rule' && parsed.durationMinutes) {
-      (parsed as DynamicRuleIntent).expiresAt = Date.now() + parsed.durationMinutes * 60_000;
-    }
-    return parsed;
+    // Model output is untrusted — sanitize before it can touch the store.
+    const clean = sanitizeIntent(JSON.parse(m[0]), contacts);
+    return clean ?? parseHeuristic(text, contacts);
   } catch {
     return parseHeuristic(text, contacts);
   }
 }
 
+/**
+ * The full understanding chain. The user can phrase a command any way they
+ * like; the best available interpreter wins:
+ *   1. Anthropic Claude — when an API key is configured
+ *   2. Precise grammar — fast deterministic patterns for common commands
+ *   3. Gemini Nano — on-device LLM interprets free phrasing, no key needed
+ *   4. Rule catch-all — leftover preferences become free-form rules
+ */
 export async function parseIntent(
   text: string,
   contacts: Contact[],
@@ -417,5 +588,12 @@ export async function parseIntent(
   apiKey: string,
 ): Promise<Intent> {
   if (apiKey.trim()) return parseViaAnthropic(text, contacts, heldMessages, apiKey.trim());
-  return parseHeuristic(text, contacts);
+
+  const precise = parsePrecise(text, contacts);
+  if (precise) return precise;
+
+  const viaNano = await parseViaNano(text, contacts);
+  if (viaNano && viaNano.type !== 'unknown') return viaNano;
+
+  return parseFallback(text, contacts);
 }
