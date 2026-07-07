@@ -349,6 +349,10 @@ export function Settings() {
         >
           <RotateCcw size={14} /> Reset demo
         </button>
+
+        <div className="text-center text-[10px] dim pb-2">
+          Strenes · build {__BUILD_STAMP__}
+        </div>
       </div>
     </>
   );

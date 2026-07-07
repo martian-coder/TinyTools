@@ -168,7 +168,7 @@ export default function App() {
           </div>
         )}
 
-        {/* App header — one header for the whole app, titled by the current screen */}
+        {/* App header — Strenes brand on the left, current screen on the right */}
         {activeScreen !== 'conversation' && (
           <div className="px-3 pt-2.5 pb-1.5 flex items-center gap-2">
             <div
@@ -181,11 +181,15 @@ export default function App() {
               <Shield size={13} color="#fff" />
             </div>
             <div>
-              <div className="font-bold text-main leading-tight" style={{ fontSize: 13 }}>
-                {SCREEN_TITLES[activeScreen]?.title ?? 'Strenes'}
+              <div className="font-bold text-main leading-tight" style={{ fontSize: 13 }}>Strenes</div>
+              <div className="text-[9px] dim leading-tight">private messaging</div>
+            </div>
+            <div className="ml-auto text-right">
+              <div className="font-semibold text-main leading-tight" style={{ fontSize: 12 }}>
+                {SCREEN_TITLES[activeScreen]?.title ?? ''}
               </div>
               <div className="text-[9px] dim leading-tight">
-                {SCREEN_TITLES[activeScreen]?.sub ?? 'Private messaging'}
+                {SCREEN_TITLES[activeScreen]?.sub ?? ''}
               </div>
             </div>
           </div>

@@ -7,6 +7,10 @@ const base = process.env.VITE_BASE ?? '/';
 
 export default defineConfig({
   base,
+  define: {
+    // Visible build stamp so testers can confirm which version they're on.
+    __BUILD_STAMP__: JSON.stringify(new Date().toISOString().slice(0, 16).replace('T', ' ') + ' UTC'),
+  },
   plugins: [
     react(),
     tailwindcss(),
