@@ -9,6 +9,7 @@ import { analyzeTypingPattern, getDrunkDetectionLevel } from '../moderation/drun
 import { suggestReplies } from '../moderation/reply-suggest';
 import { sendMessage as backendSendMessage } from '../services/backend';
 import { startCall as rtcStartCall, endCall as rtcEndCall, setCallMuted } from '../services/calls';
+import { sendReceipt } from '../services/receipts';
 import type { ModerationVerdict, MessageRoute, SpellCheckSuggestion, ToneAnalysis } from '../types';
 import type { SuggestionResult } from '../moderation/reply-suggest';
 
@@ -129,6 +130,17 @@ export function Conversation() {
   // Incoming messages are handled by the app-level pipeline in App.tsx
   // (classify → routeVerdict → dynamic rules → store), so nothing to wire here.
 
+  // Read receipts — sent only when this conversation is actually on screen,
+  // so the sender's "read" tick means a human saw it, not just delivery.
+  useEffect(() => {
+    if (!activeContactId || !currentUserId) return;
+    if (document.visibilityState !== 'visible') return;
+    const ids = useSiftStore.getState().markIncomingRead(activeContactId);
+    if (ids.length > 0) {
+      sendReceipt(currentUserId, activeContactId, { kind: 'read', ids });
+    }
+  }, [activeContactId, currentUserId, allMessages]);
+
   // Backend user ids are UUIDs; seed/demo contacts have short slugs. Real
   // contacts get a real WebRTC call, seed contacts keep the simulated demo.
   const isRealContact = !!activeContactId && /^[0-9a-f]{8}-[0-9a-f-]{20,}$/i.test(activeContactId);
@@ -221,10 +233,12 @@ export function Conversation() {
     if (outgoing.kind === 'review') {
       sendOutgoingToReview(activeContactId, text, (outgoing as { kind: 'review'; verdict: ModerationVerdict }).verdict);
     } else {
-      sendMessage(activeContactId, text, route);
+      const localId = sendMessage(activeContactId, text, route);
       if (navigator.onLine && route === 'ip') {
         try {
-          await backendSendMessage(currentUserId, activeContactId, text);
+          const relayId = await backendSendMessage(currentUserId, activeContactId, text);
+          // Correlates the recipient's delivery/read receipts with this bubble.
+          if (relayId) useSiftStore.getState().setMessageRelayId(localId, relayId);
         } catch (err) {
           console.error('Error sending message:', err);
         }
@@ -339,7 +353,26 @@ export function Conversation() {
                 {m.dir === 'out' && m.route === 'queued' && <><Timer size={9} /> queued · </>}
                 {m.dir === 'out' && m.route === 'ip'     && <Wifi size={9} />}
                 {m.time}
+                {/* Honest ticks: ✓ sent · ✓✓ delivered · colored ✓✓ read only when truly read */}
+                {m.dir === 'out' && m.status === 'delivered' && (
+                  m.receipt === 'read'
+                    ? <span style={{ color: 'var(--accent2)', fontWeight: 700, letterSpacing: '-0.18em', marginLeft: 3 }}>✓✓&nbsp;</span>
+                    : m.receipt === 'delivered'
+                      ? <span style={{ opacity: 0.75, letterSpacing: '-0.18em', marginLeft: 3 }}>✓✓&nbsp;</span>
+                      : (m.receipt === 'held' || m.receipt === 'filtered')
+                        ? null
+                        : <span style={{ opacity: 0.6, marginLeft: 3 }}>✓</span>
+                )}
               </div>
+              {/* Honest failure status: short reason, not the recipient's rules */}
+              {m.dir === 'out' && (m.receipt === 'held' || m.receipt === 'filtered') && (
+                <div className="text-[10px] mt-0.5 flex items-center gap-1" style={{ color: '#fbbf24' }}>
+                  <AlertCircle size={9} />
+                  {m.receipt === 'held'
+                    ? `Not delivered yet — held by recipient's filter${m.receiptReason ? ` (${m.receiptReason})` : ''}`
+                    : `Not delivered — filtered${m.receiptReason ? ` (${m.receiptReason})` : ''}`}
+                </div>
+              )}
             </div>
           </div>
         ))}

@@ -14,6 +14,7 @@ import { Auth } from './screens/Auth';
 import { Contacts } from './screens/Contacts';
 import { onAuthChange, onIncomingMessages, getUserProfile, updateUserStatus } from './services/backend';
 import { parseCallSignal, handleCallSignal, acceptCall, declineCall } from './services/calls';
+import { parseReceipt, sendReceipt } from './services/receipts';
 import { getModerator, routeVerdict } from './moderation';
 import { Phone, PhoneOff } from 'lucide-react';
 import type { ThemeName } from './types';
@@ -81,6 +82,13 @@ export default function App() {
       const state = useSiftStore.getState();
       const { settings } = state;
 
+      // Delivery/read receipts ride the relay too — update ticks and stop.
+      const receipt = parseReceipt(msg.text);
+      if (receipt) {
+        state.applyReceipt(msg.from, receipt);
+        return;
+      }
+
       // Call signaling (offer/answer/hangup) rides the same relay but is not
       // a chat message — hand it to the call manager and stop here.
       const signal = parseCallSignal(msg.text);
@@ -114,10 +122,19 @@ export default function App() {
       const verdict = await mod.classify(msg.text, { sensitivity: settings.civility.sensitivity });
       const trusted = !!contact?.trusted || settings.trustedIds.includes(msg.from);
       const route = routeVerdict(verdict, settings, trusted, contact?.isEmergency);
-      await state.checkAndReceiveMessage(
+      const finalRoute = await state.checkAndReceiveMessage(
         msg.from, msg.text, route, verdict,
         settings.aiModeration.anthropicKey || settings.aiReplies.anthropicKey,
+        { relayId: msg.id },
       );
+
+      // Honest status back to the sender: delivered, or a short reason when
+      // the filter intervened ("held — spam"). Never the recipient's rules.
+      const kind = finalRoute.status === 'delivered' ? 'delivered'
+        : finalRoute.status === 'held' ? 'held' : 'filtered';
+      const reason = kind === 'delivered' ? undefined
+        : (verdict.category !== 'clean' ? verdict.category : 'review');
+      sendReceipt(currentUserId, msg.from, { kind, ids: [msg.id], reason });
     });
 
     return unsubscribe;

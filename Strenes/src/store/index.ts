@@ -36,10 +36,13 @@ interface SiftState {
   openConversation: (contactId: string) => void;
   setRevealed: (id: string) => void;
   setBanner: (msg: string | null) => void;
-  sendMessage: (contactId: string, text: string, route?: MessageRoute) => void;
+  sendMessage: (contactId: string, text: string, route?: MessageRoute) => string;
+  setMessageRelayId: (localId: string, relayId: string) => void;
+  applyReceipt: (contactId: string, receipt: { kind: 'delivered' | 'read' | 'held' | 'filtered'; ids: string[]; reason?: string }) => void;
+  markIncomingRead: (contactId: string) => string[];
   flushQueue: () => void;
   sendOutgoingToReview: (contactId: string, text: string, verdict: ModerationVerdict) => void;
-  receiveMessage: (contactId: string, text: string, route: RouteResult, verdict: ModerationVerdict) => void;
+  receiveMessage: (contactId: string, text: string, route: RouteResult, verdict: ModerationVerdict, meta?: { relayId?: string }) => void;
   approveMessage: (id: string) => void;
   rejectMessage: (id: string) => void;
   clearReview: () => void;
@@ -68,7 +71,7 @@ interface SiftState {
   toggleDynamicRule: (ruleId: string) => void;
   updateDynamicRule: (ruleId: string, patch: Partial<Omit<DynamicRule, 'id' | 'contactId' | 'createdAt'>>) => void;
   getDynamicRulesForContact: (contactId: string) => DynamicRule[];
-  checkAndReceiveMessage: (contactId: string, text: string, route: RouteResult, verdict: ModerationVerdict, apiKey: string) => Promise<RouteResult>;
+  checkAndReceiveMessage: (contactId: string, text: string, route: RouteResult, verdict: ModerationVerdict, apiKey: string, meta?: { relayId?: string }) => Promise<RouteResult>;
   resetToSeed: () => void;
 }
 
@@ -150,15 +153,49 @@ export const useSiftStore = create<SiftState>()(
       setRevealed: id => set(s => ({ revealed: { ...s.revealed, [id]: true } })),
       setBanner: msg => set({ banner: msg }),
 
-      sendMessage: (contactId, text, route = 'ip') => set(s => ({
-        messages: [...s.messages, {
-          id: nid(), contactId, text, dir: 'out',
-          ts: Date.now(), time: nowTime(),
-          folder: 'primary', status: 'delivered',
-          disappearsAt: calcDisappearsAt(s.settings),
-          route,
-        }],
+      sendMessage: (contactId, text, route = 'ip') => {
+        const id = nid();
+        set(s => ({
+          messages: [...s.messages, {
+            id, contactId, text, dir: 'out',
+            ts: Date.now(), time: nowTime(),
+            folder: 'primary', status: 'delivered',
+            disappearsAt: calcDisappearsAt(s.settings),
+            route,
+          }],
+        }));
+        return id;
+      },
+
+      setMessageRelayId: (localId, relayId) => set(s => ({
+        messages: s.messages.map(m => m.id === localId ? { ...m, relayId } : m),
       })),
+
+      applyReceipt: (contactId, receipt) => set(s => ({
+        messages: s.messages.map(m => {
+          if (m.dir !== 'out' || m.contactId !== contactId || !m.relayId || !receipt.ids.includes(m.relayId)) return m;
+          // Ticks only upgrade (sent → delivered → read); held/filtered always land.
+          const rank = { delivered: 1, read: 2 } as Record<string, number>;
+          if ((receipt.kind === 'delivered' || receipt.kind === 'read') &&
+              m.receipt && (rank[m.receipt] ?? 0) >= rank[receipt.kind]) return m;
+          return { ...m, receipt: receipt.kind, receiptReason: receipt.reason };
+        }),
+      })),
+
+      markIncomingRead: (contactId) => {
+        // Collect incoming messages that were actually viewed and still owe a
+        // read receipt; mark them sent and return relay ids for the caller.
+        const pending = get().messages.filter(m =>
+          m.dir === 'in' && m.contactId === contactId && m.relayId && !m.readReceiptSent &&
+          (m.status === 'delivered' || m.status === 'approved'));
+        if (pending.length === 0) return [];
+        const ids = pending.map(m => m.relayId!);
+        const idSet = new Set(pending.map(m => m.id));
+        set(s => ({
+          messages: s.messages.map(m => idSet.has(m.id) ? { ...m, readReceiptSent: true } : m),
+        }));
+        return ids;
+      },
 
       flushQueue: () => {
         const { messages, currentUserId } = get();
@@ -188,7 +225,7 @@ export const useSiftStore = create<SiftState>()(
         }],
       })),
 
-      receiveMessage: (contactId, text, route, verdict) => {
+      receiveMessage: (contactId, text, route, verdict, meta) => {
         const { settings } = get();
         const newMsg: Message = {
           id: nid(), contactId, text, dir: 'in',
@@ -196,6 +233,7 @@ export const useSiftStore = create<SiftState>()(
           verdict, folder: route.folder, status: route.status,
           autoReply: route.autoReply,
           disappearsAt: route.status === 'delivered' ? calcDisappearsAt(settings) : undefined,
+          relayId: meta?.relayId,
         };
         set(s => {
           const messages = [...s.messages, newMsg];
@@ -206,9 +244,18 @@ export const useSiftStore = create<SiftState>()(
         });
       },
 
-      approveMessage: id => set(s => ({
-        messages: s.messages.map(m => m.id === id ? { ...m, status: 'approved', folder: 'primary' } : m),
-      })),
+      approveMessage: id => {
+        const msg = get().messages.find(m => m.id === id);
+        set(s => ({
+          messages: s.messages.map(m => m.id === id ? { ...m, status: 'approved', folder: 'primary' } : m),
+        }));
+        // The sender saw "held" — tell them it got through after all.
+        const me = get().currentUserId;
+        if (me && msg?.relayId && msg.dir === 'in') {
+          import('../services/receipts').then(({ sendReceipt }) =>
+            sendReceipt(me, msg.contactId, { kind: 'delivered', ids: [msg.relayId!] }));
+        }
+      },
 
       rejectMessage: id => set(s => ({
         messages: s.messages.map(m => m.id === id ? { ...m, status: 'rejected' } : m),
@@ -358,7 +405,7 @@ export const useSiftStore = create<SiftState>()(
         return { settings: { ...s.settings, mutes } };
       }),
 
-      checkAndReceiveMessage: async (contactId, text, route, verdict, apiKey) => {
+      checkAndReceiveMessage: async (contactId, text, route, verdict, apiKey, meta) => {
         // Import here to avoid circular dependencies
         const { checkRuleMatch } = await import('../moderation/rules-check');
 
@@ -392,7 +439,7 @@ export const useSiftStore = create<SiftState>()(
         }
 
         // Now call receiveMessage with potentially modified route
-        state.receiveMessage(contactId, text, finalRoute, finalVerdict);
+        state.receiveMessage(contactId, text, finalRoute, finalVerdict, meta);
         return finalRoute;
       },
 

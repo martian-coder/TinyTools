@@ -73,6 +73,14 @@ export interface Message {
   autoReply?: boolean;
   disappearsAt?: number;
   route?: MessageRoute;
+  /** Relay row id — correlates receipts between sender and recipient. */
+  relayId?: string;
+  /** Outgoing only: what the recipient's device reported back. */
+  receipt?: 'delivered' | 'read' | 'held' | 'filtered';
+  /** Short category for held/filtered receipts (e.g. "spam"). */
+  receiptReason?: string;
+  /** Incoming only: read receipt already sent for this message. */
+  readReceiptSent?: boolean;
 }
 
 export interface UserSettings {
