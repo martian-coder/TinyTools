@@ -109,7 +109,7 @@ export function explainHold(msg: Message): { why: string; tip?: string } {
     return { why: 'Asks you to share an OTP or verification code.', tip: 'No bank, company, or official ever asks for your OTP. Sharing it hands over your account.' };
   }
   if (/kyc|account.{0,12}(suspend|block|expir|verif)|re.?activat/.test(t)) {
-    return { why: 'Claims your account needs urgent verification or will be blocked.', tip: 'Banks never send KYC links by message. Open your bank app directly instead.' };
+    return { why: 'Claims your account needs urgent verification or will be blocked.', tip: 'Banks never send verification links by text. Open your banking app directly instead.' };
   }
   if (/(prize|lottery|winner|won\b).{0,40}(claim|fee|pay|deposit)|congratulations.{0,30}won/.test(t)) {
     return { why: 'Announces a prize that requires a payment to claim.', tip: 'Real prizes never ask for money upfront. This is the oldest scam there is.' };
@@ -117,7 +117,7 @@ export function explainHold(msg: Message): { why: string; tip?: string } {
   if (/(courier|parcel|package|customs).{0,40}(fee|charge|pay|held|stuck)/.test(t)) {
     return { why: 'Claims a parcel is stuck pending a fee.', tip: 'Delivery companies collect fees at your door, not through payment links.' };
   }
-  if (/(police|arrest|legal action|court|warrant|cbi|customs)/.test(t) && /(pay|fine|immediately|urgent|call)/.test(t)) {
+  if (/(police|arrest|legal action|court|warrant|fbi|irs|customs)/.test(t) && /(pay|fine|immediately|urgent|call)/.test(t)) {
     return { why: 'Threatens legal trouble unless you act immediately.', tip: 'Police and courts never demand payment over messages. Pressure + urgency = scam.' };
   }
 

@@ -60,13 +60,13 @@ export const PROFILES: Record<ProfileId, ProtectionProfile> = {
       summaryStyle: 'casual',
     },
     rules: [
-      { condition: 'asking for OTP, PIN, password, bank details, KYC update, or account verification', action: 'review' },
+      { condition: 'asking for a one-time passcode, PIN, password, bank details, or account verification', action: 'review' },
       { condition: 'demanding a fee, customs charge, courier payment, or claiming a prize or lottery win', action: 'review' },
       { condition: 'claiming to be police, government, or threatening arrest or legal action', action: 'review' },
       { condition: 'a new number claiming to be a family member and asking for money', action: 'review' },
     ],
     confirmation: [
-      '🛡️ Elder Shield is on. I now hold anything that smells like a scam: OTP/bank requests, prize claims, fee demands, fake police threats, and "new number" family impersonation.',
+      '🛡️ Elder Shield is on. I now hold anything that smells like a scam: passcode and bank-detail requests, prize claims, fee demands, fake law-enforcement threats, and "new number" family impersonation.',
       "Held messages wait in Review with a plain explanation of why. Trusted contacts always get through instantly.",
     ],
   },

@@ -714,7 +714,7 @@ export function Commander() {
             addAI("· Protection profiles — 'use elder shield' (scam armor), 'public inbox', 'professional mode', 'minimal mode'");
             addAI("· Circles — 'Maya is family', 'Jay is work', 'Sara is my VIP'. Your circles lead every briefing; everyone else is one summary line.");
             addAI("· Availability — 'I'm busy with calls from 5pm till 9pm' → I filter accordingly (circles & trusted still get through). 'i'm free' lifts it.");
-            addAI("· Memory — 'remember my landlord is Sharma', 'I'm going through exams' (I adapt + keep it gentle), 'what do you remember', 'forget everything', 'export memory' (.md file). All on-device.");
+            addAI("· Memory — 'remember my accountant is Sarah', 'I'm going through exams' (I adapt + keep it gentle), 'what do you remember', 'forget everything', 'export memory' (.md file). All on-device.");
             addAI("· Mute updates — 'mute Maya for 4 hours', 'mute all msgs for 2 hrs', 'dnd for 2 hours', 'unmute all'");
             addAI("· Rules in your own words — 'hold anything asking me for money', 'no rants today', 'never show me chain forwards'. I evaluate each incoming message against them with on-device AI.");
             addAI("· Manage rules — 'my rules', 'remove rule 2', 'clear all rules'");
@@ -767,7 +767,7 @@ export function Commander() {
           case 'memory': {
             const mem = (settings.memory ?? []).filter(nt => !nt.expiresAt || nt.expiresAt > Date.now());
             if (mem.length === 0) {
-              responses.push({ text: "I don't remember anything yet. Tell me things — 'I'm busy with calls 5pm–9pm', 'remember my landlord is Sharma', 'I'm going through exams' — and I'll adapt around them. Everything stays on this device." });
+              responses.push({ text: "I don't remember anything yet. Tell me things — 'I'm busy with calls 5pm–9pm', 'remember my accountant is Sarah', 'I'm going through exams' — and I'll adapt around them. Everything stays on this device." });
             } else {
               responses.push({ text: `🧠 What I remember (${mem.length} note${mem.length !== 1 ? 's' : ''}, stored only on this device):` });
               mem.slice(-8).forEach(nt => {
