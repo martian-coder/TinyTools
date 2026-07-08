@@ -19,6 +19,7 @@ export function Settings() {
   const updateToneChecker     = useSiftStore(s => s.updateToneChecker);
   const updateSpellCheck      = useSiftStore(s => s.updateSpellCheck);
   const updateAiReplies       = useSiftStore(s => s.updateAiReplies);
+  const updateAiModeration    = useSiftStore(s => s.updateAiModeration);
   const updateSmsFallback     = useSiftStore(s => s.updateSmsFallback);
   const setContactEmergency   = useSiftStore(s => s.setContactEmergency);
   const resetToSeed           = useSiftStore(s => s.resetToSeed);
@@ -228,7 +229,7 @@ export function Settings() {
           </div>
           {s.aiReplies?.enabled && (
             <>
-              <p className="text-xs dim">Shows 3 short reply options when you open a chat. Works on-device (Gemini Nano) or with your Claude API key for higher quality.</p>
+              <p className="text-xs dim">One key upgrades everything — Commander understanding, your rules, message filtering, and reply suggestions. Stored only on this device.</p>
               <div>
                 <div className="text-xs dim mb-1.5 flex items-center gap-1.5">
                   <KeyRound size={11} /> Claude API key <span className="opacity-60">(optional)</span>
@@ -237,7 +238,12 @@ export function Settings() {
                   <input
                     type={showKey ? 'text' : 'password'}
                     value={s.aiReplies?.anthropicKey ?? ''}
-                    onChange={e => updateAiReplies({ anthropicKey: e.target.value })}
+                    onChange={e => {
+                      // One paste powers every AI surface: replies, Commander
+                      // parsing, rule evaluation, AND the moderation classifier.
+                      updateAiReplies({ anthropicKey: e.target.value });
+                      updateAiModeration({ anthropicKey: e.target.value });
+                    }}
                     placeholder="sk-ant-..."
                     className="flex-1 bg-transparent text-sm text-main outline-none placeholder:dim min-w-0"
                     autoComplete="off"

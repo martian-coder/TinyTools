@@ -22,8 +22,13 @@ export { routeVerdict } from './route';
  */
 let cached: Moderator | null = null;
 
+let cachedKey: string | undefined;
+
 export async function getModerator(anthropicKey?: string): Promise<Moderator> {
-  if (cached) return cached;
+  // Re-probe when the key changes so pasting one in Settings upgrades the
+  // engine immediately instead of after the next reload.
+  if (cached && cachedKey === anthropicKey) return cached;
+  cachedKey = anthropicKey;
 
   const chain: Moderator[] = [];
   if (anthropicKey) {
