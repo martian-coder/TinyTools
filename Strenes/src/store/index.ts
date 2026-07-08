@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { Contact, Message, MessageRoute, UserSettings, Folder, RouteResult, ModerationVerdict, DynamicRule } from '../types';
+import type { Contact, Message, MessageRoute, UserSettings, Folder, RouteResult, ModerationVerdict, DynamicRule, MemoryNote } from '../types';
 import { SEED_CONTACTS, SEED_MESSAGES, DEFAULT_SETTINGS } from '../seed';
 import { PROFILES, type ProfileId } from '../moderation/profiles';
 
@@ -68,6 +68,9 @@ interface SiftState {
   muteContact: (contactId: string, untilTs: number) => void;
   unmuteContact: (contactId: string) => void;
   applyProfile: (profileId: ProfileId) => void;
+  addMemoryNote: (text: string, kind: 'fact' | 'situation', expiresAt?: number) => void;
+  forgetMemory: (target: 'all' | string) => number;
+  getActiveMemory: () => MemoryNote[];
   removeDynamicRule: (ruleId: string) => void;
   toggleDynamicRule: (ruleId: string) => void;
   updateDynamicRule: (ruleId: string, patch: Partial<Omit<DynamicRule, 'id' | 'contactId' | 'createdAt'>>) => void;
@@ -371,6 +374,34 @@ export const useSiftStore = create<SiftState>()(
           r.enabled &&
           (!r.expiresAt || r.expiresAt > now)
         );
+      },
+
+      addMemoryNote: (text, kind, expiresAt) => set(s => ({
+        settings: {
+          ...s.settings,
+          memory: [
+            ...(s.settings.memory ?? []).filter(n => !n.expiresAt || n.expiresAt > Date.now()),
+            { id: `mem-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`, text, kind, createdAt: Date.now(), expiresAt },
+          ],
+        },
+      })),
+
+      forgetMemory: (target) => {
+        const before = (get().settings.memory ?? []).length;
+        set(s => ({
+          settings: {
+            ...s.settings,
+            memory: target === 'all'
+              ? []
+              : (s.settings.memory ?? []).filter(n => !n.text.toLowerCase().includes(target.toLowerCase())),
+          },
+        }));
+        return before - (get().settings.memory ?? []).length;
+      },
+
+      getActiveMemory: () => {
+        const now = Date.now();
+        return (get().settings.memory ?? []).filter(n => !n.expiresAt || n.expiresAt > now);
       },
 
       applyProfile: (profileId) => {

@@ -10,8 +10,9 @@ import type { Message } from '../types';
 
 interface Chip {
   label: string;
-  action: 'open' | 'show_review';
+  action: 'open' | 'show_review' | 'command';
   contactId?: string;
+  command?: string;
 }
 
 interface SuggestChip {
@@ -204,6 +205,8 @@ export function Commander() {
   const updateSettings    = useSiftStore(s => s.updateSettings);
   const applyProfile      = useSiftStore(s => s.applyProfile);
   const setContactCircle  = useSiftStore(s => s.setContactCircle);
+  const addMemoryNote     = useSiftStore(s => s.addMemoryNote);
+  const forgetMemory      = useSiftStore(s => s.forgetMemory);
 
   const { msgs, addAI, addUser } = useChat();
   const [draft, setDraft]        = useState('');
@@ -276,6 +279,13 @@ export function Commander() {
         ? `Briefing: ${total} message${total !== 1 ? 's' : ''} from ${senders} sender${senders !== 1 ? 's' : ''}.`
         : `You have ${total} message${total !== 1 ? 's' : ''} from ${senders} sender${senders !== 1 ? 's' : ''}.`
     );
+
+    // Life-situation awareness: acknowledge what the user is going through.
+    const situations = (settings.memory ?? []).filter(nt => nt.kind === 'situation' && (!nt.expiresAt || nt.expiresAt > now));
+    if (situations.length > 0) {
+      const latest = situations[situations.length - 1];
+      addAI(`💙 Keeping it gentle — I remember: "${latest.text.slice(0, 80)}${latest.text.length > 80 ? '…' : ''}"`);
+    }
 
     type Priority = 'high' | 'medium' | 'low';
 
@@ -363,8 +373,11 @@ export function Commander() {
   }, [msgs.length]);
 
   /* Inline chip action handler */
+  const execRef = useRef<(text: string) => void>(() => {});
   const runChip = useCallback((chip: Chip) => {
-    if (chip.action === 'open' && chip.contactId) {
+    if (chip.action === 'command' && chip.command) {
+      execRef.current(chip.command);
+    } else if (chip.action === 'open' && chip.contactId) {
       openConversation(chip.contactId);
     } else if (chip.action === 'show_review') {
       setFolder('review');
@@ -571,6 +584,76 @@ export function Commander() {
         break;
       }
 
+      case 'remember': {
+        addMemoryNote(intent.note, intent.kind, intent.expiresAt);
+        if (intent.kind === 'situation') {
+          const empathy: Record<string, string> = {
+            breakup: "I'm sorry — that's heavy. I've noted it, and I'll keep your briefings gentle for a while.",
+            exams: "Noted — exam season. Protect the focus; I can hold the noise.",
+            grief: "I'm so sorry for your loss. I've noted it. Take all the time you need — I'll keep things quiet here.",
+            health: "Noted — health first, messages later. I've got the inbox.",
+            newjob: "Noted — big move! I'll keep distractions down while you find your feet.",
+            baby: "Congratulations! Noted — expect me to guard your sleep like it's sacred.",
+            wedding: "Congratulations! Noted — I'll help keep the chaos manageable.",
+            moving: "Noted — moving is a lot. I'll keep the inbox light.",
+            travel: "Noted — enjoy the trip. Want everything low-key while you're away?",
+            stress: "Heard. I've noted it — let's lower the volume on everything that isn't essential.",
+          };
+          responses.push({
+            text: empathy[intent.situationKind ?? 'stress'] ?? empathy.stress,
+            chips: [
+              { label: '🍃 Minimal mode', action: 'command', command: 'use minimal mode' },
+              { label: '🔇 Mute all today', action: 'command', command: 'mute all msgs today' },
+            ],
+          });
+          responses.push({ text: "This stays only on your device. Say 'what do you remember' anytime, or 'forget it' when it no longer applies." });
+        } else {
+          responses.push({ text: `🧠 Remembered: "${intent.note}". Stored only on this device — say 'what do you remember' to review.` });
+        }
+        break;
+      }
+
+      case 'forget': {
+        const n = forgetMemory(intent.target);
+        responses.push({
+          text: intent.target === 'all'
+            ? (n > 0 ? `✓ Forgot everything — ${n} note${n !== 1 ? 's' : ''} erased. Clean slate.` : 'Nothing to forget — my memory is already empty.')
+            : (n > 0 ? `✓ Forgot ${n} note${n !== 1 ? 's' : ''} about "${intent.target}".` : `I had nothing about "${intent.target}".`),
+        });
+        break;
+      }
+
+      case 'memory_export': {
+        const mem = (settings.memory ?? []).filter(nt => !nt.expiresAt || nt.expiresAt > Date.now());
+        const circled = contacts.filter(c => c.circle);
+        const rules = settings.dynamicRules.filter(r => r.enabled && (!r.expiresAt || r.expiresAt > Date.now()));
+        const md = [
+          '# Strenes — What I Remember', '',
+          `_Exported ${new Date().toLocaleString()} · this file never leaves your device unless you share it._`, '',
+          '## About you',
+          ...(mem.filter(nt => nt.kind === 'fact').map(nt => `- ${nt.text}`) || []),
+          ...(mem.filter(nt => nt.kind === 'fact').length === 0 ? ['- (nothing yet)'] : []),
+          '', '## What you are going through',
+          ...(mem.filter(nt => nt.kind === 'situation').map(nt => `- ${nt.text}${nt.expiresAt ? ` _(until ${new Date(nt.expiresAt).toLocaleDateString()})_` : ''}`)),
+          ...(mem.filter(nt => nt.kind === 'situation').length === 0 ? ['- (nothing right now)'] : []),
+          '', '## Your circles',
+          ...(circled.length ? circled.map(c => `- ${c.name}: ${c.circle}`) : ['- (none set)']),
+          '', '## Your rules',
+          ...(rules.length ? rules.map(r => `- ${r.action} ${r.contactId === '*' ? 'anyone' : (contacts.find(c => c.id === r.contactId)?.name ?? r.contactId)}: "${r.condition}"`) : ['- (none)']),
+          '', `## Setup`,
+          `- Protection profile: ${settings.commander?.profile ?? 'none'}`,
+          `- Summary style: ${settings.commander?.summaryStyle ?? 'casual'}`,
+        ].join('\n');
+        const blob = new Blob([md], { type: 'text/markdown' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'strenes-memory.md';
+        a.click();
+        setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+        responses.push({ text: '📄 Downloaded strenes-memory.md — everything I remember, in a file you own.' });
+        break;
+      }
+
       case 'set_circle': {
         setContactCircle(intent.contactId, intent.circle ?? undefined);
         if (intent.circle) {
@@ -614,6 +697,7 @@ export function Commander() {
             addAI("· Trust contacts — 'trust Sarah' / 'don't trust Dave'");
             addAI("· Protection profiles — 'use elder shield' (scam armor), 'public inbox', 'professional mode', 'minimal mode'");
             addAI("· Circles — 'Maya is family', 'Jay is work', 'Sara is my VIP'. Your circles lead every briefing; everyone else is one summary line.");
+            addAI("· Memory — 'remember I work nights', 'I'm going through exams' (I adapt + keep it gentle), 'what do you remember', 'forget everything', 'export memory' (.md file). All on-device.");
             addAI("· Mute updates — 'mute Maya for 4 hours', 'mute all msgs for 2 hrs', 'dnd for 2 hours', 'unmute all'");
             addAI("· Rules in your own words — 'hold anything asking me for money', 'no rants today', 'never show me chain forwards'. I evaluate each incoming message against them with on-device AI.");
             addAI("· Manage rules — 'my rules', 'remove rule 2', 'clear all rules'");
@@ -662,6 +746,21 @@ export function Commander() {
             setBusy(false);
             doBriefing();
             return;
+          }
+          case 'memory': {
+            const mem = (settings.memory ?? []).filter(nt => !nt.expiresAt || nt.expiresAt > Date.now());
+            if (mem.length === 0) {
+              responses.push({ text: "I don't remember anything yet. Tell me things — 'remember I work night shifts', 'I'm going through exams' — and I'll adapt around them. Everything stays on this device." });
+            } else {
+              responses.push({ text: `🧠 What I remember (${mem.length} note${mem.length !== 1 ? 's' : ''}, stored only on this device):` });
+              mem.slice(-8).forEach(nt => {
+                const tag = nt.kind === 'situation' ? '💙' : '·';
+                const until = nt.expiresAt ? ` (until ${new Date(nt.expiresAt).toLocaleDateString()})` : '';
+                responses.push({ text: `${tag} ${nt.text}${until}` });
+              });
+              responses.push({ text: "Say 'forget <word>', 'forget everything', or 'export memory' to download it as a file." });
+            }
+            break;
           }
           case 'circles': {
             const circled = contacts.filter(c => c.circle);
@@ -752,8 +851,10 @@ export function Commander() {
     contacts, heldMessages, allMessages, settings,
     sendMessage, approveMessage, rejectMessage, openConversation,
     setFolder, setScreen, setContactTrusted, updateCivility, updateSpam, updateDND,
-    addDynamicRule, removeDynamicRule, muteContact, unmuteContact, updateSettings, applyProfile, addUser, addAI, doBriefing,
+    addDynamicRule, removeDynamicRule, muteContact, unmuteContact, updateSettings, applyProfile, setContactCircle, addMemoryNote, forgetMemory, addUser, addAI, doBriefing,
   ]);
+
+  useEffect(() => { execRef.current = executeCommand; }, [executeCommand]);
 
   /* Send handler */
   const handleSend = useCallback(() => {

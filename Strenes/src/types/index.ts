@@ -48,6 +48,16 @@ export interface DynamicRule {
 
 export type SummaryStyle = 'professional' | 'casual' | 'brief';
 
+/** One thing the Commander remembers about the user. Local-only, never synced. */
+export interface MemoryNote {
+  id: string;
+  text: string;
+  kind: 'fact' | 'situation';
+  createdAt: number;
+  /** Situations can expire ("exams till friday"); facts usually don't. */
+  expiresAt?: number;
+}
+
 export interface Contact {
   id: string;
   name: string;
@@ -145,6 +155,8 @@ export interface UserSettings {
   };
   /** contactId → epoch ms until which their updates are hidden from Commander briefings. */
   mutes?: Record<string, number>;
+  /** Commander's memory about the user. Stored only on this device. */
+  memory?: MemoryNote[];
   _onboardingComplete?: boolean;
 }
 

@@ -22,7 +22,7 @@ export interface SetRuleIntent {
 }
 export interface QueryIntent {
   type: 'query';
-  subject: 'capabilities' | 'held_count' | 'contact_messages' | 'summary' | 'settings' | 'rules' | 'circles';
+  subject: 'capabilities' | 'held_count' | 'contact_messages' | 'summary' | 'settings' | 'rules' | 'circles' | 'memory';
   contactId?: string;
   contactName?: string;
 }
@@ -50,12 +50,23 @@ export interface UnmuteIntent { type: 'unmute'; contactId: string; contactName: 
 export interface SummaryStyleIntent { type: 'summary_style'; style: 'professional' | 'casual' | 'brief' }
 export interface SetProfileIntent { type: 'set_profile'; profile: ProfileId }
 export interface SetCircleIntent { type: 'set_circle'; contactId: string; contactName: string; circle: Circle | null }
+export interface RememberIntent {
+  type: 'remember';
+  note: string;
+  kind: 'fact' | 'situation';
+  /** e.g. 'breakup' | 'exams' | 'grief' | 'health' | 'newjob' | 'travel' — colors the reply. */
+  situationKind?: string;
+  expiresAt?: number;
+}
+export interface ForgetIntent { type: 'forget'; target: 'all' | string }
+export interface MemoryExportIntent { type: 'memory_export' }
 export interface UnknownIntent { type: 'unknown'; query: string }
 
 export type Intent =
   | ReplyIntent | OpenIntent | ApproveIntent | RejectIntent
   | ShowReviewIntent | SetRuleIntent | QueryIntent | DynamicRuleIntent
-  | MuteIntent | UnmuteIntent | SummaryStyleIntent | SetProfileIntent | SetCircleIntent | UnknownIntent;
+  | MuteIntent | UnmuteIntent | SummaryStyleIntent | SetProfileIntent | SetCircleIntent
+  | RememberIntent | ForgetIntent | MemoryExportIntent | UnknownIntent;
 
 /**
  * Parse a duration phrase out of a command. Returns the expiry timestamp and
@@ -160,6 +171,43 @@ function parsePrecise(text: string, contacts: Contact[]): Intent | null {
   if (circleRmM) {
     const c = matchContact(circleRmM[1], contacts);
     if (c) return { type: 'set_circle', contactId: c.id, contactName: c.name, circle: null };
+  }
+
+  // memory: "remember that...", "what do you remember", "forget X", "export memory"
+  if (/^what\s+do\s+you\s+(?:remember|know)(?:\s+about\s+me)?\??$|^(?:show\s+|my\s+)memory\s*$/i.test(rest)) {
+    return { type: 'query', subject: 'memory' };
+  }
+  if (/^(?:export|download|save)\s+(?:my\s+)?memory\s*$/i.test(rest)) {
+    return { type: 'memory_export' };
+  }
+  const forgetM = rest.match(/^forget\s+(?:about\s+)?(everything|all|it all)\s*$/i)
+    ?? rest.match(/^forget\s+(?:about\s+)?(.+)$/i);
+  if (forgetM) {
+    const target = /^(everything|all|it all)$/i.test(forgetM[1]) ? 'all' : forgetM[1].trim();
+    return { type: 'forget', target };
+  }
+  const rememberM = rest.match(/^(?:remember|note|keep\s+in\s+mind)\s+(?:that\s+)?(.+)$/i);
+  if (rememberM) {
+    return { type: 'remember', note: rememberM[1].trim(), kind: 'fact', expiresAt };
+  }
+  // life situations: "i'm going through a breakup", "exams this week", "lost my dad"
+  const sitM = t.match(/\b(break\s*up|breakup|divorce|separat(?:ed|ing)|exams?|finals|lost\s+my\s+\w+|funeral|griev|passed\s+away|sick|unwell|hospital|surgery|new\s+job|job\s+interview|interview\s+week|new\s+baby|pregnan|wedding|getting\s+married|moving\s+(?:house|out|cit)|travell?ing|vacation|burn(?:ed|t)?\s*out|overwhelmed|stressed)\b/i);
+  const sitContext = /\b(?:i'?m|i\s+am|i\s+have|i'?ve|my|going\s+through|dealing\s+with|just\s+had|feeling)\b/i.test(t);
+  if (sitM && sitContext) {
+    const w = sitM[1].toLowerCase();
+    const situationKind =
+      /break|divorce|separat/.test(w) ? 'breakup'
+      : /exam|final/.test(w) ? 'exams'
+      : /lost|funeral|griev|passed/.test(w) ? 'grief'
+      : /sick|unwell|hospital|surgery/.test(w) ? 'health'
+      : /job|interview/.test(w) ? 'newjob'
+      : /baby|pregnan/.test(w) ? 'baby'
+      : /wedding|married/.test(w) ? 'wedding'
+      : /moving/.test(w) ? 'moving'
+      : /travel|vacation/.test(w) ? 'travel'
+      : 'stress';
+    // Situations default to fading out after two weeks unless a duration was given.
+    return { type: 'remember', note: t, kind: 'situation', situationKind, expiresAt: expiresAt ?? Date.now() + 14 * 86_400_000 };
   }
 
   // unmute: "unmute maya", "unmute all", "show maya's updates again"
@@ -427,7 +475,7 @@ function sanitizeIntent(p: any, contacts: Contact[]): Intent | null {
       return { type: 'set_rule', rule: p.rule, contactId: c?.id, contactName: c?.name, value: p.value };
     }
     case 'query': {
-      if (!['capabilities', 'held_count', 'contact_messages', 'summary', 'settings', 'rules', 'circles'].includes(p.subject)) return null;
+      if (!['capabilities', 'held_count', 'contact_messages', 'summary', 'settings', 'rules', 'circles', 'memory'].includes(p.subject)) return null;
       const c = p.subject === 'contact_messages' ? findContact() : null;
       if (p.subject === 'contact_messages' && (!c || c.id === '*')) return null;
       return { type: 'query', subject: p.subject, contactId: c?.id ?? undefined, contactName: c?.name ?? undefined };
@@ -460,6 +508,20 @@ function sanitizeIntent(p: any, contacts: Contact[]): Intent | null {
       const c = findContact();
       return { type: 'unmute', contactId: c?.id ?? '*', contactName: c?.name ?? 'everyone' };
     }
+    case 'remember': {
+      if (typeof p.note !== 'string' || !p.note.trim()) return null;
+      const kind = p.kind === 'situation' ? 'situation' : 'fact';
+      return {
+        type: 'remember', note: p.note.trim().slice(0, 300), kind,
+        situationKind: typeof p.situationKind === 'string' ? p.situationKind : undefined,
+        expiresAt: minutes ? Date.now() + minutes * 60_000 : (kind === 'situation' ? Date.now() + 14 * 86_400_000 : undefined),
+      };
+    }
+    case 'forget': {
+      if (typeof p.target !== 'string' || !p.target.trim()) return null;
+      return { type: 'forget', target: p.target.trim() };
+    }
+    case 'memory_export': return { type: 'memory_export' };
     case 'set_circle': {
       const c = findContact();
       if (!c || c.id === '*') return null;
@@ -485,7 +547,7 @@ const NANO_INTENT_SCHEMA = {
   required: ['type'],
   additionalProperties: false,
   properties: {
-    type: { type: 'string', enum: ['reply', 'open', 'approve', 'reject', 'show_review', 'set_rule', 'query', 'dynamic_rule', 'mute', 'unmute', 'summary_style', 'set_profile', 'set_circle', 'unknown'] },
+    type: { type: 'string', enum: ['reply', 'open', 'approve', 'reject', 'show_review', 'set_rule', 'query', 'dynamic_rule', 'mute', 'unmute', 'summary_style', 'set_profile', 'set_circle', 'remember', 'forget', 'memory_export', 'unknown'] },
     contactId: { type: 'string' },
     contactName: { type: 'string' },
     text: { type: 'string' },
@@ -500,6 +562,10 @@ const NANO_INTENT_SCHEMA = {
     action: { type: 'string', enum: ['add', 'remove'] },
     profile: { type: 'string', enum: ['elder', 'public', 'professional', 'minimal'] },
     circle: { type: 'string', enum: ['family', 'work', 'friends', 'vip'] },
+    note: { type: 'string' },
+    kind: { type: 'string', enum: ['fact', 'situation'] },
+    situationKind: { type: 'string' },
+    target: { type: 'string' },
   },
 } as const;
 
@@ -531,6 +597,8 @@ async function parseViaNano(text: string, contacts: Contact[]): Promise<Intent |
     '{"type":"set_profile","profile":"elder|public|professional|minimal"}  // protection presets: elder=scam shield, public=creator inbox, professional=work, minimal=quiet',
     '{"type":"set_circle","contactId":"<id>","circle":"family|work|friends|vip"}  // "maya is family", "jay is a work contact"',
     '{"type":"query","subject":"circles"}  // "who is in my circles"',
+    '{"type":"remember","note":"<what to remember>","kind":"fact|situation","situationKind":"breakup|exams|grief|health|newjob|baby|wedding|moving|travel|stress","durationMinutes":<optional>}  // "remember I work nights"; life events ("i\'m going through a divorce") => kind situation',
+    '{"type":"forget","target":"all|<keyword>"} {"type":"memory_export"} {"type":"query","subject":"memory"}',
     '{"type":"unknown"}',
     '',
     'Guidance: wanting quiet/peace/no notifications => mute (contactId "*" unless a contact is named).',
@@ -591,6 +659,10 @@ async function parseViaAnthropic(
     '{"type":"set_profile","profile":"elder|public|professional|minimal"}  // protection presets, e.g. "protect my mom\'s phone" => elder\n' +
     '{"type":"set_circle","contactId":"<id>","contactName":"<name>","circle":"family|work|friends|vip"}  // "maya is family", "jay is my client" => work\n' +
     '{"type":"query","subject":"circles"}\n' +
+    '{"type":"remember","note":"<text>","kind":"fact|situation","situationKind":"breakup|exams|grief|health|newjob|baby|wedding|moving|travel|stress","durationMinutes":<optional>}  // any personal fact or life event the user shares\n' +
+    '{"type":"forget","target":"all|<keyword>"}\n' +
+    '{"type":"query","subject":"memory"}  // "what do you remember about me"\n' +
+    '{"type":"memory_export"}\n' +
     '{"type":"unknown","query":"<original input>"}\n\n' +
     'IMPORTANT: ANY preference about which messages the user wants to see, hide, hold, or block ' +
     'is a dynamic_rule add — keep the condition in the user\'s own words (it is evaluated per-message ' +
