@@ -75,6 +75,13 @@ jobs:
           mkdir -p _site/strenes
           cp -r Strenes/dist/. _site/strenes/
           cp Strenes/dist/index.html _site/strenes/404.html
+          # /fresh/ — always-uncached entry: outside the /strenes/ service
+          # worker's scope with SW registration stripped, so it ALWAYS shows
+          # the latest deploy (assets resolve via /strenes/ absolute URLs)
+          mkdir -p _site/fresh
+          cp Strenes/dist/index.html _site/fresh/index.html
+          sed -i 's#<script id="vite-plugin-pwa:register-sw"[^<]*</script>##' _site/fresh/index.html
+          cp _site/fresh/index.html _site/fresh/404.html
           # /strenes-home/ — Strenes marketing landing page
           mkdir -p _site/strenes-home
           cp -r Strenes/landing/. _site/strenes-home/
