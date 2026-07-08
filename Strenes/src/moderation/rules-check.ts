@@ -1,6 +1,7 @@
 import type { DynamicRule } from '../types';
 import { isRant } from './insights';
 import { promptNano } from './nano';
+import { promptCloud } from './cloud';
 
 /**
  * checkRuleMatch — decides whether an incoming message matches a rule the
@@ -67,31 +68,10 @@ async function checkViaAnthropic(
   rule: DynamicRule,
   apiKey: string,
 ): Promise<{ matches: boolean; reason?: string } | null> {
-  try {
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      signal: AbortSignal.timeout(10_000),
-      headers: {
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01',
-        'content-type': 'application/json',
-        'anthropic-dangerous-direct-browser-access': 'true',
-      },
-      body: JSON.stringify({
-        model: 'claude-haiku-4-5-20251001',
-        max_tokens: 100,
-        system: ruleSystemPrompt(rule),
-        messages: [{ role: 'user', content: `Incoming message: "${message}"` }],
-      }),
-    });
-
-    if (!res.ok) return null;
-    const data = await res.json() as { content?: Array<{ type: string; text?: string }> };
-    const text = data.content?.find(b => b.type === 'text')?.text ?? '';
-    return parseMatch(text);
-  } catch {
-    return null;
-  }
+  // Routes to Claude or Gemini depending on the key the user pasted.
+  const raw = await promptCloud(ruleSystemPrompt(rule), `Incoming message: "${message}"`, apiKey, { maxTokens: 100 });
+  if (!raw) return null;
+  return parseMatch(raw);
 }
 
 async function checkViaNano(

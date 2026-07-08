@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { AlertTriangle, Briefcase, Forward, ShieldCheck, RotateCcw, Download, Brain, Trash2, Clock, Zap, Flame, Sparkles, KeyRound, Eye, EyeOff, MessageSquare } from 'lucide-react';
 import { useSiftStore } from '../store';
+import { providerLabel } from '../moderation/cloud';
 import { Switch } from '../components/ui/Switch';
 import { Segment } from '../components/ui/Segment';
 import { Avatar } from '../components/ui/Avatar';
@@ -229,10 +230,10 @@ export function Settings() {
           </div>
           {s.aiReplies?.enabled && (
             <>
-              <p className="text-xs dim">One key upgrades everything — Commander understanding, your rules, message filtering, and reply suggestions. Stored only on this device.</p>
+              <p className="text-xs dim">One key upgrades everything — Commander understanding, your rules, message filtering, and reply suggestions. Claude or Gemini keys both work (detected automatically). Stored only on this device.</p>
               <div>
                 <div className="text-xs dim mb-1.5 flex items-center gap-1.5">
-                  <KeyRound size={11} /> Claude API key <span className="opacity-60">(optional)</span>
+                  <KeyRound size={11} /> Claude or Gemini API key <span className="opacity-60">(optional)</span>
                 </div>
                 <div className="flex gap-2 items-center glass rounded-xl px-3 py-2" style={{ borderRadius: 14 }}>
                   <input
@@ -244,7 +245,7 @@ export function Settings() {
                       updateAiReplies({ anthropicKey: e.target.value });
                       updateAiModeration({ anthropicKey: e.target.value });
                     }}
-                    placeholder="sk-ant-..."
+                    placeholder="sk-ant-… or AIza…"
                     className="flex-1 bg-transparent text-sm text-main outline-none placeholder:dim min-w-0"
                     autoComplete="off"
                     spellCheck={false}
@@ -260,7 +261,9 @@ export function Settings() {
                   style={{ background: s.aiReplies.anthropicKey ? 'var(--accent)' : 'var(--accent2)' }}
                 />
                 <span className="dim">
-                  {s.aiReplies.anthropicKey ? 'Using Claude API — best quality' : 'Using on-device AI (Gemini Nano) — no key needed'}
+                  {s.aiReplies.anthropicKey
+                    ? `Using ${providerLabel(s.aiReplies.anthropicKey)} — best quality`
+                    : 'Using on-device AI (Gemini Nano) — no key needed'}
                 </span>
               </div>
             </>

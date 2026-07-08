@@ -7,7 +7,7 @@ export type DisappearingMessageMode = 'off' | 'onRead' | '1m' | '5m' | '1h' | '2
 export type MessageTone = 'polite' | 'neutral' | 'assertive' | 'aggressive' | 'harsh';
 export type DrunkModeAction = 'prevent' | 'warn';
 
-export type ModerationEngine = 'rules' | 'apple-fm' | 'gemini-nano' | 'executorch' | 'anthropic-claude';
+export type ModerationEngine = 'rules' | 'apple-fm' | 'gemini-nano' | 'executorch' | 'anthropic-claude' | 'gemini-api';
 export type AIProvider = 'gemini-nano' | 'anthropic-claude';
 
 export interface SpellCheckSuggestion {

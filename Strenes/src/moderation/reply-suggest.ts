@@ -7,8 +7,11 @@
  *  2. Chrome Prompt API (Gemini Nano) — if on-device model is available.
  *  3. Returns null — no suggestions shown.
  *
- * The API key is stored only in localStorage and sent only to Anthropic.
+ * The API key is stored only in localStorage and sent only to the provider
+ * it belongs to (Claude or Gemini, detected from the key shape).
  */
+
+import { promptCloud } from './cloud';
 
 export interface ChatTurn {
   role: 'incoming' | 'outgoing';
@@ -48,30 +51,10 @@ async function suggestViaAnthropic(
   senderName: string,
   apiKey: string,
 ): Promise<string[] | null> {
-  try {
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01',
-        'content-type': 'application/json',
-        'anthropic-dangerous-direct-browser-access': 'true',
-      },
-      body: JSON.stringify({
-        model: 'claude-haiku-4-5-20251001',
-        max_tokens: 200,
-        system: SYSTEM,
-        messages: [{ role: 'user', content: buildPrompt(history, senderName) }],
-      }),
-    });
-
-    if (!res.ok) return null;
-    const data = await res.json() as { content?: Array<{ type: string; text?: string }> };
-    const text = data.content?.find(b => b.type === 'text')?.text ?? '';
-    return parseReplies(text);
-  } catch {
-    return null;
-  }
+  // Routes to Claude or Gemini depending on the key the user pasted.
+  const raw = await promptCloud(SYSTEM, buildPrompt(history, senderName), apiKey, { maxTokens: 200 });
+  if (!raw) return null;
+  return parseReplies(raw);
 }
 
 /* ── Chrome Prompt API / Gemini Nano ───────────────────────────────── */

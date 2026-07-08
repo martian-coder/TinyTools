@@ -1,6 +1,7 @@
-import type { Category, ModerationVerdict } from '../types';
+import type { Category, ModerationEngine, ModerationVerdict } from '../types';
 import type { Moderator, Sensitivity } from './types';
 import { classifyByRules } from './rules';
+import { promptCloud, detectProvider } from './cloud';
 
 /**
  * AnthropicModerator — optional cloud-based AI engine using Claude.
@@ -58,9 +59,11 @@ export function createAnthropicModerator(apiKey: string): Moderator | null {
   if (!apiKey || typeof apiKey !== 'string' || apiKey.trim().length === 0) return null;
 
   const key = apiKey.trim();
+  // The key can be Claude (sk-ant-…) or Gemini (AIza…) — promptCloud routes it.
+  const engine: ModerationEngine = detectProvider(key) === 'gemini' ? 'gemini-api' : 'anthropic-claude';
 
   return {
-    name: 'anthropic-claude',
+    name: engine,
 
     async isAvailable() {
       // Only available if API key is configured
@@ -68,45 +71,15 @@ export function createAnthropicModerator(apiKey: string): Moderator | null {
     },
 
     async classify(text, { sensitivity }) {
-      // Pre-filter with rules first; only escalate borderline cases to Claude
+      // Pre-filter with rules first; only escalate borderline cases to the cloud
       const pre = classifyByRules(text, sensitivity);
       if (pre.category !== 'clean') return pre;
 
-      try {
-        const response = await fetch('https://api.anthropic.com/v1/messages', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'x-api-key': key,
-            'anthropic-version': '2023-06-01',
-          },
-          body: JSON.stringify({
-            model: 'claude-opus-4-8',
-            max_tokens: 256,
-            system: SYSTEM_PROMPT(sensitivity),
-            messages: [
-              {
-                role: 'user',
-                content: text,
-              },
-            ],
-          }),
-        });
-
-        if (!response.ok) {
-          // API error → silent fallback to rules
-          return pre;
-        }
-
-        const data = (await response.json()) as { content?: Array<{ type: string; text?: string }> };
-        const textContent = data.content?.find((c) => c.type === 'text');
-        if (!textContent || !textContent.text) return pre;
-
-        return parseVerdict(textContent.text) ?? pre;
-      } catch {
-        // Network error → silent fallback to rules
-        return pre;
-      }
+      const raw = await promptCloud(SYSTEM_PROMPT(sensitivity), text, key, { maxTokens: 256 });
+      if (!raw) return pre;
+      const verdict = parseVerdict(raw);
+      if (!verdict) return pre;
+      return { ...verdict, engine };
     },
   };
 }

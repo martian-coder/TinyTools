@@ -64,4 +64,5 @@ export const ENGINE_LABELS: Record<ModerationEngine, string> = {
   'gemini-nano': 'Gemini Nano',
   'executorch': 'ExecuTorch',
   'anthropic-claude': 'Claude (API)',
+  'gemini-api': 'Gemini (API)',
 };

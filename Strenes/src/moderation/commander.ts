@@ -5,6 +5,7 @@
 
 import type { Contact, Message } from '../types';
 import { promptNano } from './nano';
+import { promptCloud } from './cloud';
 
 export interface ReplyIntent      { type: 'reply';       contactId: string; contactName: string; text: string }
 export interface OpenIntent       { type: 'open';        contactId: string; contactName: string }
@@ -545,26 +546,10 @@ async function parseViaAnthropic(
     'Prefer ruleAction "review" unless the user clearly wants messages gone.';
 
   try {
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      signal: AbortSignal.timeout(10_000),
-      headers: {
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01',
-        'content-type': 'application/json',
-        'anthropic-dangerous-direct-browser-access': 'true',
-      },
-      body: JSON.stringify({
-        model: 'claude-haiku-4-5-20251001',
-        max_tokens: 200,
-        system,
-        messages: [{ role: 'user', content: text }],
-      }),
-    });
-    if (!res.ok) return parseHeuristic(text, contacts);
-    const data = await res.json() as { content?: Array<{ type: string; text?: string }> };
-    const raw  = data.content?.find(b => b.type === 'text')?.text ?? '';
-    const m    = raw.match(/\{[\s\S]*?\}/);
+    // Routes to Claude or Gemini depending on the key the user pasted.
+    const raw = await promptCloud(system, text, apiKey, { maxTokens: 200 });
+    if (!raw) return parseHeuristic(text, contacts);
+    const m = raw.match(/\{[\s\S]*?\}/);
     if (!m) return parseHeuristic(text, contacts);
     // Model output is untrusted — sanitize before it can touch the store.
     const clean = sanitizeIntent(JSON.parse(m[0]), contacts);
