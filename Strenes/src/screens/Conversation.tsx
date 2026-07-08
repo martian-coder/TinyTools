@@ -8,6 +8,7 @@ import { analyzeTone } from '../moderation/tone-analyzer';
 import { analyzeTypingPattern, getDrunkDetectionLevel } from '../moderation/drunk-detection';
 import { suggestReplies } from '../moderation/reply-suggest';
 import { sendMessage as backendSendMessage } from '../services/backend';
+import { startCall as rtcStartCall, endCall as rtcEndCall, setCallMuted } from '../services/calls';
 import type { ModerationVerdict, MessageRoute, SpellCheckSuggestion, ToneAnalysis } from '../types';
 import type { SuggestionResult } from '../moderation/reply-suggest';
 
@@ -128,14 +129,33 @@ export function Conversation() {
   // Incoming messages are handled by the app-level pipeline in App.tsx
   // (classify → routeVerdict → dynamic rules → store), so nothing to wire here.
 
+  // Backend user ids are UUIDs; seed/demo contacts have short slugs. Real
+  // contacts get a real WebRTC call, seed contacts keep the simulated demo.
+  const isRealContact = !!activeContactId && /^[0-9a-f]{8}-[0-9a-f-]{20,}$/i.test(activeContactId);
+
+  // Real call state lives in the store (managed by services/calls.ts).
+  const activeCall = useSiftStore(s => s.activeCall);
+  const realCallActive = !!activeCall && activeCall.peerId === activeContactId && activeCall.status !== 'incoming';
+
   const startCall = () => {
-    setCallState('ringing');
     setMuted(false);
     setSpeaker(false);
+    if (isRealContact && currentUserId) {
+      rtcStartCall(currentUserId, activeContactId!).catch(err => {
+        console.error('Call failed:', err);
+        useSiftStore.getState().setBanner('Could not start the call — check mic permission.');
+      });
+      return;
+    }
+    setCallState('ringing');
     setTimeout(() => setCallState(prev => prev === 'ringing' ? 'connected' : prev), 2500);
   };
 
   const endCall = () => {
+    if (realCallActive) {
+      rtcEndCall();
+      return;
+    }
     setCallState('idle');
     setCallSecs(0);
   };
@@ -608,8 +628,8 @@ export function Conversation() {
         </div>
       )}
 
-      {/* In-call overlay */}
-      {callState !== 'idle' && (
+      {/* In-call overlay — covers both real WebRTC calls and the demo sim */}
+      {(callState !== 'idle' || realCallActive) && (
         <div
           className="absolute inset-0 z-50 flex flex-col items-center justify-between py-14 slide-up"
           style={{ background: 'rgba(11,16,32,0.92)', backdropFilter: 'blur(32px)', WebkitBackdropFilter: 'blur(32px)' }}
@@ -617,7 +637,7 @@ export function Conversation() {
           {/* Contact info */}
           <div className="flex flex-col items-center gap-4 pt-4">
             <div className="relative grid place-items-center">
-              {callState === 'ringing' && (
+              {(callState === 'ringing' || activeCall?.status === 'ringing') && (
                 <>
                   <div className="absolute rounded-full" style={{ width: 120, height: 120, background: 'var(--accent)', opacity: 0.12, animation: 'pulse 1.4s ease-in-out infinite' }} />
                   <div className="absolute rounded-full" style={{ width: 100, height: 100, background: 'var(--accent)', opacity: 0.18, animation: 'pulse 1.4s ease-in-out infinite .35s' }} />
@@ -630,14 +650,21 @@ export function Conversation() {
             <div className="text-center">
               <div className="text-xl font-bold text-main tracking-tight">{contact.name}</div>
               <div className="text-sm mt-1 font-medium" style={{ color: 'var(--accent)' }}>
-                {callState === 'ringing' ? 'Calling…' : formatDuration(callSecs)}
+                {realCallActive
+                  ? (activeCall!.status === 'ringing'
+                      ? 'Calling…'
+                      : formatDuration(Math.max(0, Math.floor((now - (activeCall!.startedAt ?? now)) / 1000))))
+                  : (callState === 'ringing' ? 'Calling…' : formatDuration(callSecs))}
               </div>
             </div>
           </div>
 
           {/* Call controls */}
           <div className="flex items-end gap-6">
-            <button onClick={() => setMuted(m => !m)} className="flex flex-col items-center gap-2">
+            <button
+              onClick={() => setMuted(m => { const next = !m; if (realCallActive) setCallMuted(next); return next; })}
+              className="flex flex-col items-center gap-2"
+            >
               <div className="grid place-items-center" style={{
                 width: 56, height: 56, borderRadius: 999,
                 background: muted ? 'rgba(244,63,94,0.2)' : 'rgba(255,255,255,0.09)',

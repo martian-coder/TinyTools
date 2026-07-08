@@ -5,6 +5,13 @@ import { SEED_CONTACTS, SEED_MESSAGES, DEFAULT_SETTINGS } from '../seed';
 
 export type Screen = 'chats' | 'conversation' | 'settings' | 'simulator' | 'digest' | 'commander' | 'contacts';
 
+export interface ActiveCall {
+  peerId: string;
+  direction: 'in' | 'out';
+  status: 'ringing' | 'incoming' | 'connected';
+  startedAt?: number;
+}
+
 interface SiftState {
   currentUserId: string | null;
   currentUserPhone: string | null;
@@ -21,6 +28,8 @@ interface SiftState {
   setCurrentUser: (userId: string, phone: string) => void;
   clearCurrentUser: () => void;
   upsertContact: (contact: { id: string; name: string; phone?: string; online?: boolean }) => void;
+  activeCall: ActiveCall | null;
+  setActiveCall: (call: ActiveCall | null) => void;
   setScreen: (s: Screen) => void;
   setFolder: (f: Folder) => void;
   openConversation: (contactId: string) => void;
@@ -116,6 +125,9 @@ export const useSiftStore = create<SiftState>()(
 
       setCurrentUser: (userId, phone) => set({ currentUserId: userId, currentUserPhone: phone }),
       clearCurrentUser: () => set({ currentUserId: null, currentUserPhone: null }),
+
+      activeCall: null,
+      setActiveCall: call => set({ activeCall: call }),
 
       upsertContact: ({ id, name, phone, online }) => set(s => {
         const existing = s.contacts.find(c => c.id === id);

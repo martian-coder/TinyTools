@@ -13,7 +13,9 @@ import { Onboarding } from './screens/Onboarding';
 import { Auth } from './screens/Auth';
 import { Contacts } from './screens/Contacts';
 import { onAuthChange, onIncomingMessages, getUserProfile, updateUserStatus } from './services/backend';
+import { parseCallSignal, handleCallSignal, acceptCall, declineCall } from './services/calls';
 import { getModerator, routeVerdict } from './moderation';
+import { Phone, PhoneOff } from 'lucide-react';
 import type { ThemeName } from './types';
 
 /** Header title + tagline per screen — the app shows one header, not one per screen. */
@@ -38,6 +40,9 @@ export default function App() {
   const onboardingComplete = useSiftStore(s => s.settings._onboardingComplete);
   const currentUserId  = useSiftStore(s => s.currentUserId);
   const setCurrentUser = useSiftStore(s => s.setCurrentUser);
+  const activeCall     = useSiftStore(s => s.activeCall);
+  const contacts       = useSiftStore(s => s.contacts);
+  const openConversation = useSiftStore(s => s.openConversation);
 
   const [showThemes, setShowThemes] = useState(false);
   const [authLoading, setAuthLoading] = useState(true);
@@ -75,6 +80,22 @@ export default function App() {
     const unsubscribe = onIncomingMessages(currentUserId, async (msg) => {
       const state = useSiftStore.getState();
       const { settings } = state;
+
+      // Call signaling (offer/answer/hangup) rides the same relay but is not
+      // a chat message — hand it to the call manager and stop here.
+      const signal = parseCallSignal(msg.text);
+      if (signal) {
+        if (!state.contacts.find(c => c.id === msg.from)) {
+          const profile = await getUserProfile(msg.from).catch(() => null);
+          state.upsertContact({
+            id: msg.from,
+            name: profile?.displayName || profile?.phone || 'Unknown',
+            phone: profile?.phone,
+          });
+        }
+        await handleCallSignal(currentUserId, msg.from, signal);
+        return;
+      }
 
       // Materialize unknown senders as local contacts so the chat renders.
       let contact = state.contacts.find(c => c.id === msg.from);
@@ -208,6 +229,49 @@ export default function App() {
 
         {/* Bottom nav */}
         {!isConversation && <BottomNav />}
+
+        {/* Incoming call — global overlay so a call reaches you on any screen */}
+        {activeCall?.status === 'incoming' && currentUserId && (
+          <div className="absolute inset-0 z-50 flex flex-col items-center justify-center" style={{ background: 'rgba(5,8,20,0.88)', backdropFilter: 'blur(14px)' }}>
+            <div
+              className="grid place-items-center mb-4"
+              style={{
+                width: 86, height: 86, borderRadius: 999,
+                background: 'linear-gradient(135deg,var(--accent),var(--accent2))',
+                animation: 'pulse 1.4s ease-in-out infinite',
+              }}
+            >
+              <Phone size={36} color="#fff" />
+            </div>
+            <div className="text-xl font-bold text-main mb-1">
+              {contacts.find(c => c.id === activeCall.peerId)?.name ?? 'Unknown caller'}
+            </div>
+            <div className="text-sm dim mb-10">Incoming voice call…</div>
+            <div className="flex items-center gap-14">
+              <button
+                onClick={() => declineCall(currentUserId)}
+                className="flex flex-col items-center gap-2"
+              >
+                <span className="grid place-items-center" style={{ width: 62, height: 62, borderRadius: 999, background: '#e11d48' }}>
+                  <PhoneOff size={26} color="#fff" />
+                </span>
+                <span className="text-[11px] dim">Decline</span>
+              </button>
+              <button
+                onClick={() => {
+                  acceptCall(currentUserId);
+                  openConversation(activeCall.peerId);
+                }}
+                className="flex flex-col items-center gap-2"
+              >
+                <span className="grid place-items-center" style={{ width: 62, height: 62, borderRadius: 999, background: '#10b981' }}>
+                  <Phone size={26} color="#fff" />
+                </span>
+                <span className="text-[11px] dim">Accept</span>
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Theme bottom sheet */}
         {showThemes && (
