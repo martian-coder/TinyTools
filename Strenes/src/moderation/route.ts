@@ -14,6 +14,7 @@ export function routeVerdict(
   settings: UserSettings,
   trusted: boolean,
   isEmergency = false,
+  circleAllowed = false, // family/VIP circle members ride the trusted lane through DND
 ): RouteResult {
   // Unhinged mode bypasses all filters
   if (settings.unhingedMode.enabled) return { folder: 'primary', status: 'delivered' };
@@ -25,7 +26,7 @@ export function routeVerdict(
 
   // DND — block non-emergency senders during quiet hours
   if (isDNDActive(settings.dnd)) {
-    if (trusted && settings.dnd.allowTrusted) {
+    if ((trusted || circleAllowed) && settings.dnd.allowTrusted) {
       // fall through — trusted bypass below
     } else {
       return {

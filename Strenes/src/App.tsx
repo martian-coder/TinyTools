@@ -121,7 +121,8 @@ export default function App() {
       const mod = await getModerator(settings.aiModeration.anthropicKey || undefined);
       const verdict = await mod.classify(msg.text, { sensitivity: settings.civility.sensitivity });
       const trusted = !!contact?.trusted || settings.trustedIds.includes(msg.from);
-      const route = routeVerdict(verdict, settings, trusted, contact?.isEmergency);
+      const circleAllowed = contact?.circle === 'family' || contact?.circle === 'vip';
+      const route = routeVerdict(verdict, settings, trusted, contact?.isEmergency, circleAllowed);
       const finalRoute = await state.checkAndReceiveMessage(
         msg.from, msg.text, route, verdict,
         settings.aiModeration.anthropicKey || settings.aiReplies.anthropicKey,

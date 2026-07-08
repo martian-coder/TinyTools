@@ -59,6 +59,8 @@ export interface RememberIntent {
   expiresAt?: number;
 }
 export interface ForgetIntent { type: 'forget'; target: 'all' | string }
+export interface BusyWindowIntent { type: 'busy_window'; startHour: number; endHour: number; note: string }
+export interface BusyOffIntent { type: 'busy_off' }
 export interface MemoryExportIntent { type: 'memory_export' }
 export interface UnknownIntent { type: 'unknown'; query: string }
 
@@ -66,7 +68,7 @@ export type Intent =
   | ReplyIntent | OpenIntent | ApproveIntent | RejectIntent
   | ShowReviewIntent | SetRuleIntent | QueryIntent | DynamicRuleIntent
   | MuteIntent | UnmuteIntent | SummaryStyleIntent | SetProfileIntent | SetCircleIntent
-  | RememberIntent | ForgetIntent | MemoryExportIntent | UnknownIntent;
+  | RememberIntent | ForgetIntent | MemoryExportIntent | BusyWindowIntent | BusyOffIntent | UnknownIntent;
 
 /**
  * Parse a duration phrase out of a command. Returns the expiry timestamp and
@@ -171,6 +173,33 @@ function parsePrecise(text: string, contacts: Contact[]): Intent | null {
   if (circleRmM) {
     const c = matchContact(circleRmM[1], contacts);
     if (c) return { type: 'set_circle', contactId: c.id, contactName: c.name, circle: null };
+  }
+
+  // availability: "i'm busy with calls from 5pm till 9pm" → real filter window
+  const clock = (numStr: string, mer?: string, fallbackMer?: string): number => {
+    let h = parseInt(numStr, 10);
+    const m = (mer ?? fallbackMer ?? '').toLowerCase();
+    if (m === 'pm' && h < 12) h += 12;
+    if (m === 'am' && h === 12) h = 0;
+    return h;
+  };
+  const busyWords = /\b(?:busy|unavailable|in\s+(?:calls?|meetings?|class(?:es)?)|working|focus(?:ing|\s+time)?|do\s+not\s+disturb|quiet)\b/i;
+  const rangeM = t.match(/\b(?:from|between)?\s*(\d{1,2})\s*(am|pm)?\s*(?:to|till|until|-|and)\s*(\d{1,2})\s*(am|pm)?\b/i);
+  if (busyWords.test(t) && rangeM && (rangeM[2] || rangeM[4])) {
+    const endH = clock(rangeM[3], rangeM[4]);
+    const startH = clock(rangeM[1], rangeM[2], rangeM[4]);
+    if (startH >= 0 && startH <= 23 && endH >= 0 && endH <= 23 && startH !== endH) {
+      return { type: 'busy_window', startHour: startH, endHour: endH, note: t };
+    }
+  }
+  const afterM = t.match(/\bafter\s+(\d{1,2})\s*(am|pm)\b/i);
+  if (busyWords.test(t) && afterM) {
+    const startH = clock(afterM[1], afterM[2]);
+    return { type: 'busy_window', startHour: startH, endHour: 7, note: t };
+  }
+  if (/^(?:i'?m|i\s+am)?\s*(?:free|available|done|not\s+busy)(?:\s+now)?\s*!?$/i.test(rest)
+      || /^(?:lift|end|stop|cancel)\s+(?:the\s+)?(?:dnd|busy|quiet)(?:\s+(?:window|mode|hours?))?\s*$/i.test(rest)) {
+    return { type: 'busy_off' };
   }
 
   // memory: "remember that...", "what do you remember", "forget X", "export memory"
@@ -522,6 +551,12 @@ function sanitizeIntent(p: any, contacts: Contact[]): Intent | null {
       return { type: 'forget', target: p.target.trim() };
     }
     case 'memory_export': return { type: 'memory_export' };
+    case 'busy_window': {
+      const sh = Number(p.startHour), eh = Number(p.endHour);
+      if (!Number.isInteger(sh) || !Number.isInteger(eh) || sh < 0 || sh > 23 || eh < 0 || eh > 23 || sh === eh) return null;
+      return { type: 'busy_window', startHour: sh, endHour: eh, note: typeof p.note === 'string' ? p.note.slice(0, 200) : `Busy ${sh}:00–${eh}:00` };
+    }
+    case 'busy_off': return { type: 'busy_off' };
     case 'set_circle': {
       const c = findContact();
       if (!c || c.id === '*') return null;
@@ -547,7 +582,7 @@ const NANO_INTENT_SCHEMA = {
   required: ['type'],
   additionalProperties: false,
   properties: {
-    type: { type: 'string', enum: ['reply', 'open', 'approve', 'reject', 'show_review', 'set_rule', 'query', 'dynamic_rule', 'mute', 'unmute', 'summary_style', 'set_profile', 'set_circle', 'remember', 'forget', 'memory_export', 'unknown'] },
+    type: { type: 'string', enum: ['reply', 'open', 'approve', 'reject', 'show_review', 'set_rule', 'query', 'dynamic_rule', 'mute', 'unmute', 'summary_style', 'set_profile', 'set_circle', 'remember', 'forget', 'memory_export', 'busy_window', 'busy_off', 'unknown'] },
     contactId: { type: 'string' },
     contactName: { type: 'string' },
     text: { type: 'string' },
@@ -566,6 +601,8 @@ const NANO_INTENT_SCHEMA = {
     kind: { type: 'string', enum: ['fact', 'situation'] },
     situationKind: { type: 'string' },
     target: { type: 'string' },
+    startHour: { type: 'number' },
+    endHour: { type: 'number' },
   },
 } as const;
 
@@ -599,6 +636,7 @@ async function parseViaNano(text: string, contacts: Contact[]): Promise<Intent |
     '{"type":"query","subject":"circles"}  // "who is in my circles"',
     '{"type":"remember","note":"<what to remember>","kind":"fact|situation","situationKind":"breakup|exams|grief|health|newjob|baby|wedding|moving|travel|stress","durationMinutes":<optional>}  // "remember I work nights"; life events ("i\'m going through a divorce") => kind situation',
     '{"type":"forget","target":"all|<keyword>"} {"type":"memory_export"} {"type":"query","subject":"memory"}',
+    '{"type":"busy_window","startHour":<0-23>,"endHour":<0-23>,"note":"<original text>"}  // "busy with calls 5pm-9pm" => 17,21. {"type":"busy_off"} for "i am free now"',
     '{"type":"unknown"}',
     '',
     'Guidance: wanting quiet/peace/no notifications => mute (contactId "*" unless a contact is named).',
@@ -663,6 +701,8 @@ async function parseViaAnthropic(
     '{"type":"forget","target":"all|<keyword>"}\n' +
     '{"type":"query","subject":"memory"}  // "what do you remember about me"\n' +
     '{"type":"memory_export"}\n' +
+    '{"type":"busy_window","startHour":<0-23>,"endHour":<0-23>,"note":"<text>"}  // "busy with calls from 5pm till 9pm" => 17,21\n' +
+    '{"type":"busy_off"}  // "i am free now"\n' +
     '{"type":"unknown","query":"<original input>"}\n\n' +
     'IMPORTANT: ANY preference about which messages the user wants to see, hide, hold, or block ' +
     'is a dynamic_rule add — keep the condition in the user\'s own words (it is evaluated per-message ' +

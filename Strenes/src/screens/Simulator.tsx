@@ -75,7 +75,8 @@ export function Simulator() {
 
     const cid = (tName.trim().toLowerCase().replace(/[^a-z0-9]/g, '') || 'newnumber');
     const existingContact = cById(cid);
-    const r = routeVerdict(v, settings, tTrusted, existingContact?.isEmergency ?? false);
+    const circleAllowed = existingContact?.circle === 'family' || existingContact?.circle === 'vip';
+    const r = routeVerdict(v, settings, tTrusted, existingContact?.isEmergency ?? false, circleAllowed);
 
     useSiftStore.setState(s => {
       const contacts = cById(cid)
