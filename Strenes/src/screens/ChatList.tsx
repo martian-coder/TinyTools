@@ -1,8 +1,9 @@
-import { ShieldCheck, Inbox, Briefcase, Megaphone, Check, X, Eye, Forward, ChevronRight } from 'lucide-react';
+import { ShieldCheck, Inbox, Briefcase, Megaphone, Check, X, Eye, Forward, ChevronRight, AlertTriangle, UserCheck } from 'lucide-react';
 import { useSiftStore } from '../store';
 import { Avatar } from '../components/ui/Avatar';
 import { CategoryBadge } from '../components/ui/Badge';
 import type { Folder, Contact, Message } from '../types';
+import { explainHold } from '../moderation/insights';
 
 const FOLDERS: { id: Folder; label: string; Icon: React.ComponentType<{ size?: number }> }[] = [
   { id: 'primary',    label: 'Primary',    Icon: Inbox      },
@@ -99,6 +100,7 @@ function ReviewFolder({
 }) {
   const cById = (id: string) => contacts.find(c => c.id === id);
   const settings = useSiftStore(s => s.settings);
+  const setContactTrusted = useSiftStore(s => s.setContactTrusted);
 
   if (held.length === 0 && dropped.length === 0)
     return <EmptyState icon={ShieldCheck} title="All clear" body="No filtered messages need your attention." />;
@@ -135,20 +137,40 @@ function ReviewFolder({
             )}
           </div>
 
+          {/* Why it was held — the filter is never a black box */}
+          {(() => {
+            const { why, tip } = explainHold(m);
+            return (
+              <div className="mb-2.5 p-2.5" style={{ background: 'var(--glass)', borderRadius: 12, border: '1px solid var(--line)' }}>
+                <p className="text-[11px] text-main flex items-start gap-1.5">
+                  <ShieldCheck size={12} className="mt-0.5 shrink-0" style={{ color: 'var(--accent)' }} />
+                  <span><span className="font-semibold">Why held:</span> {why}</span>
+                </p>
+                {tip && (
+                  <p className="text-[11px] mt-1.5 flex items-start gap-1.5" style={{ color: '#fbbf24' }}>
+                    <AlertTriangle size={12} className="mt-0.5 shrink-0" />
+                    <span>{tip}</span>
+                  </p>
+                )}
+              </div>
+            );
+          })()}
+
           <p className="text-[11px] dim mb-2.5 flex items-start gap-1.5">
             <Forward size={12} className="mt-0.5 shrink-0" />
             Sender sees "Under review"{m.autoReply ? ` · filter set to ${settings.civility.sensitivity}` : ''}.
           </p>
 
-          {m.verdict?.flaggedTerms && m.verdict.flaggedTerms.length > 0 && (
-            <p className="text-[11px] dim mb-2.5">
-              Triggered: {m.verdict.flaggedTerms.map(w => `"${w}"`).join(', ')}
-            </p>
-          )}
-
           <div className="flex gap-2">
             <button onClick={() => onApprove(m.id)} className="act act-ok"><Check size={15} /> Let through</button>
             <button onClick={() => onReject(m.id)}  className="act act-no"><X    size={15} /> Reject</button>
+            <button
+              onClick={() => { setContactTrusted(m.contactId, true); onApprove(m.id); }}
+              className="act"
+              style={{ background: 'rgba(124,131,255,0.14)', border: '1px solid rgba(124,131,255,0.35)', color: 'var(--accent)' }}
+            >
+              <UserCheck size={15} /> Trust sender
+            </button>
           </div>
         </div>
       ))}

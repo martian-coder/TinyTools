@@ -6,6 +6,7 @@
 import type { Contact, Message } from '../types';
 import { promptNano } from './nano';
 import { promptCloud } from './cloud';
+import { matchProfile, PROFILES, type ProfileId } from './profiles';
 
 export interface ReplyIntent      { type: 'reply';       contactId: string; contactName: string; text: string }
 export interface OpenIntent       { type: 'open';        contactId: string; contactName: string }
@@ -47,12 +48,13 @@ export interface MuteIntent {
 }
 export interface UnmuteIntent { type: 'unmute'; contactId: string; contactName: string }
 export interface SummaryStyleIntent { type: 'summary_style'; style: 'professional' | 'casual' | 'brief' }
+export interface SetProfileIntent { type: 'set_profile'; profile: ProfileId }
 export interface UnknownIntent { type: 'unknown'; query: string }
 
 export type Intent =
   | ReplyIntent | OpenIntent | ApproveIntent | RejectIntent
   | ShowReviewIntent | SetRuleIntent | QueryIntent | DynamicRuleIntent
-  | MuteIntent | UnmuteIntent | SummaryStyleIntent | UnknownIntent;
+  | MuteIntent | UnmuteIntent | SummaryStyleIntent | SetProfileIntent | UnknownIntent;
 
 /**
  * Parse a duration phrase out of a command. Returns the expiry timestamp and
@@ -126,6 +128,15 @@ function parsePrecise(text: string, contacts: Contact[]): Intent | null {
     const raw = (styleM[1] || styleM[2] || '').toLowerCase();
     const style = (raw === 'formal' ? 'professional' : raw === 'friendly' ? 'casual' : raw === 'short' ? 'brief' : raw) as 'professional' | 'casual' | 'brief';
     return { type: 'summary_style', style };
+  }
+
+  // protection profiles: "use elder shield", "professional mode", "protect my parents' phone"
+  const wantsProfile = /\b(shield|mode|profile|protection|preset)\b/i.test(rest)
+    || /^(?:elder|public)\b/i.test(rest)
+    || /protect\s+(?:my|this|the)\b/i.test(rest);
+  if (wantsProfile) {
+    const pid = matchProfile(rest);
+    if (pid) return { type: 'set_profile', profile: pid };
   }
 
   // unmute: "unmute maya", "unmute all", "show maya's updates again"
@@ -426,6 +437,10 @@ function sanitizeIntent(p: any, contacts: Contact[]): Intent | null {
       const c = findContact();
       return { type: 'unmute', contactId: c?.id ?? '*', contactName: c?.name ?? 'everyone' };
     }
+    case 'set_profile': {
+      if (!(p.profile in PROFILES)) return null;
+      return { type: 'set_profile', profile: p.profile as ProfileId };
+    }
     case 'summary_style': {
       if (!['professional', 'casual', 'brief'].includes(p.style)) return null;
       return { type: 'summary_style', style: p.style };
@@ -441,7 +456,7 @@ const NANO_INTENT_SCHEMA = {
   required: ['type'],
   additionalProperties: false,
   properties: {
-    type: { type: 'string', enum: ['reply', 'open', 'approve', 'reject', 'show_review', 'set_rule', 'query', 'dynamic_rule', 'mute', 'unmute', 'summary_style', 'unknown'] },
+    type: { type: 'string', enum: ['reply', 'open', 'approve', 'reject', 'show_review', 'set_rule', 'query', 'dynamic_rule', 'mute', 'unmute', 'summary_style', 'set_profile', 'unknown'] },
     contactId: { type: 'string' },
     contactName: { type: 'string' },
     text: { type: 'string' },
@@ -454,6 +469,7 @@ const NANO_INTENT_SCHEMA = {
     subject: { type: 'string', enum: ['capabilities', 'held_count', 'contact_messages', 'summary', 'settings', 'rules'] },
     ruleRef: { type: 'string' },
     action: { type: 'string', enum: ['add', 'remove'] },
+    profile: { type: 'string', enum: ['elder', 'public', 'professional', 'minimal'] },
   },
 } as const;
 
@@ -482,6 +498,7 @@ async function parseViaNano(text: string, contacts: Contact[]): Promise<Intent |
     '{"type":"mute","contactId":"<id or * for everything>","durationMinutes":<number>}',
     '{"type":"unmute","contactId":"<id or *>"}',
     '{"type":"summary_style","style":"professional|casual|brief"}',
+    '{"type":"set_profile","profile":"elder|public|professional|minimal"}  // protection presets: elder=scam shield, public=creator inbox, professional=work, minimal=quiet',
     '{"type":"unknown"}',
     '',
     'Guidance: wanting quiet/peace/no notifications => mute (contactId "*" unless a contact is named).',
@@ -539,6 +556,7 @@ async function parseViaAnthropic(
     '{"type":"mute","contactId":"<id or * to mute everything>","contactName":"<name or everyone>","durationMinutes":<number, default 720>}  // "mute X", "mute all msgs for 2 hrs", "dnd for 2 hours"\n' +
     '{"type":"unmute","contactId":"<id or * for unmute all>","contactName":"<name or everyone>"}\n' +
     '{"type":"summary_style","style":"professional|casual|brief"}  // "summaries should be professional"\n' +
+    '{"type":"set_profile","profile":"elder|public|professional|minimal"}  // protection presets, e.g. "protect my mom\'s phone" => elder\n' +
     '{"type":"unknown","query":"<original input>"}\n\n' +
     'IMPORTANT: ANY preference about which messages the user wants to see, hide, hold, or block ' +
     'is a dynamic_rule add — keep the condition in the user\'s own words (it is evaluated per-message ' +

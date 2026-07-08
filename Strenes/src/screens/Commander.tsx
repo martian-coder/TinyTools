@@ -3,6 +3,7 @@ import { Send, ChevronRight, Loader2 } from 'lucide-react';
 import { useSiftStore } from '../store';
 import { parseIntent, formatUntil } from '../moderation/commander';
 import { describeSender, priorityFor } from '../moderation/insights';
+import { PROFILES } from '../moderation/profiles';
 import type { Message } from '../types';
 
 /* ── Types ──────────────────────────────────────────────────────────── */
@@ -201,6 +202,7 @@ export function Commander() {
   const muteContact       = useSiftStore(s => s.muteContact);
   const unmuteContact     = useSiftStore(s => s.unmuteContact);
   const updateSettings    = useSiftStore(s => s.updateSettings);
+  const applyProfile      = useSiftStore(s => s.applyProfile);
 
   const { msgs, addAI, addUser } = useChat();
   const [draft, setDraft]        = useState('');
@@ -261,6 +263,9 @@ export function Commander() {
       } else {
         addAI("Head to Chats to start a conversation, or use the Test tab to simulate incoming messages.");
       }
+      if (!settings.commander?.profile) {
+        addAI("🛡️ New: pick a protection profile — 'use elder shield' for scam armor, 'public inbox' for creators, 'professional mode' for work, or 'minimal mode' for calm.");
+      }
       return;
     }
 
@@ -312,6 +317,9 @@ export function Commander() {
       addAI(`⚠️  ${heldMessages.length} message${heldMessages.length !== 1 ? 's' : ''} in review queue.`);
     }
 
+    if (!settings.commander?.profile) {
+      addAI("\u{1F6E1}\uFE0F New: pick a protection profile — 'use elder shield' for scam armor, 'public inbox' for creators, 'professional mode' for work, or 'minimal mode' for calm.");
+    }
     addAI("Try: 'mute Maya for 4 hours', 'no rants today', 'summaries should be professional', 'reply Alex yes'.");
   }, [unread, heldMessages, addAI, settings]);
 
@@ -536,6 +544,14 @@ export function Commander() {
         break;
       }
 
+      case 'set_profile': {
+        const prof = PROFILES[intent.profile];
+        applyProfile(intent.profile);
+        for (const line of prof.confirmation) responses.push({ text: line });
+        responses.push({ text: "Say 'my settings' to see everything it changed, or just keep adding your own rules on top." });
+        break;
+      }
+
       case 'summary_style': {
         updateSettings({ commander: { summaryStyle: intent.style } });
         const sample = intent.style === 'professional'
@@ -555,6 +571,7 @@ export function Commander() {
             addAI("· Reply — 'reply Maya sounds good' · Open — 'open Alex'");
             addAI("· Approve / reject held messages — 'approve all', 'reject all'");
             addAI("· Trust contacts — 'trust Sarah' / 'don't trust Dave'");
+            addAI("· Protection profiles — 'use elder shield' (scam armor), 'public inbox', 'professional mode', 'minimal mode'");
             addAI("· Mute updates — 'mute Maya for 4 hours', 'mute all msgs for 2 hrs', 'dnd for 2 hours', 'unmute all'");
             addAI("· Rules in your own words — 'hold anything asking me for money', 'no rants today', 'never show me chain forwards'. I evaluate each incoming message against them with on-device AI.");
             addAI("· Manage rules — 'my rules', 'remove rule 2', 'clear all rules'");
@@ -676,7 +693,7 @@ export function Commander() {
     contacts, heldMessages, allMessages, settings,
     sendMessage, approveMessage, rejectMessage, openConversation,
     setFolder, setScreen, setContactTrusted, updateCivility, updateSpam, updateDND,
-    addDynamicRule, removeDynamicRule, muteContact, unmuteContact, updateSettings, addUser, addAI, doBriefing,
+    addDynamicRule, removeDynamicRule, muteContact, unmuteContact, updateSettings, applyProfile, addUser, addAI, doBriefing,
   ]);
 
   /* Send handler */
@@ -703,11 +720,16 @@ export function Commander() {
     for (const { contact } of unread.slice(0, 2)) {
       if (contact) chips.push({ label: `Open ${contact.name}`, command: `open ${contact.name}` });
     }
+    if (!settings.commander?.profile) {
+      chips.push({ label: '\u{1F6E1}\uFE0F Elder Shield', command: 'use elder shield' });
+      chips.push({ label: '\u{1F4E3} Public Inbox', command: 'use public inbox mode' });
+      chips.push({ label: '\u{1F4BC} Professional', command: 'use professional mode' });
+    }
     chips.push({ label: 'No rants today', command: 'no ranting messages today' });
     chips.push({ label: 'My settings', command: 'my settings' });
     chips.push({ label: 'Help', command: 'help' });
-    return chips.slice(0, 5);
-  }, [heldMessages, unread]);
+    return chips.slice(0, 6);
+  }, [heldMessages, unread, settings.commander?.profile]);
 
   /* Compute burst groups for iMessage-style corners */
   const rendered = msgs.map((m, i) => {

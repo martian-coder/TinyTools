@@ -94,6 +94,52 @@ export function describeSender(latest: Message, style: SummaryStyle): { kind: Me
   return { kind, summary: PHRASES[kind][style] };
 }
 
+/**
+ * Plain-language explanation of why a message was held, with a safety tip
+ * when it matches a known scam shape. Shown in the Review folder so the
+ * filter is never a black box.
+ */
+export function explainHold(msg: Message): { why: string; tip?: string } {
+  const v = msg.verdict;
+  const t = msg.text.toLowerCase();
+
+  // Scam education first — even when a rule triggered the hold, the safety
+  // tip is worth more to the user than the rule mechanics.
+  if (/\botp\b|one.time password|verification code/.test(t) && /share|send|tell|give|forward/.test(t)) {
+    return { why: 'Asks you to share an OTP or verification code.', tip: 'No bank, company, or official ever asks for your OTP. Sharing it hands over your account.' };
+  }
+  if (/kyc|account.{0,12}(suspend|block|expir|verif)|re.?activat/.test(t)) {
+    return { why: 'Claims your account needs urgent verification or will be blocked.', tip: 'Banks never send KYC links by message. Open your bank app directly instead.' };
+  }
+  if (/(prize|lottery|winner|won\b).{0,40}(claim|fee|pay|deposit)|congratulations.{0,30}won/.test(t)) {
+    return { why: 'Announces a prize that requires a payment to claim.', tip: 'Real prizes never ask for money upfront. This is the oldest scam there is.' };
+  }
+  if (/(courier|parcel|package|customs).{0,40}(fee|charge|pay|held|stuck)/.test(t)) {
+    return { why: 'Claims a parcel is stuck pending a fee.', tip: 'Delivery companies collect fees at your door, not through payment links.' };
+  }
+  if (/(police|arrest|legal action|court|warrant|cbi|customs)/.test(t) && /(pay|fine|immediately|urgent|call)/.test(t)) {
+    return { why: 'Threatens legal trouble unless you act immediately.', tip: 'Police and courts never demand payment over messages. Pressure + urgency = scam.' };
+  }
+
+  // A dynamic-rule match carries its own explanation.
+  if (v?.reason?.startsWith('Matched your rule')) {
+    return { why: v.reason };
+  }
+
+  if (v?.category === 'abusive') {
+    const terms = v.flaggedTerms?.length ? ` Flagged: ${v.flaggedTerms.map(w => `"${w}"`).join(', ')}.` : '';
+    return { why: `Reads as hostile or demeaning.${terms}` };
+  }
+  if (v?.category === 'spam') {
+    const terms = v.flaggedTerms?.length ? ` Signals: ${v.flaggedTerms.map(w => `"${w}"`).join(', ')}.` : '';
+    return { why: `Looks like spam — chain forward, bait, or junk blast.${terms}` };
+  }
+  if (v?.reason) {
+    return { why: v.reason };
+  }
+  return { why: 'Held by your filter settings for a closer look.' };
+}
+
 /** Priority for briefing ordering, derived from what the sender is doing. */
 export function priorityFor(kind: MessageKind, verdictCategory?: string): 'high' | 'medium' | 'low' {
   if (verdictCategory === 'business' || verdictCategory === 'abusive') return 'high';

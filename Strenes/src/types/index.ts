@@ -42,6 +42,8 @@ export interface DynamicRule {
   createdAt: number;
   /** Epoch ms after which the rule stops applying ("for 4 hours", "today"). Absent = permanent. */
   expiresAt?: number;
+  /** 'profile' = managed by a protection profile; replaced when profiles switch. */
+  source?: string;
 }
 
 export type SummaryStyle = 'professional' | 'casual' | 'brief';
@@ -128,6 +130,8 @@ export interface UserSettings {
   /** Commander preferences. Optional so settings persisted before this feature still load. */
   commander?: {
     summaryStyle: SummaryStyle;
+    /** Active protection profile id, if the user picked one. */
+    profile?: string;
   };
   /** contactId → epoch ms until which their updates are hidden from Commander briefings. */
   mutes?: Record<string, number>;

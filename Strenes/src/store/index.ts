@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { Contact, Message, MessageRoute, UserSettings, Folder, RouteResult, ModerationVerdict, DynamicRule } from '../types';
 import { SEED_CONTACTS, SEED_MESSAGES, DEFAULT_SETTINGS } from '../seed';
+import { PROFILES, type ProfileId } from '../moderation/profiles';
 
 export type Screen = 'chats' | 'conversation' | 'settings' | 'simulator' | 'digest' | 'commander' | 'contacts';
 
@@ -62,6 +63,7 @@ interface SiftState {
   addDynamicRule: (contactId: string, condition: string, action: 'block' | 'review', expiresAt?: number) => void;
   muteContact: (contactId: string, untilTs: number) => void;
   unmuteContact: (contactId: string) => void;
+  applyProfile: (profileId: ProfileId) => void;
   removeDynamicRule: (ruleId: string) => void;
   toggleDynamicRule: (ruleId: string) => void;
   updateDynamicRule: (ruleId: string, patch: Partial<Omit<DynamicRule, 'id' | 'contactId' | 'createdAt'>>) => void;
@@ -319,6 +321,33 @@ export const useSiftStore = create<SiftState>()(
         );
       },
 
+      applyProfile: (profileId) => {
+        const profile = PROFILES[profileId];
+        if (!profile) return;
+        set(s => ({
+          settings: {
+            ...s.settings,
+            civility: { ...s.settings.civility, ...profile.settings.civility },
+            spam: { ...s.settings.spam, ...profile.settings.spam },
+            ...(profile.settings.dnd ? { dnd: { ...s.settings.dnd, ...profile.settings.dnd } } : {}),
+            commander: { ...(s.settings.commander ?? { summaryStyle: 'casual' }), summaryStyle: profile.settings.summaryStyle, profile: profileId },
+            dynamicRules: [
+              // Hand-written rules survive; the previous profile's rules are replaced.
+              ...s.settings.dynamicRules.filter(r => r.source !== 'profile'),
+              ...profile.rules.map((r, i) => ({
+                id: `profile-${profileId}-${i}`,
+                contactId: '*',
+                condition: r.condition,
+                action: r.action,
+                enabled: true,
+                createdAt: Date.now(),
+                source: 'profile',
+              })),
+            ],
+          },
+        }));
+      },
+
       muteContact: (contactId, untilTs) => set(s => ({
         settings: { ...s.settings, mutes: { ...(s.settings.mutes ?? {}), [contactId]: untilTs } },
       })),
@@ -337,6 +366,7 @@ export const useSiftStore = create<SiftState>()(
         const rules = state.getDynamicRulesForContact(contactId);
 
         let finalRoute = route;
+        let finalVerdict = verdict;
 
         // Check each rule against the message
         for (const rule of rules) {
@@ -346,6 +376,12 @@ export const useSiftStore = create<SiftState>()(
               // If rule action is 'block' or 'review', hold the message
               if (rule.action === 'block' || rule.action === 'review') {
                 finalRoute = { folder: 'review', status: 'held', ask: false };
+                // Carry the rule + match reason so the Review UI can explain
+                // exactly why this message was held.
+                finalVerdict = {
+                  ...verdict,
+                  reason: `Matched your rule "${rule.condition}"${result.reason ? ` — ${result.reason}` : ''}`,
+                };
                 break;
               }
             }
@@ -356,7 +392,7 @@ export const useSiftStore = create<SiftState>()(
         }
 
         // Now call receiveMessage with potentially modified route
-        state.receiveMessage(contactId, text, finalRoute, verdict);
+        state.receiveMessage(contactId, text, finalRoute, finalVerdict);
         return finalRoute;
       },
 
