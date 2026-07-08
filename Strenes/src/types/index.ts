@@ -56,6 +56,8 @@ export interface Contact {
   isEmergency?: boolean;
   /** E.164 phone number, present for contacts synced from the backend. */
   phone?: string;
+  /** Relationship circle — drives briefing priority (who matters to you). */
+  circle?: 'family' | 'work' | 'friends' | 'vip';
   /** Live presence, synced from the backend contact list. */
   online?: boolean;
 }

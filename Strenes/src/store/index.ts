@@ -62,6 +62,7 @@ interface SiftState {
   setContactEmergency: (contactId: string, isEmergency: boolean) => void;
   toggleTrusted: (contactId: string) => void;
   setContactTrusted: (contactId: string, trusted: boolean) => void;
+  setContactCircle: (contactId: string, circle: 'family' | 'work' | 'friends' | 'vip' | undefined) => void;
   resolvePendingAsk: (approve: boolean) => void;
   addDynamicRule: (contactId: string, condition: string, action: 'block' | 'review', expiresAt?: number) => void;
   muteContact: (contactId: string, untilTs: number) => void;
@@ -294,6 +295,10 @@ export const useSiftStore = create<SiftState>()(
             ? s.settings.trustedIds.filter(x => x !== id)
             : [...s.settings.trustedIds, id],
         },
+      })),
+
+      setContactCircle: (id, circle) => set(s => ({
+        contacts: s.contacts.map(c => c.id === id ? { ...c, circle } : c),
       })),
 
       setContactTrusted: (id, trusted) => set(s => ({

@@ -12,6 +12,24 @@ import type { UserSettings } from '../types';
 
 export type ProfileId = 'elder' | 'public' | 'professional' | 'minimal';
 
+export type Circle = 'family' | 'work' | 'friends' | 'vip';
+
+export const CIRCLE_META: Record<Circle, { emoji: string; label: string }> = {
+  vip:     { emoji: '\u2B50', label: 'VIP' },
+  family:  { emoji: '\u{1F46A}', label: 'Family' },
+  friends: { emoji: '\u{1F389}', label: 'Friends' },
+  work:    { emoji: '\u{1F4BC}', label: 'Work' },
+};
+
+/** Which circles lead the briefing, per persona. */
+export const CIRCLE_ORDER: Record<ProfileId | 'default', Circle[]> = {
+  elder:        ['family', 'vip', 'friends', 'work'],
+  professional: ['vip', 'work', 'family', 'friends'],
+  public:       ['vip', 'work', 'friends', 'family'],
+  minimal:      ['vip', 'family', 'friends', 'work'],
+  default:      ['vip', 'family', 'friends', 'work'],
+};
+
 export interface ProtectionProfile {
   id: ProfileId;
   emoji: string;

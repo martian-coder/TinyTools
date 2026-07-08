@@ -3,7 +3,7 @@ import { Send, ChevronRight, Loader2 } from 'lucide-react';
 import { useSiftStore } from '../store';
 import { parseIntent, formatUntil } from '../moderation/commander';
 import { describeSender, priorityFor } from '../moderation/insights';
-import { PROFILES } from '../moderation/profiles';
+import { PROFILES, CIRCLE_META, CIRCLE_ORDER, type Circle, type ProfileId } from '../moderation/profiles';
 import type { Message } from '../types';
 
 /* ── Types ──────────────────────────────────────────────────────────── */
@@ -203,6 +203,7 @@ export function Commander() {
   const unmuteContact     = useSiftStore(s => s.unmuteContact);
   const updateSettings    = useSiftStore(s => s.updateSettings);
   const applyProfile      = useSiftStore(s => s.applyProfile);
+  const setContactCircle  = useSiftStore(s => s.setContactCircle);
 
   const { msgs, addAI, addUser } = useChat();
   const [draft, setDraft]        = useState('');
@@ -278,35 +279,61 @@ export function Commander() {
 
     type Priority = 'high' | 'medium' | 'low';
 
-    const groups = visible.slice(0, 5).map(({ contact, latest, count }) => {
+    const senderLine = (entry: typeof visible[number]) => {
+      const { contact, latest, count } = entry;
       const name = contact?.name ?? 'Unknown';
       const { kind, summary } = describeSender(latest, style);
       const priority: Priority = priorityFor(kind, latest.verdict?.category);
+      const badge = count > 1 ? ` (${count})` : '';
       return {
-        contact, count, priority, summary,
+        priority,
+        text: style === 'brief' ? `${name}${badge}: ${summary}` : `${name}${badge} — ${summary}`,
         chip: { label: `Open ${name}`, action: 'open' as const, contactId: contact?.id ?? '' },
       };
-    });
-
-    /* Sort by priority: high → medium → low */
+    };
     const priorityOrder = { high: 0, medium: 1, low: 2 };
-    groups.sort((a, b) => priorityOrder[a.priority] - priorityOrder[b.priority]);
 
-    /* Render grouped by priority */
-    let currentPriority: Priority | null = null;
-    for (const g of groups) {
-      if (g.priority !== currentPriority) {
-        const label = g.priority === 'high' ? '🔴 High Priority' : g.priority === 'medium' ? '🟡 Medium' : '⚪ Other';
-        addAI(label);
-        currentPriority = g.priority;
+    // Your people first: circle sections in the order your persona cares about.
+    const circleOrder = CIRCLE_ORDER[(settings.commander?.profile as ProfileId) ?? 'default'] ?? CIRCLE_ORDER.default;
+    const circled = visible.filter(v => v.contact?.circle);
+    const others = visible.filter(v => !v.contact?.circle);
+
+    if (circled.length > 0) {
+      for (const circle of circleOrder) {
+        const members = circled.filter(v => v.contact!.circle === circle);
+        if (members.length === 0) continue;
+        const meta = CIRCLE_META[circle];
+        addAI(`${meta.emoji} ${meta.label}`);
+        members.map(senderLine).sort((a, b) => priorityOrder[a.priority] - priorityOrder[b.priority])
+          .forEach(l => addAI(l.text, [l.chip]));
       }
-      const badge = g.count > 1 ? ` (${g.count})` : '';
-      const name = g.contact?.name ?? 'Unknown';
-      addAI(style === 'brief' ? `${name}${badge}: ${g.summary}` : `${name}${badge} — ${g.summary}`, [g.chip]);
-    }
-
-    if (visible.length > 5) {
-      addAI(`…and ${visible.length - 5} more conversations.`);
+      // Everyone outside your circles collapses into one line — signal, not noise.
+      if (others.length > 0) {
+        const otherCount = others.reduce((n, o) => n + o.count, 0);
+        const urgent = others.map(senderLine).filter(l => l.priority === 'high');
+        urgent.forEach(l => addAI(`⚠️ Also: ${l.text}`, [l.chip]));
+        const rest = others.length - urgent.length;
+        if (rest > 0) {
+          addAI(`…plus ${otherCount} message${otherCount !== 1 ? 's' : ''} from ${rest} other sender${rest !== 1 ? 's' : ''} — nothing that can't wait. Say 'summary' anytime or check Chats.`);
+        }
+      }
+    } else {
+      /* No circles yet — classic priority view */
+      const groups = visible.slice(0, 5).map(senderLine);
+      groups.sort((a, b) => priorityOrder[a.priority] - priorityOrder[b.priority]);
+      let currentPriority: Priority | null = null;
+      for (const g of groups) {
+        if (g.priority !== currentPriority) {
+          const label = g.priority === 'high' ? '🔴 High Priority' : g.priority === 'medium' ? '🟡 Medium' : '⚪ Other';
+          addAI(label);
+          currentPriority = g.priority;
+        }
+        addAI(g.text, [g.chip]);
+      }
+      if (visible.length > 5) {
+        addAI(`…and ${visible.length - 5} more conversations.`);
+      }
+      addAI("💡 Tell me who matters — 'Maya is family', 'Jay is work', 'Sara is my VIP' — and your people will lead every briefing while the rest collapses to one line.");
     }
 
     if (mutedCount > 0) {
@@ -544,6 +571,20 @@ export function Commander() {
         break;
       }
 
+      case 'set_circle': {
+        setContactCircle(intent.contactId, intent.circle ?? undefined);
+        if (intent.circle) {
+          const meta = CIRCLE_META[intent.circle];
+          responses.push({
+            text: `${meta.emoji} ${intent.contactName} is now in your ${meta.label} circle — their updates lead your briefings.`,
+            chips: [{ label: `Open ${intent.contactName}`, action: 'open', contactId: intent.contactId }],
+          });
+        } else {
+          responses.push({ text: `✓ ${intent.contactName} removed from your circles.` });
+        }
+        break;
+      }
+
       case 'set_profile': {
         const prof = PROFILES[intent.profile];
         applyProfile(intent.profile);
@@ -572,6 +613,7 @@ export function Commander() {
             addAI("· Approve / reject held messages — 'approve all', 'reject all'");
             addAI("· Trust contacts — 'trust Sarah' / 'don't trust Dave'");
             addAI("· Protection profiles — 'use elder shield' (scam armor), 'public inbox', 'professional mode', 'minimal mode'");
+            addAI("· Circles — 'Maya is family', 'Jay is work', 'Sara is my VIP'. Your circles lead every briefing; everyone else is one summary line.");
             addAI("· Mute updates — 'mute Maya for 4 hours', 'mute all msgs for 2 hrs', 'dnd for 2 hours', 'unmute all'");
             addAI("· Rules in your own words — 'hold anything asking me for money', 'no rants today', 'never show me chain forwards'. I evaluate each incoming message against them with on-device AI.");
             addAI("· Manage rules — 'my rules', 'remove rule 2', 'clear all rules'");
@@ -620,6 +662,23 @@ export function Commander() {
             setBusy(false);
             doBriefing();
             return;
+          }
+          case 'circles': {
+            const circled = contacts.filter(c => c.circle);
+            if (circled.length === 0) {
+              responses.push({ text: "No circles yet. Tell me who matters — 'Maya is family', 'Jay is work', 'Sara is my VIP' — and their updates will lead every briefing." });
+            } else {
+              const order: Circle[] = ['vip', 'family', 'friends', 'work'];
+              for (const circle of order) {
+                const members = circled.filter(c => c.circle === circle);
+                if (members.length > 0) {
+                  const meta = CIRCLE_META[circle];
+                  responses.push({ text: `${meta.emoji} ${meta.label}: ${members.map(c => c.name).join(', ')}` });
+                }
+              }
+              responses.push({ text: "Say 'remove <name> from circles' to change, or '<name> is <circle>' to add more." });
+            }
+            break;
           }
           case 'rules': {
             const now = Date.now();

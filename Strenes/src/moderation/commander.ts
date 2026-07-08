@@ -6,7 +6,7 @@
 import type { Contact, Message } from '../types';
 import { promptNano } from './nano';
 import { promptCloud } from './cloud';
-import { matchProfile, PROFILES, type ProfileId } from './profiles';
+import { matchProfile, PROFILES, type ProfileId, type Circle } from './profiles';
 
 export interface ReplyIntent      { type: 'reply';       contactId: string; contactName: string; text: string }
 export interface OpenIntent       { type: 'open';        contactId: string; contactName: string }
@@ -22,7 +22,7 @@ export interface SetRuleIntent {
 }
 export interface QueryIntent {
   type: 'query';
-  subject: 'capabilities' | 'held_count' | 'contact_messages' | 'summary' | 'settings' | 'rules';
+  subject: 'capabilities' | 'held_count' | 'contact_messages' | 'summary' | 'settings' | 'rules' | 'circles';
   contactId?: string;
   contactName?: string;
 }
@@ -49,12 +49,13 @@ export interface MuteIntent {
 export interface UnmuteIntent { type: 'unmute'; contactId: string; contactName: string }
 export interface SummaryStyleIntent { type: 'summary_style'; style: 'professional' | 'casual' | 'brief' }
 export interface SetProfileIntent { type: 'set_profile'; profile: ProfileId }
+export interface SetCircleIntent { type: 'set_circle'; contactId: string; contactName: string; circle: Circle | null }
 export interface UnknownIntent { type: 'unknown'; query: string }
 
 export type Intent =
   | ReplyIntent | OpenIntent | ApproveIntent | RejectIntent
   | ShowReviewIntent | SetRuleIntent | QueryIntent | DynamicRuleIntent
-  | MuteIntent | UnmuteIntent | SummaryStyleIntent | SetProfileIntent | UnknownIntent;
+  | MuteIntent | UnmuteIntent | SummaryStyleIntent | SetProfileIntent | SetCircleIntent | UnknownIntent;
 
 /**
  * Parse a duration phrase out of a command. Returns the expiry timestamp and
@@ -137,6 +138,28 @@ function parsePrecise(text: string, contacts: Contact[]): Intent | null {
   if (wantsProfile) {
     const pid = matchProfile(rest);
     if (pid) return { type: 'set_profile', profile: pid };
+  }
+
+  // circles: "maya is family", "mark jay as work", "sara is my vip", "remove jay from circles"
+  if (/^(?:show\s+|list\s+)?(?:my\s+)?circles?\s*$|^who(?:'?s|\s+is|\s+are)?\s+(?:all\s+)?in\s+my\s+circles?/i.test(rest)) {
+    return { type: 'query', subject: 'circles' };
+  }
+  const circleM = rest.match(/^(?:mark\s+|set\s+|add\s+)?([a-z']+)\s+(?:is|as|to|=)\s*(?:my\s+|a\s+|the\s+)?(family|work|office|colleague|friend|friends|bestie|vip|inner\s+circle|important|client|priority)s?\s*(?:circle|contact|person)?\s*$/i);
+  if (circleM) {
+    const c = matchContact(circleM[1], contacts);
+    if (c) {
+      const raw = circleM[2].toLowerCase();
+      const circle: Circle = /work|office|colleague|client/.test(raw) ? 'work'
+        : /friend|bestie/.test(raw) ? 'friends'
+        : /vip|inner|important|priority/.test(raw) ? 'vip'
+        : 'family';
+      return { type: 'set_circle', contactId: c.id, contactName: c.name, circle };
+    }
+  }
+  const circleRmM = rest.match(/^(?:remove|take)\s+([a-z']+)\s+(?:from|out\s+of)\s+(?:my\s+)?(?:circles?|family|work|friends|vips?)\s*$/i);
+  if (circleRmM) {
+    const c = matchContact(circleRmM[1], contacts);
+    if (c) return { type: 'set_circle', contactId: c.id, contactName: c.name, circle: null };
   }
 
   // unmute: "unmute maya", "unmute all", "show maya's updates again"
@@ -404,7 +427,7 @@ function sanitizeIntent(p: any, contacts: Contact[]): Intent | null {
       return { type: 'set_rule', rule: p.rule, contactId: c?.id, contactName: c?.name, value: p.value };
     }
     case 'query': {
-      if (!['capabilities', 'held_count', 'contact_messages', 'summary', 'settings', 'rules'].includes(p.subject)) return null;
+      if (!['capabilities', 'held_count', 'contact_messages', 'summary', 'settings', 'rules', 'circles'].includes(p.subject)) return null;
       const c = p.subject === 'contact_messages' ? findContact() : null;
       if (p.subject === 'contact_messages' && (!c || c.id === '*')) return null;
       return { type: 'query', subject: p.subject, contactId: c?.id ?? undefined, contactName: c?.name ?? undefined };
@@ -437,6 +460,12 @@ function sanitizeIntent(p: any, contacts: Contact[]): Intent | null {
       const c = findContact();
       return { type: 'unmute', contactId: c?.id ?? '*', contactName: c?.name ?? 'everyone' };
     }
+    case 'set_circle': {
+      const c = findContact();
+      if (!c || c.id === '*') return null;
+      const circle = ['family', 'work', 'friends', 'vip'].includes(p.circle) ? p.circle as Circle : null;
+      return { type: 'set_circle', contactId: c.id, contactName: c.name, circle };
+    }
     case 'set_profile': {
       if (!(p.profile in PROFILES)) return null;
       return { type: 'set_profile', profile: p.profile as ProfileId };
@@ -456,7 +485,7 @@ const NANO_INTENT_SCHEMA = {
   required: ['type'],
   additionalProperties: false,
   properties: {
-    type: { type: 'string', enum: ['reply', 'open', 'approve', 'reject', 'show_review', 'set_rule', 'query', 'dynamic_rule', 'mute', 'unmute', 'summary_style', 'set_profile', 'unknown'] },
+    type: { type: 'string', enum: ['reply', 'open', 'approve', 'reject', 'show_review', 'set_rule', 'query', 'dynamic_rule', 'mute', 'unmute', 'summary_style', 'set_profile', 'set_circle', 'unknown'] },
     contactId: { type: 'string' },
     contactName: { type: 'string' },
     text: { type: 'string' },
@@ -470,6 +499,7 @@ const NANO_INTENT_SCHEMA = {
     ruleRef: { type: 'string' },
     action: { type: 'string', enum: ['add', 'remove'] },
     profile: { type: 'string', enum: ['elder', 'public', 'professional', 'minimal'] },
+    circle: { type: 'string', enum: ['family', 'work', 'friends', 'vip'] },
   },
 } as const;
 
@@ -499,6 +529,8 @@ async function parseViaNano(text: string, contacts: Contact[]): Promise<Intent |
     '{"type":"unmute","contactId":"<id or *>"}',
     '{"type":"summary_style","style":"professional|casual|brief"}',
     '{"type":"set_profile","profile":"elder|public|professional|minimal"}  // protection presets: elder=scam shield, public=creator inbox, professional=work, minimal=quiet',
+    '{"type":"set_circle","contactId":"<id>","circle":"family|work|friends|vip"}  // "maya is family", "jay is a work contact"',
+    '{"type":"query","subject":"circles"}  // "who is in my circles"',
     '{"type":"unknown"}',
     '',
     'Guidance: wanting quiet/peace/no notifications => mute (contactId "*" unless a contact is named).',
@@ -557,6 +589,8 @@ async function parseViaAnthropic(
     '{"type":"unmute","contactId":"<id or * for unmute all>","contactName":"<name or everyone>"}\n' +
     '{"type":"summary_style","style":"professional|casual|brief"}  // "summaries should be professional"\n' +
     '{"type":"set_profile","profile":"elder|public|professional|minimal"}  // protection presets, e.g. "protect my mom\'s phone" => elder\n' +
+    '{"type":"set_circle","contactId":"<id>","contactName":"<name>","circle":"family|work|friends|vip"}  // "maya is family", "jay is my client" => work\n' +
+    '{"type":"query","subject":"circles"}\n' +
     '{"type":"unknown","query":"<original input>"}\n\n' +
     'IMPORTANT: ANY preference about which messages the user wants to see, hide, hold, or block ' +
     'is a dynamic_rule add — keep the condition in the user\'s own words (it is evaluated per-message ' +
