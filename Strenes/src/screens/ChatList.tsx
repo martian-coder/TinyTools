@@ -79,7 +79,19 @@ export function ChatList() {
                     <span className="font-semibold text-main truncate">{c?.name}</span>
                     <span className="text-[11px] dim shrink-0">{last?.time}</span>
                   </div>
-                  <div className="text-sm dim truncate">{last?.text}</div>
+                  <div className="text-sm dim truncate flex items-center gap-1">
+                    {/* Last outgoing message carries its receipt into the inbox row */}
+                    {last?.dir === 'out' && (
+                      last.receipt === 'read'
+                        ? <span className="shrink-0" style={{ color: 'var(--accent2)', fontWeight: 700, letterSpacing: '-0.18em' }}>✓✓&nbsp;</span>
+                        : last.receipt === 'delivered'
+                          ? <span className="shrink-0" style={{ letterSpacing: '-0.18em' }}>✓✓&nbsp;</span>
+                          : (last.receipt === 'held' || last.receipt === 'filtered')
+                            ? <span className="shrink-0" style={{ color: '#fbbf24' }}>⚠</span>
+                            : <span className="shrink-0">✓</span>
+                    )}
+                    <span className="truncate">{last?.text}</span>
+                  </div>
                 </div>
                 <ChevronRight size={16} className="dim shrink-0" />
               </button>
