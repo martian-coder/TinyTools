@@ -1,0 +1,32 @@
+{
+  "role_title": "Platform & Infrastructure Owner",
+  "owner_label": "Engineering Lead, Platform",
+  "deadline": "end of week",
+  "sort_order": 2,
+  "facts": [
+    {
+      "fact": "P95 API latency has exceeded the SLO threshold of 250ms continuously for 11 days as of 2024-01-15, triggered by the Q4 schema migration's unindexed join",
+      "source": "slo",
+      "source_ref": "SLO-API-002",
+      "as_of": "2024-01-15"
+    },
+    {
+      "fact": "The Kubernetes cluster upgrade to 1.28 is blocked by a CNI plugin incompatibility that has no upstream fix scheduled; estimated unblock is March at earliest",
+      "source": "incident",
+      "source_ref": "INC-2024-0019",
+      "as_of": "2024-01-11"
+    },
+    {
+      "fact": "The database failover drill on 2024-01-10 revealed a 4-minute monitoring blind spot during leader election; alerting does not fire until a new leader is confirmed",
+      "source": "postmortem",
+      "source_ref": "INC-2024-0020",
+      "as_of": "2024-01-10"
+    },
+    {
+      "fact": "Redis cluster memory headroom is at 23% of capacity; at current growth rate, the cluster reaches saturation in approximately 6 weeks without a tier upgrade",
+      "source": "ticket",
+      "source_ref": "PLAT-2201",
+      "as_of": "2024-01-14"
+    }
+  ]
+}

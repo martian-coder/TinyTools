@@ -1,0 +1,1149 @@
+<!doctype html>
+<html lang="en" data-theme="">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Agent Standup</title>
+  <style>
+    /* =====================================================================
+       Token system — redefine only tokens in theme overrides,
+       style every component through the tokens
+    ===================================================================== */
+    :root {
+      --bg:           #0d1117;
+      --surface:      #161b22;
+      --surface-2:    #21262d;
+      --surface-3:    #2d333b;
+      --border:       #30363d;
+      --border-light: #21262d;
+
+      --text:         #e6edf3;
+      --text-muted:   #8b949e;
+      --text-dim:     #484f58;
+
+      --c-update:     #3fb950;
+      --c-contradict: #f85149;
+      --c-question:   #c9962a;
+      --c-answer:     #4c9be8;
+      --c-unknown:    #bc8cff;
+      --c-pass:       #484f58;
+
+      --accent:       #4c9be8;
+      --radius:       5px;
+
+      --mono: ui-monospace, 'SF Mono', 'Cascadia Code', Consolas, 'Courier New', monospace;
+      --sans: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, sans-serif;
+    }
+
+    @media (prefers-color-scheme: light) {
+      :root:not([data-theme="dark"]) {
+        --bg:           #f6f8fa;
+        --surface:      #ffffff;
+        --surface-2:    #f0f2f4;
+        --surface-3:    #e5e8eb;
+        --border:       #d0d7de;
+        --border-light: #eaeef2;
+        --text:         #1f2328;
+        --text-muted:   #636c76;
+        --text-dim:     #aab0b8;
+        --c-update:     #1a7f37;
+        --c-contradict: #d1242f;
+        --c-question:   #9a6700;
+        --c-answer:     #0969da;
+        --c-unknown:    #8250df;
+        --c-pass:       #aab0b8;
+        --accent:       #0969da;
+      }
+    }
+    :root[data-theme="dark"] {
+      --bg:           #0d1117;
+      --surface:      #161b22;
+      --surface-2:    #21262d;
+      --surface-3:    #2d333b;
+      --border:       #30363d;
+      --border-light: #21262d;
+      --text:         #e6edf3;
+      --text-muted:   #8b949e;
+      --text-dim:     #484f58;
+      --c-update:     #3fb950;
+      --c-contradict: #f85149;
+      --c-question:   #c9962a;
+      --c-answer:     #4c9be8;
+      --c-unknown:    #bc8cff;
+      --c-pass:       #484f58;
+      --accent:       #4c9be8;
+    }
+    :root[data-theme="light"] {
+      --bg:           #f6f8fa;
+      --surface:      #ffffff;
+      --surface-2:    #f0f2f4;
+      --surface-3:    #e5e8eb;
+      --border:       #d0d7de;
+      --border-light: #eaeef2;
+      --text:         #1f2328;
+      --text-muted:   #636c76;
+      --text-dim:     #aab0b8;
+      --c-update:     #1a7f37;
+      --c-contradict: #d1242f;
+      --c-question:   #9a6700;
+      --c-answer:     #0969da;
+      --c-unknown:    #8250df;
+      --c-pass:       #aab0b8;
+      --accent:       #0969da;
+    }
+
+    /* =====================================================================
+       Reset
+    ===================================================================== */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--sans);
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    /* =====================================================================
+       App shell — 3-column grid
+    ===================================================================== */
+    .app {
+      display: grid;
+      grid-template-rows: 50px 1fr;
+      grid-template-columns: 272px 1fr 296px;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* =====================================================================
+       Header
+    ===================================================================== */
+    .header {
+      grid-column: 1 / -1;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 0 16px;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface);
+    }
+
+    .logo {
+      font-family: var(--mono);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 0;
+    }
+    .logo-mark {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      background: var(--c-contradict);
+      border-radius: 1px;
+      margin: 0 4px;
+    }
+
+    .vsep {
+      width: 1px;
+      height: 16px;
+      background: var(--border);
+    }
+
+    .status-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-family: var(--mono);
+      font-size: 10.5px;
+      color: var(--text-muted);
+    }
+    .status-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--text-dim);
+      flex-shrink: 0;
+    }
+    .status-dot.live {
+      background: var(--c-update);
+      animation: pulse-dot 2s ease infinite;
+    }
+    @keyframes pulse-dot {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(63,185,80,.4); }
+      50%       { box-shadow: 0 0 0 4px rgba(63,185,80,0); }
+    }
+
+    .header-right {
+      margin-left: auto;
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .counter-strip {
+      display: flex;
+      gap: 10px;
+      font-family: var(--mono);
+      font-size: 9.5px;
+      color: var(--text-dim);
+      font-variant-numeric: tabular-nums;
+    }
+    .counter-item { display: flex; gap: 4px; align-items: center; }
+    .counter-dot {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+    }
+
+    .btn-sm {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      border-radius: var(--radius);
+      padding: 3px 9px;
+      font-size: 11px;
+      font-family: var(--mono);
+      cursor: pointer;
+      transition: color .15s, border-color .15s;
+    }
+    .btn-sm:hover { color: var(--text); border-color: var(--text-dim); }
+
+    /* =====================================================================
+       Left panel — Ledger
+    ===================================================================== */
+    .panel-ledger {
+      grid-row: 2;
+      border-right: 1px solid var(--border);
+      overflow-y: auto;
+      background: var(--surface);
+    }
+
+    .panel-head {
+      position: sticky;
+      top: 0;
+      padding: 8px 14px;
+      font-family: var(--mono);
+      font-size: 9.5px;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      background: var(--surface);
+      border-bottom: 1px solid var(--border-light);
+      z-index: 2;
+    }
+
+    .agent-group { border-bottom: 1px solid var(--border-light); }
+
+    .agent-toggle {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 14px;
+      cursor: pointer;
+      user-select: none;
+      transition: background .1s;
+    }
+    .agent-toggle:hover { background: var(--surface-2); }
+
+    .agent-pip {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .agent-role-name {
+      font-family: var(--mono);
+      font-size: 9.5px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      flex: 1;
+    }
+    .agent-fact-count {
+      font-family: var(--mono);
+      font-size: 9px;
+      color: var(--text-dim);
+    }
+    .chevron {
+      font-size: 8px;
+      color: var(--text-dim);
+      transition: transform .15s;
+    }
+    .chevron.open { transform: rotate(90deg); }
+
+    .agent-facts { padding-bottom: 4px; }
+    .agent-facts.collapsed { display: none; }
+
+    .ledger-row {
+      padding: 5px 14px 5px 28px;
+      transition: background .2s, border-left .2s;
+      border-left: 2px solid transparent;
+    }
+    .ledger-row.cited {
+      background: rgba(188,140,255,.07);
+      border-left-color: var(--c-unknown);
+      animation: cite-flash .55s ease;
+    }
+    @keyframes cite-flash {
+      0%   { background: rgba(188,140,255,.22); }
+      100% { background: rgba(188,140,255,.07); }
+    }
+    .ledger-fact {
+      font-size: 11.5px;
+      color: var(--text-muted);
+      line-height: 1.42;
+      margin-bottom: 2px;
+    }
+    .ledger-ref {
+      font-family: var(--mono);
+      font-size: 9px;
+      color: var(--text-dim);
+    }
+
+    /* =====================================================================
+       Center panel — Transcript
+    ===================================================================== */
+    .panel-transcript {
+      grid-row: 2;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .transcript-scroll {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px 22px;
+      scroll-behavior: smooth;
+    }
+
+    /* ——— Setup form ——— */
+    .setup-form {
+      max-width: 680px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .setup-heading {
+      font-family: var(--mono);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+    }
+    .setup-sub {
+      font-size: 12.5px;
+      color: var(--text-muted);
+      line-height: 1.5;
+      max-width: 540px;
+    }
+    textarea.update-input {
+      width: 100%;
+      min-height: 190px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+      font-family: var(--sans);
+      font-size: 13px;
+      line-height: 1.6;
+      padding: 12px 14px;
+      resize: vertical;
+      outline: none;
+      transition: border-color .15s;
+    }
+    textarea.update-input:focus { border-color: var(--accent); }
+    .form-row { display: flex; align-items: center; gap: 12px; }
+    .btn-run {
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: var(--radius);
+      padding: 8px 22px;
+      font-family: var(--mono);
+      font-size: 11.5px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      cursor: pointer;
+      transition: opacity .15s;
+    }
+    .btn-run:hover { opacity: .85; }
+    .btn-run:disabled { opacity: .38; cursor: not-allowed; }
+    .form-hint {
+      font-size: 11.5px;
+      color: var(--text-dim);
+    }
+
+    /* ——— Transcript live area ——— */
+    .transcript-live { display: none; }
+
+    .round-divider {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 18px 0 12px;
+    }
+    .round-divider::before, .round-divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+    .round-label {
+      font-family: var(--mono);
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+    }
+
+    /* ——— Turn cards ——— */
+    .turn {
+      margin-bottom: 8px;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      background: var(--surface);
+      overflow: hidden;
+      opacity: 0;
+      transform: translateY(5px);
+      animation: turn-enter .22s ease forwards;
+    }
+    @keyframes turn-enter { to { opacity: 1; transform: translateY(0); } }
+    @media (prefers-reduced-motion: reduce) {
+      .turn { animation: none; opacity: 1; transform: none; }
+    }
+
+    .turn:hover { background: var(--surface-2); }
+
+    /* kind-specific left border */
+    .turn { border-left: 3px solid var(--border); }
+    .turn[data-kind="update"]    { border-left-color: var(--c-update); }
+    .turn[data-kind="contradict"]{ border-left-color: var(--c-contradict); }
+    .turn[data-kind="question"]  { border-left-color: var(--c-question); }
+    .turn[data-kind="answer"]    { border-left-color: var(--c-answer); }
+    .turn[data-kind="unknown"]   {
+      border-left-color: var(--c-unknown);
+      background: linear-gradient(135deg, rgba(188,140,255,.04) 0%, transparent 55%);
+    }
+    .turn[data-kind="pass"] {
+      border-left-color: var(--c-pass);
+      opacity: .45;
+    }
+
+    /* dashed bottom accent on unknowns */
+    .turn[data-kind="unknown"]::after {
+      content: '';
+      display: block;
+      height: 1px;
+      background: repeating-linear-gradient(
+        90deg,
+        var(--c-unknown) 0, var(--c-unknown) 5px,
+        transparent 5px, transparent 10px
+      );
+      opacity: .35;
+    }
+
+    .turn-head {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      padding: 6px 11px;
+      border-bottom: 1px solid var(--border-light);
+    }
+    .turn-speaker {
+      font-family: var(--mono);
+      font-size: 9.5px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    .kind-pill {
+      font-family: var(--mono);
+      font-size: 8.5px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 1px 6px;
+      border-radius: 3px;
+    }
+    .pill-update    { background: rgba(63,185,80,.14);  color: var(--c-update); }
+    .pill-contradict{ background: rgba(248,81,73,.14);  color: var(--c-contradict); }
+    .pill-question  { background: rgba(201,150,42,.14); color: var(--c-question); }
+    .pill-answer    { background: rgba(76,155,232,.12); color: var(--c-answer); }
+    .pill-unknown   { background: rgba(188,140,255,.14);color: var(--c-unknown); }
+    .pill-pass      { background: var(--surface-2);     color: var(--text-dim); }
+
+    .turn-round {
+      margin-left: auto;
+      font-family: var(--mono);
+      font-size: 9px;
+      color: var(--text-dim);
+    }
+
+    .turn-body { padding: 9px 11px; }
+
+    .turn-text {
+      font-size: 13px;
+      line-height: 1.55;
+      color: var(--text);
+    }
+    .turn[data-kind="pass"] .turn-text {
+      font-size: 11.5px;
+      color: var(--text-dim);
+      font-style: italic;
+    }
+
+    .cursor-blink {
+      display: inline-block;
+      width: 2px;
+      height: 1em;
+      background: var(--accent);
+      vertical-align: text-bottom;
+      margin-left: 1px;
+      animation: blink .75s step-end infinite;
+    }
+    @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+
+    .unknown-callout {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 8px;
+      padding: 5px 8px;
+      background: rgba(188,140,255,.07);
+      border-radius: 3px;
+      font-family: var(--mono);
+      font-size: 9.5px;
+      color: var(--c-unknown);
+      letter-spacing: 0.04em;
+    }
+
+    .basis-receipt {
+      margin-top: 9px;
+      padding: 7px 10px;
+      background: rgba(248,81,73,.05);
+      border-left: 2px solid rgba(248,81,73,.3);
+      border-radius: 0 3px 3px 0;
+    }
+    .basis-eyebrow {
+      font-family: var(--mono);
+      font-size: 8.5px;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--c-contradict);
+      opacity: .65;
+      margin-bottom: 3px;
+    }
+    .basis-body {
+      font-size: 11.5px;
+      color: var(--text-muted);
+      line-height: 1.44;
+    }
+
+    /* ——— Transcript footer ——— */
+    .transcript-foot {
+      border-top: 1px solid var(--border);
+      background: var(--surface);
+      padding: 6px 22px;
+      min-height: 32px;
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--text-dim);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    /* =====================================================================
+       Right panel — Briefings
+    ===================================================================== */
+    .panel-briefings {
+      grid-row: 2;
+      border-left: 1px solid var(--border);
+      overflow-y: auto;
+      background: var(--surface);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .briefings-placeholder {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      color: var(--text-dim);
+      font-family: var(--mono);
+      font-size: 9.5px;
+      text-align: center;
+      padding: 24px;
+    }
+    .lock-icon {
+      font-size: 28px;
+      opacity: .2;
+    }
+
+    .briefing-card {
+      margin: 10px 10px 0;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      opacity: 0;
+      transform: translateX(10px);
+      animation: card-enter .28s ease forwards;
+    }
+    @keyframes card-enter { to { opacity: 1; transform: translateX(0); } }
+
+    .briefing-card-head {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      padding: 7px 10px;
+      background: var(--surface-2);
+      border-bottom: 1px solid var(--border);
+    }
+    .briefing-pip {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .briefing-role {
+      font-family: var(--mono);
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      flex: 1;
+    }
+    .private-tag {
+      font-family: var(--mono);
+      font-size: 8px;
+      color: var(--text-dim);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+    .briefing-body {
+      padding: 10px 10px;
+      font-size: 12px;
+      color: var(--text-muted);
+      line-height: 1.55;
+    }
+
+    /* stability panel */
+    .stability-section {
+      margin-top: 8px;
+      border-top: 1px solid var(--border-light);
+    }
+    .stability-head {
+      padding: 7px 10px;
+      font-family: var(--mono);
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+    }
+    .stability-cluster {
+      margin: 0 10px 8px;
+      padding: 7px 9px;
+      background: var(--surface-2);
+      border-radius: 4px;
+    }
+    .stability-bar-row {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      margin-bottom: 4px;
+    }
+    .s-pct {
+      font-family: var(--mono);
+      font-size: 11px;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      width: 32px;
+      text-align: right;
+    }
+    .s-bar {
+      flex: 1;
+      height: 3px;
+      background: var(--border);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+    .s-fill {
+      height: 100%;
+      border-radius: 2px;
+      background: var(--accent);
+    }
+    .s-role {
+      font-family: var(--mono);
+      font-size: 8.5px;
+      color: var(--text-dim);
+      margin-bottom: 2px;
+    }
+    .s-text {
+      font-size: 11px;
+      color: var(--text-muted);
+      line-height: 1.4;
+    }
+
+    /* scrollbars */
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 8px; }
+
+    /* responsive collapse */
+    @media (max-width: 860px) {
+      .app { grid-template-columns: 1fr; }
+      .panel-ledger, .panel-briefings { display: none; }
+    }
+  </style>
+</head>
+<body>
+<div class="app">
+
+  <!-- ================================================================= -->
+  <!-- Header                                                             -->
+  <!-- ================================================================= -->
+  <header class="header">
+    <div class="logo">
+      AGENT<span class="logo-mark"></span>STANDUP
+    </div>
+    <div class="vsep"></div>
+    <div class="status-row">
+      <div class="status-dot" id="statusDot"></div>
+      <span id="statusText">Ready</span>
+    </div>
+    <div class="header-right">
+      <div class="counter-strip" id="counterStrip" style="display:none">
+        <div class="counter-item">
+          <div class="counter-dot" style="background:var(--c-contradict)"></div>
+          <span id="ctr-contradict">0</span> contradict
+        </div>
+        <div class="counter-item">
+          <div class="counter-dot" style="background:var(--c-unknown)"></div>
+          <span id="ctr-unknown">0</span> unknown
+        </div>
+        <div class="counter-item">
+          <div class="counter-dot" style="background:var(--c-question)"></div>
+          <span id="ctr-question">0</span> question
+        </div>
+      </div>
+      <button class="btn-sm" onclick="toggleTheme()">⬡ theme</button>
+    </div>
+  </header>
+
+  <!-- ================================================================= -->
+  <!-- Left: Ledger                                                       -->
+  <!-- ================================================================= -->
+  <aside class="panel-ledger">
+    <div class="panel-head">Private Ledgers</div>
+    <div id="ledgerContent">
+      <div style="padding:20px 14px; font-family:var(--mono); font-size:10px; color:var(--text-dim)">
+        Loading…
+      </div>
+    </div>
+  </aside>
+
+  <!-- ================================================================= -->
+  <!-- Center: Transcript                                                 -->
+  <!-- ================================================================= -->
+  <main class="panel-transcript">
+    <div class="transcript-scroll" id="transcriptScroll">
+
+      <!-- Setup form -->
+      <div class="setup-form" id="setupForm">
+        <div>
+          <div class="setup-heading">New Meeting</div>
+        </div>
+        <div class="setup-sub">
+          Paste the engineering update the host will present. Four delegates will attend
+          with private ledgers and surface contradictions — facts the update omits or misrepresents.
+        </div>
+        <div>
+          <textarea class="update-input" id="updateText"
+            placeholder="Paste the engineering update here…"
+            rows="10"></textarea>
+        </div>
+        <div class="form-row">
+          <button class="btn-run" id="runBtn" onclick="startMeeting()">
+            ▶&nbsp; Run Meeting
+          </button>
+          <span class="form-hint">Runs 2 rounds · 4 delegates · private briefings</span>
+        </div>
+      </div>
+
+      <!-- Live transcript -->
+      <div class="transcript-live" id="transcriptLive"></div>
+
+    </div>
+    <div class="transcript-foot" id="transcriptFoot"></div>
+  </main>
+
+  <!-- ================================================================= -->
+  <!-- Right: Briefings                                                   -->
+  <!-- ================================================================= -->
+  <aside class="panel-briefings">
+    <div class="panel-head">Private Briefings</div>
+    <div id="briefingsContent" style="display:flex;flex-direction:column;flex:1">
+      <div class="briefings-placeholder" id="briefingsPlaceholder">
+        <div class="lock-icon">🔒</div>
+        <div>Sealed until<br>meeting ends</div>
+      </div>
+    </div>
+  </aside>
+
+</div>
+
+<script>
+/* ===================================================================
+   Constants
+=================================================================== */
+const AGENT_COLORS = ['#bc8cff', '#4c9be8', '#c9962a', '#3fb950'];
+
+const PILL = {
+  update:    { label: '↗ UPDATE',     cls: 'pill-update' },
+  contradict:{ label: '⚡ CONTRADICT', cls: 'pill-contradict' },
+  question:  { label: '? QUESTION',   cls: 'pill-question' },
+  answer:    { label: '↩ ANSWER',     cls: 'pill-answer' },
+  unknown:   { label: '◆ UNKNOWN',    cls: 'pill-unknown' },
+  pass:      { label: '— PASS',       cls: 'pill-pass' },
+};
+
+/* ===================================================================
+   State
+=================================================================== */
+let agentsMap   = {};   // id -> {color, role_title, ledger:[{fact,source_ref,...}]}
+let currentRound = 0;
+let counters    = { contradict: 0, unknown: 0, question: 0 };
+
+/* ===================================================================
+   Theme
+=================================================================== */
+function toggleTheme() {
+  const root = document.documentElement;
+  const cur  = root.getAttribute('data-theme') ||
+    (matchMedia('(prefers-color-scheme:dark)').matches ? 'dark' : 'light');
+  root.setAttribute('data-theme', cur === 'dark' ? 'light' : 'dark');
+}
+
+/* ===================================================================
+   Ledger
+=================================================================== */
+async function loadLedgers() {
+  try {
+    const agents = await fetch('/agents').then(r => r.json());
+    agents.forEach((a, i) => {
+      agentsMap[a.id] = { ...a, color: AGENT_COLORS[i % AGENT_COLORS.length] };
+    });
+    renderLedger(agents);
+
+    const seed = await fetch('/seed-update').then(r => r.json());
+    document.getElementById('updateText').value = seed.text;
+  } catch (e) {
+    console.warn('Could not reach backend:', e.message);
+    // Show demo mode notice
+    document.getElementById('briefingsPlaceholder').innerHTML = `
+      <div style="font-size:11px;color:var(--text-dim);text-align:center;padding:16px;">
+        Start the backend to run a live meeting.<br>
+        <code style="font-family:var(--mono);font-size:10px;">cd backend && uvicorn main:app --reload</code>
+      </div>`;
+  }
+}
+
+function renderLedger(agents) {
+  const el = document.getElementById('ledgerContent');
+  el.innerHTML = '';
+  agents.forEach((agent, i) => {
+    const color = AGENT_COLORS[i % AGENT_COLORS.length];
+    const groupId = 'ag-' + agent.id;
+    const group = document.createElement('div');
+    group.className = 'agent-group';
+    group.innerHTML = `
+      <div class="agent-toggle" onclick="toggleGroup('${groupId}', this)">
+        <div class="agent-pip" style="background:${color}"></div>
+        <span class="agent-role-name">${esc(agent.role_title)}</span>
+        <span class="agent-fact-count">${agent.ledger.length}</span>
+        <span class="chevron open">▶</span>
+      </div>
+      <div class="agent-facts" id="${groupId}">
+        ${agent.ledger.map(e => `
+          <div class="ledger-row" id="lr-${esc(e.source_ref)}">
+            <div class="ledger-fact">${esc(e.fact)}</div>
+            <div class="ledger-ref">${esc(e.source_ref)} · ${esc(e.as_of)} · ${esc(e.source)}</div>
+          </div>
+        `).join('')}
+      </div>`;
+    el.appendChild(group);
+  });
+}
+
+function toggleGroup(id, header) {
+  const entries = document.getElementById(id);
+  const chevron = header.querySelector('.chevron');
+  const collapsed = entries.classList.toggle('collapsed');
+  chevron.classList.toggle('open', !collapsed);
+}
+
+/* ===================================================================
+   Meeting
+=================================================================== */
+async function startMeeting() {
+  const text = document.getElementById('updateText').value.trim();
+  if (!text) return;
+
+  document.getElementById('runBtn').disabled = true;
+
+  let meetingId;
+  try {
+    const r = await fetch('/meetings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ update_text: text }),
+    });
+    ({ meeting_id: meetingId } = await r.json());
+  } catch (e) {
+    setStatus('', 'Backend unreachable. Start the server first.');
+    document.getElementById('runBtn').disabled = false;
+    return;
+  }
+
+  document.getElementById('setupForm').style.display    = 'none';
+  document.getElementById('transcriptLive').style.display = 'block';
+  document.getElementById('counterStrip').style.display = 'flex';
+
+  setStatus('live', 'Meeting in progress…');
+
+  const source = new EventSource(`/meetings/${meetingId}/stream`);
+  source.onmessage = (e) => {
+    const evt = JSON.parse(e.data);
+    handleSSE(evt);
+    if (evt.event === 'done') { source.close(); setStatus('', 'Meeting complete.'); }
+  };
+  source.onerror = () => { source.close(); setStatus('', 'Stream ended.'); };
+}
+
+function handleSSE(evt) {
+  if (evt.event === 'turn')     appendTurn(evt.data);
+  if (evt.event === 'briefing') appendBriefing(evt.data);
+  if (evt.event === 'status')   updateFoot(evt.data.message);
+  if (evt.event === 'stability_agent') appendStability(evt.data);
+}
+
+/* ===================================================================
+   Turn rendering
+=================================================================== */
+function appendTurn(turn) {
+  const live = document.getElementById('transcriptLive');
+
+  // Round divider
+  if (turn.round > 0 && turn.round > currentRound && turn.kind !== 'pass') {
+    currentRound = turn.round;
+    const div = document.createElement('div');
+    div.className = 'round-divider';
+    div.innerHTML = `<span class="round-label">Round ${turn.round}</span>`;
+    live.appendChild(div);
+  }
+
+  const p  = PILL[turn.kind] || { label: turn.kind.toUpperCase(), cls: '' };
+  const speakerColor = turn.speaker_id === 'host'
+    ? 'var(--text-muted)'
+    : (agentsMap[turn.speaker_id]?.color ?? 'var(--text-muted)');
+
+  const el = document.createElement('div');
+  el.className = 'turn';
+  el.dataset.kind = turn.kind;
+  el.dataset.seq  = turn.seq;
+
+  const roundBadge = turn.round > 0
+    ? `<span class="turn-round">R${turn.round}</span>` : '';
+
+  el.innerHTML = `
+    <div class="turn-head">
+      <span class="turn-speaker" style="color:${speakerColor}">${esc(turn.speaker_label).toUpperCase()}</span>
+      <span class="kind-pill ${p.cls}">${p.label}</span>
+      ${roundBadge}
+    </div>
+    <div class="turn-body">
+      <div class="turn-text" id="tt-${turn.seq}"></div>
+      ${turn.kind === 'unknown' ? `
+        <div class="unknown-callout">
+          ◆ &nbsp;This information is absent from the update. This is the finding.
+        </div>` : ''}
+      ${turn.kind === 'contradict' && turn.basis ? `
+        <div class="basis-receipt">
+          <div class="basis-eyebrow">Ledger Basis</div>
+          <div class="basis-body">${esc(turn.basis)}</div>
+        </div>` : ''}
+    </div>`;
+
+  live.appendChild(el);
+
+  const textEl = document.getElementById(`tt-${turn.seq}`);
+  if (turn.kind === 'pass') {
+    textEl.textContent = '—';
+  } else {
+    const speed = turn.kind === 'update' ? 5 : 12;
+    revealText(textEl, turn.text, speed);
+  }
+
+  if (turn.kind === 'contradict' && turn.basis) {
+    citeLedgerEntry(turn.basis);
+  }
+
+  // Update counters
+  if (turn.kind === 'contradict') bump('contradict');
+  if (turn.kind === 'unknown')    bump('unknown');
+  if (turn.kind === 'question')   bump('question');
+
+  scrollDown();
+}
+
+function bump(kind) {
+  counters[kind]++;
+  const el = document.getElementById(`ctr-${kind}`);
+  if (el) el.textContent = counters[kind];
+}
+
+function citeLedgerEntry(basis) {
+  // Match against ledger rows by word overlap
+  const basisWords = new Set(
+    basis.toLowerCase().replace(/[^\w\s]/g, '').split(/\s+/).filter(w => w.length > 4)
+  );
+  if (basisWords.size === 0) return;
+
+  let bestEl = null, bestScore = 0;
+  document.querySelectorAll('.ledger-row').forEach(row => {
+    const fact = row.querySelector('.ledger-fact');
+    if (!fact) return;
+    const factWords = new Set(
+      fact.textContent.toLowerCase().replace(/[^\w\s]/g, '').split(/\s+/).filter(w => w.length > 4)
+    );
+    const hits  = [...basisWords].filter(w => factWords.has(w)).length;
+    const score = hits / basisWords.size;
+    if (score > bestScore) { bestScore = score; bestEl = row; }
+  });
+
+  if (bestEl && bestScore > 0.35) {
+    document.querySelectorAll('.ledger-row.cited').forEach(r => r.classList.remove('cited'));
+    bestEl.classList.add('cited');
+    bestEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+}
+
+/* ===================================================================
+   Text reveal
+=================================================================== */
+function revealText(el, text, baseDelay = 12) {
+  if (!text) { el.textContent = ''; return; }
+  el.textContent = '';
+  const cursor = Object.assign(document.createElement('span'), { className: 'cursor-blink' });
+  el.appendChild(cursor);
+
+  let i = 0;
+  const chars = [...text];  // handles emoji correctly
+
+  (function tick() {
+    if (i >= chars.length) { cursor.remove(); return; }
+    const ch = chars[i++];
+    el.insertBefore(document.createTextNode(ch), cursor);
+    const delay = '.!?'.includes(ch) ? 65 : ch === ',' ? 40 : baseDelay;
+    setTimeout(tick, delay);
+  })();
+}
+
+/* ===================================================================
+   Briefing rendering
+=================================================================== */
+function appendBriefing(briefing) {
+  const content = document.getElementById('briefingsContent');
+  document.getElementById('briefingsPlaceholder')?.remove();
+
+  const color = agentsMap[briefing.agent_id]?.color ?? 'var(--text-muted)';
+  const card  = document.createElement('div');
+  card.className = 'briefing-card';
+  const bodyId = `bf-${briefing.agent_id}`;
+  card.innerHTML = `
+    <div class="briefing-card-head">
+      <div class="briefing-pip" style="background:${color}"></div>
+      <span class="briefing-role">${esc(briefing.role_title)}</span>
+      <span class="private-tag">Private</span>
+    </div>
+    <div class="briefing-body" id="${bodyId}"></div>`;
+
+  content.appendChild(card);
+  revealText(document.getElementById(bodyId), briefing.text, 8);
+}
+
+/* ===================================================================
+   Stability results (Phase 2)
+=================================================================== */
+function appendStability(data) {
+  if (!data.clusters || data.clusters.length === 0) return;
+  const content = document.getElementById('briefingsContent');
+
+  let section = document.getElementById('stability-section');
+  if (!section) {
+    section = document.createElement('div');
+    section.id = 'stability-section';
+    section.className = 'stability-section';
+    section.innerHTML = `<div class="stability-head">Stability Analysis · N=12</div>`;
+    content.appendChild(section);
+  }
+
+  data.clusters.forEach(cl => {
+    const pct = Math.round(cl.stability_pct * 100);
+    const clEl = document.createElement('div');
+    clEl.className = 'stability-cluster';
+    clEl.innerHTML = `
+      <div class="s-role">${esc(data.role_title)}</div>
+      <div class="stability-bar-row">
+        <span class="s-pct" style="color:${pct>=80?'var(--c-contradict)':pct>=60?'var(--c-question)':'var(--accent)'}">${pct}%</span>
+        <div class="s-bar"><div class="s-fill" style="width:${pct}%"></div></div>
+      </div>
+      <div class="s-text">${esc(cl.representative_text)}</div>`;
+    section.appendChild(clEl);
+  });
+}
+
+/* ===================================================================
+   Utilities
+=================================================================== */
+function setStatus(mode, text) {
+  document.getElementById('statusDot').className = 'status-dot' + (mode === 'live' ? ' live' : '');
+  document.getElementById('statusText').textContent = text;
+}
+function updateFoot(msg) {
+  document.getElementById('transcriptFoot').textContent = msg;
+}
+function scrollDown() {
+  const s = document.getElementById('transcriptScroll');
+  requestAnimationFrame(() => { s.scrollTop = s.scrollHeight; });
+}
+function esc(str) {
+  return String(str ?? '')
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+/* ===================================================================
+   Boot
+=================================================================== */
+loadLedgers();
+</script>
+</body>
+</html>
