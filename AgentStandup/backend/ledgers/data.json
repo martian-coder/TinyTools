@@ -1,6 +1,7 @@
 {
   "role_title": "Data & Analytics Owner",
   "owner_label": "Engineering Lead, Data Platform",
+  "personality_file": "data.md",
   "deadline": "end of week",
   "sort_order": 4,
   "facts": [

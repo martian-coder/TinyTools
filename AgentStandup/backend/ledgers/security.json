@@ -1,6 +1,7 @@
 {
   "role_title": "Security & Compliance Owner",
   "owner_label": "Engineering Lead, Security",
+  "personality_file": "security.md",
   "deadline": "end of week",
   "sort_order": 3,
   "facts": [

@@ -1,6 +1,7 @@
 {
   "role_title": "Billing Service Owner",
   "owner_label": "Engineering Lead, Billing & Payments",
+  "personality_file": "billing.md",
   "deadline": "end of week",
   "sort_order": 1,
   "facts": [

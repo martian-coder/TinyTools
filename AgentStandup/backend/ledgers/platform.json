@@ -1,6 +1,7 @@
 {
   "role_title": "Platform & Infrastructure Owner",
   "owner_label": "Engineering Lead, Platform",
+  "personality_file": "platform.md",
   "deadline": "end of week",
   "sort_order": 2,
   "facts": [

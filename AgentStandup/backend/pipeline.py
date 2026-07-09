@@ -14,6 +14,7 @@ import anthropic
 from models import Meeting, AgentModel, LedgerEntry, Turn, Briefing, StabilityRun, StabilityCluster
 
 PROMPTS_DIR = Path(__file__).parent / "prompts"
+AGENTS_DIR  = Path(__file__).parent / "agents"
 MODEL = "claude-sonnet-4-6"
 MAX_ROUNDS = 3
 STABILITY_N = 12
@@ -40,6 +41,15 @@ def get_client() -> anthropic.AsyncAnthropic:
 
 def load_prompt(name: str) -> str:
     return (PROMPTS_DIR / name).read_text()
+
+
+def load_personality(personality_file: str | None) -> str:
+    if not personality_file:
+        return "(No specific character profile for this role.)"
+    path = AGENTS_DIR / personality_file
+    if not path.exists():
+        return "(No specific character profile for this role.)"
+    return path.read_text()
 
 
 # --------------------------------------------------------------------------- #
@@ -164,9 +174,12 @@ async def call_agent_turn(
         else ""
     )
 
+    personality = load_personality(getattr(agent, "personality_file", None))
+
     prompt = (
         load_prompt("agent_turn.txt")
         .replace("{title}", agent.role_title)
+        .replace("{personality}", personality)
         .replace("{ledger_facts}", ledger_facts or "(no ledger entries)")
         .replace("{transcript}", format_transcript(transcript))
         .replace("{round_instruction}", round_instruction + extra_basis_instruction)

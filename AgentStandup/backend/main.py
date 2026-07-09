@@ -178,6 +178,7 @@ def list_agents(db: Session = Depends(get_db)):
             "id": a.id,
             "role_title": a.role_title,
             "owner_label": a.owner_label,
+            "personality_file": a.personality_file,
             "ledger": [
                 {
                     "id": e.id,

@@ -29,6 +29,7 @@ class AgentModel(Base):
     owner_label = Column(String)                  # role description for briefing header
     deadline = Column(String)                     # "end of week" etc.
     sort_order = Column(Integer, default=0)
+    personality_file = Column(String)             # e.g. "billing.md" in backend/agents/
 
     ledger_entries = relationship("LedgerEntry", back_populates="agent",
                                   order_by="LedgerEntry.as_of")

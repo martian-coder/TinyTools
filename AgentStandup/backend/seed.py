@@ -32,6 +32,7 @@ def seed():
                 owner_label=data.get("owner_label", data["role_title"]),
                 deadline=data.get("deadline", "end of week"),
                 sort_order=data.get("sort_order", 99),
+                personality_file=data.get("personality_file"),
             )
             db.add(agent)
             db.flush()
