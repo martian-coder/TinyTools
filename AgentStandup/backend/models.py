@@ -16,6 +16,7 @@ class Meeting(Base):
     update_text = Column(Text, nullable=False)
     status = Column(String, default="pending")  # pending | running | complete | failed
     created_at = Column(DateTime, default=datetime.utcnow)
+    api_key = Column(String, nullable=True)
 
     turns = relationship("Turn", back_populates="meeting", order_by="Turn.seq")
     briefings = relationship("Briefing", back_populates="meeting")

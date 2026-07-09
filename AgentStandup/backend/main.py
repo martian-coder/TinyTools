@@ -4,7 +4,7 @@ from pathlib import Path
 from uuid import uuid4
 
 from dotenv import load_dotenv
-from fastapi import FastAPI, Depends, HTTPException
+from fastapi import FastAPI, Depends, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
@@ -13,7 +13,7 @@ from sqlalchemy.orm import Session
 
 load_dotenv()
 
-from database import get_db, create_tables
+from database import get_db, create_tables, engine
 from models import Meeting, AgentModel, LedgerEntry, Turn, Briefing, StabilityCluster
 from pipeline import run_meeting, run_stability_engine
 from seed import seed
@@ -34,6 +34,14 @@ SEED_UPDATE = (Path(__file__).parent / "ledgers" / "seed_update.txt").read_text(
 @app.on_event("startup")
 def startup():
     create_tables()
+    # Add api_key column if this is an existing DB that predates the column
+    from sqlalchemy import text
+    with engine.connect() as conn:
+        try:
+            conn.execute(text("ALTER TABLE meetings ADD COLUMN api_key TEXT"))
+            conn.commit()
+        except Exception:
+            pass
     seed()
 
 
@@ -59,8 +67,9 @@ class CreateMeetingRequest(BaseModel):
 
 
 @app.post("/meetings")
-def create_meeting(body: CreateMeetingRequest, db: Session = Depends(get_db)):
-    meeting = Meeting(id=str(uuid4()), update_text=body.update_text.strip())
+def create_meeting(body: CreateMeetingRequest, request: Request, db: Session = Depends(get_db)):
+    api_key = request.headers.get("X-Api-Key", "").strip() or os.environ.get("ANTHROPIC_API_KEY", "")
+    meeting = Meeting(id=str(uuid4()), update_text=body.update_text.strip(), api_key=api_key or None)
     db.add(meeting)
     db.commit()
     return {"meeting_id": meeting.id}

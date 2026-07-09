@@ -215,6 +215,34 @@
     }
     .btn-sm:hover { color: var(--text); border-color: var(--text-dim); }
 
+    .key-row {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .key-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--c-question);
+      flex-shrink: 0;
+      transition: background .2s;
+    }
+    .key-dot.set { background: var(--c-update); }
+    .key-input {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-radius: var(--radius);
+      padding: 2px 8px;
+      font-family: var(--mono);
+      font-size: 10px;
+      width: 148px;
+      outline: none;
+      transition: border-color .15s;
+    }
+    .key-input:focus { border-color: var(--accent); }
+    .key-input::placeholder { color: var(--text-dim); }
+
     /* =====================================================================
        Left panel — Ledger
     ===================================================================== */
@@ -743,6 +771,13 @@
           <span id="ctr-question">0</span> question
         </div>
       </div>
+      <div class="key-row" title="Anthropic API key">
+        <div class="key-dot" id="keyDot"></div>
+        <input class="key-input" id="keyInput" type="password"
+          placeholder="sk-ant-… API key"
+          oninput="saveKey(this.value.trim())"
+          onkeydown="if(event.key==='Enter')this.blur()">
+      </div>
       <button class="btn-sm" onclick="toggleTheme()">⬡ theme</button>
     </div>
   </header>
@@ -832,6 +867,16 @@ let currentRound = 0;
 let counters    = { contradict: 0, unknown: 0, question: 0 };
 
 /* ===================================================================
+   API Key
+=================================================================== */
+function saveKey(val) {
+  if (val) localStorage.setItem('standup_api_key', val);
+  else localStorage.removeItem('standup_api_key');
+  document.getElementById('keyDot').classList.toggle('set', !!val);
+}
+function getKey() { return localStorage.getItem('standup_api_key') || ''; }
+
+/* ===================================================================
    Theme
 =================================================================== */
 function toggleTheme() {
@@ -906,13 +951,20 @@ async function startMeeting() {
   const text = document.getElementById('updateText').value.trim();
   if (!text) return;
 
+  const apiKey = getKey();
+  if (!apiKey) {
+    setStatus('', 'Paste your Anthropic API key in the header first.');
+    document.getElementById('keyInput').focus();
+    return;
+  }
+
   document.getElementById('runBtn').disabled = true;
 
   let meetingId;
   try {
     const r = await fetch('/meetings', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'X-Api-Key': apiKey },
       body: JSON.stringify({ update_text: text }),
     });
     ({ meeting_id: meetingId } = await r.json());
@@ -1143,6 +1195,13 @@ function esc(str) {
 /* ===================================================================
    Boot
 =================================================================== */
+(function initKey() {
+  const k = getKey();
+  if (k) {
+    document.getElementById('keyInput').value = k;
+    document.getElementById('keyDot').classList.add('set');
+  }
+})();
 loadLedgers();
 </script>
 </body>

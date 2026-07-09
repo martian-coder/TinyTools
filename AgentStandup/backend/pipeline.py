@@ -22,17 +22,11 @@ STABILITY_THRESHOLD = 0.40
 
 
 # --------------------------------------------------------------------------- #
-# Anthropic client                                                             #
+# Anthropic client — created per-request from the meeting's stored api_key   #
 # --------------------------------------------------------------------------- #
 
-_async_client: anthropic.AsyncAnthropic | None = None
-
-
-def get_client() -> anthropic.AsyncAnthropic:
-    global _async_client
-    if _async_client is None:
-        _async_client = anthropic.AsyncAnthropic(api_key=os.environ["ANTHROPIC_API_KEY"])
-    return _async_client
+def make_client(api_key: str) -> anthropic.AsyncAnthropic:
+    return anthropic.AsyncAnthropic(api_key=api_key)
 
 
 # --------------------------------------------------------------------------- #
@@ -139,8 +133,8 @@ def turn_to_dict(turn: Turn) -> dict:
 # LLM calls                                                                   #
 # --------------------------------------------------------------------------- #
 
-async def _llm(prompt: str, temperature: float = 0.4, max_tokens: int = 300) -> str:
-    client = get_client()
+async def _llm(prompt: str, temperature: float = 0.4, max_tokens: int = 300, *,
+               client: anthropic.AsyncAnthropic) -> str:
     msg = await client.messages.create(
         model=MODEL,
         max_tokens=max_tokens,
@@ -156,6 +150,8 @@ async def call_agent_turn(
     entries: list[LedgerEntry],
     round_num: int,
     strict_basis: bool = False,
+    *,
+    client: anthropic.AsyncAnthropic,
 ) -> dict:
     ledger_facts = "\n".join(
         f"- [{e.source_ref} / {e.as_of}] {e.fact}" for e in entries
@@ -185,14 +181,14 @@ async def call_agent_turn(
         .replace("{round_instruction}", round_instruction + extra_basis_instruction)
     )
 
-    raw = await _llm(prompt, temperature=0.4)
+    raw = await _llm(prompt, temperature=0.4, client=client)
     try:
         result = parse_json(raw)
     except Exception:
-        # Retry once at lower temperature with explicit instruction
         raw = await _llm(
             prompt + "\n\nYour last response was not valid JSON. Respond ONLY with the JSON object.",
             temperature=0.1,
+            client=client,
         )
         try:
             result = parse_json(raw)
@@ -207,14 +203,14 @@ async def call_agent_turn(
     return result
 
 
-async def call_host_reply(update_text: str, transcript: list[dict]) -> dict:
+async def call_host_reply(update_text: str, transcript: list[dict], *, client: anthropic.AsyncAnthropic) -> dict:
     prompt = (
         load_prompt("host_reply.txt")
         .replace("{update}", update_text)
         .replace("{transcript}", format_transcript(transcript))
     )
 
-    raw = await _llm(prompt, temperature=0.2)
+    raw = await _llm(prompt, temperature=0.2, client=client)
     try:
         result = parse_json(raw)
     except Exception:
@@ -226,22 +222,23 @@ async def call_host_reply(update_text: str, transcript: list[dict]) -> dict:
     return result
 
 
-async def call_briefing(agent: AgentModel, transcript: list[dict]) -> str:
+async def call_briefing(agent: AgentModel, transcript: list[dict], *, client: anthropic.AsyncAnthropic) -> str:
     prompt = (
         load_prompt("briefing.txt")
         .replace("{role_owner}", agent.owner_label or agent.role_title)
         .replace("{deadline}", agent.deadline or "end of week")
         .replace("{transcript}", format_transcript(transcript))
     )
-    # Replace all {deadline} occurrences (appears twice in template)
     prompt = prompt.replace("{deadline}", agent.deadline or "end of week")
-    return await _llm(prompt, temperature=0.3, max_tokens=200)
+    return await _llm(prompt, temperature=0.3, max_tokens=200, client=client)
 
 
 async def call_stability_run(
     agent: AgentModel,
     entries: list[LedgerEntry],
     update_text: str,
+    *,
+    client: anthropic.AsyncAnthropic,
 ) -> dict:
     ledger_facts = "\n".join(
         f"- [{e.source_ref} / {e.as_of}] {e.fact}" for e in entries
@@ -252,7 +249,7 @@ async def call_stability_run(
         .replace("{ledger_facts}", ledger_facts or "(no ledger entries)")
         .replace("{update}", update_text)
     )
-    raw = await _llm(prompt, temperature=0.7, max_tokens=200)
+    raw = await _llm(prompt, temperature=0.7, max_tokens=200, client=client)
     try:
         result = parse_json(raw)
     except Exception:
@@ -268,6 +265,8 @@ async def cluster_objections(
     texts: list[str],
     total_runs: int,
     agent: AgentModel,
+    *,
+    client: anthropic.AsyncAnthropic,
 ) -> list[dict]:
     if not texts:
         return []
@@ -288,7 +287,7 @@ For each group:
 Respond ONLY with valid JSON:
 {{"clusters": [{{"description": "...", "indices": [1, 3], "representative_text": "..."}}]}}"""
 
-    raw = await _llm(prompt, temperature=0.1, max_tokens=800)
+    raw = await _llm(prompt, temperature=0.1, max_tokens=800, client=client)
     try:
         parsed = parse_json(raw)
     except Exception:
@@ -321,6 +320,11 @@ async def run_meeting(meeting_id: str, db) -> AsyncGenerator[dict, None]:
         yield {"event": "error", "data": {"message": "Meeting not found"}}
         return
 
+    if not meeting.api_key:
+        yield {"event": "error", "data": {"message": "No API key set. Enter your Anthropic API key in the app header."}}
+        return
+
+    client = make_client(meeting.api_key)
     meeting.status = "running"
     db.commit()
 
@@ -363,7 +367,7 @@ async def run_meeting(meeting_id: str, db) -> AsyncGenerator[dict, None]:
             )
 
             turn_data = await call_agent_turn(
-                agent, transcript, entries, round_num
+                agent, transcript, entries, round_num, client=client
             )
 
             # Basis integrity gate: contradict with bad basis becomes question
@@ -371,7 +375,7 @@ async def run_meeting(meeting_id: str, db) -> AsyncGenerator[dict, None]:
                 if not verify_basis(turn_data.get("basis", ""), entries):
                     # Retry once in strict mode
                     turn_data = await call_agent_turn(
-                        agent, transcript, entries, round_num, strict_basis=True
+                        agent, transcript, entries, round_num, strict_basis=True, client=client
                     )
                     if not verify_basis(turn_data.get("basis", ""), entries):
                         turn_data["kind"] = "question"
@@ -400,7 +404,7 @@ async def run_meeting(meeting_id: str, db) -> AsyncGenerator[dict, None]:
                 productive = True
                 await asyncio.sleep(0.6)  # pacing for streaming effect
 
-                reply_data = await call_host_reply(meeting.update_text, transcript)
+                reply_data = await call_host_reply(meeting.update_text, transcript, client=client)
 
                 host_reply = Turn(
                     meeting_id=meeting_id,
@@ -443,7 +447,7 @@ async def run_meeting(meeting_id: str, db) -> AsyncGenerator[dict, None]:
     yield {"event": "status", "data": {"message": "Generating private briefings…"}}
 
     for agent in agents:
-        briefing_text = await call_briefing(agent, transcript)
+        briefing_text = await call_briefing(agent, transcript, client=client)
         briefing = Briefing(
             meeting_id=meeting_id,
             agent_id=agent.id,
@@ -487,6 +491,12 @@ async def run_stability_engine(meeting_id: str, db) -> AsyncGenerator[dict, None
         yield {"event": "error", "data": {"message": "Meeting not found"}}
         return
 
+    if not meeting.api_key:
+        yield {"event": "error", "data": {"message": "No API key set."}}
+        return
+
+    client = make_client(meeting.api_key)
+
     agents: list[AgentModel] = (
         db.query(AgentModel).order_by(AgentModel.sort_order).all()
     )
@@ -502,7 +512,7 @@ async def run_stability_engine(meeting_id: str, db) -> AsyncGenerator[dict, None
 
         # N independent runs in parallel — independence is what makes the % meaningful
         tasks = [
-            call_stability_run(agent, entries, meeting.update_text)
+            call_stability_run(agent, entries, meeting.update_text, client=client)
             for _ in range(STABILITY_N)
         ]
         results = await asyncio.gather(*tasks)
@@ -522,7 +532,7 @@ async def run_stability_engine(meeting_id: str, db) -> AsyncGenerator[dict, None
         active = [r for r in results if r["kind"] in ("contradict", "question")]
         texts = [r["text"] for r in active]
 
-        clusters = await cluster_objections(texts, STABILITY_N, agent)
+        clusters = await cluster_objections(texts, STABILITY_N, agent, client=client)
 
         for cl in clusters:
             db.add(StabilityCluster(
