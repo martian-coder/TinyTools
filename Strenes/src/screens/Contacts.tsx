@@ -1,18 +1,24 @@
 import { useState, useEffect, useRef } from 'react';
 import { useSiftStore } from '../store';
-import { UserPlus, Users, Search } from 'lucide-react';
+import { UserPlus, Users, Search, X } from 'lucide-react';
 import { onUserSearch, addContact, onContactsChange } from '../services/backend';
 import { isValidPhone } from '../utils/phone';
+import { CIRCLE_META, type Circle } from '../moderation/profiles';
 
 export function Contacts() {
   const currentUserId = useSiftStore(s => s.currentUserId);
   const upsertContact = useSiftStore(s => s.upsertContact);
   const openConversation = useSiftStore(s => s.openConversation);
+  const setContactCircle = useSiftStore(s => s.setContactCircle);
+  const contacts = useSiftStore(s => s.contacts);
   const [searchPhone, setSearchPhone] = useState('');
   const [searchResult, setSearchResult] = useState<any>(null);
   const [searchDone, setSearchDone] = useState(false);
   const [loading, setLoading] = useState(false);
   const [backendContacts, setBackendContacts] = useState<Record<string, any>>({});
+  const [circleModalContactId, setCircleModalContactId] = useState<string | null>(null);
+  const [longPressActive, setLongPressActive] = useState(false);
+  const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const activeSearchRef = useRef<(() => void) | null>(null);
 
@@ -36,6 +42,7 @@ export function Contacts() {
 
   useEffect(() => () => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
+    if (longPressTimerRef.current) clearTimeout(longPressTimerRef.current);
     activeSearchRef.current?.();
   }, []);
 
@@ -91,6 +98,33 @@ export function Contacts() {
     }
   };
 
+  const handleContactMouseDown = (contactId: string) => {
+    setLongPressActive(true);
+    longPressTimerRef.current = setTimeout(() => {
+      setCircleModalContactId(contactId);
+    }, 500);
+  };
+
+  const handleContactMouseUp = (contactId: string) => {
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current);
+    }
+    if (!longPressActive) return;
+    setLongPressActive(false);
+    if (circleModalContactId !== contactId) {
+      openConversation(contactId);
+    }
+  };
+
+  const handleSetCircle = (contactId: string, circle: Circle | undefined) => {
+    setContactCircle(contactId, circle);
+    setCircleModalContactId(null);
+  };
+
+  const contact = circleModalContactId
+    ? contacts.find(c => c.id === circleModalContactId)
+    : null;
+
   return (
     <div className="flex flex-col h-full">
       {/* Screen title lives in the app header (App.tsx) — no local header. */}
@@ -142,25 +176,47 @@ export function Contacts() {
 
       {/* Contacts List — bottom padding clears the fixed nav pill */}
       <div className="flex-1 overflow-y-auto" style={{ paddingBottom: 'calc(var(--nav-height) + 16px)' }}>
-        {Object.entries(backendContacts).length > 0 ? (
+        {Object.entries(backendContacts).length > 0 || contacts.length > 0 ? (
           <div className="divide-y divide-[var(--border)]">
-            {Object.entries(backendContacts).map(([contactId, contactData]: [string, any]) => (
-              <button
-                key={contactId}
-                onClick={() => openConversation(contactId)}
-                className="w-full text-left px-4 py-3 hover:bg-[var(--surface)] cursor-pointer"
-              >
-                <div className="font-medium text-[var(--text)]">
-                  {contactData.displayName || contactData.phone || 'Unknown'}
-                </div>
-                <div className="text-xs text-[var(--text-secondary)]">
-                  {contactData.phone}
-                </div>
-                <div className={`text-xs mt-1 ${contactData.online ? 'text-green-400' : 'text-[var(--text-secondary)]'}`}>
-                  {contactData.online ? '● Online' : '● Offline'}
-                </div>
-              </button>
-            ))}
+            {(() => {
+              const contactList = Object.entries(backendContacts).length > 0
+                ? Object.entries(backendContacts)
+                : contacts.map(c => [c.id, { displayName: c.name, phone: c.phone, online: c.online }] as [string, any]);
+              return contactList.map(([contactId, contactData]: [string, any]) => {
+              const contactCircle = contacts.find(c => c.id === contactId)?.circle;
+              const circleInfo = contactCircle ? CIRCLE_META[contactCircle] : null;
+              return (
+                <button
+                  key={contactId}
+                  onMouseDown={() => handleContactMouseDown(contactId)}
+                  onMouseUp={() => handleContactMouseUp(contactId)}
+                  onTouchStart={() => handleContactMouseDown(contactId)}
+                  onTouchEnd={() => handleContactMouseUp(contactId)}
+                  onClick={() => openConversation(contactId)}
+                  className="w-full text-left px-4 py-3 hover:bg-[var(--surface)] cursor-pointer"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <div className="font-medium text-[var(--text)]">
+                        {contactData.displayName || contactData.phone || 'Unknown'}
+                      </div>
+                      <div className="text-xs text-[var(--text-secondary)]">
+                        {contactData.phone}
+                      </div>
+                      <div className={`text-xs mt-1 ${contactData.online ? 'text-green-400' : 'text-[var(--text-secondary)]'}`}>
+                        {contactData.online ? '● Online' : '● Offline'}
+                      </div>
+                    </div>
+                    {circleInfo && (
+                      <div className="ml-2 text-lg flex items-center">
+                        {circleInfo.emoji}
+                      </div>
+                    )}
+                  </div>
+                </button>
+              );
+            });
+            })()}
           </div>
         ) : (
           <div className="flex flex-col items-center justify-center h-full text-center p-4">
@@ -172,6 +228,58 @@ export function Contacts() {
           </div>
         )}
       </div>
+
+      {circleModalContactId && contact && (
+        <div
+          className="fixed inset-0 bg-black/40 flex items-end z-50"
+          onClick={() => setCircleModalContactId(null)}
+        >
+          <div
+            className="bg-[var(--surface)] w-full rounded-t-xl border border-[var(--border)] shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between p-4 border-b border-[var(--border)]">
+              <h3 className="font-semibold text-[var(--text)]">
+                Add {contact.name} to a circle
+              </h3>
+              <button
+                onClick={() => setCircleModalContactId(null)}
+                className="p-1 hover:bg-[var(--surface-hover)] rounded-lg"
+              >
+                <X size={20} className="text-[var(--text-secondary)]" />
+              </button>
+            </div>
+
+            <div className="p-4 space-y-2">
+              {(Object.entries(CIRCLE_META) as [Circle, typeof CIRCLE_META[Circle]][]).map(([circleId, meta]) => (
+                <button
+                  key={circleId}
+                  onClick={() => handleSetCircle(contact.id, circleId)}
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition ${
+                    contact.circle === circleId
+                      ? 'bg-[var(--accent)]/20 text-[var(--accent)]'
+                      : 'hover:bg-[var(--surface-hover)] text-[var(--text)]'
+                  }`}
+                >
+                  <span className="text-lg">{meta.emoji}</span>
+                  <span className="font-medium">{meta.label}</span>
+                </button>
+              ))}
+
+              <button
+                onClick={() => handleSetCircle(contact.id, undefined)}
+                className={`w-full px-4 py-3 rounded-lg transition ${
+                  !contact.circle
+                    ? 'bg-[var(--accent)]/20 text-[var(--accent)]'
+                    : 'hover:bg-[var(--surface-hover)] text-[var(--text)]'
+                }`}
+              >
+                <span className="font-medium">No circle</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
