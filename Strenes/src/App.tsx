@@ -231,7 +231,7 @@ export default function App() {
             </div>
             <div>
               <div className="font-bold text-main leading-tight" style={{ fontSize: 13 }}>Strenes</div>
-              <div className="text-[9px] dim leading-tight">private messaging</div>
+              <div className="text-[9px] dim leading-tight">built by Amit N</div>
             </div>
             <div className="ml-auto text-right">
               <div className="font-semibold text-main leading-tight" style={{ fontSize: 12 }}>

@@ -113,6 +113,7 @@ export function Auth() {
               </div>
               <h1 className="text-3xl font-bold text-[var(--text)]">Strenes</h1>
               <p className="text-sm text-[var(--text-secondary)] mt-2">Private message filtering</p>
+              <p className="text-xs text-[var(--text-secondary)] mt-1 opacity-70">built by Amit N</p>
             </div>
 
             <form onSubmit={handlePhoneSubmit} className="space-y-4">
