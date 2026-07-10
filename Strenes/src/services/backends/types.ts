@@ -43,6 +43,13 @@ export interface Backend {
   setupRecaptcha(containerId: string): Promise<any>;
   signInWithPhone(phoneNumber: string, verifier: any): Promise<BackendVerificationResult>;
   confirmCode(result: BackendVerificationResult, code: string): Promise<BackendAuthUser>;
+  /**
+   * Fallback sign-up when no SMS provider is configured: creates a real
+   * backend session (anonymous auth) and claims the phone number as the
+   * user's identity WITHOUT verifying it. Fine for evaluation builds;
+   * production should use verified OTP.
+   */
+  signInWithoutSms?(phoneNumber: string): Promise<BackendAuthUser>;
   logOut(): Promise<void>;
   onAuthChange(callback: (user: any) => void): () => void;
 

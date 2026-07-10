@@ -32,7 +32,7 @@ export const DEFAULT_SETTINGS: UserSettings = {
   business: { enabled: true },
   spam:     { enabled: true, onBlock: 'review' },
   theme:    'daylight',
-  trustedIds: ['dad'],
+  trustedIds: [],
   disappearingMessages: { enabled: false, defaultMode: 'off', customMinutes: 60 },
   dnd: { enabled: false, startHour: 22, endHour: 7, allowTrusted: true, allowEmergency: true, notifyButSilent: false },
   drunkMode: { enabled: false, autoDetect: true, action: 'prevent', typingSpeedThreshold: 80 },
