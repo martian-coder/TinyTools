@@ -276,23 +276,37 @@ export const supabaseBackend: Backend = {
     };
   },
 
-  onUserSearch(phoneNumber: string, callback: (user: BackendUser | null) => void): () => void {
+  onUserSearch(phoneNumber: string, callback: (user: BackendUser | null, error?: string) => void): () => void {
     let isActive = true;
 
     const search = async () => {
-      const { data, error } = await supabase
-        .from('users')
-        .select('*')
-        .eq('phone', normalizePhone(phoneNumber))
-        .maybeSingle();
+      const phone = normalizePhone(phoneNumber);
 
+      // Exact E.164 match first.
+      const exact = await supabase.from('users').select('*').eq('phone', phone).maybeSingle();
       if (!isActive) return;
-      if (error) {
-        console.error('Search error:', error);
-        callback(null);
+      if (exact.error) {
+        console.error('Search error:', exact.error);
+        callback(null, exact.error.message);
         return;
       }
-      callback(data ? rowToUser(data) : null);
+      if (exact.data) { callback(rowToUser(exact.data)); return; }
+
+      // Forgiving fallback: match on the trailing 10 digits so a missing or
+      // different country-code prefix still finds the account.
+      const tail = phone.replace(/\D/g, '').slice(-10);
+      if (tail.length === 10) {
+        const fuzzy = await supabase.from('users').select('*').like('phone', `%${tail}`).limit(1);
+        if (!isActive) return;
+        if (fuzzy.error) {
+          console.error('Search error:', fuzzy.error);
+          callback(null, fuzzy.error.message);
+          return;
+        }
+        if (fuzzy.data?.[0]) { callback(rowToUser(fuzzy.data[0])); return; }
+      }
+
+      callback(null);
     };
 
     search();
