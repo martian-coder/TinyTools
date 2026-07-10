@@ -15,6 +15,23 @@ import { sendMessage as relaySend } from './backend';
 
 const RECEIPT_TAG = '__strenes_receipt';
 
+/**
+ * Prefix for the automatic "can't receive this" notice sent back to a sender
+ * whose message was blocked. Doubles as the loop guard: an incoming message
+ * carrying this prefix is never auto-replied to.
+ */
+export const AUTO_NOTICE_PREFIX = '🛡️ Auto-reply:';
+
+export function isAutoNotice(text: string): boolean {
+  return text.startsWith(AUTO_NOTICE_PREFIX);
+}
+
+/** Fire-and-forget notice to the sender that their message can't be received. */
+export function sendAutoNotice(myId: string, to: string): void {
+  relaySend(myId, to, `${AUTO_NOTICE_PREFIX} I can't receive this kind of message right now.`)
+    .catch(err => console.error('Auto-notice send failed:', err));
+}
+
 export type ReceiptKind = 'delivered' | 'read' | 'held' | 'filtered';
 
 export interface Receipt {

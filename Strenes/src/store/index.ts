@@ -459,17 +459,19 @@ export const useSiftStore = create<SiftState>()(
           try {
             const result = await checkRuleMatch(text, rule, apiKey);
             if (result.matches) {
-              // If rule action is 'block' or 'review', hold the message
-              if (rule.action === 'block' || rule.action === 'review') {
-                finalRoute = { folder: 'review', status: 'held', ask: false };
-                // Carry the rule + match reason so the Review UI can explain
-                // exactly why this message was held.
-                finalVerdict = {
-                  ...verdict,
-                  reason: `Matched your rule "${rule.condition}"${result.reason ? ` — ${result.reason}` : ''}`,
-                };
-                break;
-              }
+              // 'block' rules truly block: the message never surfaces (it is
+              // auditable in Review → dropped) and the sender gets an
+              // auto-reply. 'review' rules hold it for a decision.
+              finalRoute = rule.action === 'block'
+                ? { folder: 'review', status: 'dropped', autoReply: true }
+                : { folder: 'review', status: 'held', ask: false };
+              // Carry the rule + match reason so the Review UI can explain
+              // exactly why this message was caught.
+              finalVerdict = {
+                ...verdict,
+                reason: `Matched your rule "${rule.condition}"${result.reason ? ` — ${result.reason}` : ''}`,
+              };
+              break;
             }
           } catch (error) {
             console.error('Error checking rule match:', error);
