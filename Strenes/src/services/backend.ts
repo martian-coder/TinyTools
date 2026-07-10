@@ -14,6 +14,7 @@ export const {
   setupRecaptcha,
   signInWithPhone,
   confirmCode,
+  signInWithoutSms,
   logOut,
   onAuthChange,
   createUserProfile,

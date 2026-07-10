@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useSiftStore } from '../store';
-import { setupRecaptcha, signInWithPhone, confirmCode, createUserProfile } from '../services/backend';
+import { setupRecaptcha, signInWithPhone, confirmCode, signInWithoutSms, createUserProfile } from '../services/backend';
 import type { BackendAuthUser } from '../services/backend';
 import { isValidPhone, normalizePhone } from '../utils/phone';
 import { Phone, Lock, CheckCircle, Zap } from 'lucide-react';
@@ -11,14 +11,16 @@ export function Auth() {
   const [code, setCode] = useState('');
   const [displayName, setDisplayName] = useState('');
   const [error, setError] = useState('');
+  const [notice, setNotice] = useState('');
   const [loading, setLoading] = useState(false);
   const [confirmationResult, setConfirmationResult] = useState<any>(null);
   const [authUser, setAuthUser] = useState<BackendAuthUser | null>(null);
 
-  const { setScreen, setCurrentUser } = useSiftStore();
+  const { setScreen, setCurrentUser, loadDemoData } = useSiftStore();
 
   const handleDemoMode = () => {
-    localStorage.setItem('__demo_mode', '1');
+    localStorage.setItem('__strenes_demo', '1');
+    loadDemoData();
     setCurrentUser('demo-user-123', '+1 (555) 123-4567');
     setScreen('commander');
   };
@@ -26,6 +28,7 @@ export function Auth() {
   const handlePhoneSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setNotice('');
 
     if (!isValidPhone(phoneNumber)) {
       setError('Enter a valid phone number with country code, e.g. +1 555 123 4567');
@@ -39,6 +42,22 @@ export function Auth() {
       setConfirmationResult(result);
       setStep('code');
     } catch (err: any) {
+      // No SMS provider configured (evaluation build) — fall back to a real
+      // backend session that claims the phone without OTP verification.
+      if (signInWithoutSms) {
+        try {
+          const user = await signInWithoutSms(normalizePhone(phoneNumber));
+          setAuthUser(user);
+          setNotice('SMS verification is not available on this build — continuing with quick sign-up.');
+          setStep('profile');
+          return;
+        } catch (fallbackErr: any) {
+          setError(fallbackErr.message || err.message || 'Failed to sign up');
+          return;
+        } finally {
+          setLoading(false);
+        }
+      }
       setError(err.message || 'Failed to send code');
     } finally {
       setLoading(false);
@@ -207,6 +226,9 @@ export function Auth() {
               </div>
               <h2 className="text-2xl font-bold text-[var(--text)]">Complete Profile</h2>
               <p className="text-sm text-[var(--text-secondary)] mt-2">Set your display name</p>
+              {notice && (
+                <p className="text-xs text-amber-400/90 mt-3 px-4">{notice}</p>
+              )}
             </div>
 
             <form onSubmit={handleProfileSubmit} className="space-y-4">

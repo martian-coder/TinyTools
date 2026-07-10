@@ -50,15 +50,19 @@ export default function App() {
 
   // Listen to Firebase auth state
   useEffect(() => {
-    // Check for demo mode first
+    // Check for demo mode first ('__strenes_demo' — the old '__demo_mode' flag
+    // is intentionally ignored so updated installs boot to the real sign-in).
     const demoMode = new URLSearchParams(window.location.search).get('demo') === '1' ||
-                     localStorage.getItem('__demo_mode') === '1';
+                     localStorage.getItem('__strenes_demo') === '1';
 
     if (demoMode && !currentUserId) {
-      // Use mock user for demo/testing
+      // Seed the sample inbox once; later launches keep the user's demo state.
+      if (useSiftStore.getState().contacts.length === 0) {
+        useSiftStore.getState().loadDemoData();
+      }
       setCurrentUser('demo-user-123', '+1 (555) 123-4567');
       setAuthLoading(false);
-      localStorage.setItem('__demo_mode', '1');
+      localStorage.setItem('__strenes_demo', '1');
       return;
     }
 

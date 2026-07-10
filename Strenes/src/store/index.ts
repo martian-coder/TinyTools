@@ -76,6 +76,7 @@ interface SiftState {
   updateDynamicRule: (ruleId: string, patch: Partial<Omit<DynamicRule, 'id' | 'contactId' | 'createdAt'>>) => void;
   getDynamicRulesForContact: (contactId: string) => DynamicRule[];
   checkAndReceiveMessage: (contactId: string, text: string, route: RouteResult, verdict: ModerationVerdict, apiKey: string, meta?: { relayId?: string }) => Promise<RouteResult>;
+  loadDemoData: () => void;
   resetToSeed: () => void;
 }
 
@@ -120,10 +121,12 @@ function calcDisappearsAt(settings: UserSettings): number | undefined {
 export const useSiftStore = create<SiftState>()(
   persist(
     (set, get) => ({
+      // Fresh installs start with an EMPTY inbox — no fake users. Demo data
+      // loads only when the user explicitly enters demo mode (loadDemoData).
       currentUserId:    null,
       currentUserPhone: null,
-      contacts:         SEED_CONTACTS,
-      messages:         SEED_MESSAGES,
+      contacts:         [],
+      messages:         [],
       settings:         DEFAULT_SETTINGS,
       activeScreen:     'commander',
       activeFolder:     'primary',
@@ -479,15 +482,28 @@ export const useSiftStore = create<SiftState>()(
         return finalRoute;
       },
 
+      // Explicit demo entry: sample contacts/messages, onboarding pre-completed
+      // so "Try Demo" drops straight into the app.
+      loadDemoData: () => set({
+        contacts: SEED_CONTACTS,
+        messages: SEED_MESSAGES,
+        settings: { ...DEFAULT_SETTINGS, trustedIds: ['dad'], _onboardingComplete: true },
+        activeFolder: 'primary', activeContactId: null,
+        pendingAsk: null, revealed: {}, banner: null,
+      }),
+
       resetToSeed: () => set({
         currentUserId: null, currentUserPhone: null,
-        contacts: SEED_CONTACTS, messages: SEED_MESSAGES, settings: DEFAULT_SETTINGS,
+        contacts: SEED_CONTACTS, messages: SEED_MESSAGES,
+        settings: { ...DEFAULT_SETTINGS, trustedIds: ['dad'], _onboardingComplete: true },
         activeScreen: 'chats', activeFolder: 'primary', activeContactId: null,
         pendingAsk: null, revealed: {}, banner: null,
       }),
     }),
     {
-      name: 'sift-v3',
+      // Key bump ('sift-v3' → 'strenes-v1') deliberately resets every existing
+      // install to the new fresh-start state on update.
+      name: 'strenes-v1',
       partialize: s => ({ contacts: s.contacts, messages: s.messages, settings: s.settings }),
     }
   )

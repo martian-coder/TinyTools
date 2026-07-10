@@ -34,6 +34,26 @@ export const supabaseBackend: Backend = {
     return { confirmationResult: { phone } };
   },
 
+  async signInWithoutSms(phoneNumber: string): Promise<BackendAuthUser> {
+    const phone = normalizePhone(phoneNumber);
+    // Reuse an existing anonymous session if one is already active so a
+    // re-run of sign-up doesn't mint a second account on the same device.
+    const { data: existing } = await supabase.auth.getSession();
+    let userId = existing.session?.user?.id;
+    if (!userId) {
+      const { data, error } = await supabase.auth.signInAnonymously();
+      if (error) {
+        throw new Error(
+          `Quick sign-up unavailable: ${error.message}. ` +
+          'Enable "Anonymous sign-ins" in Supabase → Authentication → Sign In / Up.'
+        );
+      }
+      userId = data.user?.id;
+    }
+    if (!userId) throw new Error('Sign-up succeeded but no session was returned.');
+    return { userId, phone };
+  },
+
   async confirmCode(result, code: string): Promise<BackendAuthUser> {
     const phone = result?.confirmationResult?.phone;
     if (!phone) throw new Error('Missing phone number — restart sign-in.');
