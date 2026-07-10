@@ -3,7 +3,7 @@ import { useSiftStore } from '../store';
 import { setupRecaptcha, signInWithPhone, confirmCode, createUserProfile } from '../services/backend';
 import type { BackendAuthUser } from '../services/backend';
 import { isValidPhone, normalizePhone } from '../utils/phone';
-import { Phone, Lock, CheckCircle } from 'lucide-react';
+import { Phone, Lock, CheckCircle, Zap } from 'lucide-react';
 
 export function Auth() {
   const [step, setStep] = useState<'phone' | 'code' | 'profile'>('phone');
@@ -16,6 +16,12 @@ export function Auth() {
   const [authUser, setAuthUser] = useState<BackendAuthUser | null>(null);
 
   const { setScreen, setCurrentUser } = useSiftStore();
+
+  const handleDemoMode = () => {
+    localStorage.setItem('__demo_mode', '1');
+    setCurrentUser('demo-user-123', '+1 (555) 123-4567');
+    setScreen('commander');
+  };
 
   const handlePhoneSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -122,6 +128,21 @@ export function Auth() {
                 className="w-full px-4 py-3 bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-white rounded-lg font-semibold disabled:opacity-50"
               >
                 {loading ? 'Sending code...' : 'Send Code'}
+              </button>
+
+              <div className="relative flex items-center gap-3 py-2">
+                <div className="flex-1 h-px bg-[var(--border)]" />
+                <span className="text-xs text-[var(--text-secondary)]">or</span>
+                <div className="flex-1 h-px bg-[var(--border)]" />
+              </div>
+
+              <button
+                type="button"
+                onClick={handleDemoMode}
+                className="w-full px-4 py-3 bg-[var(--surface)] hover:bg-[var(--surface-hover)] border border-[var(--border)] text-[var(--text)] rounded-lg font-semibold flex items-center justify-center gap-2"
+              >
+                <Zap size={16} className="text-[var(--accent)]" />
+                Try Demo — no sign-in needed
               </button>
             </form>
           </div>
