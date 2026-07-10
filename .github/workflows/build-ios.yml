@@ -1,0 +1,105 @@
+name: Build & Release iOS IPA
+
+# Builds an UNSIGNED iOS .ipa from the Strenes Capacitor iOS project on a
+# macOS runner. Apple does not allow direct installs like Android APKs:
+# testers install this via AltStore / Sideloadly (free Apple ID, resign on
+# device), or use the zero-install path — Safari → Add to Home Screen.
+# A signed TestFlight build requires an Apple Developer account ($99/yr).
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "Strenes/src/**"
+      - "Strenes/public/**"
+      - "Strenes/index.html"
+      - "Strenes/vite.config.ts"
+      - "Strenes/package.json"
+      - "Strenes/ios/**"
+      - "Strenes/capacitor.config.ts"
+      - ".github/workflows/build-ios.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-ipa:
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: Strenes/package-lock.json
+
+      - name: Install dependencies
+        working-directory: Strenes
+        run: npm ci
+
+      - name: Build web app
+        working-directory: Strenes
+        env:
+          # Capacitor iOS serves assets from the app bundle — no base path.
+          VITE_BASE: "/"
+        run: npm run build
+
+      - name: Sync web assets into iOS project
+        working-directory: Strenes
+        run: npx cap sync ios
+
+      - name: Build unsigned iOS app
+        working-directory: Strenes/ios/App
+        run: |
+          xcodebuild \
+            -project App.xcodeproj \
+            -scheme App \
+            -configuration Release \
+            -destination 'generic/platform=iOS' \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            build
+
+      - name: Package IPA
+        working-directory: Strenes/ios/App
+        run: |
+          APP_PATH=$(find build/Build/Products/Release-iphoneos -name "*.app" -maxdepth 1 | head -1)
+          echo "App bundle: $APP_PATH"
+          mkdir -p Payload
+          cp -r "$APP_PATH" Payload/
+          zip -qry ../../../strenes-ios.ipa Payload
+          cd ../../..
+          echo "IPA size: $(du -sh strenes-ios.ipa | cut -f1)"
+
+      - name: Create / update rolling iOS release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ios-latest
+          name: "Strenes — Latest iOS Build (unsigned)"
+          body: |
+            **Strenes unsigned iOS IPA** — built automatically from the latest `main` commit.
+
+            Apple doesn't allow direct installs. Two ways to run Strenes on iPhone:
+
+            **Easiest — no computer needed:**
+            1. Open `https://martian-coder.github.io/TinyTools/strenes/` in **Safari**
+            2. Tap **Share → Add to Home Screen**
+            3. Strenes installs as a full-screen app
+
+            **Sideload the IPA (needs a computer once):**
+            1. Install [AltStore](https://altstore.io) or [Sideloadly](https://sideloadly.io) on your computer
+            2. Connect your iPhone and sideload `strenes-ios.ipa` below
+            3. It signs the app with your free Apple ID (re-sign needed every 7 days)
+
+            > A signed TestFlight build (one-tap install) requires an Apple Developer account.
+          prerelease: false
+          make_latest: false
+          files: strenes-ios.ipa
