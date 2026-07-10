@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { ArrowLeft, ShieldCheck, Send, Loader2, Lock, Clock, Phone, PhoneOff, Mic, MicOff, Volume2, VolumeX, Sparkles, Check, X, Brain, AlertCircle, RefreshCw, Wifi, MessageSquare, Timer } from 'lucide-react';
 import { useSiftStore } from '../store';
 import { Avatar } from '../components/ui/Avatar';
+import { MessageWithLinks } from '../components/ui/MessageWithLinks';
 import { getModerator } from '../moderation';
 import { checkSpellingWithAI, applySuggestion } from '../moderation/spell-check';
 import { analyzeTone } from '../moderation/tone-analyzer';
@@ -343,7 +344,7 @@ export function Conversation() {
                 opacity: m.dir === 'out' && m.status === 'held' ? 0.7 : 1,
               }}
             >
-              {m.text}
+              <MessageWithLinks text={m.text} />
               <div className={`text-[10px] mt-0.5 flex items-center gap-1 ${m.dir === 'out' ? 'out-time justify-end' : 'dim'}`}>
                 {m.dir === 'out' && m.status === 'held' && <><Clock size={9} /> under review · </>}
                 {m.disappearsAt && m.disappearsAt > now && (
