@@ -14,7 +14,7 @@ import { Auth } from './screens/Auth';
 import { Contacts } from './screens/Contacts';
 import { onAuthChange, onIncomingMessages, getUserProfile, updateUserStatus } from './services/backend';
 import { parseCallSignal, handleCallSignal, acceptCall, declineCall } from './services/calls';
-import { parseReceipt, sendReceipt } from './services/receipts';
+import { parseReceipt, sendReceipt, sendAutoNotice, isAutoNotice } from './services/receipts';
 import { getModerator, routeVerdict } from './moderation';
 import { Phone, PhoneOff } from 'lucide-react';
 import type { ThemeName } from './types';
@@ -140,6 +140,12 @@ export default function App() {
       const reason = kind === 'delivered' ? undefined
         : (verdict.category !== 'clean' ? verdict.category : 'review');
       sendReceipt(currentUserId, msg.from, { kind, ids: [msg.id], reason });
+
+      // Blocked with notify-sender on: tell them in-chat that this kind of
+      // message can't be received. Auto-notices are never auto-replied to.
+      if (finalRoute.autoReply && kind !== 'delivered' && !isAutoNotice(msg.text)) {
+        sendAutoNotice(currentUserId, msg.from);
+      }
     });
 
     return unsubscribe;
