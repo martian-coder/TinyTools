@@ -14,6 +14,7 @@ export function Contacts() {
   const [searchPhone, setSearchPhone] = useState('');
   const [searchResult, setSearchResult] = useState<any>(null);
   const [searchDone, setSearchDone] = useState(false);
+  const [searchError, setSearchError] = useState('');
   const [loading, setLoading] = useState(false);
   const [backendContacts, setBackendContacts] = useState<Record<string, any>>({});
   const [circleModalContactId, setCircleModalContactId] = useState<string | null>(null);
@@ -50,6 +51,7 @@ export function Contacts() {
     setSearchPhone(phone);
     setSearchResult(null);
     setSearchDone(false);
+    setSearchError('');
 
     if (debounceRef.current) clearTimeout(debounceRef.current);
     activeSearchRef.current?.();
@@ -63,10 +65,11 @@ export function Contacts() {
     setLoading(true);
     debounceRef.current = setTimeout(() => {
       let answered = false;
-      activeSearchRef.current = onUserSearch(phone, (user) => {
+      activeSearchRef.current = onUserSearch(phone, (user, error) => {
         answered = true;
         setLoading(false);
         setSearchDone(true);
+        if (error) setSearchError(error);
         setSearchResult(user && user.id !== currentUserId ? user : null);
       });
       // Flaky network: don't leave the spinner hanging forever.
@@ -147,9 +150,15 @@ export function Contacts() {
         )}
 
         {searchDone && !searchResult && !loading && (
-          <div className="text-xs text-[var(--text-secondary)]">
-            No user found with that number. They need to sign up first.
-          </div>
+          searchError ? (
+            <div className="text-xs text-red-400">
+              Search failed: {searchError}
+            </div>
+          ) : (
+            <div className="text-xs text-[var(--text-secondary)]">
+              No user found with that number. They need to sign up first.
+            </div>
+          )
         )}
 
         {searchResult && (

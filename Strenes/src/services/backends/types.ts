@@ -71,5 +71,5 @@ export interface Backend {
   // Contacts
   addContact(userId: string, contactUserId: string, contactPhone: string): Promise<void>;
   onContactsChange(userId: string, callback: (contacts: Record<string, BackendContact>) => void): () => void;
-  onUserSearch(phoneNumber: string, callback: (user: BackendUser | null) => void): () => void;
+  onUserSearch(phoneNumber: string, callback: (user: BackendUser | null, error?: string) => void): () => void;
 }
