@@ -10,7 +10,9 @@ export type CloudProvider = 'claude' | 'gemini';
 export function detectProvider(apiKey: string): CloudProvider | null {
   const k = apiKey.trim();
   if (!k) return null;
-  if (k.startsWith('AIza')) return 'gemini';
+  // 'AIza…' is the classic Google API key shape; 'AQ.…' is the newer
+  // format AI Studio issues.
+  if (k.startsWith('AIza') || k.startsWith('AQ.')) return 'gemini';
   if (k.startsWith('sk-ant-') || k.startsWith('sk-')) return 'claude';
   // Unknown shape: assume Claude (the app's historical behavior).
   return 'claude';

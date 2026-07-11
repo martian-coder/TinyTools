@@ -58,6 +58,9 @@ jobs:
         # base_path is e.g. /TinyTools; append /strenes/ so assets resolve correctly.
         env:
           VITE_BASE: ${{ steps.pages.outputs.base_path }}/strenes/
+          # Optional evaluation AI key baked into the build as the default
+          # (testers can replace it in Settings). Empty if the secret is unset.
+          VITE_DEFAULT_AI_KEY: ${{ secrets.DEFAULT_AI_KEY }}
         run: |
           npm ci
           npm run build

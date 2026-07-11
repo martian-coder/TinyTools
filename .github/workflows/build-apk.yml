@@ -65,6 +65,9 @@ jobs:
           # Capacitor Android loads assets from /android_asset/public/ so no
           # base path prefix is needed when bundled inside the APK.
           VITE_BASE: "/"
+          # Optional evaluation AI key baked into the build as the default
+          # (testers can replace it in Settings). Empty if the secret is unset.
+          VITE_DEFAULT_AI_KEY: ${{ secrets.DEFAULT_AI_KEY }}
         run: npm run build
 
       - name: Sync web assets into Android project
