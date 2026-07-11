@@ -30,7 +30,7 @@ jobs:
               -H "content-type: application/json" \
               -H "apikey: $KEY" \
               -H "authorization: Bearer $KEY" \
-              -d '{"system":"Reply with exactly the word PONG and nothing else.","user":"ping","maxTokens":10}')
+              -d '{"system":"Reply with exactly the word PONG and nothing else.","user":"ping","maxTokens":300}')
             echo "HTTP status: $code"
             echo "Response body:"
             cat /tmp/resp.json
