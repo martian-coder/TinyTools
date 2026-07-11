@@ -159,6 +159,29 @@ GRANT EXECUTE ON FUNCTION claim_phone_account(TEXT) TO authenticated;
 > (`DROP FUNCTION claim_phone_account;`) or gate it on
 > `auth.jwt()->>'phone' = p_phone`.
 
+### Step 2.6: Managed AI Proxy (recommended)
+
+The `ai-proxy` Edge Function (`supabase/functions/ai-proxy/index.ts`) lets the
+app use full-quality Gemini AI **without shipping any API key to clients** —
+the key lives only in the function's environment. When no key is pasted in
+Settings, every AI surface (Commander, rules, moderation, replies) routes
+through this proxy automatically.
+
+**Deploy from the dashboard (no CLI needed):**
+1. Dashboard → **Edge Functions** → **Deploy a new function** → name it `ai-proxy`
+2. Paste the contents of `supabase/functions/ai-proxy/index.ts` into the editor → **Deploy**
+3. Dashboard → **Edge Functions → Secrets** → add secret
+   `GEMINI_API_KEY` = your Gemini API key
+
+**Or with the Supabase CLI:**
+```bash
+supabase functions deploy ai-proxy
+supabase secrets set GEMINI_API_KEY=<your key>
+```
+
+To revoke access later: delete the `GEMINI_API_KEY` secret (or the function).
+Clients fall back to on-device AI automatically — nothing breaks.
+
 ### Step 3: Enable Phone Authentication
 
 1. Go to **Supabase Dashboard → Authentication → Providers**

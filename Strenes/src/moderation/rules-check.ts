@@ -1,7 +1,7 @@
 import type { DynamicRule } from '../types';
 import { isRant } from './insights';
 import { promptNano } from './nano';
-import { promptCloud } from './cloud';
+import { promptCloud, cloudAvailable } from './cloud';
 
 /**
  * checkRuleMatch — decides whether an incoming message matches a rule the
@@ -20,7 +20,7 @@ export async function checkRuleMatch(
   rule: DynamicRule,
   apiKey: string,
 ): Promise<{ matches: boolean; reason?: string }> {
-  if (apiKey.trim()) {
+  if (cloudAvailable(apiKey)) {
     const viaClaude = await checkViaAnthropic(message, rule, apiKey.trim());
     if (viaClaude) return viaClaude;
   }

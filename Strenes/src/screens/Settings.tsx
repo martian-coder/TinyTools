@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { AlertTriangle, Briefcase, Forward, ShieldCheck, RotateCcw, Download, Brain, Trash2, Clock, Zap, Flame, Sparkles, KeyRound, Eye, EyeOff, MessageSquare } from 'lucide-react';
 import { useSiftStore } from '../store';
-import { providerLabel } from '../moderation/cloud';
+import { providerLabel, proxyAvailable } from '../moderation/cloud';
 import { Switch } from '../components/ui/Switch';
 import { Segment } from '../components/ui/Segment';
 import { Avatar } from '../components/ui/Avatar';
@@ -263,7 +263,9 @@ export function Settings() {
                 <span className="dim">
                   {s.aiReplies.anthropicKey
                     ? `Using ${providerLabel(s.aiReplies.anthropicKey)} — best quality`
-                    : 'Using on-device AI (Gemini Nano) — no key needed'}
+                    : proxyAvailable()
+                      ? 'Using Strenes managed AI — no key needed'
+                      : 'Using on-device AI (Gemini Nano) — no key needed'}
                 </span>
               </div>
             </>

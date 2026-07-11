@@ -1,7 +1,7 @@
 import type { Category, ModerationEngine, ModerationVerdict } from '../types';
 import type { Moderator, Sensitivity } from './types';
 import { classifyByRules } from './rules';
-import { promptCloud, detectProvider } from './cloud';
+import { promptCloud, detectProvider, proxyAvailable } from './cloud';
 
 /**
  * AnthropicModerator — optional cloud-based AI engine using Claude.
@@ -56,18 +56,20 @@ function parseVerdict(raw: string): ModerationVerdict | null {
  * The key must be provided and non-empty; returns null if not.
  */
 export function createAnthropicModerator(apiKey: string): Moderator | null {
-  if (!apiKey || typeof apiKey !== 'string' || apiKey.trim().length === 0) return null;
+  const key = (typeof apiKey === 'string' ? apiKey : '').trim();
+  // No pasted key still works when the managed server-side proxy is configured.
+  if (!key && !proxyAvailable()) return null;
 
-  const key = apiKey.trim();
-  // The key can be Claude (sk-ant-…) or Gemini (AIza…) — promptCloud routes it.
-  const engine: ModerationEngine = detectProvider(key) === 'gemini' ? 'gemini-api' : 'anthropic-claude';
+  // The key can be Claude (sk-ant-…) or Gemini (AIza…) — promptCloud routes
+  // it. The managed proxy is Gemini-backed, so keyless = gemini-api.
+  const engine: ModerationEngine =
+    !key || detectProvider(key) === 'gemini' ? 'gemini-api' : 'anthropic-claude';
 
   return {
     name: engine,
 
     async isAvailable() {
-      // Only available if API key is configured
-      return !!key;
+      return !!key || proxyAvailable();
     },
 
     async classify(text, { sensitivity }) {
