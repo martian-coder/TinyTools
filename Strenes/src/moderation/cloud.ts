@@ -13,6 +13,9 @@ export type CloudProvider = 'claude' | 'gemini';
 
 const SUPABASE_URL = (import.meta.env.VITE_SUPABASE_URL ?? '').replace(/\/$/, '');
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY ?? '';
+// The deployed edge-function slug. Dashboard-created functions can get a
+// generated slug that differs from the intended name — override via env.
+const AI_PROXY_FN = import.meta.env.VITE_AI_PROXY_FN ?? 'ai-proxy';
 
 /** True when the managed server-side AI proxy is configured for this build. */
 export function proxyAvailable(): boolean {
@@ -40,7 +43,7 @@ async function promptViaProxy(
       if (data.session?.access_token) bearer = data.session.access_token;
     } catch { /* demo/local builds without a backend still work via anon key */ }
 
-    const res = await fetch(`${SUPABASE_URL}/functions/v1/ai-proxy`, {
+    const res = await fetch(`${SUPABASE_URL}/functions/v1/${AI_PROXY_FN}`, {
       method: 'POST',
       signal: AbortSignal.timeout(timeoutMs),
       headers: {
