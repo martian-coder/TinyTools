@@ -92,17 +92,36 @@ export const supabaseBackend: Backend = {
   // User Profile
   async createUserProfile(userId: string, phoneNumber: string, displayName: string = '') {
     const phone = normalizePhone(phoneNumber);
-    const { error } = await supabase
-      .from('users')
-      .upsert({
-        id: userId,
-        phone,
-        display_name: displayName || phone,
-        created_at: Date.now(),
-        last_seen: Date.now(),
-        online: true,
-      });
-    if (error) throw error;
+    const profile = {
+      id: userId,
+      phone,
+      display_name: displayName || phone,
+      created_at: Date.now(),
+      last_seen: Date.now(),
+      online: true,
+    };
+    const { error } = await supabase.from('users').upsert(profile);
+    if (!error) return;
+
+    // 23505: this phone already belongs to another account — typically a
+    // previous install whose anonymous session is gone. Reclaim it server-side
+    // (moves message history and contact links to this account, then frees the
+    // number) and retry once.
+    if (error.code === '23505') {
+      const { error: claimErr } = await supabase.rpc('claim_phone_account', { p_phone: phone });
+      if (claimErr) {
+        throw new Error(
+          'This number is registered to a previous install and could not be ' +
+          `reclaimed automatically (${claimErr.message}). Run the ` +
+          'claim_phone_account SQL from SUPABASE_SETUP.md, or delete the old ' +
+          'row in Supabase → Table Editor → users.'
+        );
+      }
+      const { error: retryErr } = await supabase.from('users').upsert(profile);
+      if (retryErr) throw retryErr;
+      return;
+    }
+    throw error;
   },
 
   async getUserProfile(userId: string): Promise<BackendUser | null> {

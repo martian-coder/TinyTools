@@ -104,6 +104,61 @@ CREATE POLICY "Users can delete contacts" ON contacts
   FOR DELETE USING (auth.uid() = user_id);
 ```
 
+### Step 2.5: Account Reclaim Function (required for quick sign-up)
+
+When SMS verification is off (quick sign-up / anonymous sessions), a reinstall
+mints a new account. This function lets a fresh sign-in with an already-known
+phone number take over the old account — message history and contact links
+move with it. Run in **SQL Editor**:
+
+```sql
+CREATE OR REPLACE FUNCTION claim_phone_account(p_phone TEXT)
+RETURNS VOID
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  old_id UUID;
+  new_id UUID := auth.uid();
+BEGIN
+  IF new_id IS NULL THEN
+    RAISE EXCEPTION 'not authenticated';
+  END IF;
+  SELECT id INTO old_id FROM users WHERE phone = p_phone;
+  IF old_id IS NULL OR old_id = new_id THEN
+    RETURN; -- number is free, or already ours
+  END IF;
+
+  -- Move message history to the new account
+  UPDATE messages SET from_user_id = new_id WHERE from_user_id = old_id;
+  UPDATE messages SET to_user_id   = new_id WHERE to_user_id   = old_id;
+
+  -- Move contact links, dropping any that would duplicate existing ones
+  DELETE FROM contacts c WHERE c.user_id = old_id
+    AND EXISTS (SELECT 1 FROM contacts d
+                WHERE d.user_id = new_id AND d.contact_user_id = c.contact_user_id);
+  UPDATE contacts SET user_id = new_id WHERE user_id = old_id;
+  DELETE FROM contacts c WHERE c.contact_user_id = old_id
+    AND EXISTS (SELECT 1 FROM contacts d
+                WHERE d.contact_user_id = new_id AND d.user_id = c.user_id);
+  UPDATE contacts SET contact_user_id = new_id WHERE contact_user_id = old_id;
+
+  -- Release the phone number
+  DELETE FROM users WHERE id = old_id;
+END;
+$$;
+
+REVOKE ALL ON FUNCTION claim_phone_account(TEXT) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION claim_phone_account(TEXT) TO authenticated;
+```
+
+> ⚠️ **Evaluation only.** Quick sign-up doesn't verify number ownership, so
+> this function lets any signed-in user claim any number. Once you attach a
+> real SMS provider and OTP verification, remove this function
+> (`DROP FUNCTION claim_phone_account;`) or gate it on
+> `auth.jwt()->>'phone' = p_phone`.
+
 ### Step 3: Enable Phone Authentication
 
 1. Go to **Supabase Dashboard → Authentication → Providers**
