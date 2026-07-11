@@ -5,7 +5,7 @@
 
 import type { Contact, Message } from '../types';
 import { promptNano } from './nano';
-import { promptCloud } from './cloud';
+import { promptCloud, cloudAvailable } from './cloud';
 import { matchProfile, PROFILES, type ProfileId, type Circle } from './profiles';
 
 export interface ReplyIntent      { type: 'reply';       contactId: string; contactName: string; text: string }
@@ -737,7 +737,8 @@ export async function parseIntent(
   heldMessages: Message[],
   apiKey: string,
 ): Promise<Intent> {
-  if (apiKey.trim()) return parseViaAnthropic(text, contacts, heldMessages, apiKey.trim());
+  // A pasted key OR the managed proxy both route through the cloud parser.
+  if (cloudAvailable(apiKey)) return parseViaAnthropic(text, contacts, heldMessages, apiKey.trim());
 
   const precise = parsePrecise(text, contacts);
   if (precise) return precise;

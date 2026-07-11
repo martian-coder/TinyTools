@@ -31,10 +31,10 @@ export async function getModerator(anthropicKey?: string): Promise<Moderator> {
   cachedKey = anthropicKey;
 
   const chain: Moderator[] = [];
-  if (anthropicKey) {
-    const anthropic = createAnthropicModerator(anthropicKey);
-    if (anthropic) chain.push(anthropic);
-  }
+  // Also covers the keyless managed-proxy path (returns null only when
+  // neither a key nor the proxy is configured).
+  const anthropic = createAnthropicModerator(anthropicKey ?? '');
+  if (anthropic) chain.push(anthropic);
   chain.push(GeminiNanoModerator);
   chain.push(RulesModerator);
 

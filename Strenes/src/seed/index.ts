@@ -27,12 +27,6 @@ export const SEED_MESSAGES: Message[] = [
   { id: 'm7', contactId: 'groupfwd',  text: "URGENT!! Forward this to 10 people or bad luck 😱😱😱",                           dir: 'in',  ts: 7, time: '6:05', folder: 'review',     status: 'held',      verdict: { category: 'spam',     confidence: 0.91, flaggedTerms: ['forward','10 people'], engine: 'rules' } },
 ];
 
-// Temporary evaluation key so first-time testers get full AI quality without
-// setup. Injected at build time from the DEFAULT_AI_KEY repo secret (never
-// committed); owner will revoke it after the test window. Testers can
-// replace it in Settings any time. Empty on local builds without the env.
-const DEFAULT_AI_KEY = import.meta.env.VITE_DEFAULT_AI_KEY ?? '';
-
 export const DEFAULT_SETTINGS: UserSettings = {
   civility: { enabled: true, sensitivity: 'medium', onBlock: 'review', notifySender: true },
   business: { enabled: true },
@@ -45,8 +39,8 @@ export const DEFAULT_SETTINGS: UserSettings = {
   unhingedMode: { enabled: false },
   toneChecker: { enabled: true, warnOnAggressive: true },
   spellCheck: { enabled: true },
-  aiReplies: { enabled: true, anthropicKey: DEFAULT_AI_KEY },
-  aiModeration: { provider: 'gemini-nano', anthropicKey: DEFAULT_AI_KEY },
+  aiReplies: { enabled: true, anthropicKey: '' },
+  aiModeration: { provider: 'gemini-nano', anthropicKey: '' },
   smsFallback: { enabled: false },
   dynamicRules: [],
   commander: { summaryStyle: 'casual' },

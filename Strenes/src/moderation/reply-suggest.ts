@@ -11,7 +11,7 @@
  * it belongs to (Claude or Gemini, detected from the key shape).
  */
 
-import { promptCloud } from './cloud';
+import { promptCloud, cloudAvailable } from './cloud';
 
 export interface ChatTurn {
   role: 'incoming' | 'outgoing';
@@ -115,7 +115,7 @@ export async function suggestReplies(
 ): Promise<SuggestionResult | null> {
   if (history.length === 0) return null;
 
-  if (anthropicKey.trim()) {
+  if (cloudAvailable(anthropicKey)) {
     const replies = await suggestViaAnthropic(history, senderName, anthropicKey.trim());
     if (replies && replies.length > 0) return { replies, engine: 'claude' };
   }

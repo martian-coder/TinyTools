@@ -3,9 +3,60 @@
  * Claude key (sk-ant-…) or a Google Gemini key (AIza…) into Settings; the
  * provider is detected from the key shape and every AI surface (Commander
  * parsing, rule evaluation, moderation, replies) routes through here.
+ *
+ * With NO key set, calls route through the Strenes managed AI proxy — a
+ * Supabase Edge Function that holds the provider key server-side, so no
+ * key ever ships inside the app.
  */
 
 export type CloudProvider = 'claude' | 'gemini';
+
+const SUPABASE_URL = (import.meta.env.VITE_SUPABASE_URL ?? '').replace(/\/$/, '');
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY ?? '';
+
+/** True when the managed server-side AI proxy is configured for this build. */
+export function proxyAvailable(): boolean {
+  return !!SUPABASE_URL && !!SUPABASE_ANON_KEY && !SUPABASE_URL.includes('your-project');
+}
+
+/** True when ANY cloud AI path exists: a pasted key or the managed proxy. */
+export function cloudAvailable(apiKey: string | undefined): boolean {
+  return !!apiKey?.trim() || proxyAvailable();
+}
+
+async function promptViaProxy(
+  system: string,
+  user: string,
+  maxTokens: number,
+  timeoutMs: number,
+): Promise<string | null> {
+  try {
+    // Prefer the signed-in session token so the proxy can rate-limit per
+    // user; fall back to the anon key (Try Demo / signed-out).
+    let bearer = SUPABASE_ANON_KEY;
+    try {
+      const { supabase } = await import('../services/backends/supabase');
+      const { data } = await supabase.auth.getSession();
+      if (data.session?.access_token) bearer = data.session.access_token;
+    } catch { /* demo/local builds without a backend still work via anon key */ }
+
+    const res = await fetch(`${SUPABASE_URL}/functions/v1/ai-proxy`, {
+      method: 'POST',
+      signal: AbortSignal.timeout(timeoutMs),
+      headers: {
+        'content-type': 'application/json',
+        apikey: SUPABASE_ANON_KEY,
+        authorization: `Bearer ${bearer}`,
+      },
+      body: JSON.stringify({ system, user, maxTokens }),
+    });
+    if (!res.ok) return null;
+    const data = await res.json() as { text?: string | null };
+    return data.text || null;
+  } catch {
+    return null;
+  }
+}
 
 export function detectProvider(apiKey: string): CloudProvider | null {
   const k = apiKey.trim();
@@ -20,7 +71,9 @@ export function detectProvider(apiKey: string): CloudProvider | null {
 
 export function providerLabel(apiKey: string): string {
   const p = detectProvider(apiKey);
-  return p === 'gemini' ? 'Gemini (API)' : p === 'claude' ? 'Claude (API)' : '';
+  if (p === 'gemini') return 'Gemini (API)';
+  if (p === 'claude') return 'Claude (API)';
+  return proxyAvailable() ? 'Strenes managed AI' : '';
 }
 
 interface CloudOpts {
@@ -40,9 +93,15 @@ export async function promptCloud(
   opts: CloudOpts = {},
 ): Promise<string | null> {
   const key = apiKey.trim();
+  const { maxTokens = 300, timeoutMs = 10_000 } = opts;
+
+  // No key pasted → managed server-side proxy (key never ships to clients).
+  if (!key) {
+    return proxyAvailable() ? promptViaProxy(system, user, maxTokens, timeoutMs) : null;
+  }
+
   const provider = detectProvider(key);
   if (!provider) return null;
-  const { maxTokens = 300, timeoutMs = 10_000 } = opts;
 
   try {
     if (provider === 'gemini') {
