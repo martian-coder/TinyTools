@@ -1,0 +1,38 @@
+name: Test AI Proxy
+
+# Smoke-tests the deployed Supabase ai-proxy edge function: sends a tiny
+# prompt with the public anon key and asserts a sane completion comes back.
+
+on:
+  push:
+    branches:
+      - claude/sift-glass-milestones-cvn1uf
+    paths:
+      - ".github/workflows/test-ai-proxy.yml"
+  workflow_dispatch:
+
+jobs:
+  test-proxy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Call ai-proxy with a ping prompt
+        run: |
+          URL=$(grep '^VITE_SUPABASE_URL=' Strenes/.env | cut -d= -f2 | tr -d '\r')
+          KEY=$(grep '^VITE_SUPABASE_ANON_KEY=' Strenes/.env | cut -d= -f2 | tr -d '\r')
+          echo "Endpoint: $URL/functions/v1/ai-proxy"
+          code=$(curl -sS -o /tmp/resp.json -w "%{http_code}" -X POST \
+            "$URL/functions/v1/ai-proxy" \
+            -H "content-type: application/json" \
+            -H "apikey: $KEY" \
+            -H "authorization: Bearer $KEY" \
+            -d '{"system":"Reply with exactly the word PONG and nothing else.","user":"ping","maxTokens":10}')
+          echo "HTTP status: $code"
+          echo "Response body:"
+          cat /tmp/resp.json
+          echo
+          test "$code" = "200" || { echo "::error::proxy returned $code"; exit 1; }
+          grep -qi 'pong' /tmp/resp.json || { echo "::error::no PONG in response"; exit 1; }
+          echo "✅ ai-proxy is live and answering"
