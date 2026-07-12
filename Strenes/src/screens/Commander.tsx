@@ -695,8 +695,28 @@ export function Commander() {
       case 'set_profile': {
         const prof = PROFILES[intent.profile];
         applyProfile(intent.profile);
+        if (intent.profile === 'guardian') {
+          updateSettings({
+            guardian: { ...(settings.guardian ?? { alerts: true }), enabled: true },
+          });
+        }
         for (const line of prof.confirmation) responses.push({ text: line });
         responses.push({ text: "Say 'my settings' to see everything it changed, or just keep adding your own rules on top." });
+        break;
+      }
+
+      case 'guardian_link': {
+        updateSettings({
+          guardian: {
+            enabled: true,
+            alerts: true,
+            guardianContactId: intent.contactId,
+            guardianName: intent.contactName,
+          },
+        });
+        responses.push({
+          text: `🛡️ Done — ${intent.contactName} is now this phone's guardian. Whenever Guardian mode blocks something dangerous (grooming, photo requests, meet-up pressure, scams), ${intent.contactName} gets an instant alert. The alert says WHY it was blocked but never includes the message itself — the kid's privacy stays intact.`,
+        });
         break;
       }
 

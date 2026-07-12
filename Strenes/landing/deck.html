@@ -124,6 +124,7 @@
   <h2>What's in the build today</h2>
   <div class="grid2">
     <div class="card"><div class="t">🛡️ On-device AI filter</div><div class="d">Chrome's built-in Gemini Nano + a rules engine fallback. Classifies and routes every incoming message locally.</div></div>
+    <div class="card"><div class="t">🧒 Guardian mode</div><div class="d">Kid-safe phone: grooming patterns, photo requests, meet-up pressure and kid-targeted scams blocked on-device — with an instant alert to the linked parent that never exposes the message content.</div></div>
     <div class="card"><div class="t">🤖 Commander</div><div class="d">Natural-language inbox assistant: briefings, free-form rules, mutes, protection profiles, memory, busy windows.</div></div>
     <div class="card"><div class="t">🔐 Encrypted DMs & groups</div><div class="d">ECDH P-256 + AES-256-GCM, private keys never leave the device. WhatsApp-style groups with per-member key wrapping.</div></div>
     <div class="card"><div class="t">📞 Voice calls</div><div class="d">Real WebRTC calling over the same relay. Accept/decline UI on any screen.</div></div>
@@ -169,10 +170,28 @@
   <div class="kicker">Where a funded team takes this</div>
   <h2>Three wedges, one core asset.</h2>
   <ul class="big">
-    <li><strong>Teen & family safety</strong> — parents already pay for protection; receiver-side filtering is the visceral pitch. (COPPA + parental dashboard needed.)</li>
+    <li><strong>Teen & family safety</strong> — Guardian mode is already in the build: grooming detection + parent alerts. Parents already pay for protection; this is the visceral pitch. (COPPA + parental dashboard next.)</li>
     <li><strong>Elder scam shield</strong> — a protection profile already exists in the build; the demographic loses billions/yr to message scams.</li>
     <li><strong>B2B SDK</strong> — license the on-device filtering layer to dating apps, creator platforms, and workplaces that can't send content to a cloud.</li>
     <li>Roadmap in repo: Signal-protocol upgrade, push notifications, Play Store release, verified OTP auth.</li>
+  </ul>
+</section>
+
+<!-- 7b · Governments -->
+<section class="slide">
+  <div class="kicker">The biggest buyer isn't a consumer</div>
+  <h2>Citizen protection as <span class="grad">public infrastructure.</span></h2>
+  <p class="lead">
+    Governments across Europe are under pressure to protect children online (UK Online Safety Act,
+    EU DSA, chat-control debates) — but every proposal collides with privacy. Strenes dissolves that
+    conflict: <strong>the AI runs on the citizen's device.</strong> No scanning in the cloud, no backdoor,
+    no data collection. Protection without surveillance.
+  </p>
+  <ul class="big">
+    <li><strong>GDPR-native by architecture</strong> — message content never leaves the phone; there is nothing to subpoena, leak, or breach.</li>
+    <li><strong>National kid-safety layer</strong> — Guardian mode as a state-endorsed app for families: grooming and predator patterns blocked on-device, parents alerted.</li>
+    <li><strong>Elder scam defense at population scale</strong> — the same engine, one profile switch. Message scams cost EU citizens billions annually.</li>
+    <li><strong>White-label handoff</strong> — a ministry or public agency can take this codebase, brand it, localize the threat lexicons, and ship it to their people.</li>
   </ul>
 </section>
 
@@ -182,8 +201,9 @@
   <h2>Take it over. <span class="grad">Build on top of it.</span></h2>
   <p class="lead">
     I built Strenes solo to prove that receiver-side, on-device AI messaging works — the concept, the
-    architecture, and a shipping app. It deserves a team with reach and resources. If that's you:
-    the codebase, the roadmap, and my help with the transition are on the table.
+    architecture, and a shipping app. It deserves an owner with reach and resources: a fund-backed team,
+    a platform, or a government that wants to protect its people from scams and predators without
+    surveilling them. If that's you: the codebase, the roadmap, and my help with the transition are on the table.
   </p>
   <div style="margin-top:20px">
     <a class="btn" href="mailto:amit.nilajkar@gmail.com?subject=Strenes">amit.nilajkar@gmail.com</a>

@@ -155,6 +155,14 @@ export interface UserSettings {
   };
   /** contactId → epoch ms until which their updates are hidden from Commander briefings. */
   mutes?: Record<string, number>;
+  /** Guardian mode: kid-safe on-device threat detection + parent alerts. */
+  guardian?: {
+    enabled: boolean;
+    /** Contact who receives real-time alerts (content never included). */
+    guardianContactId?: string;
+    guardianName?: string;
+    alerts: boolean;
+  };
   /** Commander's memory about the user. Stored only on this device. */
   memory?: MemoryNote[];
   _onboardingComplete?: boolean;

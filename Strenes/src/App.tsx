@@ -13,7 +13,8 @@ import { Onboarding } from './screens/Onboarding';
 import { Auth } from './screens/Auth';
 import { Contacts } from './screens/Contacts';
 import { Groups } from './screens/Groups';
-import { onAuthChange, onIncomingMessages, getUserProfile, updateUserStatus, decryptIncoming } from './services/backend';
+import { onAuthChange, onIncomingMessages, getUserProfile, updateUserStatus, decryptIncoming, sendMessage as relaySend } from './services/backend';
+import { detectThreat, guardianAlertText } from './moderation/guardian';
 import { parseCallSignal, handleCallSignal, acceptCall, declineCall } from './services/calls';
 import logoUrl from './assets/logo.png';
 import { parseReceipt, sendReceipt, sendAutoNotice, isAutoNotice } from './services/receipts';
@@ -129,16 +130,33 @@ export default function App() {
         contact = useSiftStore.getState().contacts.find(c => c.id === msgForProcessing.from);
       }
 
+      // Guardian mode: predator/grooming detection runs FIRST and ignores
+      // trust — groomed kids often "trust" their groomer. On-device only.
+      const guardianCfg = settings.guardian;
+      const threat = guardianCfg?.enabled ? detectThreat(msgForProcessing.text) : null;
+
       const mod = await getModerator(settings.aiModeration.anthropicKey || undefined);
-      const verdict = await mod.classify(msgForProcessing.text, { sensitivity: settings.civility.sensitivity });
+      const verdict = threat
+        ? { category: 'abusive' as const, confidence: 0.95, reason: `Guardian: ${threat.reason}`, engine: 'rules' as const }
+        : await mod.classify(msgForProcessing.text, { sensitivity: settings.civility.sensitivity });
       const trusted = !!contact?.trusted || settings.trustedIds.includes(msgForProcessing.from);
       const circleAllowed = contact?.circle === 'family' || contact?.circle === 'vip';
-      const route = routeVerdict(verdict, settings, trusted, contact?.isEmergency, circleAllowed);
+      const route = threat
+        ? { folder: 'review' as const, status: threat.severity === 'block' ? 'dropped' as const : 'held' as const }
+        : routeVerdict(verdict, settings, trusted, contact?.isEmergency, circleAllowed);
       const finalRoute = await state.checkAndReceiveMessage(
         msgForProcessing.from, msgForProcessing.text, route, verdict,
         settings.aiModeration.anthropicKey || settings.aiReplies.anthropicKey,
         { relayId: msgForProcessing.id },
       );
+
+      // Real-time guardian alert over the relay — never includes the content.
+      if (threat && guardianCfg?.alerts && guardianCfg.guardianContactId
+          && guardianCfg.guardianContactId !== msgForProcessing.from) {
+        const senderName = contact?.name ?? 'Unknown';
+        relaySend(currentUserId, guardianCfg.guardianContactId, guardianAlertText(senderName, threat))
+          .catch(() => { /* offline/demo — alert is best-effort */ });
+      }
 
       // Honest status back to the sender: delivered, or a short reason when
       // the filter intervened ("held — spam"). Never the recipient's rules.

@@ -10,7 +10,7 @@ import type { UserSettings } from '../types';
  * wholesale when the user switches profiles; hand-written rules are kept.
  */
 
-export type ProfileId = 'elder' | 'public' | 'professional' | 'minimal';
+export type ProfileId = 'elder' | 'public' | 'professional' | 'minimal' | 'guardian';
 
 export type Circle = 'family' | 'work' | 'friends' | 'vip';
 
@@ -27,6 +27,7 @@ export const CIRCLE_ORDER: Record<ProfileId | 'default', Circle[]> = {
   professional: ['vip', 'work', 'family', 'friends'],
   public:       ['vip', 'work', 'friends', 'family'],
   minimal:      ['vip', 'family', 'friends', 'work'],
+  guardian:     ['family', 'vip', 'friends', 'work'],
   default:      ['vip', 'family', 'friends', 'work'],
 };
 
@@ -104,6 +105,26 @@ export const PROFILES: Record<ProfileId, ProtectionProfile> = {
       '💼 Professional mode is on. Do Not Disturb runs 22:00–07:00 (trusted and emergency contacts still get through), spam is held, and briefings are now formal.',
     ],
   },
+  guardian: {
+    id: 'guardian',
+    emoji: '🧒',
+    label: 'Guardian',
+    tagline: 'kid-safe phone — grooming & predator patterns blocked, parents alerted',
+    settings: {
+      civility: { enabled: true, sensitivity: 'high', onBlock: 'review' },
+      spam: { enabled: true, onBlock: 'silentDrop' as UserSettings['spam']['onBlock'] },
+      summaryStyle: 'casual',
+    },
+    rules: [
+      { condition: 'an adult stranger trying to build a private relationship with a minor', action: 'block' },
+      { condition: 'asking to move the conversation to another app to avoid being seen', action: 'review' },
+      { condition: 'pressuring for personal information like address, school, or daily schedule', action: 'review' },
+    ],
+    confirmation: [
+      '🧒 Guardian mode is on. This phone now blocks grooming patterns on-device: secrecy pressure ("don\'t tell your parents"), photo requests, meet-up pressure, explicit content, gift lures and kid-targeted scams.',
+      'Say "guardian is mom" (or any contact) and I\'ll send them an instant alert whenever something dangerous is blocked — the alert never includes the message content.',
+    ],
+  },
   minimal: {
     id: 'minimal',
     emoji: '🍃',
@@ -126,6 +147,7 @@ export const PROFILES: Record<ProfileId, ProtectionProfile> = {
 /** Match loose user phrasing ("grandma mode", "creator profile") to a profile. */
 export function matchProfile(text: string): ProfileId | null {
   const t = text.toLowerCase();
+  if (/\b(?:kid|kids|child|children|teen|teenager|son|daughter|guardian|school\s+phone|my\s+boy|my\s+girl)\b/i.test(t)) return 'guardian';
   if (/elder|senior|grandma|grandpa|parent|mom|dad'?s\s+phone|old/i.test(t)) return 'elder';
   if (/public|creator|influencer|open\s+inbox|business\s+inbox/i.test(t)) return 'public';
   if (/professional|work|office|formal/i.test(t)) return 'professional';

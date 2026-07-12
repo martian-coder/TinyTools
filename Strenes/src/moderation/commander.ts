@@ -69,6 +69,7 @@ export interface ScheduleIntent {
   startTs: number;          // epoch ms
   durationMinutes: number;  // default 30
 }
+export interface GuardianLinkIntent { type: 'guardian_link'; contactId: string; contactName: string }
 export interface UnknownIntent { type: 'unknown'; query: string }
 
 export type Intent =
@@ -76,7 +77,7 @@ export type Intent =
   | ShowReviewIntent | SetRuleIntent | QueryIntent | DynamicRuleIntent
   | MuteIntent | UnmuteIntent | SummaryStyleIntent | SetProfileIntent | SetCircleIntent
   | RememberIntent | ForgetIntent | MemoryExportIntent | BusyWindowIntent | BusyOffIntent
-  | ScheduleIntent | UnknownIntent;
+  | ScheduleIntent | GuardianLinkIntent | UnknownIntent;
 
 /**
  * Parse a duration phrase out of a command. Returns the expiry timestamp and
@@ -192,6 +193,14 @@ function parsePrecise(text: string, contacts: Contact[]): Intent | null {
     const n = new Date();
     return new Date(n.getFullYear(), n.getMonth(), n.getDate() + 1).getTime();
   };
+
+  // guardian link: "guardian is mom", "send safety alerts to dad"
+  const guardM = rest.match(/\b(?:guardian|safety\s+alerts?)\s+(?:is|are|go(?:es)?\s+to)\s+([a-z']+)/i)
+    ?? rest.match(/\bsend\s+(?:safety\s+)?alerts?\s+to\s+([a-z']+)/i);
+  if (guardM) {
+    const c = matchContact(guardM[1], contacts);
+    if (c) return { type: 'guardian_link', contactId: c.id, contactName: c.name };
+  }
 
   // schedule: "schedule a meeting with maya tomorrow 3pm", "book a call friday noon"
   const schedM = rest.match(/\b(?:schedule|set\s*up|book|arrange|plan)\b[\s\S]{0,40}?\b(meeting|meet|call|sync|catch\s*up|appointment|interview)\b|\b(meeting|call)\s+with\b/i);
@@ -626,6 +635,11 @@ function sanitizeIntent(p: any, contacts: Contact[]): Intent | null {
         expiresAt: minutes ? Date.now() + minutes * 60_000 : (kind === 'situation' ? Date.now() + 14 * 86_400_000 : undefined),
       };
     }
+    case 'guardian_link': {
+      const c = findContact();
+      if (!c || c.id === '*') return null;
+      return { type: 'guardian_link', contactId: c.id, contactName: c.name };
+    }
     case 'schedule': {
       if (typeof p.title !== 'string' || !p.title.trim()) return null;
       let startTs: number | null = null;
@@ -686,7 +700,7 @@ const NANO_INTENT_SCHEMA = {
   required: ['type'],
   additionalProperties: false,
   properties: {
-    type: { type: 'string', enum: ['reply', 'open', 'approve', 'reject', 'show_review', 'set_rule', 'query', 'dynamic_rule', 'mute', 'unmute', 'summary_style', 'set_profile', 'set_circle', 'remember', 'forget', 'memory_export', 'busy_window', 'busy_off', 'unknown'] },
+    type: { type: 'string', enum: ['reply', 'open', 'approve', 'reject', 'show_review', 'set_rule', 'query', 'dynamic_rule', 'mute', 'unmute', 'summary_style', 'set_profile', 'set_circle', 'remember', 'forget', 'memory_export', 'busy_window', 'busy_off', 'schedule', 'guardian_link', 'unknown'] },
     contactId: { type: 'string' },
     contactName: { type: 'string' },
     text: { type: 'string' },
@@ -735,13 +749,14 @@ async function parseViaNano(text: string, contacts: Contact[]): Promise<Intent |
     '{"type":"mute","contactId":"<id or * for everything>","durationMinutes":<number>}',
     '{"type":"unmute","contactId":"<id or *>"}',
     '{"type":"summary_style","style":"professional|casual|brief"}',
-    '{"type":"set_profile","profile":"elder|public|professional|minimal"}  // protection presets: elder=scam shield, public=creator inbox, professional=work, minimal=quiet',
+    '{"type":"set_profile","profile":"elder|public|professional|minimal|guardian"}  // protection presets: elder=scam shield, public=creator inbox, professional=work, minimal=quiet, guardian=kid-safe phone',
     '{"type":"set_circle","contactId":"<id>","circle":"family|work|friends|vip"}  // "maya is family", "jay is a work contact"',
     '{"type":"query","subject":"circles"}  // "who is in my circles"',
     '{"type":"remember","note":"<what to remember>","kind":"fact|situation","situationKind":"breakup|exams|grief|health|newjob|baby|wedding|moving|travel|stress","durationMinutes":<optional>}  // "remember I work nights"; life events ("i\'m going through a divorce") => kind situation',
     '{"type":"forget","target":"all|<keyword>"} {"type":"memory_export"} {"type":"query","subject":"memory"}',
     '{"type":"busy_window","startHour":<0-23>,"endHour":<0-23>,"note":"<original text>"}  // "busy with calls 5pm-9pm" => 17,21. {"type":"busy_off"} for "i am free now"',
     '{"type":"schedule","title":"<short event title>","contactName":"<optional>","startISO":"<ISO 8601 datetime>","durationMinutes":30}  // "schedule a meeting with maya tomorrow 3pm" — resolve relative dates using Now below',
+    '{"type":"guardian_link","contactId":"<id>"}  // "guardian is mom", "send safety alerts to dad" — who gets kid-safety alerts',
     '{"type":"unknown"}',
     '',
     `Now: ${new Date().toString()}`,
@@ -801,7 +816,7 @@ async function parseViaAnthropic(
     '{"type":"mute","contactId":"<id or * to mute everything>","contactName":"<name or everyone>","durationMinutes":<number, default 720>}  // "mute X", "mute all msgs for 2 hrs", "dnd for 2 hours"\n' +
     '{"type":"unmute","contactId":"<id or * for unmute all>","contactName":"<name or everyone>"}\n' +
     '{"type":"summary_style","style":"professional|casual|brief"}  // "summaries should be professional"\n' +
-    '{"type":"set_profile","profile":"elder|public|professional|minimal"}  // protection presets, e.g. "protect my mom\'s phone" => elder\n' +
+    '{"type":"set_profile","profile":"elder|public|professional|minimal|guardian"}  // protection presets, e.g. "protect my mom\'s phone" => elder, "this is my kid\'s phone" => guardian\n' +
     '{"type":"set_circle","contactId":"<id>","contactName":"<name>","circle":"family|work|friends|vip"}  // "maya is family", "jay is my client" => work\n' +
     '{"type":"query","subject":"circles"}\n' +
     '{"type":"remember","note":"<text>","kind":"fact|situation","situationKind":"breakup|exams|grief|health|newjob|baby|wedding|moving|travel|stress","durationMinutes":<optional>}  // any personal fact or life event the user shares\n' +
@@ -811,6 +826,7 @@ async function parseViaAnthropic(
     '{"type":"busy_window","startHour":<0-23>,"endHour":<0-23>,"note":"<text>"}  // "busy with calls from 5pm till 9pm" => 17,21\n' +
     '{"type":"busy_off"}  // "i am free now"\n' +
     '{"type":"schedule","title":"<short event title e.g. Call with Maya>","contactName":"<optional>","startISO":"<ISO 8601 datetime with offset>","durationMinutes":30}  // "schedule a meeting with maya tomorrow 3pm", "book a call friday noon" — resolve relative dates from Now\n' +
+    '{"type":"guardian_link","contactId":"<id>","contactName":"<name>"}  // "guardian is mom", "send safety alerts to dad" — links who receives kid-safety alerts\n' +
     '{"type":"unknown","query":"<original input>"}\n\n' +
     `Now: ${new Date().toString()}\n\n` +
     'IMPORTANT: ANY preference about which messages the user wants to see, hide, hold, or block ' +
