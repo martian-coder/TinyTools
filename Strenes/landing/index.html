@@ -297,6 +297,29 @@
     .pt { font-size: 15px; font-weight: 700; margin-bottom: 8px; color: var(--text); }
     .pp { font-size: 13.5px; color: var(--sub); line-height: 1.65; }
 
+    /* RESEARCH cards */
+    .rg { display: grid; grid-template-columns: repeat(2,1fr); gap: 16px; }
+    @media(max-width:640px) { .rg { grid-template-columns: 1fr; } }
+    .rc {
+      display: flex; align-items: flex-start; gap: 14px;
+      background: rgba(255,255,255,0.7);
+      border: 1px solid var(--border);
+      border-radius: 14px; padding: 20px;
+      backdrop-filter: blur(12px) saturate(140%);
+      -webkit-backdrop-filter: blur(12px) saturate(140%);
+      box-shadow: 0 2px 12px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.6);
+      transition: border-color .25s, transform .25s, box-shadow .25s;
+    }
+    .rc:hover { border-color: var(--border2); transform: translateY(-3px); box-shadow: 0 8px 24px rgba(99,102,241,0.1), inset 0 1px 0 rgba(255,255,255,0.6); }
+    .rc-icon {
+      flex-shrink: 0; width: 40px; height: 40px; border-radius: 10px;
+      display: grid; place-items: center; font-size: 18px;
+    }
+    .rc-body { flex: 1; min-width: 0; }
+    .rc-tag { font-size: 11px; font-weight: 700; letter-spacing: 0.5px; margin-bottom: 4px; }
+    .rc-body .pt { font-size: 14px; margin-bottom: 4px; }
+    .rc-body .pp { font-size: 12.5px; line-height: 1.55; }
+
     /* COMPARE table */
     .tw {
       overflow-x: auto; border-radius: 14px;
@@ -1121,38 +1144,56 @@
     <div class="s-hdr" style="margin-bottom:40px">
       <div class="sl2">Research foundation</div>
       <h2 class="sh">The science behind<br>every feature.</h2>
-      <p class="ss">Strenes doesn't invent AI. It ships the AI that researchers already proved works — faster, and without a cloud bill.</p>
+      <p class="ss">Strenes ships AI that researchers already proved works — faster, and without a cloud bill.</p>
     </div>
-    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px">
-      <div class="pc rev" style="border-left:3px solid var(--accent)">
-        <div style="font-size:10px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:var(--accent);margin-bottom:10px">Google Research · 2017</div>
-        <div class="pt">Federated Learning</div>
-        <p class="pp">McMahan et al., "Communication-Efficient Learning of Deep Networks from Decentralized Data" — the paper that proved AI can train and infer without a central server. Strenes runs entirely on this principle.</p>
+    <div class="rg">
+      <div class="rc rev">
+        <div class="rc-icon" style="background:rgba(99,102,241,0.1);color:var(--accent)">🧠</div>
+        <div class="rc-body">
+          <div class="rc-tag" style="color:var(--accent)">Google · 2017</div>
+          <div class="pt">Federated Learning</div>
+          <p class="pp">AI trains and infers without a central server. Strenes runs entirely on this principle.</p>
+        </div>
       </div>
-      <div class="pc rev d1" style="border-left:3px solid var(--accent2)">
-        <div style="font-size:10px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:var(--accent2);margin-bottom:10px">Google I/O · 2024</div>
-        <div class="pt">Chrome Prompt API / Gemini Nano</div>
-        <p class="pp">Chrome 127+ ships Gemini Nano directly to the browser. Strenes is the first messaging app to use this API for real-time content classification — completely offline, zero tokens sent to the cloud.</p>
+      <div class="rc rev d1">
+        <div class="rc-icon" style="background:rgba(6,182,212,0.1);color:var(--accent2)">💎</div>
+        <div class="rc-body">
+          <div class="rc-tag" style="color:var(--accent2)">Google I/O · 2024</div>
+          <div class="pt">Gemini Nano</div>
+          <p class="pp">Chrome ships an on-device LLM. Strenes uses it for real-time classification — zero cloud.</p>
+        </div>
       </div>
-      <div class="pc rev d2" style="border-left:3px solid var(--accent3)">
-        <div style="font-size:10px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:var(--accent3);margin-bottom:10px">ACL / NLP Research · 2021–24</div>
-        <div class="pt">Transformer Content Moderation</div>
-        <p class="pp">Peer-reviewed NLP benchmarks consistently show transformer-based classifiers achieving &gt;90% F1 on hate speech and spam detection. Strenes's rules engine mirrors this pipeline on constrained hardware.</p>
+      <div class="rc rev d2">
+        <div class="rc-icon" style="background:rgba(139,92,246,0.1);color:var(--accent3)">🔬</div>
+        <div class="rc-body">
+          <div class="rc-tag" style="color:var(--accent3)">NLP Research · 2021–24</div>
+          <div class="pt">Content Moderation</div>
+          <p class="pp">Transformer classifiers achieve >90% F1 on hate speech and spam detection.</p>
+        </div>
       </div>
-      <div class="pc rev d1" style="border-left:3px solid #f59e0b">
-        <div style="font-size:10px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:#d97706;margin-bottom:10px">Apple WWDC · 2024</div>
-        <div class="pt">Foundation Models on-device</div>
-        <p class="pp">Apple Intelligence ships a &gt;3B parameter on-device model for text tasks on iPhone 15 Pro and M-series. Strenes's roadmap targets this API natively — same zero-network guarantee, Apple's hardware.</p>
+      <div class="rc rev d1">
+        <div class="rc-icon" style="background:rgba(245,158,11,0.1);color:#d97706">🍎</div>
+        <div class="rc-body">
+          <div class="rc-tag" style="color:#d97706">Apple WWDC · 2024</div>
+          <div class="pt">On-device Models</div>
+          <p class="pp">Apple Intelligence runs 3B+ params on-device. Strenes targets this API natively.</p>
+        </div>
       </div>
-      <div class="pc rev d2" style="border-left:3px solid #ef4444">
-        <div style="font-size:10px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:#ef4444;margin-bottom:10px">Pew Research · 2021</div>
-        <div class="pt">The Online Harassment Crisis</div>
-        <p class="pp">41% of Americans have experienced online harassment. 73% have witnessed it. Current messaging apps ship with zero on-device protection. Strenes was built to close that gap — one inbox at a time.</p>
+      <div class="rc rev d2">
+        <div class="rc-icon" style="background:rgba(239,68,68,0.1);color:#ef4444">📊</div>
+        <div class="rc-body">
+          <div class="rc-tag" style="color:#ef4444">Pew Research · 2021</div>
+          <div class="pt">Harassment Crisis</div>
+          <p class="pp">41% of Americans harassed online. Messaging apps ship zero on-device protection.</p>
+        </div>
       </div>
-      <div class="pc rev d3" style="border-left:3px solid #10b981">
-        <div style="font-size:10px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:#059669;margin-bottom:10px">Signal Protocol · 2013–present</div>
-        <div class="pt">End-to-End Encryption (Roadmap)</div>
-        <p class="pp">The Double Ratchet algorithm powering Signal, WhatsApp, and Facebook Messenger. Strenes M3 will layer libsignal E2EE on top of on-device AI — the first app to ship both simultaneously.</p>
+      <div class="rc rev d3">
+        <div class="rc-icon" style="background:rgba(16,185,129,0.1);color:#059669">🔐</div>
+        <div class="rc-body">
+          <div class="rc-tag" style="color:#059669">Signal Protocol</div>
+          <div class="pt">E2E Encryption</div>
+          <p class="pp">Double Ratchet algorithm. Strenes M3 layers E2EE on top of on-device AI.</p>
+        </div>
       </div>
     </div>
   </div>
