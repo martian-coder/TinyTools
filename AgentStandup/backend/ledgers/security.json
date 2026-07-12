@@ -1,0 +1,33 @@
+{
+  "role_title": "Security & Compliance Owner",
+  "owner_label": "Engineering Lead, Security",
+  "personality_file": "security.md",
+  "deadline": "end of week",
+  "sort_order": 3,
+  "facts": [
+    {
+      "fact": "The most recent penetration test found one critical unresolved finding: a credential stuffing vulnerability on the password reset endpoint; no remediation has shipped",
+      "source": "postmortem",
+      "source_ref": "SEC-0896",
+      "as_of": "2024-01-09"
+    },
+    {
+      "fact": "SOC2 Type II audit window opens in 6 weeks; all user access reviews must be completed before the window opens or the audit scope expands to include remediation evidence",
+      "source": "ticket",
+      "source_ref": "SEC-0891",
+      "as_of": "2024-01-08"
+    },
+    {
+      "fact": "PCI scope was expanded in Q4 2023 to include the new event streaming pipeline; this scope change has not been communicated to the audit firm",
+      "source": "ticket",
+      "source_ref": "SEC-0887",
+      "as_of": "2023-12-21"
+    },
+    {
+      "fact": "The third-party OAuth library has CVE-2024-0392 rated CVSS 8.1; the upstream maintainer has not issued a patch and no mitigating controls are in place",
+      "source": "ticket",
+      "source_ref": "SEC-0894",
+      "as_of": "2024-01-13"
+    }
+  ]
+}

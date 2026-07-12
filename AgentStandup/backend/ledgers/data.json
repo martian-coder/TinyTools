@@ -1,0 +1,33 @@
+{
+  "role_title": "Data & Analytics Owner",
+  "owner_label": "Engineering Lead, Data Platform",
+  "personality_file": "data.md",
+  "deadline": "end of week",
+  "sort_order": 4,
+  "facts": [
+    {
+      "fact": "The dbt event pipeline has been silently dropping between 2% and 3% of raw events since 2023-12-15 due to a schema mismatch in the Kafka consumer; affected tables show inflated uptime metrics",
+      "source": "incident",
+      "source_ref": "DATA-1102",
+      "as_of": "2024-01-06"
+    },
+    {
+      "fact": "The ML feature store contains 14 stale feature sets from the abandoned personalization project; they have not been deprecated and will be consumed by any new personalization work",
+      "source": "ticket",
+      "source_ref": "DATA-1099",
+      "as_of": "2024-01-07"
+    },
+    {
+      "fact": "The GDPR deletion job has a backlog of 847 pending deletion requests older than 30 days, exceeding the legally required 30-day SLA",
+      "source": "ticket",
+      "source_ref": "DATA-1098",
+      "as_of": "2024-01-14"
+    },
+    {
+      "fact": "Snowflake compute costs exceeded the monthly budget by 34% in January due to a full-table scan in the attribution model introduced in the December release",
+      "source": "ticket",
+      "source_ref": "DATA-1105",
+      "as_of": "2024-01-15"
+    }
+  ]
+}

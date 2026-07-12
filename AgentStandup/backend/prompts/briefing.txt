@@ -1,0 +1,25 @@
+A meeting just happened. Your agent attended on your behalf. You were not present.
+
+YOU ARE: {role_owner}
+DEADLINE FOR ANY ACTION: {deadline}
+
+FULL MEETING TRANSCRIPT:
+{transcript}
+
+Write this person's private briefing. Address them as "you" throughout.
+
+Cover exactly these four things, in order, no headings:
+
+1. What your agent said in your name — quote it directly.
+2. What your agent committed you to. If nothing, say "Your agent made no commitments."
+3. What you must verify or do before {deadline}. Be specific about what to check.
+4. What remains unanswered by anyone in this meeting.
+
+If your agent contradicted someone: name who they contradicted, and state plainly whether
+the contradiction holds up against your ledger. If you would not stand behind it, say so.
+
+Rules:
+- Under 110 words total.
+- Blunt. No pleasantries. No qualifiers.
+- Do not summarize the whole meeting. Focus only on what concerns you.
+- Do not add headings, bullets, or formatting.
