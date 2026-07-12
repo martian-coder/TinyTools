@@ -62,13 +62,21 @@ export interface ForgetIntent { type: 'forget'; target: 'all' | string }
 export interface BusyWindowIntent { type: 'busy_window'; startHour: number; endHour: number; note: string }
 export interface BusyOffIntent { type: 'busy_off' }
 export interface MemoryExportIntent { type: 'memory_export' }
+export interface ScheduleIntent {
+  type: 'schedule';
+  title: string;
+  contactName?: string;
+  startTs: number;          // epoch ms
+  durationMinutes: number;  // default 30
+}
 export interface UnknownIntent { type: 'unknown'; query: string }
 
 export type Intent =
   | ReplyIntent | OpenIntent | ApproveIntent | RejectIntent
   | ShowReviewIntent | SetRuleIntent | QueryIntent | DynamicRuleIntent
   | MuteIntent | UnmuteIntent | SummaryStyleIntent | SetProfileIntent | SetCircleIntent
-  | RememberIntent | ForgetIntent | MemoryExportIntent | BusyWindowIntent | BusyOffIntent | UnknownIntent;
+  | RememberIntent | ForgetIntent | MemoryExportIntent | BusyWindowIntent | BusyOffIntent
+  | ScheduleIntent | UnknownIntent;
 
 /**
  * Parse a duration phrase out of a command. Returns the expiry timestamp and
@@ -124,6 +132,55 @@ function matchContact(name: string, contacts: Contact[]): Contact | undefined {
 }
 
 /**
+ * Resolve a natural "when" phrase to an epoch timestamp: "tomorrow 3pm",
+ * "friday at 10", "today noon". Null when the text names no day or time.
+ */
+export function parseWhen(text: string): number | null {
+  const now = new Date();
+  const day = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  let dayFound = false;
+  const t = text.toLowerCase();
+
+  if (/\btomorrow\b/.test(t)) { day.setDate(day.getDate() + 1); dayFound = true; }
+  else if (/\btoday\b|\btonight\b/.test(t)) { dayFound = true; }
+  else {
+    const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+    for (let i = 0; i < 7; i++) {
+      if (new RegExp(`\\b${days[i]}\\b`).test(t)) {
+        let diff = (i - now.getDay() + 7) % 7;
+        if (diff === 0) diff = 7; // "monday" said on a Monday = next Monday
+        day.setDate(day.getDate() + diff);
+        dayFound = true;
+        break;
+      }
+    }
+  }
+
+  let hour: number | null = null;
+  let minute = 0;
+  if (/\bnoon\b|\bmidday\b/.test(t)) hour = 12;
+  else if (/\btonight\b/.test(t)) hour = 19;
+  const tm = t.match(/\b(\d{1,2})(?::(\d{2}))?\s*(am|pm)\b/)
+    ?? t.match(/\bat\s+(\d{1,2})(?::(\d{2}))?\b/);
+  if (tm && hour === null) {
+    hour = parseInt(tm[1], 10);
+    minute = tm[2] ? parseInt(tm[2], 10) : 0;
+    const ap = tm[3];
+    if (ap === 'pm' && hour < 12) hour += 12;
+    if (ap === 'am' && hour === 12) hour = 0;
+    if (!ap && hour >= 1 && hour <= 7) hour += 12; // bare "at 3" → 3 PM for meetings
+    if (hour > 23 || minute > 59) { hour = 10; minute = 0; }
+  }
+
+  if (hour === null && !dayFound) return null;
+  if (hour === null) { hour = 10; minute = 0; } // day given, no time → 10:00
+  day.setHours(hour, minute, 0, 0);
+  let ts = day.getTime();
+  if (ts <= Date.now()) ts += 86_400_000; // that time already passed → same time next day
+  return ts;
+}
+
+/**
  * Precise command grammar — deterministic patterns for well-formed commands.
  * Returns null when nothing matches so the caller can escalate to the
  * on-device LLM before falling back to the rule catch-all.
@@ -135,6 +192,29 @@ function parsePrecise(text: string, contacts: Contact[]): Intent | null {
     const n = new Date();
     return new Date(n.getFullYear(), n.getMonth(), n.getDate() + 1).getTime();
   };
+
+  // schedule: "schedule a meeting with maya tomorrow 3pm", "book a call friday noon"
+  const schedM = rest.match(/\b(?:schedule|set\s*up|book|arrange|plan)\b[\s\S]{0,40}?\b(meeting|meet|call|sync|catch\s*up|appointment|interview)\b|\b(meeting|call)\s+with\b/i);
+  if (schedM) {
+    const kindRaw = (schedM[1] || schedM[2] || 'meeting').toLowerCase();
+    const kind = kindRaw === 'meet' ? 'meeting' : kindRaw.replace(/\s+/g, ' ');
+    const withM = rest.match(/\bwith\s+([a-z']+)/i);
+    const contact = withM ? matchContact(withM[1], contacts) : undefined;
+    const title = `${kind.charAt(0).toUpperCase()}${kind.slice(1)}${contact ? ` with ${contact.name}` : ''}`;
+    // extractDuration already consumed "for 1 hour" → recover it as the length.
+    const durationMinutes = expiresAt
+      ? Math.min(480, Math.max(15, Math.round((expiresAt - Date.now()) / 60_000)))
+      : 30;
+    const nextHour = new Date();
+    nextHour.setHours(nextHour.getHours() + 1, 0, 0, 0);
+    return {
+      type: 'schedule',
+      title,
+      contactName: contact?.name,
+      startTs: parseWhen(rest) ?? nextHour.getTime(),
+      durationMinutes,
+    };
+  }
 
   // summary style: "summary should be professional", "casual summaries"
   const styleM = t.match(/summar(?:y|ies).{0,24}?\b(professional|formal|casual|friendly|brief|short)\b|\b(professional|formal|casual|friendly|brief|short)\b.{0,10}summar(?:y|ies)/i);
@@ -546,6 +626,30 @@ function sanitizeIntent(p: any, contacts: Contact[]): Intent | null {
         expiresAt: minutes ? Date.now() + minutes * 60_000 : (kind === 'situation' ? Date.now() + 14 * 86_400_000 : undefined),
       };
     }
+    case 'schedule': {
+      if (typeof p.title !== 'string' || !p.title.trim()) return null;
+      let startTs: number | null = null;
+      if (typeof p.startTs === 'number' && p.startTs > 0) startTs = p.startTs;
+      else if (typeof p.startISO === 'string') {
+        const d = new Date(p.startISO).getTime();
+        if (!Number.isNaN(d)) startTs = d;
+      }
+      if (!startTs) {
+        const nextHour = new Date();
+        nextHour.setHours(nextHour.getHours() + 1, 0, 0, 0);
+        startTs = nextHour.getTime();
+      }
+      if (startTs < Date.now()) startTs += 86_400_000; // resolved into the past → next day
+      const dur = typeof p.durationMinutes === 'number' && p.durationMinutes >= 5 && p.durationMinutes <= 480
+        ? Math.round(p.durationMinutes) : 30;
+      return {
+        type: 'schedule',
+        title: p.title.trim().slice(0, 120),
+        contactName: typeof p.contactName === 'string' ? p.contactName : undefined,
+        startTs,
+        durationMinutes: dur,
+      };
+    }
     case 'forget': {
       if (typeof p.target !== 'string' || !p.target.trim()) return null;
       return { type: 'forget', target: p.target.trim() };
@@ -637,7 +741,10 @@ async function parseViaNano(text: string, contacts: Contact[]): Promise<Intent |
     '{"type":"remember","note":"<what to remember>","kind":"fact|situation","situationKind":"breakup|exams|grief|health|newjob|baby|wedding|moving|travel|stress","durationMinutes":<optional>}  // "remember I work nights"; life events ("i\'m going through a divorce") => kind situation',
     '{"type":"forget","target":"all|<keyword>"} {"type":"memory_export"} {"type":"query","subject":"memory"}',
     '{"type":"busy_window","startHour":<0-23>,"endHour":<0-23>,"note":"<original text>"}  // "busy with calls 5pm-9pm" => 17,21. {"type":"busy_off"} for "i am free now"',
+    '{"type":"schedule","title":"<short event title>","contactName":"<optional>","startISO":"<ISO 8601 datetime>","durationMinutes":30}  // "schedule a meeting with maya tomorrow 3pm" — resolve relative dates using Now below',
     '{"type":"unknown"}',
+    '',
+    `Now: ${new Date().toString()}`,
     '',
     'Guidance: wanting quiet/peace/no notifications => mute (contactId "*" unless a contact is named).',
     'Any preference about which messages to see, hide, hold or block => dynamic_rule add, condition in the user\'s own words.',
@@ -703,7 +810,9 @@ async function parseViaAnthropic(
     '{"type":"memory_export"}\n' +
     '{"type":"busy_window","startHour":<0-23>,"endHour":<0-23>,"note":"<text>"}  // "busy with calls from 5pm till 9pm" => 17,21\n' +
     '{"type":"busy_off"}  // "i am free now"\n' +
+    '{"type":"schedule","title":"<short event title e.g. Call with Maya>","contactName":"<optional>","startISO":"<ISO 8601 datetime with offset>","durationMinutes":30}  // "schedule a meeting with maya tomorrow 3pm", "book a call friday noon" — resolve relative dates from Now\n' +
     '{"type":"unknown","query":"<original input>"}\n\n' +
+    `Now: ${new Date().toString()}\n\n` +
     'IMPORTANT: ANY preference about which messages the user wants to see, hide, hold, or block ' +
     'is a dynamic_rule add — keep the condition in the user\'s own words (it is evaluated per-message ' +
     'by an AI later, so free-form conditions like "asking me for money" or "guilt-tripping me" are fine). ' +

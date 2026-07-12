@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Strenes — a working concept for receiver-side AI messaging. Built to prove the idea; offered to a team that can scale it.">
+<link rel="icon" type="image/png" href="img/logo-192.png">
+<title>Strenes — Concept Deck</title>
+<style>
+  :root {
+    --bg: #ffffff; --bg2: #f8fafc;
+    --border: rgba(15,23,42,0.08);
+    --accent: #6366f1; --accent2: #06b6d4; --accent3: #8b5cf6;
+    --text: #0f172a; --sub: #475569; --dim: #64748b;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--bg); color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', system-ui, sans-serif;
+    line-height: 1.6;
+  }
+  .slide {
+    min-height: 92vh; display: flex; flex-direction: column; justify-content: center;
+    max-width: 860px; margin: 0 auto; padding: 64px 28px;
+    border-bottom: 1px solid var(--border);
+  }
+  .kicker {
+    font-size: 11px; font-weight: 800; letter-spacing: 2.5px; text-transform: uppercase;
+    color: var(--accent); margin-bottom: 14px;
+  }
+  h1 { font-size: clamp(34px,6vw,60px); font-weight: 900; letter-spacing: -2px; line-height: 1.05; margin-bottom: 18px; }
+  h2 { font-size: clamp(26px,4.5vw,42px); font-weight: 900; letter-spacing: -1.4px; line-height: 1.1; margin-bottom: 16px; }
+  p.lead { font-size: 17px; color: var(--sub); max-width: 640px; }
+  .grad {
+    background: linear-gradient(135deg, var(--accent), var(--accent3));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  }
+  .logo-row { display: flex; align-items: center; gap: 14px; margin-bottom: 26px; }
+  .logo-row img { width: 52px; height: 52px; border-radius: 14px; box-shadow: 0 4px 16px rgba(15,23,42,0.14); }
+  .logo-row span { font-size: 24px; font-weight: 900; letter-spacing: -0.8px; }
+  ul.big { list-style: none; margin-top: 18px; }
+  ul.big li {
+    padding: 12px 0 12px 34px; position: relative; font-size: 15.5px; color: var(--sub);
+    border-bottom: 1px solid var(--border);
+  }
+  ul.big li::before { content: "→"; position: absolute; left: 4px; color: var(--accent); font-weight: 800; }
+  ul.big li strong { color: var(--text); }
+  .stat-row { display: grid; grid-template-columns: repeat(3,1fr); gap: 16px; margin-top: 26px; }
+  @media (max-width:560px) { .stat-row { grid-template-columns: 1fr; } }
+  .stat {
+    background: var(--bg2); border: 1px solid var(--border); border-radius: 16px; padding: 20px;
+  }
+  .stat .n { font-size: 30px; font-weight: 900; letter-spacing: -1px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+  .stat .l { font-size: 12px; color: var(--dim); margin-top: 4px; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 22px; }
+  @media (max-width:640px) { .grid2 { grid-template-columns: 1fr; } }
+  .card {
+    background: var(--bg2); border: 1px solid var(--border); border-radius: 14px; padding: 18px;
+  }
+  .card .t { font-weight: 700; font-size: 14px; margin-bottom: 5px; }
+  .card .d { font-size: 13px; color: var(--sub); line-height: 1.6; }
+  .card .tag { font-size: 10.5px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 8px; }
+  a.btn {
+    display: inline-block; background: var(--accent); color: #fff; text-decoration: none;
+    padding: 13px 26px; border-radius: 12px; font-weight: 700; font-size: 15px; margin: 8px 10px 0 0;
+    box-shadow: 0 4px 16px -4px rgba(99,102,241,0.5);
+  }
+  a.btn.ghost { background: var(--bg2); color: var(--text); border: 1px solid var(--border); box-shadow: none; }
+  .foot { font-size: 12px; color: var(--dim); padding: 26px; text-align: center; }
+  .shots { display: flex; gap: 12px; overflow-x: auto; margin-top: 26px; padding-bottom: 8px; }
+  .shots img { height: 340px; border-radius: 18px; border: 1px solid var(--border); box-shadow: 0 10px 30px -12px rgba(15,23,42,0.25); }
+  code.k { background: var(--bg2); border: 1px solid var(--border); border-radius: 6px; padding: 1px 7px; font-size: 13px; }
+</style>
+</head>
+<body>
+
+<!-- 1 · Title -->
+<section class="slide">
+  <div class="logo-row"><img src="img/logo-192.png" alt="Strenes logo"><span>Strenes</span></div>
+  <div class="kicker">A working concept · offered for handoff</div>
+  <h1>Messaging apps protect the sender.<br><span class="grad">Nobody protects the receiver.</span></h1>
+  <p class="lead">
+    Strenes is a working, installable messaging app where the <strong>recipient</strong> controls an AI filter
+    that screens every incoming message on-device — before it reaches them. I built it to prove the concept.
+    This deck is an offer: if your team wants to take it over and build on top of it, it's yours to run with.
+  </p>
+  <p class="lead" style="margin-top:14px;font-size:14px;">Amit N · amit.nilajkar@gmail.com</p>
+</section>
+
+<!-- 2 · Problem -->
+<section class="slide">
+  <div class="kicker">The gap</div>
+  <h2>Every filter today serves the platform.<br>None serve the person being messaged.</h2>
+  <ul class="big">
+    <li><strong>41% of Americans</strong> have experienced online harassment (Pew Research) — messaging apps ship zero receiver-side protection.</li>
+    <li><strong>Elder scams</strong> arrive over SMS and chat; the target is the person least equipped to spot them.</li>
+    <li><strong>Creators and professionals</strong> drown in unsolicited DMs with no way to say <em>"only show me what matters."</em></li>
+    <li>Platform moderation optimizes for the platform's liability — not for <em>your</em> boundaries, <em>your</em> family, <em>your</em> quiet hours.</li>
+  </ul>
+</section>
+
+<!-- 3 · Concept -->
+<section class="slide">
+  <div class="kicker">The concept</div>
+  <h2>Your inbox, defended by <span class="grad">your AI</span> — running on your device.</h2>
+  <p class="lead">
+    Incoming messages are classified on-device (abusive / spam / business / promo / clean) and routed by rules
+    the user states in plain language. No message content leaves the phone for moderation. The AI answers to
+    the receiver — not to a platform.
+  </p>
+  <div class="stat-row">
+    <div class="stat"><div class="n">100%</div><div class="l">On-device moderation — zero cloud reads of your messages</div></div>
+    <div class="stat"><div class="n">&lt;50ms</div><div class="l">Classification latency (Gemini Nano / rules engine)</div></div>
+    <div class="stat"><div class="n">1 sentence</div><div class="l">"Hold anything asking me for money" — becomes a live rule</div></div>
+  </div>
+</section>
+
+<!-- 4 · What's built -->
+<section class="slide">
+  <div class="kicker">Already working — not a mockup</div>
+  <h2>What's in the build today</h2>
+  <div class="grid2">
+    <div class="card"><div class="t">🛡️ On-device AI filter</div><div class="d">Chrome's built-in Gemini Nano + a rules engine fallback. Classifies and routes every incoming message locally.</div></div>
+    <div class="card"><div class="t">🤖 Commander</div><div class="d">Natural-language inbox assistant: briefings, free-form rules, mutes, protection profiles, memory, busy windows.</div></div>
+    <div class="card"><div class="t">🔐 Encrypted DMs & groups</div><div class="d">ECDH P-256 + AES-256-GCM, private keys never leave the device. WhatsApp-style groups with per-member key wrapping.</div></div>
+    <div class="card"><div class="t">📞 Voice calls</div><div class="d">Real WebRTC calling over the same relay. Accept/decline UI on any screen.</div></div>
+    <div class="card"><div class="t">📅 Google Calendar</div><div class="d">"Schedule a meeting with Maya tomorrow 3pm" — Commander books it (OAuth API or prefilled event).</div></div>
+    <div class="card"><div class="t">📱 Ships everywhere</div><div class="d">Installable PWA, signed-ready Android APK via CI, iOS Xcode project. Supabase backend with RLS.</div></div>
+  </div>
+  <div class="shots">
+    <img src="img/shot-commander-aurora.png" alt="Commander screen">
+    <img src="img/shot-chats-daylight.png" alt="Chats screen">
+    <img src="img/shot-review-noir.png" alt="Review queue">
+    <img src="img/shot-busy-terminal.png" alt="Busy windows">
+  </div>
+</section>
+
+<!-- 5 · Try it -->
+<section class="slide">
+  <div class="kicker">Try it in 60 seconds</div>
+  <h2>It's live right now.</h2>
+  <p class="lead">The demo mode seeds a realistic inbox — no sign-up needed. Tell the Commander things like
+    <code class="k">no rants today</code>, <code class="k">mute Jay for 4 hours</code>,
+    <code class="k">hold anything asking me for money</code>.</p>
+  <div style="margin-top:18px">
+    <a class="btn" href="https://martian-coder.github.io/TinyTools/strenes/?demo=1">Open the web app (demo)</a>
+    <a class="btn ghost" href="https://github.com/martian-coder/TinyTools/releases/download/android-latest/strenes.apk">Download Android APK</a>
+    <a class="btn ghost" href="https://martian-coder.github.io/TinyTools/strenes-home/">Product site</a>
+  </div>
+</section>
+
+<!-- 6 · Research foundation -->
+<section class="slide">
+  <div class="kicker">Why now</div>
+  <h2>The research matured. The hardware caught up.<br>Nobody has shipped the receiver-side product.</h2>
+  <div class="grid2">
+    <div class="card"><div class="tag" style="color:var(--accent)">Google · 2017</div><div class="t">Federated learning</div><div class="d">AI without a central server — Strenes runs entirely on this principle.</div></div>
+    <div class="card"><div class="tag" style="color:var(--accent2)">Chrome · 2024</div><div class="t">Gemini Nano on-device</div><div class="d">The browser ships an LLM. Strenes uses it for real-time classification.</div></div>
+    <div class="card"><div class="tag" style="color:#d97706">Apple · 2024</div><div class="t">Apple Intelligence</div><div class="d">3B+ params on-device. The iOS build targets this API natively.</div></div>
+    <div class="card"><div class="tag" style="color:var(--accent3)">NLP research</div><div class="t">&gt;90% F1 moderation</div><div class="d">Transformer classifiers solved hate-speech/spam detection years ago.</div></div>
+  </div>
+</section>
+
+<!-- 7 · Where it goes -->
+<section class="slide">
+  <div class="kicker">Where a funded team takes this</div>
+  <h2>Three wedges, one core asset.</h2>
+  <ul class="big">
+    <li><strong>Teen & family safety</strong> — parents already pay for protection; receiver-side filtering is the visceral pitch. (COPPA + parental dashboard needed.)</li>
+    <li><strong>Elder scam shield</strong> — a protection profile already exists in the build; the demographic loses billions/yr to message scams.</li>
+    <li><strong>B2B SDK</strong> — license the on-device filtering layer to dating apps, creator platforms, and workplaces that can't send content to a cloud.</li>
+    <li>Roadmap in repo: Signal-protocol upgrade, push notifications, Play Store release, verified OTP auth.</li>
+  </ul>
+</section>
+
+<!-- 8 · The offer -->
+<section class="slide">
+  <div class="kicker">The offer</div>
+  <h2>Take it over. <span class="grad">Build on top of it.</span></h2>
+  <p class="lead">
+    I built Strenes solo to prove that receiver-side, on-device AI messaging works — the concept, the
+    architecture, and a shipping app. It deserves a team with reach and resources. If that's you:
+    the codebase, the roadmap, and my help with the transition are on the table.
+  </p>
+  <div style="margin-top:20px">
+    <a class="btn" href="mailto:amit.nilajkar@gmail.com?subject=Strenes">amit.nilajkar@gmail.com</a>
+    <a class="btn ghost" href="https://github.com/martian-coder/TinyTools">Source repository</a>
+  </div>
+</section>
+
+<div class="foot">Strenes · concept deck · built by Amit N</div>
+
+</body>
+</html>

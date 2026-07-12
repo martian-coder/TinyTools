@@ -3,6 +3,7 @@ import { Send, ChevronRight, Loader2 } from 'lucide-react';
 import { useSiftStore } from '../store';
 import { parseIntent, formatUntil } from '../moderation/commander';
 import { proxyQuotaExceeded, localOnlyChosen, chooseLocalOnly, FREE_PROXY_LIMIT } from '../moderation/cloud';
+import { createMeeting } from '../services/calendar';
 import { describeSender, priorityFor } from '../moderation/insights';
 import { PROFILES, CIRCLE_META, CIRCLE_ORDER, type Circle, type ProfileId } from '../moderation/profiles';
 import type { Message } from '../types';
@@ -853,6 +854,29 @@ export function Commander() {
             responses.push({ text: `Summary style: ${settings.commander?.summaryStyle ?? 'casual'}` });
             break;
           }
+        }
+        break;
+      }
+
+      case 'schedule': {
+        const when = new Date(intent.startTs).toLocaleString([], {
+          weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit',
+        });
+        const result = await createMeeting({
+          title: intent.title,
+          startTs: intent.startTs,
+          endTs: intent.startTs + intent.durationMinutes * 60_000,
+          details: 'Scheduled via Strenes Commander',
+        });
+        if (result.mode === 'api') {
+          responses.push({
+            text: `📅 "${intent.title}" is on your Google Calendar for ${when} (${intent.durationMinutes} min)${result.meetLink ? ` — Meet link attached: ${result.meetLink}` : ''} ✓`,
+          });
+        } else {
+          window.open(result.url, '_blank', 'noopener');
+          responses.push({
+            text: `📅 Opening Google Calendar with "${intent.title}" prefilled for ${when} (${intent.durationMinutes} min) — tap Save there to confirm.`,
+          });
         }
         break;
       }
