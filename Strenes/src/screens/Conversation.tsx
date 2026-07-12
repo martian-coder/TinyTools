@@ -308,7 +308,7 @@ export function Conversation() {
   return (
     <>
       {/* Header */}
-      <div className="glass-h px-3 py-3 flex items-center gap-3">
+      <div className="glass-h px-3 pb-3 flex items-center gap-3" style={{ paddingTop: 'calc(12px + env(safe-area-inset-top, 0px))' }}>
         <button onClick={() => setScreen('chats')} className="text-main"><ArrowLeft size={20} /></button>
         <Avatar name={contact.name} grad={contact.grad} size={36} trusted={contact.trusted} />
         <div className="flex-1">
