@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { Send, ChevronRight, Loader2 } from 'lucide-react';
 import { useSiftStore } from '../store';
 import { parseIntent, formatUntil } from '../moderation/commander';
+import { proxyQuotaExceeded, localOnlyChosen, chooseLocalOnly, FREE_PROXY_LIMIT } from '../moderation/cloud';
 import { describeSender, priorityFor } from '../moderation/insights';
 import { PROFILES, CIRCLE_META, CIRCLE_ORDER, type Circle, type ProfileId } from '../moderation/profiles';
 import type { Message } from '../types';
@@ -10,7 +11,7 @@ import type { Message } from '../types';
 
 interface Chip {
   label: string;
-  action: 'open' | 'show_review' | 'command';
+  action: 'open' | 'show_review' | 'command' | 'settings' | 'use_local';
   contactId?: string;
   command?: string;
 }
@@ -213,6 +214,7 @@ export function Commander() {
   const [busy, setBusy]          = useState(false);
   const bottomRef                = useRef<HTMLDivElement>(null);
   const briefedRef               = useRef(false);
+  const quotaAskedRef            = useRef(false);
 
   const unread = useMemo(() => {
     const ins = allMessages.filter(
@@ -382,8 +384,13 @@ export function Commander() {
     } else if (chip.action === 'show_review') {
       setFolder('review');
       setScreen('chats');
+    } else if (chip.action === 'settings') {
+      setScreen('settings');
+    } else if (chip.action === 'use_local') {
+      chooseLocalOnly();
+      addAI("👍 Done — Commander now runs fully on-device. Everything keeps working (a bit less fancy at parsing). Paste an API key in Settings anytime to switch back to cloud AI.");
     }
-  }, [openConversation, setFolder, setScreen]);
+  }, [openConversation, setFolder, setScreen, addAI]);
 
   /* ── Core command execution ── */
   const executeCommand = useCallback(async (text: string) => {
@@ -858,6 +865,20 @@ export function Commander() {
     }
 
     for (const r of responses) addAI(r.text, r.chips);
+
+    // Free cloud-AI quota spent, no personal key, no choice made yet →
+    // ask once per session how to continue.
+    const hasOwnKey = !!(settings.aiReplies?.anthropicKey?.trim() || settings.aiModeration?.anthropicKey?.trim());
+    if (proxyQuotaExceeded() && !hasOwnKey && !localOnlyChosen() && !quotaAskedRef.current) {
+      quotaAskedRef.current = true;
+      addAI(
+        `⚡ You've used all ${FREE_PROXY_LIMIT} free Strenes AI requests. Pick how to continue — both options keep Commander working:`,
+        [
+          { label: '🔑 Add my API key', action: 'settings' },
+          { label: '📱 Use on-device AI', action: 'use_local' },
+        ],
+      );
+    }
 
     } catch {
       addAI("Something went wrong handling that — please try again.");

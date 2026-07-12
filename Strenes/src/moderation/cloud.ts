@@ -22,9 +22,49 @@ export function proxyAvailable(): boolean {
   return !!SUPABASE_URL && !!SUPABASE_ANON_KEY && !SUPABASE_URL.includes('your-project');
 }
 
-/** True when ANY cloud AI path exists: a pasted key or the managed proxy. */
+// ── Free-tier quota for the managed proxy ──────────────────────────────────
+// The managed proxy runs on the app owner's provider key. Each device gets
+// FREE_PROXY_LIMIT successful calls; after that the app asks the user to
+// paste their own key (Settings) or continue fully on-device.
+
+export const FREE_PROXY_LIMIT = 20;
+const USES_KEY = '__strenes_proxy_uses';
+const LOCAL_ONLY_KEY = '__strenes_ai_local_only';
+
+export function proxyUses(): number {
+  try { return parseInt(localStorage.getItem(USES_KEY) ?? '0', 10) || 0; } catch { return 0; }
+}
+
+export function proxyUsesLeft(): number {
+  return Math.max(0, FREE_PROXY_LIMIT - proxyUses());
+}
+
+export function proxyQuotaExceeded(): boolean {
+  return proxyUses() >= FREE_PROXY_LIMIT;
+}
+
+/** The user explicitly picked "keep using on-device AI" after the quota ran out. */
+export function localOnlyChosen(): boolean {
+  try { return localStorage.getItem(LOCAL_ONLY_KEY) === '1'; } catch { return false; }
+}
+
+export function chooseLocalOnly(): void {
+  try { localStorage.setItem(LOCAL_ONLY_KEY, '1'); } catch { /* private mode */ }
+}
+
+/** Re-enable the managed proxy (e.g. if the user changes their mind before pasting a key). */
+export function clearLocalOnly(): void {
+  try { localStorage.removeItem(LOCAL_ONLY_KEY); } catch { /* private mode */ }
+}
+
+function bumpProxyUses(): void {
+  try { localStorage.setItem(USES_KEY, String(proxyUses() + 1)); } catch { /* private mode */ }
+}
+
+/** True when ANY cloud AI path exists: a pasted key, or the managed proxy with quota left. */
 export function cloudAvailable(apiKey: string | undefined): boolean {
-  return !!apiKey?.trim() || proxyAvailable();
+  if (apiKey?.trim()) return true;
+  return proxyAvailable() && !proxyQuotaExceeded() && !localOnlyChosen();
 }
 
 async function promptViaProxy(
@@ -99,8 +139,13 @@ export async function promptCloud(
   const { maxTokens = 300, timeoutMs = 10_000 } = opts;
 
   // No key pasted → managed server-side proxy (key never ships to clients).
+  // Free quota spent or the user opted for on-device AI → return null so
+  // every caller falls through to Gemini Nano / heuristics.
   if (!key) {
-    return proxyAvailable() ? promptViaProxy(system, user, maxTokens, timeoutMs) : null;
+    if (!proxyAvailable() || proxyQuotaExceeded() || localOnlyChosen()) return null;
+    const out = await promptViaProxy(system, user, maxTokens, timeoutMs);
+    if (out) bumpProxyUses();
+    return out;
   }
 
   const provider = detectProvider(key);
