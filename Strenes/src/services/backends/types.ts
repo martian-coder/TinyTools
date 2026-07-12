@@ -72,4 +72,36 @@ export interface Backend {
   addContact(userId: string, contactUserId: string, contactPhone: string): Promise<void>;
   onContactsChange(userId: string, callback: (contacts: Record<string, BackendContact>) => void): () => void;
   onUserSearch(phoneNumber: string, callback: (user: BackendUser | null, error?: string) => void): () => void;
+
+  // Encryption key registry
+  publishPublicKey?(userId: string, publicKeyB64: string): Promise<void>;
+  getPublicKey?(userId: string): Promise<string | null>;
+
+  // Groups
+  createGroup?(creatorId: string, name: string, avatar: string, memberIds: string[], encryptedKeys: Record<string, string>, creatorPubKey: string): Promise<string>;
+  getGroup?(groupId: string, userId: string): Promise<BackendGroup | null>;
+  getUserGroups?(userId: string): Promise<BackendGroup[]>;
+  addGroupMember?(groupId: string, userId: string, encryptedKey: string, addedBy: string): Promise<void>;
+  sendGroupMessage?(groupId: string, fromUserId: string, fromName: string, text: string): Promise<string>;
+  onGroupMessages?(userId: string, callback: (msg: BackendGroupMessage) => void | Promise<void>): () => void;
+}
+
+export interface BackendGroup {
+  id: string;
+  name: string;
+  avatar: string;
+  createdBy: string;
+  createdAt: number;
+  members: Array<{ userId: string; role: 'admin' | 'member'; joinedAt: number; displayName?: string }>;
+  encryptedKey?: string;   // this user's copy of the encrypted group key
+  creatorPubKey?: string;  // needed to decrypt encryptedKey
+}
+
+export interface BackendGroupMessage {
+  id: string;
+  groupId: string;
+  fromUserId: string;
+  fromName: string;
+  text: string;            // wire text (may be encrypted JSON)
+  timestamp: number;
 }

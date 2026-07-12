@@ -12,7 +12,8 @@ import { Commander } from './screens/Commander';
 import { Onboarding } from './screens/Onboarding';
 import { Auth } from './screens/Auth';
 import { Contacts } from './screens/Contacts';
-import { onAuthChange, onIncomingMessages, getUserProfile, updateUserStatus } from './services/backend';
+import { Groups } from './screens/Groups';
+import { onAuthChange, onIncomingMessages, getUserProfile, updateUserStatus, decryptIncoming } from './services/backend';
 import { parseCallSignal, handleCallSignal, acceptCall, declineCall } from './services/calls';
 import { parseReceipt, sendReceipt, sendAutoNotice, isAutoNotice } from './services/receipts';
 import { getModerator, routeVerdict } from './moderation';
@@ -24,6 +25,7 @@ const SCREEN_TITLES: Record<string, { title: string; sub: string }> = {
   commander: { title: 'Commander', sub: 'your AI inbox assistant' },
   chats:     { title: 'Chats',     sub: 'private by design' },
   contacts:  { title: 'Contacts',  sub: 'find people by phone' },
+  groups:    { title: 'Groups',    sub: 'E2E encrypted group chats' },
   simulator: { title: 'Test',      sub: 'try the filter on any message' },
   settings:  { title: 'Settings',  sub: 'filters, rules & themes' },
   digest:    { title: 'Digest',    sub: 'your daily summary' },
@@ -109,28 +111,32 @@ export default function App() {
         return;
       }
 
+      // Decrypt E2E payload before moderation (moderation runs on plaintext)
+      const plainText = await decryptIncoming(msg.from, msg.text);
+      const msgForProcessing = { ...msg, text: plainText };
+
       // Materialize unknown senders as local contacts so the chat renders.
-      let contact = state.contacts.find(c => c.id === msg.from);
+      let contact = state.contacts.find(c => c.id === msgForProcessing.from);
       if (!contact) {
-        const profile = await getUserProfile(msg.from).catch(() => null);
+        const profile = await getUserProfile(msgForProcessing.from).catch(() => null);
         state.upsertContact({
-          id: msg.from,
+          id: msgForProcessing.from,
           name: profile?.displayName || profile?.phone || 'Unknown',
           phone: profile?.phone,
           online: profile?.online,
         });
-        contact = useSiftStore.getState().contacts.find(c => c.id === msg.from);
+        contact = useSiftStore.getState().contacts.find(c => c.id === msgForProcessing.from);
       }
 
       const mod = await getModerator(settings.aiModeration.anthropicKey || undefined);
-      const verdict = await mod.classify(msg.text, { sensitivity: settings.civility.sensitivity });
-      const trusted = !!contact?.trusted || settings.trustedIds.includes(msg.from);
+      const verdict = await mod.classify(msgForProcessing.text, { sensitivity: settings.civility.sensitivity });
+      const trusted = !!contact?.trusted || settings.trustedIds.includes(msgForProcessing.from);
       const circleAllowed = contact?.circle === 'family' || contact?.circle === 'vip';
       const route = routeVerdict(verdict, settings, trusted, contact?.isEmergency, circleAllowed);
       const finalRoute = await state.checkAndReceiveMessage(
-        msg.from, msg.text, route, verdict,
+        msgForProcessing.from, msgForProcessing.text, route, verdict,
         settings.aiModeration.anthropicKey || settings.aiReplies.anthropicKey,
-        { relayId: msg.id },
+        { relayId: msgForProcessing.id },
       );
 
       // Honest status back to the sender: delivered, or a short reason when
@@ -139,12 +145,12 @@ export default function App() {
         : finalRoute.status === 'held' ? 'held' : 'filtered';
       const reason = kind === 'delivered' ? undefined
         : (verdict.category !== 'clean' ? verdict.category : 'review');
-      sendReceipt(currentUserId, msg.from, { kind, ids: [msg.id], reason });
+      sendReceipt(currentUserId, msgForProcessing.from, { kind, ids: [msgForProcessing.id], reason });
 
       // Blocked with notify-sender on: tell them in-chat that this kind of
       // message can't be received. Auto-notices are never auto-replied to.
-      if (finalRoute.autoReply && kind !== 'delivered' && !isAutoNotice(msg.text)) {
-        sendAutoNotice(currentUserId, msg.from);
+      if (finalRoute.autoReply && kind !== 'delivered' && !isAutoNotice(msgForProcessing.text)) {
+        sendAutoNotice(currentUserId, msgForProcessing.from);
       }
     });
 
@@ -253,6 +259,7 @@ export default function App() {
           {activeScreen === 'settings'    && <Settings />}
           {activeScreen === 'simulator'   && <Simulator />}
           {activeScreen === 'contacts'    && <Contacts />}
+          {activeScreen === 'groups'      && <Groups />}
         </div>
 
         {/* Bottom nav */}

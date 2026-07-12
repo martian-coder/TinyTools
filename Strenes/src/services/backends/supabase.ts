@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
-import type { Backend, BackendAuthUser, BackendMessage, BackendContact, BackendUser } from './types';
+import type { Backend, BackendAuthUser, BackendMessage, BackendContact, BackendUser, BackendGroup, BackendGroupMessage } from './types';
 import { normalizePhone } from '../../utils/phone';
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://your-project.supabase.co';
@@ -293,6 +293,166 @@ export const supabaseBackend: Backend = {
       isActive = false;
       clearInterval(interval);
     };
+  },
+
+  // ── Encryption key registry ──────────────────────────────────────────────
+
+  async publishPublicKey(userId: string, publicKeyB64: string): Promise<void> {
+    const { error } = await supabase
+      .from('user_keys')
+      .upsert({ user_id: userId, public_key: publicKeyB64, updated_at: Date.now() }, { onConflict: 'user_id' });
+    if (error) throw error;
+  },
+
+  async getPublicKey(userId: string): Promise<string | null> {
+    const { data } = await supabase
+      .from('user_keys')
+      .select('public_key')
+      .eq('user_id', userId)
+      .maybeSingle();
+    return data?.public_key ?? null;
+  },
+
+  // ── Groups ───────────────────────────────────────────────────────────────
+
+  async createGroup(
+    creatorId: string,
+    name: string,
+    avatar: string,
+    memberIds: string[],
+    encryptedKeys: Record<string, string>,
+    creatorPubKey: string,
+  ): Promise<string> {
+    const { data, error } = await supabase
+      .from('groups')
+      .insert({ name, avatar, created_by: creatorId, created_at: Date.now(), creator_pub_key: creatorPubKey })
+      .select('id')
+      .single();
+    if (error) throw error;
+    const groupId = data.id as string;
+
+    const allIds = [...new Set([creatorId, ...memberIds])];
+    const memberRows = allIds.map(uid => ({
+      group_id: groupId,
+      user_id: uid,
+      role: uid === creatorId ? 'admin' : 'member',
+      joined_at: Date.now(),
+      encrypted_key: encryptedKeys[uid] ?? null,
+    }));
+    const { error: mErr } = await supabase.from('group_members').insert(memberRows);
+    if (mErr) throw mErr;
+    return groupId;
+  },
+
+  async getGroup(groupId: string, userId: string): Promise<BackendGroup | null> {
+    const [gRes, mRes] = await Promise.all([
+      supabase.from('groups').select('*').eq('id', groupId).maybeSingle(),
+      supabase.from('group_members').select('*').eq('group_id', groupId),
+    ]);
+    if (!gRes.data) return null;
+    const myRow = (mRes.data || []).find((r: any) => r.user_id === userId);
+    return {
+      id: gRes.data.id,
+      name: gRes.data.name,
+      avatar: gRes.data.avatar,
+      createdBy: gRes.data.created_by,
+      createdAt: gRes.data.created_at,
+      creatorPubKey: gRes.data.creator_pub_key,
+      encryptedKey: myRow?.encrypted_key ?? undefined,
+      members: (mRes.data || []).map((r: any) => ({
+        userId: r.user_id, role: r.role, joinedAt: r.joined_at,
+      })),
+    };
+  },
+
+  async getUserGroups(userId: string): Promise<BackendGroup[]> {
+    const { data: memberRows } = await supabase
+      .from('group_members')
+      .select('group_id, role, joined_at, encrypted_key')
+      .eq('user_id', userId);
+    if (!memberRows?.length) return [];
+
+    const groupIds = memberRows.map((r: any) => r.group_id);
+    const { data: groups } = await supabase
+      .from('groups')
+      .select('*')
+      .in('id', groupIds);
+
+    const { data: allMembers } = await supabase
+      .from('group_members')
+      .select('group_id, user_id, role, joined_at')
+      .in('group_id', groupIds);
+
+    return (groups || []).map((g: any) => {
+      const myRow = memberRows.find((r: any) => r.group_id === g.id);
+      return {
+        id: g.id, name: g.name, avatar: g.avatar,
+        createdBy: g.created_by, createdAt: g.created_at,
+        creatorPubKey: g.creator_pub_key,
+        encryptedKey: myRow?.encrypted_key ?? undefined,
+        members: (allMembers || [])
+          .filter((m: any) => m.group_id === g.id)
+          .map((m: any) => ({ userId: m.user_id, role: m.role, joinedAt: m.joined_at })),
+      };
+    });
+  },
+
+  async addGroupMember(groupId: string, userId: string, encryptedKey: string): Promise<void> {
+    const { error } = await supabase.from('group_members').upsert({
+      group_id: groupId, user_id: userId, role: 'member',
+      joined_at: Date.now(), encrypted_key: encryptedKey,
+    }, { onConflict: 'group_id,user_id' });
+    if (error) throw error;
+  },
+
+  async sendGroupMessage(groupId: string, fromUserId: string, fromName: string, text: string): Promise<string> {
+    const { data, error } = await supabase
+      .from('group_messages')
+      .insert({ group_id: groupId, from_user_id: fromUserId, from_name: fromName, text, timestamp: Date.now(), delivered: false })
+      .select('id')
+      .single();
+    if (error) throw error;
+    return data.id as string;
+  },
+
+  onGroupMessages(userId: string, callback: (msg: BackendGroupMessage) => void | Promise<void>): () => void {
+    let isActive = true;
+    const processed = new Set<string>();
+
+    const poll = async () => {
+      if (!isActive) return;
+      // Get groups this user belongs to
+      const { data: memberRows } = await supabase
+        .from('group_members').select('group_id').eq('user_id', userId);
+      const groupIds = (memberRows || []).map((r: any) => r.group_id);
+      if (!groupIds.length) return;
+
+      const { data: msgs } = await supabase
+        .from('group_messages')
+        .select('*')
+        .in('group_id', groupIds)
+        .neq('from_user_id', userId)  // don't deliver own messages back
+        .eq('delivered', false)
+        .order('timestamp', { ascending: true });
+
+      for (const msg of msgs || []) {
+        if (!isActive || processed.has(msg.id)) continue;
+        try {
+          await callback({
+            id: msg.id, groupId: msg.group_id,
+            fromUserId: msg.from_user_id, fromName: msg.from_name,
+            text: msg.text, timestamp: msg.timestamp,
+          });
+          processed.add(msg.id);
+          await supabase.from('group_messages').update({ delivered: true }).eq('id', msg.id);
+        } catch { /* retry next tick */ }
+      }
+      if (processed.size > 500) processed.clear();
+    };
+
+    const interval = setInterval(poll, 2500);
+    poll();
+    return () => { isActive = false; clearInterval(interval); };
   },
 
   onUserSearch(phoneNumber: string, callback: (user: BackendUser | null, error?: string) => void): () => void {

@@ -166,3 +166,37 @@ export interface RouteResult {
   autoReply?: boolean;
   ask?: boolean;
 }
+
+// ── Groups ─────────────────────────────────────────────────────────────────
+
+export interface Group {
+  id: string;
+  name: string;
+  avatar?: string;       // emoji or URL
+  createdBy: string;     // userId
+  createdAt: number;
+  members: GroupMember[];
+  /** Encrypted group key for the current user (base64). Null until key is fetched. */
+  encryptedKey?: string;
+  /** Creator's public key needed to decrypt the encryptedKey. */
+  creatorPubKey?: string;
+  /** In-memory decrypted group key — never persisted. */
+  groupKeyB64?: string;
+}
+
+export interface GroupMember {
+  userId: string;
+  displayName?: string;
+  role: 'admin' | 'member';
+  joinedAt: number;
+}
+
+export interface GroupMessage {
+  id: string;
+  groupId: string;
+  fromUserId: string;
+  fromName?: string;
+  text: string;
+  ts: number;
+  encrypted?: boolean;
+}

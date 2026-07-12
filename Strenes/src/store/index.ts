@@ -4,7 +4,7 @@ import type { Contact, Message, MessageRoute, UserSettings, Folder, RouteResult,
 import { SEED_CONTACTS, SEED_MESSAGES, DEFAULT_SETTINGS } from '../seed';
 import { PROFILES, type ProfileId } from '../moderation/profiles';
 
-export type Screen = 'chats' | 'conversation' | 'settings' | 'simulator' | 'digest' | 'commander' | 'contacts';
+export type Screen = 'chats' | 'conversation' | 'settings' | 'simulator' | 'digest' | 'commander' | 'contacts' | 'groups';
 
 export interface ActiveCall {
   peerId: string;
