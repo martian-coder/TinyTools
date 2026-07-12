@@ -219,7 +219,7 @@ export default function App() {
 
         {/* App header — Strenes brand on the left, current screen on the right */}
         {activeScreen !== 'conversation' && (
-          <div className="px-3 pt-2.5 pb-1.5 flex items-center gap-2">
+          <div className="px-3 pb-1.5 flex items-center gap-2" style={{ paddingTop: 'calc(10px + env(safe-area-inset-top, 0px))' }}>
             <div
               className="grid place-items-center"
               style={{
