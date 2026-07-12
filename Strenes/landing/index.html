@@ -8,6 +8,8 @@
   <meta property="og:description" content="Academic research in on-device AI, federated learning, and transformer NLP — applied to your inbox. No cloud. No compromise.">
   <meta property="og:type" content="website">
   <meta name="theme-color" content="#ffffff">
+  <link rel="icon" type="image/png" href="img/logo-192.png">
+  <link rel="apple-touch-icon" href="img/logo-192.png">
   <title>Strenes — The Future of Messaging Is Already Here</title>
   <style>
     :root {
@@ -51,9 +53,14 @@
       height: 62px; display: flex; align-items: center; justify-content: space-between;
     }
     .nav-logo {
+      display: flex; align-items: center; gap: 10px;
       font-size: 20px; font-weight: 900; letter-spacing: -0.7px;
       background: linear-gradient(135deg, var(--accent), var(--accent3));
       -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+    .nav-logo-img {
+      width: 30px; height: 30px; border-radius: 8px; flex-shrink: 0;
+      box-shadow: 0 2px 8px rgba(15,23,42,0.12);
     }
     .nav-links { display: flex; align-items: center; gap: 28px; list-style: none; }
     .nav-links a { color: var(--dim); text-decoration: none; font-size: 14px; font-weight: 500; transition: color .2s; }
@@ -469,7 +476,7 @@
 
 <nav>
   <div class="nav-inner">
-    <div class="nav-logo">Strenes</div>
+    <div class="nav-logo"><img src="img/logo-192.png" alt="Strenes logo" class="nav-logo-img">Strenes</div>
     <ul class="nav-links">
       <li class="hide-sm"><a href="#why">Why Strenes</a></li>
       <li class="hide-sm"><a href="#compare">Compare</a></li>

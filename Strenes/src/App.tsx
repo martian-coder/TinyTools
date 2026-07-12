@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { X, Palette, Check, Lock, Shield } from 'lucide-react';
+import { X, Palette, Check, Lock } from 'lucide-react';
 import { useSiftStore } from './store';
 import { THEMES } from './theme';
 import { BottomNav } from './components/ui/BottomNav';
@@ -15,6 +15,7 @@ import { Contacts } from './screens/Contacts';
 import { Groups } from './screens/Groups';
 import { onAuthChange, onIncomingMessages, getUserProfile, updateUserStatus, decryptIncoming } from './services/backend';
 import { parseCallSignal, handleCallSignal, acceptCall, declineCall } from './services/calls';
+import logoUrl from './assets/logo.png';
 import { parseReceipt, sendReceipt, sendAutoNotice, isAutoNotice } from './services/receipts';
 import { getModerator, routeVerdict } from './moderation';
 import { Phone, PhoneOff } from 'lucide-react';
@@ -226,15 +227,11 @@ export default function App() {
         {/* App header — Strenes brand on the left, current screen on the right */}
         {activeScreen !== 'conversation' && (
           <div className="px-3 pb-1.5 flex items-center gap-2" style={{ paddingTop: 'calc(10px + env(safe-area-inset-top, 0px))' }}>
-            <div
-              className="grid place-items-center"
-              style={{
-                width: 26, height: 26, borderRadius: 8,
-                background: 'linear-gradient(135deg,var(--accent),var(--accent2))',
-              }}
-            >
-              <Shield size={13} color="#fff" />
-            </div>
+            <img
+              src={logoUrl}
+              alt="Strenes"
+              style={{ width: 26, height: 26, borderRadius: 8, display: 'block' }}
+            />
             <div>
               <div className="font-bold text-main leading-tight" style={{ fontSize: 13 }}>Strenes</div>
               <div className="text-[9px] dim leading-tight">built by Amit N</div>
