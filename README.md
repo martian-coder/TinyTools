@@ -24,6 +24,7 @@ Inspired by [Scott Hanselman's TinyToolTown](https://tinytooltown.com) — _"Vib
 | [**Olus**](./Olus/) | A featherweight browser — real Chromium via WebView2, never-lose-your-tabs sessions, Tor/proxy region routing, switchable search engine | Rust / Tauri 2 | Windows |
 | [**Strenes**](./Strenes/) | WhatsApp-style AI message filter PWA — recipient controls moderation with on-device AI (Gemini Nano), zero cloud, smart folders, blur-to-reveal UI. 4 themes, installable. | React 19 + Vite + TS | Any browser (PWA) |
 | [**MeetingCopilot**](./MeetingCopilot/) | On-screen AI copilot — listens to meeting audio, transcribes with local Whisper (any language → English), streams reply suggestions with Claude in a transparent overlay | Node.js / Electron | Windows / macOS / Linux / Android |
+| [**Perch**](./Perch/) | 🦉 AI guardian for kids' phones — scans WhatsApp/Instagram/Snapchat/SMS notifications on-device for grooming, scams, bullying & self-harm signals; parent gets the flag (never the message) + an AI chat to ask "anything to worry about this week?" | React 19 + Capacitor 8 (native Java watcher) | Android + web demo |
 
 ---
 

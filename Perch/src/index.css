@@ -1,0 +1,95 @@
+@import "tailwindcss";
+
+/* ─── Nightwatch tokens ──────────────────────────────────────────── */
+/* Perch has one theme: a moonlit forest at night, warmed by owl-amber. */
+:root {
+  --base: #0a120e;
+  --g1: rgba(245, 185, 66, .26);   /* amber glow */
+  --g2: rgba(52, 211, 153, .20);   /* moss green */
+  --g3: rgba(59, 130, 246, .12);   /* moonlight blue */
+  --accent: #f5b942;
+  --accent2: #34d399;
+  --danger: #fb7185;
+  --warn: #fbbf24;
+  --text: #f0f6f1;
+  --dim: rgba(240, 246, 241, .55);
+  --glass: rgba(255, 255, 255, .06);
+  --glass2: rgba(255, 255, 255, .12);
+  --line: rgba(255, 255, 255, .13);
+}
+
+/* ─── Layout ─────────────────────────────────────────────────────── */
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; height: 100%; overflow: hidden;
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased; color: var(--text); }
+#root { height: 100%; }
+button { font-family: inherit; -webkit-appearance: none; border: none; cursor: pointer; background: none; color: inherit; }
+input, textarea { font-family: inherit; }
+::placeholder { color: var(--dim); }
+
+.app-bg {
+  min-height: 100vh; min-height: 100dvh;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--text);
+  background:
+    radial-gradient(40% 35% at 18% 16%, var(--g1), transparent 70%),
+    radial-gradient(42% 38% at 84% 28%, var(--g2), transparent 70%),
+    radial-gradient(46% 42% at 50% 90%, var(--g3), transparent 72%),
+    var(--base);
+  background-size: 180% 180%, 180% 180%, 200% 200%, auto;
+  animation: drift 26s ease-in-out infinite alternate;
+}
+
+@keyframes drift {
+  0%   { background-position: 0% 0%, 100% 0%, 50% 100%, 0 0; }
+  100% { background-position: 30% 20%, 70% 30%, 40% 70%, 0 0; }
+}
+
+/* Phone frame on desktop; full-bleed on small screens. */
+.phone {
+  width: 100%; max-width: 430px;
+  height: 100dvh; max-height: 932px;
+  display: flex; flex-direction: column;
+  position: relative; overflow: hidden;
+}
+@media (min-width: 500px) {
+  .phone {
+    height: min(92vh, 932px);
+    border-radius: 36px;
+    border: 1px solid var(--line);
+    box-shadow: 0 40px 120px rgba(0,0,0,.55);
+    background: rgba(0,0,0,.25);
+  }
+}
+
+/* ─── Shared atoms ───────────────────────────────────────────────── */
+.glass {
+  background: var(--glass);
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+.glass-hover:hover { background: var(--glass2); }
+
+.scroll-y { overflow-y: auto; scrollbar-width: none; }
+.scroll-y::-webkit-scrollbar { display: none; }
+
+@keyframes rise {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.rise { animation: rise .35s ease both; }
+
+@keyframes pulse-soft {
+  0%, 100% { opacity: 1; }
+  50% { opacity: .45; }
+}
+.pulse-soft { animation: pulse-soft 1.6s ease-in-out infinite; }
+
+@keyframes blink {
+  0%, 92%, 100% { transform: scaleY(1); }
+  96% { transform: scaleY(.08); }
+}
+.owl-eye { transform-origin: center; animation: blink 5.5s ease-in-out infinite; }

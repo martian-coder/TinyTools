@@ -60,7 +60,7 @@ const GROUPS: ThreatGroup[] = [
     reason: 'pressure to meet in person or accept a ride',
     patterns: [
       /\bmeet\s+(?:me|up)\b.{0,30}\b(?:alone|secret|don'?t\s+tell)\b/i,
-      /\bi\s+(?:can|will|'ll)\s+pick\s+you\s+up\b/i,
+      /\bi(?:\s+can|\s+will|'ll)\s+pick\s+you\s+up\b/i,
       /\bdon'?t\s+bring\s+(?:anyone|your\s+friends?)\b/i,
       /\bcome\s+(?:to\s+my|over\s+to\s+my)\s+(?:place|house|apartment|hotel)\b/i,
       /\bget\s+in\s+(?:my|the)\s+car\b/i,
@@ -110,7 +110,7 @@ function normalize(text: string): string {
     .toLowerCase()
     .replace(/[‘’]/g, "'")
     .replace(/0/g, 'o').replace(/1/g, 'i').replace(/3/g, 'e').replace(/\$/g, 's')
-    .replace(/(.)\1{2,}/g, '$1$1')     // "heyyyyy" → "heyy"
+    .replace(/(.)\1{2,}/g, '$1')       // "parentsss" → "parents" (runs of 3+ → 1; doubles like "tell" survive)
     .replace(/\s+/g, ' ');
 }
 

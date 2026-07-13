@@ -1,10 +1,12 @@
 name: Deploy to GitHub Pages
 
-# Publishes four static surfaces:
+# Publishes six static surfaces:
 #   /            -> MarkdownZipped/web  (the live compression studio, v1)
 #   /v2/         -> static PREVIEW of the SaaS frontend (saas/public)
 #   /strenes/    -> Strenes messaging-filter PWA (Strenes/)
 #   /strenes-home/ -> Strenes marketing landing page (Strenes/landing/)
+#   /perch/      -> Perch AI-guardian PWA (Perch/)
+#   /perch-home/ -> Perch marketing landing page (Perch/landing/)
 #
 # Deploys ONLY from the default branch (main).
 
@@ -23,6 +25,12 @@ on:
       - "Strenes/vite.config.ts"
       - "Strenes/package.json"
       - "Strenes/landing/**"
+      - "Perch/src/**"
+      - "Perch/public/**"
+      - "Perch/index.html"
+      - "Perch/vite.config.ts"
+      - "Perch/package.json"
+      - "Perch/landing/**"
       - ".github/workflows/pages.yml"
   workflow_dispatch:
 
@@ -62,6 +70,14 @@ jobs:
           npm ci
           npm run build
 
+      - name: Build Perch
+        working-directory: Perch
+        env:
+          VITE_BASE: ${{ steps.pages.outputs.base_path }}/perch/
+        run: |
+          npm ci
+          npm run build
+
       - name: Assemble site
         run: |
           mkdir -p _site
@@ -78,6 +94,13 @@ jobs:
           # /strenes-home/ — Strenes marketing landing page
           mkdir -p _site/strenes-home
           cp -r Strenes/landing/. _site/strenes-home/
+          # /perch/ — Perch AI-guardian PWA
+          mkdir -p _site/perch
+          cp -r Perch/dist/. _site/perch/
+          cp Perch/dist/index.html _site/perch/404.html
+          # /perch-home/ — Perch marketing landing page
+          mkdir -p _site/perch-home
+          cp -r Perch/landing/. _site/perch-home/
           touch _site/.nojekyll
 
       - name: Upload Pages artifact

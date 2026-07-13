@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Perch — the AI guardian for your kid's phone</title>
+<meta name="description" content="Perch watches over your kid's phone for grooming, scams, bullying and predators — entirely on-device. Message content never leaves their phone. You just get the flag.">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 96 96'%3E%3Crect width='96' height='96' rx='22' fill='%230a120e'/%3E%3Ccircle cx='36' cy='40' r='11' fill='%23f5b942'/%3E%3Ccircle cx='60' cy='40' r='11' fill='%23f5b942'/%3E%3Ccircle cx='36' cy='40' r='5' fill='%23141b16'/%3E%3Ccircle cx='60' cy='40' r='5' fill='%23141b16'/%3E%3Cpath d='M48 46 L43 52 L48 58 L53 52 Z' fill='%23f5b942'/%3E%3C/svg%3E">
+<style>
+  :root {
+    --base:#0a120e; --accent:#f5b942; --accent2:#34d399; --danger:#fb7185;
+    --text:#f0f6f1; --dim:rgba(240,246,241,.62);
+    --glass:rgba(255,255,255,.06); --glass2:rgba(255,255,255,.12); --line:rgba(255,255,255,.13);
+  }
+  * { box-sizing:border-box; margin:0; }
+  body {
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    color:var(--text); background:
+      radial-gradient(45% 35% at 15% 10%, rgba(245,185,66,.16), transparent 70%),
+      radial-gradient(45% 40% at 88% 22%, rgba(52,211,153,.12), transparent 70%),
+      radial-gradient(50% 45% at 50% 95%, rgba(59,130,246,.08), transparent 72%),
+      var(--base);
+    line-height:1.6; -webkit-font-smoothing:antialiased;
+  }
+  .wrap { max-width:1000px; margin:0 auto; padding:0 22px; }
+  header { padding:26px 0; display:flex; align-items:center; justify-content:space-between; }
+  .brand { display:flex; align-items:center; gap:10px; font-weight:800; font-size:20px; color:var(--accent); text-decoration:none; }
+  nav a { color:var(--dim); text-decoration:none; margin-left:22px; font-size:14px; font-weight:600; }
+  nav a:hover { color:var(--text); }
+  .hero { padding:64px 0 30px; text-align:center; }
+  .hero h1 { font-size:clamp(34px,6vw,56px); line-height:1.12; letter-spacing:-.02em; font-weight:850; }
+  .hero h1 em { font-style:normal; color:var(--accent); }
+  .hero p.sub { max-width:640px; margin:20px auto 0; font-size:18px; color:var(--dim); }
+  .cta { display:flex; gap:12px; justify-content:center; flex-wrap:wrap; margin-top:32px; }
+  .btn { display:inline-block; padding:15px 30px; border-radius:16px; font-weight:750; font-size:16px; text-decoration:none; transition:.15s; }
+  .btn.p { background:var(--accent); color:#1a1206; }
+  .btn.p:hover { transform:translateY(-2px); box-shadow:0 12px 34px rgba(245,185,66,.25); }
+  .btn.g { background:var(--glass); border:1px solid var(--line); color:var(--text); }
+  .btn.g:hover { background:var(--glass2); }
+  .note { margin-top:12px; font-size:12.5px; color:var(--dim); }
+  section { padding:56px 0; }
+  h2 { font-size:clamp(24px,3.6vw,34px); letter-spacing:-.01em; margin-bottom:8px; }
+  .lead { color:var(--dim); max-width:640px; }
+  .cards { display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:16px; margin-top:30px; }
+  .card { background:var(--glass); border:1px solid var(--line); border-radius:20px; padding:24px; }
+  .card .ico { font-size:28px; }
+  .card h3 { margin:10px 0 6px; font-size:17px; }
+  .card p { font-size:14px; color:var(--dim); }
+  .steps { counter-reset:s; display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:16px; margin-top:30px; }
+  .step { background:var(--glass); border:1px solid var(--line); border-radius:20px; padding:24px; position:relative; }
+  .step::before { counter-increment:s; content:counter(s); position:absolute; top:-14px; left:20px;
+    width:30px; height:30px; border-radius:10px; background:var(--accent); color:#1a1206;
+    font-weight:800; display:grid; place-items:center; font-size:15px; }
+  .step h3 { margin:6px 0; font-size:16px; }
+  .step p { font-size:13.5px; color:var(--dim); }
+  .vs { margin-top:30px; width:100%; border-collapse:collapse; background:var(--glass); border-radius:20px; overflow:hidden; font-size:14.5px; }
+  .vs th, .vs td { padding:14px 18px; border-bottom:1px solid var(--line); text-align:left; }
+  .vs th { background:var(--glass2); font-size:13px; text-transform:uppercase; letter-spacing:.08em; }
+  .vs td.y { color:var(--accent2); font-weight:700; }
+  .vs td.n { color:var(--danger); }
+  .promise { background:var(--glass); border:1px solid rgba(245,185,66,.3); border-radius:24px; padding:34px; margin-top:30px; }
+  .promise ul { list-style:none; display:grid; gap:12px; margin-top:16px; }
+  .promise li { padding-left:30px; position:relative; font-size:15px; color:var(--dim); }
+  .promise li::before { content:"🦉"; position:absolute; left:0; }
+  .promise li b { color:var(--text); }
+  footer { padding:44px 0 60px; border-top:1px solid var(--line); margin-top:40px; font-size:13.5px; color:var(--dim); display:flex; flex-wrap:wrap; gap:10px; justify-content:space-between; }
+  footer a { color:var(--accent); text-decoration:none; }
+  .owl { filter: drop-shadow(0 10px 40px rgba(245,185,66,.25)); }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <a class="brand" href="#">
+      <svg width="34" height="34" viewBox="0 0 96 96"><rect width="96" height="96" rx="22" fill="#141f19"/><circle cx="36" cy="40" r="11" fill="#f5b942"/><circle cx="60" cy="40" r="11" fill="#f5b942"/><circle cx="36" cy="40" r="5" fill="#141b16"/><circle cx="60" cy="40" r="5" fill="#141b16"/><path d="M48 46 L43 52 L48 58 L53 52 Z" fill="#f5b942"/></svg>
+      Perch
+    </a>
+    <nav>
+      <a href="#how">How it works</a>
+      <a href="#privacy">Privacy</a>
+      <a href="../perch/">Live demo</a>
+    </nav>
+  </header>
+
+  <div class="hero">
+    <svg class="owl" width="120" height="120" viewBox="0 0 96 96" fill="none">
+      <path d="M8 82 Q48 74 88 82" stroke="#6b4f2a" stroke-width="5" stroke-linecap="round"/>
+      <path d="M28 22 L34 8 L42 20 Z" fill="#22332a"/><path d="M68 22 L62 8 L54 20 Z" fill="#22332a"/>
+      <path d="M48 12 C29 12 20 27 20 44 L20 62 C20 72 28 79 38 79 L58 79 C68 79 76 72 76 62 L76 44 C76 27 67 12 48 12 Z" fill="#22332a" stroke="#3a5243" stroke-width="2"/>
+      <ellipse cx="48" cy="62" rx="16" ry="14" fill="#31473a"/>
+      <circle cx="36" cy="38" r="11" fill="#f5b942"/><circle cx="60" cy="38" r="11" fill="#f5b942"/>
+      <circle cx="36" cy="38" r="5" fill="#141b16"/><circle cx="60" cy="38" r="5" fill="#141b16"/>
+      <path d="M48 44 L43 50 L48 56 L53 50 Z" fill="#f5b942"/>
+      <path d="M38 79 L38 84 M44 79 L44 84 M52 79 L52 84 M58 79 L58 84" stroke="#f5b942" stroke-width="3" stroke-linecap="round"/>
+    </svg>
+    <h1>The AI guardian for your kid's phone.<br><em>Without reading over their shoulder.</em></h1>
+    <p class="sub">
+      Perch watches WhatsApp, Instagram, Snapchat, Telegram and SMS notifications
+      on your kid's phone for grooming, predators, scams and bullying — <b>entirely
+      on their device</b>. If something's wrong, you get a flag that says why.
+      Never the messages.
+    </p>
+    <div class="cta">
+      <a class="btn p" href="https://github.com/martian-coder/TinyTools/releases/download/perch-android-latest/perch.apk" download>Download for Android</a>
+      <a class="btn g" href="../perch/">👀 Try the live demo</a>
+    </div>
+    <p class="note">Free · Android 7.0+ · one install on the kid's phone, pair with yours in 30 seconds</p>
+  </div>
+
+  <section id="how">
+    <h2>One install. That's the whole setup.</h2>
+    <p class="lead">No new messaging app, no asking your kid's friends to switch, no reading their chats.</p>
+    <div class="steps">
+      <div class="step"><h3>Install Perch on their phone</h3><p>Choose “Protect this phone”. Perch shows your kid exactly what it does — transparency is built in, not bolted on.</p></div>
+      <div class="step"><h3>Pair with a 6-letter code</h3><p>Install Perch on your phone too, tap “I'm a parent”, and read the code out loud. Linked.</p></div>
+      <div class="step"><h3>Perch takes the night watch</h3><p>Every incoming notification from messaging apps is scanned on the device — grooming pressure, photo requests, meet-up lures, scams, bullying, self-harm signals.</p></div>
+      <div class="step"><h3>Ask, don't scroll</h3><p>“Anything to worry about this week?” — Perch's AI answers in plain language from the flag log. Quiet week? It says so.</p></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Detection without surveillance.</h2>
+    <p class="lead">Every other parental-control app uploads your kid's private messages to their cloud and scans them there. Perch refuses.</p>
+    <table class="vs">
+      <tr><th></th><th>Perch</th><th>Cloud scanners ($14–99/mo)</th></tr>
+      <tr><td>Where scanning happens</td><td class="y">On the kid's phone</td><td class="n">Their servers</td></tr>
+      <tr><td>Message content uploaded</td><td class="y">Never — by architecture</td><td class="n">All of it, continuously</td></tr>
+      <tr><td>What the parent sees</td><td class="y">The flag + the reason</td><td class="n">Excerpts of private chats</td></tr>
+      <tr><td>Kid can see what's monitored</td><td class="y">Always — same list as you</td><td class="n">Usually hidden</td></tr>
+      <tr><td>Works offline</td><td class="y">Yes</td><td class="n">No</td></tr>
+      <tr><td>Price</td><td class="y">Free</td><td class="n">$14–99/month</td></tr>
+    </table>
+  </section>
+
+  <section id="privacy">
+    <h2>The Perch promise</h2>
+    <div class="promise">
+      <ul>
+        <li><b>Message content never leaves the phone.</b> The scanner runs inside the device; there is no code path that uploads a message. Only a flag crosses the wire: category, reason, app, sender name, time.</li>
+        <li><b>Your kid is in on it.</b> Perch's setup runs on their phone, explains itself in kid language, and shows them every flag it has ever raised — the same list you see. Protection, not spying.</li>
+        <li><b>Self-harm flags help friends too.</b> If a contact messages your kid about wanting to hurt themselves, you'll know someone in their circle may need an adult.</li>
+        <li><b>Open source.</b> Every line — the detector, the relay, this page — is public. Verify the promise yourself.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section>
+    <h2>What Perch watches for</h2>
+    <div class="cards">
+      <div class="card"><div class="ico">🚨</div><h3>Grooming & secrecy</h3><p>“Don't tell your parents”, “our little secret”, “are you alone?” — the patterns predators actually use, including l33t-speak obfuscation.</p></div>
+      <div class="card"><div class="ico">📸</div><h3>Photo requests</h3><p>Requests for pictures, camera access, or “what are you wearing” from any contact.</p></div>
+      <div class="card"><div class="ico">📍</div><h3>Meet-up pressure</h3><p>“I'll pick you up”, “come to my place”, “don't bring anyone” — flagged instantly.</p></div>
+      <div class="card"><div class="ico">🎁</div><h3>Gift lures</h3><p>Free Robux, gift cards, cash offers — the classic grooming opener, caught at message one.</p></div>
+      <div class="card"><div class="ico">💢</div><h3>Bullying</h3><p>Targeted insults and exclusion from group chats show up in your weekly digest before they become a crisis.</p></div>
+      <div class="card"><div class="ico">🆘</div><h3>Self-harm signals</h3><p>When someone messages your kid about wanting to hurt themselves, an adult finds out in time.</p></div>
+      <div class="card"><div class="ico">🎣</div><h3>Scams</h3><p>Fake prizes, OTP phishing, account threats — filtered from day one, for kids and grandparents alike.</p></div>
+      <div class="card"><div class="ico">🤖</div><h3>Ask Perch</h3><p>An AI companion for the parent: “what happened this week?” gets a calm, grounded answer — never drama.</p></div>
+    </div>
+  </section>
+
+  <footer>
+    <div>© 2026 <b>Martian Coders</b> · Perch is open source, part of the Strenes family</div>
+    <div><a href="mailto:martian.coders.x@gmail.com">martian.coders.x@gmail.com</a> · <a href="https://github.com/martian-coder/TinyTools">GitHub</a> · <a href="../strenes-home/">Strenes messenger</a></div>
+  </footer>
+
+</div>
+</body>
+</html>

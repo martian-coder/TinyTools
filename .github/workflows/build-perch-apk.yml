@@ -1,0 +1,120 @@
+name: Build & Release Perch Android APK
+
+# Builds the Perch debug APK from the Capacitor Android project.
+# On main: also publishes/updates the rolling "perch-android-latest"
+# release (NOT marked latest — Strenes landing links rely on
+# releases/latest pointing at the Strenes release).
+# On claude/** branches: build-only, so native code is compile-verified
+# in CI before merging.
+
+on:
+  push:
+    branches:
+      - main
+      - "claude/**"
+    paths:
+      - "Perch/src/**"
+      - "Perch/public/**"
+      - "Perch/index.html"
+      - "Perch/vite.config.ts"
+      - "Perch/package.json"
+      - "Perch/android/**"
+      - "Perch/capacitor.config.ts"
+      - ".github/workflows/build-perch-apk.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-apk:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Accept Android SDK licenses
+        run: yes | sdkmanager --licenses || true
+
+      - name: Install Android build tools & platform
+        run: |
+          sdkmanager "platforms;android-36" "build-tools;36.0.0"
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: Perch/package-lock.json
+
+      - name: Install dependencies
+        working-directory: Perch
+        run: npm ci
+
+      - name: Run tests
+        working-directory: Perch
+        run: npm test
+
+      - name: Build web app
+        working-directory: Perch
+        env:
+          # Capacitor Android loads assets from /android_asset/public/ so no
+          # base path prefix is needed when bundled inside the APK.
+          VITE_BASE: "/"
+        run: npm run build
+
+      - name: Sync web assets into Android project
+        working-directory: Perch
+        run: npx cap sync android
+
+      - name: Make gradlew executable
+        working-directory: Perch/android
+        run: chmod +x gradlew
+
+      - name: Build debug APK
+        working-directory: Perch/android
+        run: ./gradlew assembleDebug --no-daemon
+
+      - name: Rename APK
+        run: |
+          cp Perch/android/app/build/outputs/apk/debug/app-debug.apk perch.apk
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: perch-apk
+          path: perch.apk
+
+      - name: Create / update rolling release
+        if: github.ref == 'refs/heads/main'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: perch-android-latest
+          name: "Perch — Latest Android Build"
+          body: |
+            **Perch debug APK** — built automatically from the latest `main` commit.
+
+            Perch 🦉 — the AI guardian that watches over your kid's phone,
+            without reading over their shoulder. On-device scanning; message
+            content never leaves the phone.
+
+            Install on any Android device (Android 7.0+):
+            1. Download `perch.apk` below
+            2. Open the file on your device
+            3. Allow "Install from unknown sources" if prompted
+            4. Tap **Install**
+
+            > This is a debug build for evaluation. A signed release will follow.
+          prerelease: false
+          make_latest: false
+          files: perch.apk
