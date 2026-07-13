@@ -44,6 +44,21 @@ final class EventStore {
     return pairingId() != null && supabaseUrl() != null && anonKey() != null;
   }
 
+  // ── Parent-side instant alerts (ParentWatchService) ───────────────────────
+
+  void setParentWatch(boolean enabled, String kidAlias) {
+    prefs.edit()
+      .putBoolean("parentWatch", enabled)
+      .putString("kidAlias", kidAlias == null ? "" : kidAlias)
+      .apply();
+  }
+
+  boolean parentWatchEnabled() { return prefs.getBoolean("parentWatch", false); }
+  String kidAlias()            { return prefs.getString("kidAlias", ""); }
+
+  long lastSeenMs() { return prefs.getLong("lastSeenMs", 0); }
+  void setLastSeenMs(long t) { prefs.edit().putLong("lastSeenMs", t).apply(); }
+
   // ── Flag log ──────────────────────────────────────────────────────────────
 
   synchronized void addEvent(JSONObject event) {

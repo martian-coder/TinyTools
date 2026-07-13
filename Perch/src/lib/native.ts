@@ -32,6 +32,15 @@ interface PerchWatcherPlugin {
   /** Local transparency log — everything the watcher flagged on THIS phone. */
   getLocalEvents(): Promise<{ events: PerchEvent[] }>;
   getStats(): Promise<WatcherStats>;
+  /** PARENT phone: start the instant-alerts foreground service (60s poll → notifications). */
+  startParentWatch(opts: {
+    pairingId: string;
+    supabaseUrl: string;
+    anonKey: string;
+    kidAlias?: string;
+  }): Promise<{ running: boolean; notificationsGranted: boolean }>;
+  stopParentWatch(): Promise<void>;
+  parentWatchRunning(): Promise<{ running: boolean }>;
 }
 
 const PerchWatcher = registerPlugin<PerchWatcherPlugin>('PerchWatcher');
@@ -62,4 +71,31 @@ export async function watcherLocalEvents(): Promise<PerchEvent[]> {
 export async function watcherStats(): Promise<WatcherStats> {
   if (!isNativeAndroid()) return { scannedToday: 0, flagged: 0 };
   try { return await PerchWatcher.getStats(); } catch { return { scannedToday: 0, flagged: 0 }; }
+}
+
+// ── Parent phone: instant alerts ─────────────────────────────────────────────
+
+export async function startInstantAlerts(
+  pairingId: string,
+  supabaseUrl: string,
+  anonKey: string,
+  kidAlias: string,
+): Promise<boolean> {
+  if (!isNativeAndroid()) return false;
+  try {
+    const r = await PerchWatcher.startParentWatch({ pairingId, supabaseUrl, anonKey, kidAlias });
+    return r.running;
+  } catch {
+    return false;
+  }
+}
+
+export async function stopInstantAlerts(): Promise<void> {
+  if (!isNativeAndroid()) return;
+  try { await PerchWatcher.stopParentWatch(); } catch { /* not fatal */ }
+}
+
+export async function instantAlertsRunning(): Promise<boolean> {
+  if (!isNativeAndroid()) return false;
+  try { return (await PerchWatcher.parentWatchRunning()).running; } catch { return false; }
 }

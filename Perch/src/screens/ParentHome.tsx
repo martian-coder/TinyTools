@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import { usePerch } from '../store';
 import { createPairing, fetchEvents, pairingClaimed } from '../lib/relay';
-import { backendConfigured } from '../lib/supabase';
+import { backendConfigured, SUPABASE_URL, SUPABASE_ANON_KEY } from '../lib/supabase';
 import { briefing } from '../ai/analyst';
+import { instantAlertsRunning, isNativeAndroid, startInstantAlerts, stopInstantAlerts } from '../lib/native';
 import { EventCard } from '../components/EventCard';
 import { OwlLogo } from '../components/OwlLogo';
 import { Btn, Glass, SectionTitle } from '../components/ui';
@@ -13,6 +14,24 @@ export function ParentHome() {
   const [nameDraft, setNameDraft] = useState(kidAlias);
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState('');
+  const [alertsOn, setAlertsOn] = useState(false);
+
+  // Reflect whether the instant-alerts service is armed on this phone.
+  useEffect(() => {
+    if (demo || !linked) return;
+    instantAlertsRunning().then(setAlertsOn);
+  }, [demo, linked]);
+
+  async function toggleAlerts() {
+    if (!pairingId) return;
+    if (alertsOn) {
+      await stopInstantAlerts();
+      setAlertsOn(false);
+    } else {
+      const ok = await startInstantAlerts(pairingId, SUPABASE_URL, SUPABASE_ANON_KEY, kidAlias);
+      setAlertsOn(ok);
+    }
+  }
 
   // Poll: while waiting for the kid's phone to claim the code.
   useEffect(() => {
@@ -102,6 +121,37 @@ export function ParentHome() {
       {/* ── Linked: the nest ── */}
       {(demo || linked) && (
         <>
+          {!demo && (
+            <Glass className="mt-3 p-4">
+              <div className="flex items-center gap-3">
+                <span className="text-xl">🔔</span>
+                <div className="min-w-0 flex-1">
+                  <p className="text-[14px] font-bold">Instant alerts</p>
+                  <p className="text-[12px] leading-snug" style={{ color: 'var(--dim)' }}>
+                    {isNativeAndroid()
+                      ? alertsOn
+                        ? 'On — you\'ll get a notification within a minute of any flag, even with Perch closed.'
+                        : 'Get a phone notification the moment a flag arrives, even when Perch is closed.'
+                      : 'Available in the Perch Android app — on web, flags sync while this page is open.'}
+                  </p>
+                </div>
+                {isNativeAndroid() && (
+                  <button
+                    onClick={toggleAlerts}
+                    aria-label="Toggle instant alerts"
+                    className="relative h-7 w-12 shrink-0 rounded-full transition"
+                    style={{ background: alertsOn ? 'var(--accent)' : 'var(--glass2)', border: '1px solid var(--line)' }}
+                  >
+                    <span
+                      className="absolute top-0.5 h-[22px] w-[22px] rounded-full bg-white transition-all"
+                      style={{ left: alertsOn ? 24 : 2 }}
+                    />
+                  </button>
+                )}
+              </div>
+            </Glass>
+          )}
+
           <SectionTitle>This week</SectionTitle>
           <Glass className="p-4">
             <p className="whitespace-pre-line text-[13.5px] leading-relaxed">{briefing(events, kidAlias)}</p>

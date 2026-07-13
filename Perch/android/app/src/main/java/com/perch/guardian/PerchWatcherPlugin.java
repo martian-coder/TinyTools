@@ -6,12 +6,18 @@ import android.provider.Settings;
 
 import androidx.core.app.NotificationManagerCompat;
 
+import android.Manifest;
+import android.os.Build;
+
 import com.getcapacitor.JSArray;
 import com.getcapacitor.JSObject;
+import com.getcapacitor.PermissionState;
 import com.getcapacitor.Plugin;
 import com.getcapacitor.PluginCall;
 import com.getcapacitor.PluginMethod;
 import com.getcapacitor.annotation.CapacitorPlugin;
+import com.getcapacitor.annotation.Permission;
+import com.getcapacitor.annotation.PermissionCallback;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -21,7 +27,10 @@ import org.json.JSONObject;
  * Setup (configure + open settings) and transparency reads only; the
  * scanning itself lives in NotificationWatcherService and needs no JS.
  */
-@CapacitorPlugin(name = "PerchWatcher")
+@CapacitorPlugin(
+  name = "PerchWatcher",
+  permissions = @Permission(alias = "notifications", strings = { Manifest.permission.POST_NOTIFICATIONS })
+)
 public class PerchWatcherPlugin extends Plugin {
 
   @PluginMethod
@@ -79,6 +88,58 @@ public class PerchWatcherPlugin extends Plugin {
     } catch (Exception ignored) { /* empty list is a fine answer */ }
     JSObject ret = new JSObject();
     ret.put("events", events);
+    call.resolve(ret);
+  }
+
+  // ── Parent-side instant alerts ─────────────────────────────────────────────
+
+  @PluginMethod
+  public void startParentWatch(PluginCall call) {
+    String pairingId = call.getString("pairingId");
+    String supabaseUrl = call.getString("supabaseUrl");
+    String anonKey = call.getString("anonKey");
+    if (pairingId == null || supabaseUrl == null || anonKey == null) {
+      call.reject("pairingId, supabaseUrl and anonKey are required");
+      return;
+    }
+    EventStore store = new EventStore(getContext());
+    store.configure(pairingId, supabaseUrl, anonKey);
+    store.setParentWatch(true, call.getString("kidAlias", ""));
+
+    if (Build.VERSION.SDK_INT >= 33
+        && getPermissionState("notifications") != PermissionState.GRANTED) {
+      requestPermissionForAlias("notifications", call, "notifPermDone");
+      return;
+    }
+    launchWatch(call);
+  }
+
+  @PermissionCallback
+  private void notifPermDone(PluginCall call) {
+    // Start either way — alerts are just muted until the user grants it.
+    launchWatch(call);
+  }
+
+  private void launchWatch(PluginCall call) {
+    ParentWatchService.start(getContext());
+    JSObject ret = new JSObject();
+    ret.put("running", true);
+    ret.put("notificationsGranted",
+      Build.VERSION.SDK_INT < 33 || getPermissionState("notifications") == PermissionState.GRANTED);
+    call.resolve(ret);
+  }
+
+  @PluginMethod
+  public void stopParentWatch(PluginCall call) {
+    new EventStore(getContext()).setParentWatch(false, null);
+    ParentWatchService.stop(getContext());
+    call.resolve();
+  }
+
+  @PluginMethod
+  public void parentWatchRunning(PluginCall call) {
+    JSObject ret = new JSObject();
+    ret.put("running", new EventStore(getContext()).parentWatchEnabled());
     call.resolve(ret);
   }
 

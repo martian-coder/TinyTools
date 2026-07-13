@@ -40,9 +40,14 @@ src/lib/relay.ts                — pairing + event sync (Supabase RPCs)
 src/lib/native.ts               — PerchWatcher plugin JS bridge
 src/store/index.ts              — Zustand store (role, pairing, events, chat)
 src/screens/                    — Welcome, ParentHome, Chat, Shield, Settings, KidSetup, KidHome
-android/…/NotificationWatcherService.java — the always-on scanner
+android/…/NotificationWatcherService.java — the always-on scanner (kid phone)
+android/…/ParentWatchService.java — instant alerts (parent phone): foreground
+                                    service polls perch_fetch_events every 60s
+                                    → high-priority notifications; BootReceiver
+                                    re-arms after reboot; specialUse FGS type
 android/…/Detection.java        — Java mirror of engine.ts
-android/…/PerchWatcherPlugin.java — Capacitor plugin (setup + transparency)
+android/…/PerchWatcherPlugin.java — Capacitor plugin (setup + transparency +
+                                    startParentWatch/stopParentWatch)
 supabase/migrations/001_….sql   — run once in the shared Supabase project
 ```
 
