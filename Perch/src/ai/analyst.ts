@@ -80,12 +80,27 @@ const SYSTEM = (kidAlias: string) => `You are Perch, a calm and reassuring AI gu
 You will be given the complete flag log (metadata only: category, sender display name, app, time, reason — Perch never reads or stores message content, everything is scanned on the child's device). Answer the parent's question grounded ONLY in that log.
 
 Rules:
-- Be warm, brief, and concrete. A worried parent is reading this on a phone.
+- ANSWER DIRECTLY. No greetings, no "I've reviewed…", no restating the question.
+- HARD LIMIT: 80 words. Fewer is better. Always end with a complete sentence.
+- Be warm, concrete and specific. A worried parent is reading this on a phone.
 - Never invent flags, senders, or details not in the log.
 - If the log is quiet, say so plainly and reassure — don't manufacture worry.
-- For serious flags (grooming, meet-up, photo requests, self-harm), give one practical next step (e.g. "sit with ${kidAlias || 'your kid'} and look at that Snapchat contact together — don't lead with anger, lead with curiosity").
-- Remind gently, when relevant, that Perch sees notification text of flagged apps only, on-device, and never uploads message content.
-- Plain text only, no markdown headers. 120 words max unless asked for detail.`;
+- For serious flags (grooming, meet-up, photo requests, self-harm), give one practical next step (e.g. "sit with ${kidAlias || 'your kid'} and look at that contact together — lead with curiosity, not anger").
+- Plain text only, no markdown.`;
+
+/**
+ * A truncated LLM reply (token cap) ends mid-sentence and reads broken.
+ * Trim back to the last complete sentence; keep the text as-is when no
+ * earlier boundary exists (better a cut than an empty answer).
+ */
+export function finishSentence(text: string): string {
+  const t = text.trim();
+  if (!t) return t;
+  if (/[.!?…)"”'’]$/.test(t)) return t;
+  const m = t.match(/^[\s\S]*[.!?…](?=["”'’)]?(\s|$))/);
+  if (m && m[0].trim().length >= 20) return m[0].trim();
+  return t;
+}
 
 /**
  * Answer one parent question. Never throws; always returns SOMETHING
@@ -99,11 +114,13 @@ export async function askPerch(
 ): Promise<string> {
   const user = `Flag log for ${kidAlias || 'the protected phone'} (newest first):\n${eventLogText(events, kidAlias)}\n\nParent's question: ${question}`;
 
-  const cloud = await promptCloud(SYSTEM(kidAlias), user, apiKey);
-  if (cloud?.trim()) return cloud.trim();
+  // 512 = the managed proxy's server-side clamp; ask for all of it so the
+  // ~80-word answer never hits the cap mid-sentence.
+  const cloud = await promptCloud(SYSTEM(kidAlias), user, apiKey, { maxTokens: 512 });
+  if (cloud?.trim()) return finishSentence(cloud);
 
   const nano = await promptNano(SYSTEM(kidAlias), user);
-  if (nano?.trim()) return nano.trim();
+  if (nano?.trim()) return finishSentence(nano);
 
   return deterministicAnswer(question, events, kidAlias);
 }

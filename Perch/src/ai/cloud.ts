@@ -128,7 +128,13 @@ export async function promptCloud(
           body: JSON.stringify({
             system_instruction: { parts: [{ text: system }] },
             contents: [{ role: 'user', parts: [{ text: user }] }],
-            generationConfig: { temperature: 0.3, maxOutputTokens: maxTokens },
+            generationConfig: {
+              temperature: 0.3,
+              maxOutputTokens: maxTokens,
+              // gemini-2.5-flash spends output budget on internal "thinking"
+              // unless disabled — with it on, short caps truncate mid-sentence.
+              thinkingConfig: { thinkingBudget: 0 },
+            },
           }),
         },
       );
