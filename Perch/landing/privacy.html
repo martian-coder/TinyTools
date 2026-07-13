@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Perch — Privacy Policy</title>
+<meta name="description" content="Perch privacy policy: what data Perch processes, what leaves the device, and what never does.">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 96 96'%3E%3Crect width='96' height='96' rx='14' fill='%23101828'/%3E%3Ccircle cx='36' cy='40' r='11' fill='%23f5b942'/%3E%3Ccircle cx='60' cy='40' r='11' fill='%23f5b942'/%3E%3Ccircle cx='36' cy='40' r='5' fill='%23101828'/%3E%3Ccircle cx='60' cy='40' r='5' fill='%23101828'/%3E%3Cpath d='M48 46 L43 52 L48 58 L53 52 Z' fill='%23f5b942'/%3E%3C/svg%3E">
+<style>
+  :root { --paper:#fff; --paper2:#f6f7f9; --ink:#101828; --ink2:#344054; --dim:#667085; --line:#e4e7ec;
+    --amber:#b45309; --good:#067647; --bad:#b42318;
+    --sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --mono: ui-monospace, "SF Mono", Consolas, monospace; }
+  * { box-sizing:border-box; margin:0; }
+  body { font-family:var(--sans); color:var(--ink); background:var(--paper); line-height:1.7; font-size:16px; -webkit-font-smoothing:antialiased; }
+  .wrap { max-width:820px; margin:0 auto; padding:0 28px; }
+  header { border-bottom:1px solid var(--line); }
+  .bar { display:flex; align-items:center; justify-content:space-between; height:68px; }
+  .brand { display:flex; align-items:center; gap:11px; text-decoration:none; color:var(--ink); font-weight:750; letter-spacing:.16em; }
+  .bar a.back { color:var(--ink2); text-decoration:none; font-size:14px; font-weight:550; }
+  h1 { font-size:34px; letter-spacing:-.02em; margin:56px 0 6px; }
+  .meta { color:var(--dim); font-size:13.5px; font-family:var(--mono); }
+  h2 { font-size:20px; margin:44px 0 12px; letter-spacing:-.01em; }
+  p, li { color:var(--ink2); font-size:15.5px; }
+  ul { padding-left:22px; display:grid; gap:8px; margin:12px 0; }
+  .box { border:1px solid var(--line); border-radius:10px; padding:20px 24px; margin:18px 0; background:var(--paper2); }
+  .box.good { border-left:3px solid var(--good); }
+  .box.bad { border-left:3px solid var(--bad); }
+  code { font-family:var(--mono); font-size:13.5px; background:var(--paper2); border:1px solid var(--line); padding:1px 6px; border-radius:4px; }
+  footer { border-top:1px solid var(--line); margin-top:72px; padding:32px 0 56px; font-size:13.5px; color:var(--dim); }
+  a { color:var(--amber); }
+</style>
+</head>
+<body>
+<header><div class="wrap bar">
+  <a class="brand" href="./index.html">
+    <svg width="30" height="30" viewBox="0 0 96 96"><rect width="96" height="96" rx="14" fill="#101828"/><circle cx="36" cy="40" r="11" fill="#f5b942"/><circle cx="60" cy="40" r="11" fill="#f5b942"/><circle cx="36" cy="40" r="5" fill="#101828"/><circle cx="60" cy="40" r="5" fill="#101828"/><path d="M48 46 L43 52 L48 58 L53 52 Z" fill="#f5b942"/></svg>
+    PERCH
+  </a>
+  <a class="back" href="./index.html">← Back to perch</a>
+</div></header>
+
+<div class="wrap">
+  <h1>Privacy Policy</h1>
+  <p class="meta">Effective 13 July 2026 · applies to the Perch Android app and web app</p>
+
+  <h2>The one-paragraph version</h2>
+  <p>
+    Perch scans incoming messaging notifications <b>on the protected phone itself</b>.
+    If — and only if — a threat pattern is detected, a flag containing category,
+    reason, source app, sender display name and timestamp is sent to the paired
+    guardian. Message content is never transmitted, never stored off the device,
+    and the reporting database has no column that could hold it. Non-flagged
+    notifications produce no record anywhere off the device.
+  </p>
+
+  <h2>What Perch processes, and where</h2>
+  <div class="box good">
+    <p><b>On the protected phone (never leaves it):</b></p>
+    <ul>
+      <li>Notification text of watched messaging apps — read in memory, scanned locally, then discarded. Not stored, not logged.</li>
+      <li>A local log of flags raised on this phone, visible to the phone's user.</li>
+      <li>A daily counter of how many notifications were scanned (a number only).</li>
+    </ul>
+  </div>
+  <div class="box bad">
+    <p><b>Transmitted to the paired guardian via the relay — the complete list:</b></p>
+    <ul>
+      <li><code>category</code> and <code>severity</code> of a detected threat</li>
+      <li><code>reason</code> — a fixed, pre-written explanation string</li>
+      <li><code>app</code> — e.g. "WhatsApp"</li>
+      <li><code>sender</code> — the display name shown on the notification</li>
+      <li><code>at</code> — a timestamp</li>
+    </ul>
+  </div>
+
+  <h2>What Perch never collects</h2>
+  <ul>
+    <li>Message content, photos, media, voice notes</li>
+    <li>Conversation history or contact lists</li>
+    <li>Location, browsing history, app usage statistics</li>
+    <li>Names, accounts or identities — Perch has no user accounts; pairing uses an anonymous one-time code</li>
+    <li>Advertising identifiers, analytics or tracking of any kind — the app contains no analytics SDK</li>
+  </ul>
+
+  <h2>Consent and transparency</h2>
+  <p>
+    Perch is a parental-consent tool for guardians of minors. Setup runs on the
+    protected phone and explains what is monitored before activation. The phone's
+    user can open Perch at any time to see the watched apps, the scan counter, and
+    every flag ever raised — the identical list the guardian sees. Perch is not
+    designed for, and must not be used for, covert monitoring of adults.
+  </p>
+
+  <h2>Storage and retention</h2>
+  <ul>
+    <li>Flag metadata is stored in the relay database (PostgreSQL with row-level security; hosted on Supabase, or self-hosted in institutional deployments), keyed to an unguessable pairing identifier.</li>
+    <li>Unlinking (Settings → Unlink &amp; reset) deletes the pairing; database rules cascade-delete all its flags.</li>
+    <li>Local logs live only on the device and are removed by uninstalling the app.</li>
+  </ul>
+
+  <h2>AI features</h2>
+  <p>
+    "Ask Perch" answers guardian questions using <b>the flag log only</b> — the AI
+    never sees message content because message content does not exist off-device.
+    Depending on configuration, answers are generated by an API key the guardian
+    supplies, a managed proxy, or fully on-device models. With no AI available,
+    a deterministic summarizer answers instead.
+  </p>
+
+  <h2>Your rights</h2>
+  <p>
+    Under GDPR and similar regimes you may request access, correction or deletion
+    of relayed flag metadata. Because Perch holds no accounts or identities, the
+    practical mechanism is unlinking (immediate cascade deletion) or contacting us
+    with your pairing identifier. Contact:
+    <a href="mailto:martian.coders.x@gmail.com">martian.coders.x@gmail.com</a>.
+  </p>
+
+  <h2>Verifiability</h2>
+  <p>
+    Every claim on this page is checkable against the
+    <a href="https://github.com/martian-coder/TinyTools/tree/main/Perch">published source code</a>,
+    including the database schema showing the absence of any content column.
+  </p>
+
+  <h2>Changes</h2>
+  <p>Material changes to this policy will be published on this page with a new effective date.</p>
+</div>
+
+<footer><div class="wrap">
+  PERCH · a Martian Coders product · <a href="mailto:martian.coders.x@gmail.com">martian.coders.x@gmail.com</a>
+</div></footer>
+</body>
+</html>
