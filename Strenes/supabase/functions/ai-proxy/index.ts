@@ -76,7 +76,13 @@ Deno.serve(async (req) => {
         body: JSON.stringify({
           system_instruction: { parts: [{ text: system }] },
           contents: [{ role: 'user', parts: [{ text: user }] }],
-          generationConfig: { temperature: 0, maxOutputTokens: maxTokens },
+          generationConfig: {
+            temperature: 0,
+            maxOutputTokens: maxTokens,
+            // gemini-2.5-flash silently spends the output budget on internal
+            // "thinking" unless disabled — answers then truncate mid-sentence.
+            thinkingConfig: { thinkingBudget: 0 },
+          },
         }),
       },
     );
