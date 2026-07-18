@@ -101,6 +101,18 @@ jobs:
           # /perch-home/ — Perch marketing landing page
           mkdir -p _site/perch-home
           cp -r Perch/landing/. _site/perch-home/
+          # Mirror the latest release APKs as SAME-ORIGIN static files so the
+          # download buttons don't rely on GitHub's cross-host release
+          # redirect — flaky mobile browsers (and in-app webviews) loop on
+          # that redirect but download a plain static file fine. Non-fatal:
+          # a transient fetch failure must not break the whole site deploy;
+          # the landing pages keep the github.com release link as a fallback.
+          curl -fL --retry 3 -o _site/strenes.apk \
+            https://github.com/martian-coder/TinyTools/releases/download/android-latest/strenes.apk \
+            || echo "::warning::strenes.apk mirror failed"
+          curl -fL --retry 3 -o _site/perch.apk \
+            https://github.com/martian-coder/TinyTools/releases/download/perch-android-latest/perch.apk \
+            || echo "::warning::perch.apk mirror failed"
           touch _site/.nojekyll
 
       - name: Upload Pages artifact
