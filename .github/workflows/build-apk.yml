@@ -77,6 +77,10 @@ jobs:
 
       - name: Build debug APK
         working-directory: Strenes/android
+        env:
+          # Monotonic per-workflow counter → versionCode, so installs update
+          # in place instead of demanding an uninstall.
+          APP_VERSION_CODE: ${{ github.run_number }}
         run: ./gradlew assembleDebug --no-daemon
 
       - name: Rename APK

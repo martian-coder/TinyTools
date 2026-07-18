@@ -50,6 +50,15 @@ export interface Backend {
    * production should use verified OTP.
    */
   signInWithoutSms?(phoneNumber: string): Promise<BackendAuthUser>;
+  /**
+   * Email-OTP sign-up (interim until SMS is activated): sends a 6-digit
+   * code to the address, then confirmEmailCode() verifies it and returns a
+   * session whose identity still carries the user's PHONE (the app's
+   * user-facing identity). Verified emails are visible in the Supabase
+   * Authentication dashboard for tracking.
+   */
+  signInWithEmailOtp?(email: string): Promise<void>;
+  confirmEmailCode?(email: string, code: string, phoneNumber: string): Promise<BackendAuthUser>;
   logOut(): Promise<void>;
   onAuthChange(callback: (user: any) => void): () => void;
 

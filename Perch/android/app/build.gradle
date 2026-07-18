@@ -7,8 +7,9 @@ android {
         applicationId "com.perch.guardian"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 1
-        versionName "1.0"
+        // CI passes GITHUB run number so every build is an in-place upgrade.
+        versionCode (System.getenv("APP_VERSION_CODE") ?: "1").toInteger()
+        versionName "1.0." + (System.getenv("APP_VERSION_CODE") ?: "dev")
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
@@ -16,7 +17,18 @@ android {
             ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
+    signingConfigs {
+        eval {
+            storeFile file('perch-eval.keystore')
+            storePassword 'strenes-eval'
+            keyAlias 'strenes'
+            keyPassword 'strenes-eval'
+        }
+    }
     buildTypes {
+        debug {
+            signingConfig signingConfigs.eval
+        }
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'

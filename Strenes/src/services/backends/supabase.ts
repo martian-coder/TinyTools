@@ -68,6 +68,28 @@ export const supabaseBackend: Backend = {
     return { userId: user.id, phone };
   },
 
+  async signInWithEmailOtp(email: string): Promise<void> {
+    const { error } = await supabase.auth.signInWithOtp({
+      email: email.trim().toLowerCase(),
+      options: { shouldCreateUser: true },
+    });
+    if (error) throw new Error(error.message);
+  },
+
+  async confirmEmailCode(email: string, code: string, phoneNumber: string): Promise<BackendAuthUser> {
+    const { data, error } = await supabase.auth.verifyOtp({
+      email: email.trim().toLowerCase(),
+      token: code.trim(),
+      type: 'email',
+    });
+    if (error) throw new Error(error.message);
+    const user = data.user ?? data.session?.user;
+    if (!user) throw new Error('Verification succeeded but no session was returned.');
+    // The app's identity stays the PHONE number; email is the verification
+    // channel (and shows up in the Supabase auth dashboard for tracking).
+    return { userId: user.id, phone: normalizePhone(phoneNumber) };
+  },
+
   async logOut() {
     const { error } = await supabase.auth.signOut();
     if (error) throw error;

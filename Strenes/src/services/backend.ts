@@ -66,6 +66,8 @@ export const {
   signInWithPhone,
   confirmCode,
   signInWithoutSms,
+  signInWithEmailOtp,
+  confirmEmailCode,
   logOut,
   onAuthChange,
   createUserProfile,
