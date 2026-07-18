@@ -18,3 +18,12 @@ export function isValidPhone(input: string): boolean {
   // E.164: max 15 digits; require at least 8 so short codes don't pass.
   return /^\+[0-9]{8,15}$/.test(n);
 }
+
+/**
+ * Looser gate for CONTACT SEARCH: a bare local number (no country code) is
+ * enough to look someone up, because search matches on the trailing 10
+ * digits server-side. Requires 7+ digits so a stray keystroke doesn't fire.
+ */
+export function isSearchableNumber(input: string): boolean {
+  return input.replace(/[^0-9]/g, '').length >= 7;
+}

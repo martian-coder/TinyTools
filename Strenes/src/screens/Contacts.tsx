@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useSiftStore } from '../store';
 import { UserPlus, Users, Search, X } from 'lucide-react';
 import { onUserSearch, addContact, onContactsChange } from '../services/backend';
-import { isValidPhone } from '../utils/phone';
+import { isSearchableNumber } from '../utils/phone';
 import { CIRCLE_META, type Circle } from '../moderation/profiles';
 
 export function Contacts() {
@@ -57,7 +57,7 @@ export function Contacts() {
     activeSearchRef.current?.();
     activeSearchRef.current = null;
 
-    if (!isValidPhone(phone)) {
+    if (!isSearchableNumber(phone)) {
       setLoading(false);
       return;
     }
@@ -138,7 +138,7 @@ export function Contacts() {
           <Search size={16} className="text-[var(--text-secondary)]" />
           <input
             type="tel"
-            placeholder="Search by phone, e.g. +15551234567"
+            placeholder="Search by number (with or without country code)"
             value={searchPhone}
             onChange={(e) => handleSearch(e.target.value)}
             className="flex-1 bg-transparent text-[var(--text)] placeholder-[var(--text-secondary)] focus:outline-none"
