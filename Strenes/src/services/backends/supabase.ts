@@ -522,6 +522,22 @@ export const supabaseBackend: Backend = {
     const search = async () => {
       const phone = normalizePhone(phoneNumber);
 
+      // Preferred path: SECURITY DEFINER RPC (migration 005). It does exact +
+      // trailing-10-digit matching server-side and bypasses users-table SELECT
+      // RLS, so search works even if the "read all profiles" policy was never
+      // applied — the exact failure two testers hit.
+      const rpc = await supabase.rpc('find_user_by_phone', { p_phone: phone });
+      if (!isActive) return;
+      if (!rpc.error) {
+        const row = Array.isArray(rpc.data) ? rpc.data[0] : rpc.data;
+        callback(row ? rowToUser(row) : null);
+        return;
+      }
+      // RPC missing (migration not run yet) → fall back to direct queries.
+      if (!/function|does not exist|schema cache/i.test(rpc.error.message)) {
+        console.error('Search RPC error:', rpc.error);
+      }
+
       // Exact E.164 match first.
       const exact = await supabase.from('users').select('*').eq('phone', phone).maybeSingle();
       if (!isActive) return;
