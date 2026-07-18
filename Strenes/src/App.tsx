@@ -13,7 +13,7 @@ import { Onboarding } from './screens/Onboarding';
 import { Auth } from './screens/Auth';
 import { Contacts } from './screens/Contacts';
 import { Groups } from './screens/Groups';
-import { onAuthChange, onIncomingMessages, getUserProfile, updateUserStatus, decryptIncoming, sendMessage as relaySend } from './services/backend';
+import { onAuthChange, onIncomingMessages, getUserProfile, createUserProfile, updateUserStatus, decryptIncoming, sendMessage as relaySend } from './services/backend';
 import { detectThreat, guardianAlertText } from './moderation/guardian';
 import { parseCallSignal, handleCallSignal, acceptCall, declineCall } from './services/calls';
 import logoUrl from './assets/logo.png';
@@ -72,7 +72,24 @@ export default function App() {
 
     const unsubscribe = onAuthChange((user) => {
       if (user) {
-        setCurrentUser(user.uid, user.phoneNumber || '');
+        // The store's phone may be stale after reinstall; the locally saved
+        // one (written at profile completion) survives sessions.
+        const savedPhone = localStorage.getItem('__strenes_phone') || '';
+        setCurrentUser(user.uid, user.phoneNumber || savedPhone);
+
+        // Self-heal discoverability: accounts created before profile
+        // registration existed (or that skipped the name step) have no
+        // users row, so contact search can't find them. Recreate it from
+        // the locally saved phone — fire-and-forget, safe to re-run.
+        void (async () => {
+          try {
+            const prof = await getUserProfile(user.uid);
+            const phone = user.phoneNumber || savedPhone;
+            if (!prof?.phone && phone) {
+              await createUserProfile(user.uid, phone, prof?.displayName || '');
+            }
+          } catch { /* offline — retried on next launch */ }
+        })();
       }
       setAuthLoading(false);
     });

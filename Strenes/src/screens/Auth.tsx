@@ -93,6 +93,9 @@ export function Auth() {
     try {
       // Register the profile so other devices can find this user by phone.
       await createUserProfile(authUser.userId, authUser.phone, displayName.trim());
+      // Remember the number locally: anonymous sessions don't carry it, and
+      // App uses it to self-heal a missing users row on later launches.
+      localStorage.setItem('__strenes_phone', authUser.phone);
       setCurrentUser(authUser.userId, authUser.phone);
       setScreen('chats');
     } catch (err: any) {

@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { AlertTriangle, Briefcase, Forward, ShieldCheck, RotateCcw, Download, Brain, Trash2, Clock, Zap, Flame, Sparkles, KeyRound, Eye, EyeOff, MessageSquare } from 'lucide-react';
+import { AlertTriangle, Briefcase, Forward, ShieldCheck, RotateCcw, Download, Brain, Trash2, Clock, Zap, Flame, Sparkles, KeyRound, Eye, EyeOff, MessageSquare, LogOut } from 'lucide-react';
 import { useSiftStore } from '../store';
+import { logOut } from '../services/backend';
 import { providerLabel, proxyAvailable } from '../moderation/cloud';
 import { Switch } from '../components/ui/Switch';
 import { Segment } from '../components/ui/Segment';
@@ -353,6 +354,24 @@ export function Settings() {
             <Download size={14} /> Export data
           </button>
         </div>
+
+        <button
+          onClick={async () => {
+            // Escape hatch out of demo mode AND real sessions. Clearing the
+            // demo flag is essential: App re-enters demo on every launch
+            // while it is set, which used to make registration unreachable.
+            localStorage.removeItem('__strenes_demo');
+            try { await logOut(); } catch { /* demo / already signed out */ }
+            resetToSeed(); // currentUserId → null ⇒ App renders the sign-in screen
+          }}
+          className="w-full flex items-center justify-center gap-2 text-sm font-semibold py-3 glass hover:bg-white hover:bg-opacity-10 transition"
+          style={{ borderRadius: 12, color: 'var(--accent)' }}
+        >
+          <LogOut size={14} />
+          {(typeof localStorage !== 'undefined' && localStorage.getItem('__strenes_demo') === '1')
+            ? 'Exit demo — sign in with my number'
+            : 'Sign out'}
+        </button>
 
         <button
           onClick={resetToSeed}

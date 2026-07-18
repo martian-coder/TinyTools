@@ -156,7 +156,9 @@ export function Contacts() {
             </div>
           ) : (
             <div className="text-xs text-[var(--text-secondary)]">
-              No user found with that number. They need to sign up first.
+              No Strenes account found for that number. Ask them to open
+              Strenes, sign in with their number and finish the name step —
+              then search again. (Include the country code, e.g. +91…)
             </div>
           )
         )}
