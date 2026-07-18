@@ -1,25 +1,25 @@
 import { useState } from 'react';
 import { useSiftStore } from '../store';
-import { signInWithEmailOtp, confirmEmailCode, signInWithoutSms, createUserProfile } from '../services/backend';
+import { phoneHasPin, signInWithPin, createUserProfile } from '../services/backend';
 import type { BackendAuthUser } from '../services/backend';
 import { isValidPhone, normalizePhone } from '../utils/phone';
-import { Phone, Lock, CheckCircle, Zap, Mail } from 'lucide-react';
+import { Phone, Lock, CheckCircle, Zap } from 'lucide-react';
 
 /**
- * Registration flow (interim, until an SMS provider is activated):
- *   phone → email → 6-digit code sent TO THE EMAIL → display name.
- * The phone number stays the app's identity (contact search runs on it);
- * the email is the verification channel and is visible in the Supabase
- * Authentication dashboard, so sign-ups are tracked.
+ * Registration/sign-in: phone number + a 4-6 digit PIN.
+ * First use of a number sets its PIN; later sign-ins (reinstall, new
+ * device) enter the same PIN and get the account back with history.
+ * PINs are bcrypt-hashed server-side; 5 wrong tries → 15-min lockout.
  */
 export function Auth() {
-  const [step, setStep] = useState<'phone' | 'email' | 'code' | 'profile'>('phone');
+  const [step, setStep] = useState<'phone' | 'pin' | 'profile'>('phone');
   const [phoneNumber, setPhoneNumber] = useState('');
-  const [email, setEmail] = useState('');
-  const [code, setCode] = useState('');
+  const [pin, setPin] = useState('');
+  const [pinConfirm, setPinConfirm] = useState('');
+  /** true = number registered (enter PIN); false = new (create); null = unknown/offline. */
+  const [hasPin, setHasPin] = useState<boolean | null>(null);
   const [displayName, setDisplayName] = useState('');
   const [error, setError] = useState('');
-  const [notice, setNotice] = useState('');
   const [loading, setLoading] = useState(false);
   const [authUser, setAuthUser] = useState<BackendAuthUser | null>(null);
 
@@ -32,70 +32,53 @@ export function Auth() {
     setScreen('commander');
   };
 
-  const handlePhoneSubmit = (e: React.FormEvent) => {
+  const handlePhoneSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     if (!isValidPhone(phoneNumber)) {
       setError('Enter a valid phone number with country code, e.g. +91 98765 43210');
       return;
     }
-    setStep('email');
+    setLoading(true);
+    const known = phoneHasPin ? await phoneHasPin(phoneNumber) : null;
+    setLoading(false);
+    setHasPin(known);
+    setPin('');
+    setPinConfirm('');
+    setStep('pin');
   };
 
-  const handleEmailSubmit = async (e: React.FormEvent) => {
+  const creating = hasPin !== true; // unknown/offline → allow create UX, server decides
+
+  const handlePinSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
-      setError('Enter a valid email address.');
+    if (!/^\d{4,6}$/.test(pin)) {
+      setError('PIN must be 4-6 digits.');
       return;
     }
-    if (!signInWithEmailOtp) {
-      await handleQuickStart();
+    if (creating && hasPin === false && pin !== pinConfirm) {
+      setError("PINs don't match — type the same PIN twice.");
+      return;
+    }
+    if (!signInWithPin) {
+      setError('PIN sign-in is unavailable on this build.');
       return;
     }
     setLoading(true);
     try {
-      await signInWithEmailOtp(email);
-      setNotice('');
-      setStep('code');
+      const user = await signInWithPin(phoneNumber, pin);
+      localStorage.setItem('__strenes_phone', user.phone);
+      if (user.isNew) {
+        setAuthUser(user);
+        setStep('profile');
+      } else {
+        // Returning user: account + history reclaimed server-side; go in.
+        setCurrentUser(user.userId, user.phone);
+        setScreen('chats');
+      }
     } catch (err: any) {
-      setError(err.message || 'Could not send the code — check the address or use quick sign-up below.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleCodeSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
-    if (!confirmEmailCode) return;
-    setLoading(true);
-    try {
-      const user = await confirmEmailCode(email, code, normalizePhone(phoneNumber));
-      setAuthUser(user);
-      setStep('profile');
-    } catch {
-      setError('Invalid or expired code. Check the email (including spam) and try again.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  /** Escape hatch when email delivery is unavailable: real session, unverified. */
-  const handleQuickStart = async () => {
-    if (!signInWithoutSms) {
-      setError('Sign-up is unavailable on this build.');
-      return;
-    }
-    setError('');
-    setLoading(true);
-    try {
-      const user = await signInWithoutSms(normalizePhone(phoneNumber));
-      setAuthUser(user);
-      setNotice('Continuing without verification — your number is claimed on first come, first served.');
-      setStep('profile');
-    } catch (err: any) {
-      setError(err.message || 'Quick sign-up failed');
+      setError(err.message || 'Sign-in failed');
     } finally {
       setLoading(false);
     }
@@ -114,8 +97,6 @@ export function Auth() {
     try {
       // Register the profile so other devices can find this user by phone.
       await createUserProfile(authUser.userId, authUser.phone, displayName.trim());
-      // Remember the number locally: anonymous sessions don't carry it, and
-      // App uses it to self-heal a missing users row on later launches.
       localStorage.setItem('__strenes_phone', authUser.phone);
       setCurrentUser(authUser.userId, authUser.phone);
       setScreen('chats');
@@ -130,6 +111,20 @@ export function Auth() {
     <div className="p-3 bg-red-500/20 border border-red-500/50 rounded-lg text-red-400 text-sm">
       {error}
     </div>
+  );
+
+  const pinInput = (value: string, onChange: (v: string) => void, placeholder: string, autoFocus = false) => (
+    <input
+      type="password"
+      inputMode="numeric"
+      placeholder={placeholder}
+      value={value}
+      onChange={(e) => onChange(e.target.value.replace(/\D/g, '').slice(0, 6))}
+      maxLength={6}
+      autoFocus={autoFocus}
+      className="w-full px-4 py-3 bg-[var(--surface)] border border-[var(--border)] rounded-lg text-[var(--text)] text-center text-xl tracking-[.5em] focus:outline-none focus:border-[var(--accent2)]"
+      required
+    />
   );
 
   return (
@@ -172,7 +167,7 @@ export function Auth() {
                 disabled={loading}
                 className="w-full px-4 py-3 bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-white rounded-lg font-semibold disabled:opacity-50"
               >
-                Continue
+                {loading ? 'Checking…' : 'Continue'}
               </button>
 
               <div className="relative flex items-center gap-3 py-2">
@@ -193,98 +188,46 @@ export function Auth() {
           </div>
         )}
 
-        {step === 'email' && (
-          <div className="space-y-6">
-            <div className="text-center">
-              <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-[var(--accent)]/20 mb-4">
-                <Mail size={32} className="text-[var(--accent)]" />
-              </div>
-              <h2 className="text-2xl font-bold text-[var(--text)]">Verify by Email</h2>
-              <p className="text-sm text-[var(--text-secondary)] mt-2">
-                We'll email a 6-digit code to confirm it's you.
-                <br />Your number {normalizePhone(phoneNumber)} stays your Strenes identity.
-              </p>
-            </div>
-
-            <form onSubmit={handleEmailSubmit} className="space-y-4">
-              <input
-                type="email"
-                placeholder="you@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-4 py-3 bg-[var(--surface)] border border-[var(--border)] rounded-lg text-[var(--text)] placeholder-[var(--text-secondary)] focus:outline-none focus:border-[var(--accent)]"
-                required
-                autoFocus
-              />
-
-              {errorBox}
-
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full px-4 py-3 bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-white rounded-lg font-semibold disabled:opacity-50"
-              >
-                {loading ? 'Sending code…' : 'Email me the code'}
-              </button>
-
-              <button
-                type="button"
-                onClick={handleQuickStart}
-                disabled={loading}
-                className="w-full px-4 py-2 text-xs text-[var(--text-secondary)] hover:text-[var(--text)]"
-              >
-                No email access? Continue without verification
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setStep('phone')}
-                className="w-full px-4 py-2 text-[var(--text-secondary)] hover:text-[var(--text)]"
-              >
-                Back
-              </button>
-            </form>
-          </div>
-        )}
-
-        {step === 'code' && (
+        {step === 'pin' && (
           <div className="space-y-6">
             <div className="text-center">
               <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-[var(--accent2)]/20 mb-4">
                 <Lock size={32} className="text-[var(--accent2)]" />
               </div>
-              <h2 className="text-2xl font-bold text-[var(--text)]">Enter the Code</h2>
+              <h2 className="text-2xl font-bold text-[var(--text)]">
+                {hasPin === true ? 'Enter your PIN' : hasPin === false ? 'Create your PIN' : 'Your PIN'}
+              </h2>
               <p className="text-sm text-[var(--text-secondary)] mt-2">
-                Sent to {email} — check spam if it's not there within a minute.
+                {hasPin === true
+                  ? `Welcome back — unlock ${normalizePhone(phoneNumber)} with your 4-6 digit PIN.`
+                  : hasPin === false
+                    ? `Choose a 4-6 digit PIN for ${normalizePhone(phoneNumber)}. It protects your number and signs you back in after a reinstall — remember it.`
+                    : `Enter your PIN for ${normalizePhone(phoneNumber)} — or create one if this number is new.`}
               </p>
             </div>
 
-            <form onSubmit={handleCodeSubmit} className="space-y-4">
-              <input
-                type="text"
-                inputMode="numeric"
-                placeholder="000000"
-                value={code}
-                onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                maxLength={6}
-                className="w-full px-4 py-3 bg-[var(--surface)] border border-[var(--border)] rounded-lg text-[var(--text)] text-center text-xl tracking-widest focus:outline-none focus:border-[var(--accent2)]"
-                required
-                autoFocus
-              />
+            <form onSubmit={handlePinSubmit} className="space-y-4">
+              {pinInput(pin, setPin, '••••', true)}
+              {creating && hasPin === false && (
+                <div>
+                  <label className="block text-xs text-[var(--text-secondary)] mb-1 text-center">Confirm PIN</label>
+                  {pinInput(pinConfirm, setPinConfirm, '••••')}
+                </div>
+              )}
 
               {errorBox}
 
               <button
                 type="submit"
-                disabled={loading || code.length < 6}
+                disabled={loading || pin.length < 4}
                 className="w-full px-4 py-3 bg-[var(--accent2)] hover:bg-[var(--accent2)]/80 text-white rounded-lg font-semibold disabled:opacity-50"
               >
-                {loading ? 'Verifying…' : 'Verify & Continue'}
+                {loading ? 'Signing in…' : hasPin === true ? 'Unlock' : 'Continue'}
               </button>
 
               <button
                 type="button"
-                onClick={() => { setCode(''); setStep('email'); }}
+                onClick={() => { setPin(''); setPinConfirm(''); setStep('phone'); }}
                 className="w-full px-4 py-2 text-[var(--text-secondary)] hover:text-[var(--text)]"
               >
                 Back
@@ -301,9 +244,6 @@ export function Auth() {
               </div>
               <h2 className="text-2xl font-bold text-[var(--text)]">Complete Profile</h2>
               <p className="text-sm text-[var(--text-secondary)] mt-2">Set your display name</p>
-              {notice && (
-                <p className="text-xs text-amber-400/90 mt-3 px-4">{notice}</p>
-              )}
             </div>
 
             <form onSubmit={handleProfileSubmit} className="space-y-4">

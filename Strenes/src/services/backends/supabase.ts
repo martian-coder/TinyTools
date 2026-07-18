@@ -90,6 +90,45 @@ export const supabaseBackend: Backend = {
     return { userId: user.id, phone: normalizePhone(phoneNumber) };
   },
 
+  async phoneHasPin(phoneNumber: string): Promise<boolean | null> {
+    const { data, error } = await supabase.rpc('phone_has_pin', {
+      p_phone: normalizePhone(phoneNumber),
+    });
+    if (error) return null; // offline or migration 004 not run — caller degrades
+    return data === true;
+  },
+
+  async signInWithPin(phoneNumber: string, pin: string): Promise<BackendAuthUser & { isNew: boolean }> {
+    const phone = normalizePhone(phoneNumber);
+    // Underlying session is anonymous auth (same as quick sign-up); the PIN
+    // RPC is what gates ownership of the phone number.
+    const { data: existing } = await supabase.auth.getSession();
+    let userId = existing.session?.user?.id;
+    if (!userId) {
+      const { data, error } = await supabase.auth.signInAnonymously();
+      if (error) {
+        throw new Error(
+          `Sign-in unavailable: ${error.message}. ` +
+          'Enable "Anonymous sign-ins" in Supabase → Authentication → Sign In / Up.'
+        );
+      }
+      userId = data.user?.id;
+    }
+    if (!userId) throw new Error('Sign-in succeeded but no session was returned.');
+
+    const { data, error } = await supabase.rpc('claim_phone_with_pin', {
+      p_phone: phone,
+      p_pin: pin,
+    });
+    if (error) {
+      if (/does not exist|schema cache/i.test(error.message)) {
+        throw new Error('PIN sign-in is not set up on the server yet — run migration 004_phone_pin_auth.sql in Supabase.');
+      }
+      throw new Error(error.message);
+    }
+    return { userId, phone, isNew: data === 'registered' };
+  },
+
   async logOut() {
     const { error } = await supabase.auth.signOut();
     if (error) throw error;

@@ -68,6 +68,8 @@ export const {
   signInWithoutSms,
   signInWithEmailOtp,
   confirmEmailCode,
+  phoneHasPin,
+  signInWithPin,
   logOut,
   onAuthChange,
   createUserProfile,

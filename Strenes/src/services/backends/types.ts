@@ -59,6 +59,13 @@ export interface Backend {
    */
   signInWithEmailOtp?(email: string): Promise<void>;
   confirmEmailCode?(email: string, code: string, phoneNumber: string): Promise<BackendAuthUser>;
+  /**
+   * Phone + PIN auth (current flow): a 4-6 digit PIN registers the number
+   * on first use and reclaims the account (with history) on later sign-ins.
+   * PIN is bcrypt-hashed server-side; wrong-PIN lockout after 5 attempts.
+   */
+  phoneHasPin?(phoneNumber: string): Promise<boolean | null>;
+  signInWithPin?(phoneNumber: string, pin: string): Promise<BackendAuthUser & { isNew: boolean }>;
   logOut(): Promise<void>;
   onAuthChange(callback: (user: any) => void): () => void;
 
