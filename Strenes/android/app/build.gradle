@@ -8,8 +8,11 @@ android {
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         // CI passes GITHUB run number so every build is an in-place upgrade.
-        versionCode (System.getenv("APP_VERSION_CODE") ?: "1").toInteger()
-        versionName "1.0." + (System.getenv("APP_VERSION_CODE") ?: "dev")
+        // Explicit assignments: `versionCode (x).toInteger()` parses as
+        // `versionCode(x).toInteger()` in Groovy and fails with "Value is null".
+        def ciBuild = System.getenv("APP_VERSION_CODE")
+        versionCode = (ciBuild ?: "1").toInteger()
+        versionName = "1.0." + (ciBuild ?: "dev")
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
