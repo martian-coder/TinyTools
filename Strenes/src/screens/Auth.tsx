@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useSiftStore } from '../store';
 import { phoneHasPin, signInWithPin, createUserProfile } from '../services/backend';
+import { runDiagnostics, type DiagStep } from '../services/diagnostics';
 import type { BackendAuthUser } from '../services/backend';
 import { isValidPhone, normalizePhone } from '../utils/phone';
 import { Phone, Lock, CheckCircle, Zap } from 'lucide-react';
@@ -22,6 +23,14 @@ export function Auth() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [authUser, setAuthUser] = useState<BackendAuthUser | null>(null);
+  const [diag, setDiag] = useState<DiagStep[] | null>(null);
+  const [diagRunning, setDiagRunning] = useState(false);
+
+  const handleDiagnostics = async () => {
+    setDiagRunning(true);
+    setDiag(null);
+    try { setDiag(await runDiagnostics()); } finally { setDiagRunning(false); }
+  };
 
   const { setScreen, setCurrentUser, loadDemoData } = useSiftStore();
 
@@ -184,6 +193,28 @@ export function Auth() {
                 <Zap size={16} className="text-[var(--accent)]" />
                 Try Demo — no sign-in needed
               </button>
+
+              <button
+                type="button"
+                onClick={handleDiagnostics}
+                disabled={diagRunning}
+                className="w-full px-4 py-2 text-xs text-[var(--text-secondary)] hover:text-[var(--text)] disabled:opacity-50"
+              >
+                {diagRunning ? 'Testing connection…' : 'Trouble signing in? Run connection test'}
+              </button>
+
+              {diag && (
+                <div className="p-3 bg-[var(--surface)] border border-[var(--border)] rounded-lg space-y-1.5">
+                  {diag.map(d => (
+                    <div key={d.name} className="text-xs leading-snug">
+                      <span className={d.ok ? 'text-green-400' : 'text-red-400'}>
+                        {d.ok ? '✓' : '✗'} {d.name}
+                      </span>
+                      <span className="text-[var(--text-secondary)]"> — {d.detail}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
             </form>
           </div>
         )}
