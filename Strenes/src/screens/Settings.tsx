@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { AlertTriangle, Briefcase, Forward, ShieldCheck, RotateCcw, Download, Brain, Trash2, Clock, Zap, Flame, Sparkles, KeyRound, Eye, EyeOff, MessageSquare, LogOut } from 'lucide-react';
+import { AlertTriangle, Briefcase, Forward, ShieldCheck, RotateCcw, Download, Brain, Trash2, Clock, Zap, Flame, Sparkles, KeyRound, Eye, EyeOff, MessageSquare, LogOut, Activity } from 'lucide-react';
 import { useSiftStore } from '../store';
 import { logOut } from '../services/backend';
+import { runDiagnostics, type DiagStep } from '../services/diagnostics';
 import { providerLabel, proxyAvailable } from '../moderation/cloud';
 import { Switch } from '../components/ui/Switch';
 import { Segment } from '../components/ui/Segment';
@@ -25,6 +26,8 @@ export function Settings() {
   const updateSmsFallback     = useSiftStore(s => s.updateSmsFallback);
   const setContactEmergency   = useSiftStore(s => s.setContactEmergency);
   const resetToSeed           = useSiftStore(s => s.resetToSeed);
+  const [diag, setDiag] = useState<DiagStep[] | null>(null);
+  const [diagRunning, setDiagRunning] = useState(false);
   const s = settings;
   const [showKey, setShowKey] = useState(false);
 
@@ -379,6 +382,32 @@ export function Settings() {
         >
           <RotateCcw size={14} /> Reset demo
         </button>
+
+        {/* Connection test — reachable while logged in, to diagnose
+            registration/search issues against the live backend. */}
+        <button
+          onClick={async () => {
+            setDiagRunning(true); setDiag(null);
+            try { setDiag(await runDiagnostics()); } finally { setDiagRunning(false); }
+          }}
+          disabled={diagRunning}
+          className="w-full flex items-center justify-center gap-2 text-sm dim py-3 disabled:opacity-50"
+        >
+          <Activity size={14} /> {diagRunning ? 'Testing connection…' : 'Run connection test'}
+        </button>
+
+        {diag && (
+          <div className="p-3 bg-[var(--surface)] border border-[var(--border)] rounded-lg space-y-1.5">
+            {diag.map(d => (
+              <div key={d.name} className="text-xs leading-snug">
+                <span className={d.ok ? 'text-green-400' : 'text-red-400'}>
+                  {d.ok ? '✓' : '✗'} {d.name}
+                </span>
+                <span className="dim"> — {d.detail}</span>
+              </div>
+            ))}
+          </div>
+        )}
 
         <div className="text-center text-[10px] dim pb-2">
           Strenes · build {__BUILD_STAMP__}
