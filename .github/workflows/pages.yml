@@ -33,6 +33,14 @@ on:
       - "Perch/landing/**"
       - ".github/workflows/pages.yml"
   workflow_dispatch:
+  # Re-deploy after each APK build completes so the same-origin APK mirror
+  # picks up the FRESH release (previously it copied the release while the
+  # new APK was still building — permanently one build behind).
+  workflow_run:
+    workflows:
+      - "Build & Release Android APK"
+      - "Build & Release Perch Android APK"
+    types: [completed]
 
 permissions:
   contents: read
@@ -45,6 +53,7 @@ concurrency:
 
 jobs:
   build:
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
