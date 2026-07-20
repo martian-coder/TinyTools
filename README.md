@@ -1,113 +1,135 @@
-# Autonomous Memory Engine (AME)
+<p align="center">
+  <img src="./banner.png" alt="TinyTools Banner" width="100%">
+</p>
 
-A high-performance, zero-allocation state management and memory engine designed natively for autonomous AI agent swarms. By bypassing traditional HTTP/JSON stacks entirely, AME implements a custom binary wire protocol over raw TCP pipelines, delivering microsecond-level retrieval and ingestion speeds optimized for machine-to-machine context consolidation.
+# 🛠️ TinyTools
 
----
+> A collection of stupid-delightful, zero-dependency tiny tools — built with love, made for an audience of one.
 
-## Performance Benchmarks
-
-The following metrics were captured using the included self-hosted multi-threaded benchmark suite (`MemoryEngine.Benchmarks`) simulating a dense swarm of AI agents over 50 concurrent TCP loopback connections on .NET 10.
-
-### Throughput & Efficiency
-
-| Operation | Scale | Throughput | Resource Impact |
-| :--- | :--- | :--- | :--- |
-| **`StateAppend` (Ingestion)** | 100,000 frames | **177,437 msg/s** | Zero LOH Allocations / No GC Pauses |
-| **`ContextQuery` (Retrieval)** | 10,000 round trips | **4,108 msg/s** | Strictly bounded token budget payload |
-
-### Latency Percentiles (Round-Trip)
-
-> Ingestion operations execute with non-blocking handoffs. Retrieval round-trips execute end-to-end (parse, score, compile, serialize, and emit) under microsecond constraints:
-
-*   **P50 (Median):** 207.5 µs
-*   **P95:** 559.8 µs
-*   **P99 (Tail):** 1,575.5 µs
+Inspired by [Scott Hanselman's TinyToolTown](https://tinytooltown.com) — _"Vibe coding is the GeoCities of the AI era."_
 
 ---
 
-## Architectural Pillars
+## 🏘️ The Tools
 
-
-```
-[AI Agent Swarm] ──(Nexus Binary Protocol over TCP)──> [TcpPipelineGateway]
-│
-(Zero-Copy SequenceReader)
-│
-┌────────────────────────────────┴────────────────────────────────┐
-▼                                                                 ▼
-[StateAppend / Evict]                                                [ContextQuery]
-│                                                                 │
-(Non-Blocking TryAppend)                                           (Recency & Semantic Rank)
-│                                                                 │
-▼                                                                 ▼
-[Bounded System.Threading.Channel]                                      [ContextCompiler]
-│                                                                 │
-(Async Drain Loop)                                                          ▼
-▼                                                    (Strict Token Budget Packing)
-[Downstream Vector Index]                                                     │
-│                                                                 ▼
-└─────────────────> [Concurrent Repository] ──────────────────────┘
-```
-
-### 1. Zero-Allocation TCP Gateway (`System.IO.Pipelines`)
-The ingest layer avoids the thread-per-connection scaling bottleneck and intermediate byte-array allocations by leveraging `.NET` core pipelines. 
-* Network data streams directly into managed memory segments managed by a `PipeReader`.
-* Frames are parsed synchronously out of `ReadOnlySequence<byte>` chains using a stack-allocated `SequenceReader<byte>`. 
-* Buffer positions advance using `AdvanceTo` without copying payload data into intermediate arrays, bypassing the Large Object Heap (LOH) entirely.
-
-### 2. Low-Overhead Nexus Wire Protocol
-Communication utilizes a tight binary framing layout designed for direct machine execution. UTF-8 strings are only materialized when application-level text processing requires compilation.
-
-
-```
-+-------------------+---------------------+----------------------------+
-|  MsgType (1 Byte) | Length (4 Bytes BE) |  Binary Payload (N Bytes)  |
-+-------------------+---------------------+----------------------------+
-```
-Supported operational frames:
-*   `0x01 - StateAppend`: Appends structural logs or state frames to an agent's memory track.
-*   `0x02 - ContextQuery`: Requests an optimized, token-bounded context slice.
-*   `0x03 - MemoryEvict`: Explicitly clears specific frames or ranges from memory storage.
-
-### 3. Lock-Free Ingestion & Temporal Logging
-Parallel execution pipelines use non-blocking coordination patterns to achieve high scaling metrics:
-* Inbound frames lease memory chunks from a centralized memory allocator pool.
-* Frames transition instantly to processing pipelines through a bounded `System.Threading.Channels` queue using `TryWrite`. This approach guarantees that network threads never block on backend persistence tasks.
-* Frame sequences scale safely under concurrent loads through atomized tracking operations using `Interlocked`.
-* A dedicated `BackgroundService` consumes the processing queue to feed background indexing tasks asynchronously.
-
-### 4. Deterministic Context Compiler
-To protect LLM engines from context saturation and lower processing costs, the retrieval pipeline optimizes payloads deterministically:
-* Queries analyze relevant historical events by balancing semantic importance with temporal proximity scores.
-* Compilers pack the target return layout byte-by-byte against hard token budget constraints (configured here at an approximate ratio of 1 token per 4 characters).
-* Streams evaluate exact payload allocations, dropping lower-ranked objects cleanly before completing the sequence.
+| Tool | What it does | Language | Platform |
+|------|-------------|----------|---------|
+| [**CopyToLLM**](./CopyToLLM/) | Screen capture → clipboard → paste into any AI chat in one hotkey | C# / .NET 9 | Windows |
+| [**WingetDiff**](./WingetDiff/) | Diff two `winget export` JSON files with a gorgeous terminal UI | C# / .NET 8 | Windows |
+| [**JumpDir**](./JumpDir/) | Interactive fuzzy directory navigator for your terminal | Python 3 | Windows / macOS / Linux |
+| [**CodeBlaster**](./CodeBlaster/) | Arcade game — shoot falling code asteroids with the correct keyword | HTML / JS | Any browser |
+| [**SmartRecover**](./SmartRecover/) | When your machine crashes — pick up where you left off. Snapshots tmux / browser / clipboard on a schedule, restores from any past timeline state | Python 3 | Linux |
+| [**CmdLog**](./CmdLog/) | Interactive history browser — search, categorize, bookmark and re-run commands with full context (directory, branch, timing, exit code) | Python 3 | Windows / macOS / Linux |
+| [**MarkdownZipped**](./MarkdownZipped/) | Compress LLM prompts through a 4-stage pipeline (minify → rewrite → dedup → cache) and pack them into a `.mdz` file | Python 3 | Windows / macOS / Linux |
+| [**Olus**](./Olus/) | A featherweight browser — real Chromium via WebView2, never-lose-your-tabs sessions, Tor/proxy region routing, switchable search engine | Rust / Tauri 2 | Windows |
+| [**Strenes**](./Strenes/) | WhatsApp-style AI message filter PWA — recipient controls moderation with on-device AI (Gemini Nano), zero cloud, smart folders, blur-to-reveal UI. 4 themes, installable. | React 19 + Vite + TS | Any browser (PWA) |
+| [**MeetingCopilot**](./MeetingCopilot/) | On-screen AI copilot — listens to meeting audio, transcribes with local Whisper (any language → English), streams reply suggestions with Claude in a transparent overlay | Node.js / Electron | Windows / macOS / Linux / Android |
 
 ---
 
-## Repository Layout
+## ✨ Philosophy
 
-*   `src/AutonomousMemoryEngine/`: Engine core containing the socket gateway pipelines, custom protocol parsers, and internal storage compilers.
-*   `src/MemoryEngine.Benchmarks/`: High-performance loopback benchmarking client simulating concurrent operational traffic without external dependencies.
+Every tool in this repo follows the same principles:
+
+- **Tiny** — Single-purpose, small codebase, no bloat
+- **Zero dependencies** — No NuGet packages, no pip installs, just the standard library
+- **Just works** — Clone, build, run. That's it.
+- **Delightful** — If it doesn't spark joy, it doesn't ship
 
 ---
 
-## Getting Started
+## 🚀 Quick Start
 
-### Prerequisites
-*   .NET 9 SDK or .NET 10 SDK
-
-### Building the Project
-Verify the configuration by compiling the core application:
+### CopyToLLM
 ```bash
-dotnet build AutonomousMemoryEngine/AutonomousMemoryEngine.csproj
-
+cd CopyToLLM
+dotnet run
+# Press Ctrl+Shift+S → capture screen → auto-paste into ChatGPT/Claude/Gemini
 ```
-### Running the Verification Suite
-Execute the multi-threaded self-hosted benchmark to profile throughput and latency percentiles locally:
+
+### WingetDiff
 ```bash
-dotnet run --project MemoryEngine.Benchmarks/MemoryEngine.Benchmarks.csproj -- --self-host 127.0.0.1 7077
+cd WingetDiff
+dotnet run -- laptop.json desktop.json
+```
 
-```
+### JumpDir
+```bash
+cd JumpDir
+python jumpdir.py --make-bat   # Windows one-time setup
+j                               # Launch interactive picker
 ```
 
+### SmartRecover
+```bash
+cd SmartRecover
+python3 smartrecover.py daemon &   # autosave every 10 min in the background
+python3 smartrecover.py            # browse the timeline — restore tmux, tabs, clipboard
 ```
+
+### CmdLog
+```bash
+cd CmdLog
+python3 cmdlog.py                     # auto-imports history, opens interactive TUI
+python3 cmdlog.py --install bash      # install rich shell hooks (one-time setup)
+```
+
+### MarkdownZipped
+```bash
+cd MarkdownZipped
+python3 mdzip.py zip examples/verbose_prompt.xml   # compress -> .mdz
+python3 mdzip.py info examples/verbose_prompt.mdz  # show savings
+open web/index.html                                # or use the browser studio (zero install)
+```
+
+### MeetingCopilot
+```bash
+cd MeetingCopilot
+npm install
+
+# Desktop overlay (Electron)
+ANTHROPIC_API_KEY=sk-ant-... npm start
+
+# CLI — terminal only
+node cli.js --key sk-ant-... --context "context about the meeting"
+
+# CLI with web overlay — open on phone/tablet (same WiFi)
+node cli.js --key sk-ant-... --serve
+# → Open http://<your-ip>:3001 on any device
+```
+
+---
+
+## 📦 Building
+
+Each tool is self-contained in its own directory. No solution file, no monorepo build system — just `cd` into the folder and build.
+
+```bash
+# .NET tools
+dotnet build CopyToLLM/
+dotnet build WingetDiff/
+
+# Python tool — no build needed
+python JumpDir/jumpdir.py --help
+```
+
+---
+
+## 🤝 Contributing
+
+Got a tiny tool that sparks joy? Open a PR! The bar is:
+1. Does it solve a real itch?
+2. Is it small enough to understand in one sitting?
+3. Does it have zero (or near-zero) external dependencies?
+
+---
+
+## 📄 License
+
+[MIT](./LICENSE) — Do whatever you want with it.
+
+---
+
+<p align="center">
+  <i>Made with ✨ vibes ✨ by <a href="https://github.com/martian-coder">martian-coder</a></i>
+</p>
