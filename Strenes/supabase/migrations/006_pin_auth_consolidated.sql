@@ -14,7 +14,7 @@ create or replace function claim_phone_account(p_phone text)
 returns void
 language plpgsql
 security definer
-set search_path = public
+set search_path = public, extensions
 as $$
 declare
   old_id uuid;
@@ -63,7 +63,7 @@ create or replace function phone_has_pin(p_phone text)
 returns boolean
 language sql
 security definer
-set search_path = public
+set search_path = public, extensions
 stable
 as $$
   select exists (select 1 from phone_credentials where phone = p_phone);
@@ -76,7 +76,7 @@ create or replace function claim_phone_with_pin(p_phone text, p_pin text)
 returns text
 language plpgsql
 security definer
-set search_path = public
+set search_path = public, extensions
 as $$
 declare
   cred phone_credentials%rowtype;
@@ -129,7 +129,7 @@ create or replace function find_user_by_phone(p_phone text)
 returns table (id uuid, phone text, display_name text, last_seen bigint, online boolean)
 language plpgsql
 security definer
-set search_path = public
+set search_path = public, extensions
 stable
 as $$
 declare
