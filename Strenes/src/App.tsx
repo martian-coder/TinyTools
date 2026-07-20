@@ -17,7 +17,7 @@ import { onAuthChange, onIncomingMessages, getUserProfile, createUserProfile, up
 import { detectThreat, guardianAlertText } from './moderation/guardian';
 import { parseCallSignal, handleCallSignal, acceptCall, declineCall } from './services/calls';
 import logoUrl from './assets/logo.png';
-import { parseReceipt, sendReceipt, sendAutoNotice, isAutoNotice } from './services/receipts';
+import { parseReceipt, sendReceipt, sendAutoNotice, isAutoNotice, looksLikeReceipt } from './services/receipts';
 import { getModerator, routeVerdict } from './moderation';
 import { Phone, PhoneOff } from 'lucide-react';
 import type { ThemeName } from './types';
@@ -96,6 +96,22 @@ export default function App() {
     return unsubscribe;
   }, [setCurrentUser, currentUserId]);
 
+  // One-time cleanup: purge control envelopes (receipts/call signals) that
+  // older builds stored as chat bubbles, and ask notification permission.
+  useEffect(() => {
+    if (!currentUserId) return;
+    const s = useSiftStore.getState();
+    const junk = (t: string) => looksLikeReceipt(t) || !!parseCallSignal(t);
+    if (s.messages.some(m => junk(m.text))) {
+      useSiftStore.setState({ messages: s.messages.filter(m => !junk(m.text)) });
+    }
+    try {
+      if (typeof Notification !== 'undefined' && Notification.permission === 'default') {
+        Notification.requestPermission().catch(() => {});
+      }
+    } catch { /* webview without Notification API */ }
+  }, [currentUserId]);
+
   // Global incoming-message pipeline: every message addressed to this user —
   // no matter which screen is open — is classified on-device, routed through
   // routeVerdict(), checked against dynamic rules, and stored locally. This is
@@ -107,16 +123,22 @@ export default function App() {
       const state = useSiftStore.getState();
       const { settings } = state;
 
-      // Delivery/read receipts ride the relay too — update ticks and stop.
-      const receipt = parseReceipt(msg.text);
+      // Decrypt FIRST: receipts and call signals ride the relay E2E-encrypted
+      // like everything else, so intercepting on the wire text let them fall
+      // through as chat bubbles — and each bubble triggered a receipt back,
+      // ping-ponging forever. Plaintext interception kills the loop.
+      const plainText = await decryptIncoming(msg.from, msg.text);
+
+      // Delivery/read receipts — update ticks and stop.
+      const receipt = parseReceipt(plainText);
       if (receipt) {
         state.applyReceipt(msg.from, receipt);
         return;
       }
 
-      // Call signaling (offer/answer/hangup) rides the same relay but is not
-      // a chat message — hand it to the call manager and stop here.
-      const signal = parseCallSignal(msg.text);
+      // Call signaling (offer/answer/hangup) is not a chat message — hand it
+      // to the call manager and stop here.
+      const signal = parseCallSignal(plainText);
       if (signal) {
         if (!state.contacts.find(c => c.id === msg.from)) {
           const profile = await getUserProfile(msg.from).catch(() => null);
@@ -130,8 +152,6 @@ export default function App() {
         return;
       }
 
-      // Decrypt E2E payload before moderation (moderation runs on plaintext)
-      const plainText = await decryptIncoming(msg.from, msg.text);
       const msgForProcessing = { ...msg, text: plainText };
 
       // Materialize unknown senders as local contacts so the chat renders.
@@ -174,6 +194,16 @@ export default function App() {
         relaySend(currentUserId, guardianCfg.guardianContactId, guardianAlertText(senderName, threat))
           .catch(() => { /* offline/demo — alert is best-effort */ });
       }
+
+      // Heads-up when the app is open but backgrounded (web/PWA). True
+      // closed-app push needs FCM — next milestone.
+      try {
+        if (finalRoute.status === 'delivered' && typeof document !== 'undefined' && document.hidden
+            && typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+          const from = useSiftStore.getState().contacts.find(c => c.id === msgForProcessing.from);
+          new Notification(from?.name || 'New message', { body: msgForProcessing.text.slice(0, 80), tag: msgForProcessing.from });
+        }
+      } catch { /* no Notification API */ }
 
       // Honest status back to the sender: delivered, or a short reason when
       // the filter intervened ("held — spam"). Never the recipient's rules.

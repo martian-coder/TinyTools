@@ -15,6 +15,7 @@ import { Phone, Lock, CheckCircle, Zap } from 'lucide-react';
 export function Auth() {
   const [step, setStep] = useState<'phone' | 'pin' | 'profile'>('phone');
   const [phoneNumber, setPhoneNumber] = useState('');
+  const [countryCode, setCountryCode] = useState('+91');
   const [pin, setPin] = useState('');
   const [pinConfirm, setPinConfirm] = useState('');
   /** true = number registered (enter PIN); false = new (create); null = unknown/offline. */
@@ -44,12 +45,15 @@ export function Auth() {
   const handlePhoneSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    if (!isValidPhone(phoneNumber)) {
-      setError('Enter a valid phone number with country code, e.g. +91 98765 43210');
+    // Typed a full +XX number? Respect it; else prepend the selected code.
+    const full = phoneNumber.trim().startsWith('+') ? phoneNumber : countryCode + phoneNumber;
+    if (!isValidPhone(full)) {
+      setError('Enter a valid phone number, e.g. 98765 43210');
       return;
     }
+    setPhoneNumber(full);
     setLoading(true);
-    const known = phoneHasPin ? await phoneHasPin(phoneNumber) : null;
+    const known = phoneHasPin ? await phoneHasPin(full) : null;
     setLoading(false);
     setHasPin(known);
     setPin('');
@@ -155,17 +159,26 @@ export function Auth() {
                 <label className="block text-sm font-medium text-[var(--text)] mb-2">
                   Phone Number
                 </label>
-                <input
-                  type="tel"
-                  placeholder="+91 98765 43210"
-                  value={phoneNumber}
-                  onChange={(e) => setPhoneNumber(e.target.value)}
-                  className="w-full px-4 py-3 bg-[var(--surface)] border border-[var(--border)] rounded-lg text-[var(--text)] placeholder-[var(--text-secondary)] focus:outline-none focus:border-[var(--accent)]"
-                  required
-                />
+                <div className="flex gap-2">
+                  <select
+                    value={countryCode}
+                    onChange={(e) => setCountryCode(e.target.value)}
+                    className="px-2 py-3 bg-[var(--surface)] border border-[var(--border)] rounded-lg text-[var(--text)] focus:outline-none focus:border-[var(--accent)]"
+                  >
+                    {['+91','+1','+44','+971','+61','+65','+92','+880','+94','+977'].map(c => <option key={c} value={c}>{c}</option>)}
+                  </select>
+                  <input
+                    type="tel"
+                    placeholder="98765 43210"
+                    value={phoneNumber}
+                    onChange={(e) => setPhoneNumber(e.target.value)}
+                    className="flex-1 px-4 py-3 bg-[var(--surface)] border border-[var(--border)] rounded-lg text-[var(--text)] placeholder-[var(--text-secondary)] focus:outline-none focus:border-[var(--accent)]"
+                    required
+                  />
+                </div>
                 <p className="text-xs text-[var(--text-secondary)] mt-2">
-                  Include the country code (+91 India, +1 US, +44 UK…). This is
-                  how friends will find you.
+                  Pick your country code (or type a full +XX number). Friends
+                  find you by this number.
                 </p>
               </div>
 

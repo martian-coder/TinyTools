@@ -15,6 +15,7 @@ export function Contacts() {
   const [searchResult, setSearchResult] = useState<any>(null);
   const [searchDone, setSearchDone] = useState(false);
   const [searchError, setSearchError] = useState('');
+  const [newName, setNewName] = useState('');
   const [loading, setLoading] = useState(false);
   const [backendContacts, setBackendContacts] = useState<Record<string, any>>({});
   const [circleModalContactId, setCircleModalContactId] = useState<string | null>(null);
@@ -70,7 +71,9 @@ export function Contacts() {
         setLoading(false);
         setSearchDone(true);
         if (error) setSearchError(error);
-        setSearchResult(user && user.id !== currentUserId ? user : null);
+        const found = user && user.id !== currentUserId ? user : null;
+        setSearchResult(found);
+        setNewName(found ? (found.displayName || found.phone || '') : '');
       });
       // Flaky network: don't leave the spinner hanging forever.
       setTimeout(() => {
@@ -89,7 +92,7 @@ export function Contacts() {
       await addContact(currentUserId, contactUser.id, contactUser.phone);
       upsertContact({
         id: contactUser.id,
-        name: contactUser.displayName || contactUser.phone,
+        name: newName.trim() || contactUser.displayName || contactUser.phone,
         phone: contactUser.phone,
         online: contactUser.online,
       });
@@ -174,12 +177,21 @@ export function Contacts() {
                   {searchResult.phone}
                 </div>
               </div>
-              <button
-                onClick={() => handleAddContact(searchResult)}
-                className="p-2 bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-white rounded-lg"
-              >
-                <UserPlus size={16} />
-              </button>
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  value={newName}
+                  onChange={(e) => setNewName(e.target.value)}
+                  placeholder="Name (e.g. Amit)"
+                  className="w-28 px-2 py-1.5 text-sm bg-[var(--surface)] border border-[var(--border)] rounded-lg text-[var(--text)] focus:outline-none focus:border-[var(--accent)]"
+                />
+                <button
+                  onClick={() => handleAddContact(searchResult)}
+                  className="p-2 bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-white rounded-lg"
+                >
+                  <UserPlus size={16} />
+                </button>
+              </div>
             </div>
           </div>
         )}
