@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useSiftStore } from '../store';
-import { UserPlus, Users, Search, X } from 'lucide-react';
+import { UserPlus, Users, Search, X, Trash2, Ban, MessageCircle } from 'lucide-react';
 import { onUserSearch, addContact, onContactsChange } from '../services/backend';
 import { isSearchableNumber } from '../utils/phone';
 import { CIRCLE_META, type Circle } from '../moderation/profiles';
@@ -10,6 +10,8 @@ export function Contacts() {
   const upsertContact = useSiftStore(s => s.upsertContact);
   const openConversation = useSiftStore(s => s.openConversation);
   const setContactCircle = useSiftStore(s => s.setContactCircle);
+  const removeContact = useSiftStore(s => s.removeContact);
+  const setBlocked = useSiftStore(s => s.setBlocked);
   const contacts = useSiftStore(s => s.contacts);
   const [searchPhone, setSearchPhone] = useState('');
   const [searchResult, setSearchResult] = useState<any>(null);
@@ -263,7 +265,7 @@ export function Contacts() {
           >
             <div className="flex items-center justify-between p-4 border-b border-[var(--border)]">
               <h3 className="font-semibold text-[var(--text)]">
-                Add {contact.name} to a circle
+                {contact.name}
               </h3>
               <button
                 onClick={() => setCircleModalContactId(null)}
@@ -274,6 +276,26 @@ export function Contacts() {
             </div>
 
             <div className="p-4 space-y-2">
+              <div className="grid grid-cols-3 gap-2 pb-2 border-b border-[var(--border)] mb-2">
+                <button
+                  onClick={() => { openConversation(contact.id); setCircleModalContactId(null); }}
+                  className="flex flex-col items-center gap-1 py-2 rounded-lg hover:bg-[var(--surface-hover)] text-[var(--text)]"
+                >
+                  <MessageCircle size={18} /><span className="text-xs">Message</span>
+                </button>
+                <button
+                  onClick={() => { setBlocked(contact.id, !contact.blocked); setCircleModalContactId(null); }}
+                  className="flex flex-col items-center gap-1 py-2 rounded-lg hover:bg-[var(--surface-hover)] text-amber-400"
+                >
+                  <Ban size={18} /><span className="text-xs">{contact.blocked ? 'Unblock' : 'Block'}</span>
+                </button>
+                <button
+                  onClick={() => { if (confirm(`Remove ${contact.name}? This deletes the chat.`)) { removeContact(contact.id); setCircleModalContactId(null); } }}
+                  className="flex flex-col items-center gap-1 py-2 rounded-lg hover:bg-[var(--surface-hover)] text-red-400"
+                >
+                  <Trash2 size={18} /><span className="text-xs">Remove</span>
+                </button>
+              </div>
               {(Object.entries(CIRCLE_META) as [Circle, typeof CIRCLE_META[Circle]][]).map(([circleId, meta]) => (
                 <button
                   key={circleId}

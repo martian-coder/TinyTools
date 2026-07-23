@@ -62,6 +62,7 @@ export interface Contact {
   id: string;
   name: string;
   trusted: boolean;
+  blocked?: boolean;
   grad: string;
   isEmergency?: boolean;
   /** E.164 phone number, present for contacts synced from the backend. */

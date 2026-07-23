@@ -29,6 +29,16 @@ async function ensureKeyPublished(userId: string) {
 }
 
 /** Encrypt a DM if we have the recipient's public key; fall back to plaintext. */
+/** Force-republish this device's public key (after a reinstall changed it). */
+export async function republishKey(userId: string): Promise<void> {
+  if (!backend.publishPublicKey) return;
+  try {
+    const pub = await getPublicKeyB64();
+    await backend.publishPublicKey(userId, pub);
+    _pubKeyPublished = true;
+  } catch { /* non-fatal */ }
+}
+
 export async function sendMessage(fromUserId: string, toUserId: string, text: string): Promise<string> {
   await ensureKeyPublished(fromUserId);
   let wireText = text;

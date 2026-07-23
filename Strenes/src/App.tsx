@@ -13,12 +13,14 @@ import { Onboarding } from './screens/Onboarding';
 import { Auth } from './screens/Auth';
 import { Contacts } from './screens/Contacts';
 import { Groups } from './screens/Groups';
-import { onAuthChange, onIncomingMessages, getUserProfile, createUserProfile, updateUserStatus, decryptIncoming, sendMessage as relaySend } from './services/backend';
+import { onAuthChange, onIncomingMessages, getUserProfile, createUserProfile, updateUserStatus, decryptIncoming, sendMessage as relaySend, republishKey } from './services/backend';
 import { detectThreat, guardianAlertText } from './moderation/guardian';
 import { parseCallSignal, handleCallSignal, acceptCall, declineCall } from './services/calls';
 import logoUrl from './assets/logo.png';
 import { parseReceipt, sendReceipt, sendAutoNotice, isAutoNotice, looksLikeReceipt } from './services/receipts';
 import { getModerator, routeVerdict } from './moderation';
+import { LocalNotifications } from '@capacitor/local-notifications';
+import { Capacitor } from '@capacitor/core';
 import { Phone, PhoneOff } from 'lucide-react';
 import type { ThemeName } from './types';
 
@@ -101,15 +103,16 @@ export default function App() {
   useEffect(() => {
     if (!currentUserId) return;
     const s = useSiftStore.getState();
-    const junk = (t: string) => looksLikeReceipt(t) || !!parseCallSignal(t);
+    const junk = (t: string) => looksLikeReceipt(t) || !!parseCallSignal(t) || t.startsWith('🔒');
     if (s.messages.some(m => junk(m.text))) {
       useSiftStore.setState({ messages: s.messages.filter(m => !junk(m.text)) });
     }
-    try {
-      if (typeof Notification !== 'undefined' && Notification.permission === 'default') {
-        Notification.requestPermission().catch(() => {});
-      }
-    } catch { /* webview without Notification API */ }
+    (async () => {
+      try {
+        if (Capacitor.isNativePlatform()) await LocalNotifications.requestPermissions();
+        else if (typeof Notification !== 'undefined' && Notification.permission === 'default') await Notification.requestPermission();
+      } catch { /* no notification API */ }
+    })();
   }, [currentUserId]);
 
   // Global incoming-message pipeline: every message addressed to this user —
@@ -129,12 +132,27 @@ export default function App() {
       // ping-ponging forever. Plaintext interception kills the loop.
       const plainText = await decryptIncoming(msg.from, msg.text);
 
+      // Undecryptable (peer's key changed after a reinstall): the sentinel
+      // used to be stored as a bubble and each bubble triggered a receipt →
+      // endless "key mismatch" scroll. Drop it silently; republish our key so
+      // future messages decrypt.
+      if (plainText.startsWith('🔒')) {
+        void republishKey(currentUserId);
+        return;
+      }
+
       // Delivery/read receipts — update ticks and stop.
       const receipt = parseReceipt(plainText);
       if (receipt) {
         state.applyReceipt(msg.from, receipt);
         return;
       }
+
+      // Blocked sender → ignore entirely, and never receipt back.
+      if (state.contacts.find(c => c.id === msg.from)?.blocked) return;
+
+      // Dedupe: the relay can redeliver; a message already stored is skipped.
+      if (msg.id && state.messages.some(m => m.relayId === msg.id)) return;
 
       // Call signaling (offer/answer/hangup) is not a chat message — hand it
       // to the call manager and stop here.
@@ -197,13 +215,23 @@ export default function App() {
 
       // Heads-up when the app is open but backgrounded (web/PWA). True
       // closed-app push needs FCM — next milestone.
-      try {
-        if (finalRoute.status === 'delivered' && typeof document !== 'undefined' && document.hidden
-            && typeof Notification !== 'undefined' && Notification.permission === 'granted') {
-          const from = useSiftStore.getState().contacts.find(c => c.id === msgForProcessing.from);
-          new Notification(from?.name || 'New message', { body: msgForProcessing.text.slice(0, 80), tag: msgForProcessing.from });
-        }
-      } catch { /* no Notification API */ }
+      if (finalRoute.status === 'delivered') {
+        const from = useSiftStore.getState().contacts.find(c => c.id === msgForProcessing.from);
+        const title = from?.name || 'New message';
+        const body = msgForProcessing.text.slice(0, 120);
+        const notViewing = useSiftStore.getState().activeContactId !== msgForProcessing.from
+          || (typeof document !== 'undefined' && document.hidden);
+        try {
+          if (Capacitor.isNativePlatform()) {
+            if (notViewing) await LocalNotifications.schedule({ notifications: [{
+              id: Math.floor(Math.random() * 1e9), title, body,
+              largeBody: body, smallIcon: 'ic_stat_icon', channelId: 'messages',
+            }] });
+          } else if (notViewing && typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+            new Notification(title, { body, tag: msgForProcessing.from });
+          }
+        } catch { /* notification failed — non-fatal */ }
+      }
 
       // Honest status back to the sender: delivered, or a short reason when
       // the filter intervened ("held — spam"). Never the recipient's rules.

@@ -29,6 +29,8 @@ interface SiftState {
   setCurrentUser: (userId: string, phone: string) => void;
   clearCurrentUser: () => void;
   upsertContact: (contact: { id: string; name: string; phone?: string; online?: boolean }) => void;
+  removeContact: (id: string) => void;
+  setBlocked: (id: string, blocked: boolean) => void;
   activeCall: ActiveCall | null;
   setActiveCall: (call: ActiveCall | null) => void;
   setScreen: (s: Screen) => void;
@@ -154,6 +156,15 @@ export const useSiftStore = create<SiftState>()(
           contacts: [...s.contacts, { id, name: name || phone || 'Unknown', phone, online, trusted: false, grad: gradFor(id) }],
         };
       }),
+      removeContact: (id) => set(s => ({
+        contacts: s.contacts.filter(c => c.id !== id),
+        messages: s.messages.filter(m => m.contactId !== id),
+        activeContactId: s.activeContactId === id ? null : s.activeContactId,
+        activeScreen: s.activeContactId === id ? 'chats' : s.activeScreen,
+      })),
+      setBlocked: (id, blocked) => set(s => ({
+        contacts: s.contacts.map(c => c.id === id ? { ...c, blocked } : c),
+      })),
       setScreen: s  => set({ activeScreen: s }),
       setFolder: f  => set({ activeFolder: f }),
       openConversation: id => set({ activeContactId: id, activeScreen: 'conversation' }),
