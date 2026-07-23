@@ -125,6 +125,12 @@ export function formatUntil(ts: number): string {
 
 function matchContact(name: string, contacts: Contact[]): Contact | undefined {
   const lower = name.toLowerCase().trim();
+  const digits = name.replace(/\D/g, '');
+  if (digits.length >= 7) {
+    const tail = digits.slice(-10);
+    const byPhone = contacts.find(c => (c.phone ?? '').replace(/\D/g, '').endsWith(tail));
+    if (byPhone) return byPhone;
+  }
   return (
     contacts.find(c => c.name.toLowerCase() === lower) ??
     contacts.find(c => c.name.toLowerCase().startsWith(lower)) ??
@@ -394,7 +400,7 @@ function parsePrecise(text: string, contacts: Contact[]): Intent | null {
   }
 
   // reply
-  const rm = t.match(/^(?:reply(?:\s+to)?|respond\s+to|tell|message|text|msg|send(?:\s+to)?)\s+([a-z']+)\s+(.+)/i);
+  const rm = t.match(/^(?:reply(?:\s+to)?|respond\s+to|tell|message|text|msg|send(?:\s+to)?)\s+([a-z'+\d][a-z'\d ()+-]*?)\s+(?:say(?:ing)?[:\s]+)?(.+)/i);
   if (rm) {
     const c = matchContact(rm[1], contacts);
     if (c) return { type: 'reply', contactId: c.id, contactName: c.name, text: rm[2] };

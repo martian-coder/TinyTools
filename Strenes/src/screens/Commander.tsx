@@ -2,7 +2,8 @@ import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { Send, ChevronRight, Loader2 } from 'lucide-react';
 import { useSiftStore } from '../store';
 import { parseIntent, formatUntil } from '../moderation/commander';
-import { proxyQuotaExceeded, localOnlyChosen, chooseLocalOnly, FREE_PROXY_LIMIT } from '../moderation/cloud';
+import { proxyQuotaExceeded, localOnlyChosen, chooseLocalOnly, FREE_PROXY_LIMIT, providerLabel } from '../moderation/cloud';
+import { sendMessage as backendSendMessage } from '../services/backend';
 import { createMeeting } from '../services/calendar';
 import { describeSender, priorityFor } from '../moderation/insights';
 import { PROFILES, CIRCLE_META, CIRCLE_ORDER, type Circle, type ProfileId } from '../moderation/profiles';
@@ -414,9 +415,18 @@ export function Commander() {
 
     switch (intent.type) {
       case 'reply': {
-        sendMessage(intent.contactId, intent.text);
+        const localId = sendMessage(intent.contactId, intent.text);
+        // Actually deliver it over the relay (previously only stored locally,
+        // so replies never reached the number).
+        const uid = useSiftStore.getState().currentUserId;
+        if (uid && navigator.onLine) {
+          try {
+            const relayId = await backendSendMessage(uid, intent.contactId, intent.text);
+            if (relayId) useSiftStore.getState().setMessageRelayId(localId, relayId);
+          } catch { /* offline — stays local, resends manually */ }
+        }
         responses.push({
-          text: `Sent to ${intent.contactName} ✓`,
+          text: `Sent to ${intent.contactName} ✓  “${intent.text}”`,
           chips: [{ label: `Open ${intent.contactName}`, action: 'open', contactId: intent.contactId }],
         });
         break;
@@ -1040,7 +1050,7 @@ export function Commander() {
             value={draft}
             onChange={e => setDraft(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && !busy && handleSend()}
-            placeholder="Mute Maya 4 hrs, no rants today, reply Alex…"
+            placeholder="reply +919876543210 say running late, mute Maya 4 hrs…"
             className="flex-1 bg-transparent px-3 text-sm text-main outline-none placeholder:dim"
             disabled={busy}
           />
@@ -1057,6 +1067,9 @@ export function Commander() {
           >
             <Send size={16} color="#fff" />
           </button>
+        </div>
+        <div className="text-center text-[10px] dim mt-1">
+          AI engine: {providerLabel(settings.aiReplies?.anthropicKey ?? '') || 'On-device (Gemini Nano / rules)'}
         </div>
       </div>
     </>
