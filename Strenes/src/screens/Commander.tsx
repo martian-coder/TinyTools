@@ -4,6 +4,8 @@ import { useSiftStore } from '../store';
 import { parseIntent, formatUntil } from '../moderation/commander';
 import { proxyQuotaExceeded, localOnlyChosen, chooseLocalOnly, FREE_PROXY_LIMIT, providerLabel } from '../moderation/cloud';
 import { sendMessage as backendSendMessage } from '../services/backend';
+import { promptCloud } from '../moderation/cloud';
+import { promptNano } from '../moderation/nano';
 import { createMeeting } from '../services/calendar';
 import { describeSender, priorityFor } from '../moderation/insights';
 import { PROFILES, CIRCLE_META, CIRCLE_ORDER, type Circle, type ProfileId } from '../moderation/profiles';
@@ -912,8 +914,17 @@ export function Commander() {
       }
 
       default: {
+        // Perch-style answer floor: never dead-end. Talk it through with the
+        // AI chain (cloud → on-device); if no AI, give a helpful nudge.
+        const q = (intent as { query?: string }).query || text;
+        const sys = "You are Commander, the friendly assistant inside Strenes, a private messaging app with an on-device AI filter. Answer the user's message helpfully and briefly (max 60 words, plain text). You can do: send replies (\"reply <name/number> <text>\"), mute/unmute people, set filter rules in plain words, show held messages, summaries, reminders. If they seem to want one of those, tell them the exact phrase to type. Otherwise just answer conversationally.";
+        const apiKey2 = settings.aiReplies?.anthropicKey ?? '';
+        let reply: string | null = null;
+        try { reply = await promptCloud(sys, q, apiKey2, { maxTokens: 200 }); } catch { /* fall through */ }
+        if (!reply?.trim()) { try { reply = await promptNano(sys, q); } catch { /* fall through */ } }
         responses.push({
-          text: "I didn't catch that. You can state any rule in your own words — 'hold anything asking me for money', 'mute Jay for 4 hours' — or try 'reply Maya yes', 'my rules', 'help'.",
+          text: reply?.trim() ||
+            "Tell me what you'd like — e.g. \"reply Maya running late\", \"mute Jay 4 hours\", \"hold anything asking for money\", \"show held\", or \"help\".",
         });
       }
     }
