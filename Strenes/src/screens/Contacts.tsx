@@ -32,10 +32,13 @@ export function Contacts() {
     if (!currentUserId) return;
     const unsubscribe = onContactsChange(currentUserId, (contacts) => {
       setBackendContacts(contacts);
+      const local = new Set(useSiftStore.getState().contacts.map(c => c.id));
       for (const [id, c] of Object.entries<any>(contacts)) {
         upsertContact({
           id,
-          name: c.displayName || c.phone || 'Unknown',
+          // The saved name belongs to THIS user's view — the other person's
+          // registered name is only the default for contacts we don't have yet.
+          name: local.has(id) ? '' : (c.displayName || c.phone || 'Unknown'),
           phone: c.phone,
           online: c.online,
         });
