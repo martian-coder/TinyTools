@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useSiftStore } from '../store';
-import { phoneHasPin, signInWithPin, createUserProfile } from '../services/backend';
+import { phoneHasPin, signInWithPin, createUserProfile, getUserProfile } from '../services/backend';
 import { runDiagnostics, type DiagStep } from '../services/diagnostics';
 import type { BackendAuthUser } from '../services/backend';
 import { isValidPhone, normalizePhone } from '../utils/phone';
@@ -86,9 +86,17 @@ export function Auth() {
         setAuthUser(user);
         setStep('profile');
       } else {
-        // Returning user: account + history reclaimed server-side; go in.
-        setCurrentUser(user.userId, user.phone);
-        setScreen('chats');
+        // Returning user: account + history reclaimed server-side. If the
+        // account never got a real name (older builds skipped this), ask now.
+        const prof = await getUserProfile(user.userId).catch(() => null);
+        const name = prof?.displayName?.trim() ?? '';
+        if (!name || name === user.phone || name === prof?.phone) {
+          setAuthUser(user);
+          setStep('profile');
+        } else {
+          setCurrentUser(user.userId, user.phone);
+          setScreen('chats');
+        }
       }
     } catch (err: any) {
       setError(err.message || 'Sign-in failed');

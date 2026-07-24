@@ -319,8 +319,8 @@ export function Conversation() {
           <div className="flex items-center gap-2 mt-1 w-full">
             <input value={nameEdit} onChange={e => setNameEdit(e.target.value)}
               className="flex-1 text-center font-semibold text-main bg-transparent border-b border-[var(--border)] py-1 focus:outline-none focus:border-[var(--accent)]" />
-            <button onClick={() => { upsertContact({ id: contact.id, name: nameEdit.trim() || contact.name, phone: contact.phone }); }}
-              className="p-1.5 rounded-lg bg-[var(--accent)] text-white"><Check size={16} /></button>
+            <button onClick={() => { upsertContact({ id: contact.id, name: nameEdit.trim() || contact.name, phone: contact.phone }); useSiftStore.getState().setBanner('✓ Name saved'); }}
+              className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-[var(--accent)] text-white text-sm font-semibold"><Check size={15} /> Save</button>
           </div>
           <div className="text-sm dim">{contact.phone || 'no number'}</div>
         </div>

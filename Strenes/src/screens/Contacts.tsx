@@ -13,6 +13,7 @@ export function Contacts() {
   const removeContact = useSiftStore(s => s.removeContact);
   const setBlocked = useSiftStore(s => s.setBlocked);
   const contacts = useSiftStore(s => s.contacts);
+  const setBanner = useSiftStore(s => s.setBanner);
   const [searchPhone, setSearchPhone] = useState('');
   const [searchResult, setSearchResult] = useState<any>(null);
   const [searchDone, setSearchDone] = useState(false);
@@ -92,20 +93,25 @@ export function Contacts() {
 
   const handleAddContact = async (contactUser: any) => {
     if (!currentUserId) return;
+    const finalName = newName.trim() || contactUser.displayName || contactUser.phone;
 
     try {
-      await addContact(currentUserId, contactUser.id, contactUser.phone);
+      // Already a contact? Just save the (new) name — backend row exists.
+      if (!contacts.find(c => c.id === contactUser.id)) {
+        await addContact(currentUserId, contactUser.id, contactUser.phone);
+      }
       upsertContact({
         id: contactUser.id,
-        name: newName.trim() || contactUser.displayName || contactUser.phone,
+        name: finalName,
         phone: contactUser.phone,
         online: contactUser.online,
       });
       setSearchPhone('');
       setSearchResult(null);
       setSearchDone(false);
-    } catch (err) {
-      console.error('Error adding contact:', err);
+      setBanner(`✓ ${finalName} saved to contacts`);
+    } catch (err: any) {
+      setSearchError(err?.message || 'Could not save contact — check your connection and try again.');
     }
   };
 
@@ -192,9 +198,10 @@ export function Contacts() {
                 />
                 <button
                   onClick={() => handleAddContact(searchResult)}
-                  className="p-2 bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-white rounded-lg"
+                  className="flex items-center gap-1.5 px-3 py-2 bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-white rounded-lg text-sm font-semibold"
                 >
-                  <UserPlus size={16} />
+                  <UserPlus size={15} />
+                  {contacts.find(c => c.id === searchResult.id) ? 'Save' : 'Add'}
                 </button>
               </div>
             </div>
