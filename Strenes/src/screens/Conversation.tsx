@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
-import { ArrowLeft, ShieldCheck, Send, Loader2, Lock, Clock, Phone, PhoneOff, Mic, MicOff, Volume2, VolumeX, Sparkles, Check, X, Brain, AlertCircle, RefreshCw, Wifi, MessageSquare, Timer } from 'lucide-react';
+import { ArrowLeft, ShieldCheck, Send, Loader2, Lock, Clock, Phone, PhoneOff, Mic, MicOff, Volume2, VolumeX, Sparkles, Check, X, Brain, AlertCircle, RefreshCw, Wifi, MessageSquare, Timer, Ban, Trash2 } from 'lucide-react';
 import { useSiftStore } from '../store';
 import { Avatar } from '../components/ui/Avatar';
 import { MessageWithLinks } from '../components/ui/MessageWithLinks';
@@ -36,6 +36,12 @@ export function Conversation() {
   const currentUserId        = useSiftStore(s => s.currentUserId);
   const setScreen            = useSiftStore(s => s.setScreen);
   const sendMessage          = useSiftStore(s => s.sendMessage);
+  const upsertContact        = useSiftStore(s => s.upsertContact);
+  const toggleTrusted        = useSiftStore(s => s.toggleTrusted);
+  const setBlocked           = useSiftStore(s => s.setBlocked);
+  const removeContact        = useSiftStore(s => s.removeContact);
+  const [showProfile, setShowProfile] = useState(false);
+  const [nameEdit, setNameEdit] = useState('');
   const sendOutgoingToReview = useSiftStore(s => s.sendOutgoingToReview);
   // Pull raw messages from store (stable reference via slice), then filter/sort in useMemo
   // to avoid returning new array references from the Zustand selector (causes infinite loop).
@@ -305,13 +311,44 @@ export function Conversation() {
 
   const sendDisabled = !draft.trim() || outgoing.kind === 'blocked' || outgoing.kind === 'checking' || (drunkWarning !== 'none' && settings.drunkMode.action === 'prevent');
 
+  const profileModal = showProfile && (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] p-4" onClick={() => setShowProfile(false)}>
+      <div className="bg-[var(--surface)] w-full max-w-sm rounded-2xl border border-[var(--border)] p-5" onClick={e => e.stopPropagation()}>
+        <div className="flex flex-col items-center gap-2 pb-4 border-b border-[var(--border)]">
+          <Avatar name={contact.name} grad={contact.grad} size={72} trusted={contact.trusted} />
+          <div className="flex items-center gap-2 mt-1 w-full">
+            <input value={nameEdit} onChange={e => setNameEdit(e.target.value)}
+              className="flex-1 text-center font-semibold text-main bg-transparent border-b border-[var(--border)] py-1 focus:outline-none focus:border-[var(--accent)]" />
+            <button onClick={() => { upsertContact({ id: contact.id, name: nameEdit.trim() || contact.name, phone: contact.phone }); }}
+              className="p-1.5 rounded-lg bg-[var(--accent)] text-white"><Check size={16} /></button>
+          </div>
+          <div className="text-sm dim">{contact.phone || 'no number'}</div>
+        </div>
+        <div className="grid grid-cols-3 gap-2 pt-4">
+          <button onClick={() => toggleTrusted(contact.id)} className="flex flex-col items-center gap-1 py-2 rounded-lg hover:bg-[var(--surface-hover)] text-main">
+            <ShieldCheck size={18} className={contact.trusted ? 'text-emerald-400' : ''} /><span className="text-xs">{contact.trusted ? 'Trusted' : 'Trust'}</span>
+          </button>
+          <button onClick={() => setBlocked(contact.id, !contact.blocked)} className="flex flex-col items-center gap-1 py-2 rounded-lg hover:bg-[var(--surface-hover)] text-amber-400">
+            <Ban size={18} /><span className="text-xs">{contact.blocked ? 'Unblock' : 'Block'}</span>
+          </button>
+          <button onClick={() => { if (confirm(`Remove ${contact.name}? This deletes the chat.`)) { removeContact(contact.id); setShowProfile(false); setScreen('chats'); } }}
+            className="flex flex-col items-center gap-1 py-2 rounded-lg hover:bg-[var(--surface-hover)] text-red-400">
+            <Trash2 size={18} /><span className="text-xs">Remove</span>
+          </button>
+        </div>
+        <button onClick={() => setShowProfile(false)} className="w-full mt-4 py-2 text-sm dim">Close</button>
+      </div>
+    </div>
+  );
+
   return (
     <>
+      {profileModal}
       {/* Header */}
       <div className="glass-h px-3 pb-3 flex items-center gap-3" style={{ paddingTop: 'calc(12px + env(safe-area-inset-top, 0px))' }}>
         <button onClick={() => setScreen('chats')} className="text-main"><ArrowLeft size={20} /></button>
-        <Avatar name={contact.name} grad={contact.grad} size={36} trusted={contact.trusted} />
-        <div className="flex-1">
+        <div onClick={() => { setNameEdit(contact.name); setShowProfile(true); }} className="cursor-pointer"><Avatar name={contact.name} grad={contact.grad} size={36} trusted={contact.trusted} /></div>
+        <div className="flex-1 cursor-pointer" onClick={() => { setNameEdit(contact.name); setShowProfile(true); }}>
           <div className="font-semibold text-main leading-tight">{contact.name}</div>
           {contact.trusted
             ? <div className="text-[11px] flex items-center gap-1 accent-t"><ShieldCheck size={11} /> Trusted · filters off</div>
