@@ -59,43 +59,50 @@ export function Onboarding() {
 
             <div className="space-y-4">
               <button
-                onClick={() => {
-                  setSelectedProvider('gemini-nano');
-                  setStep('theme');
-                }}
+                onClick={() => setSelectedProvider('gemini-nano')}
                 className={`w-full p-4 rounded-lg border-2 transition ${
                   selectedProvider === 'gemini-nano'
-                    ? 'border-[var(--accent)] bg-[var(--accent)]/10'
+                    ? 'border-[var(--accent)] bg-[var(--accent)]/10 ring-2 ring-[var(--accent)]'
                     : 'border-[var(--border)] bg-[var(--surface)]'
                 }`}
               >
-                <div className="text-left">
-                  <h3 className="text-lg font-semibold text-[var(--text)]">Google Gemini Nano (Recommended)</h3>
-                  <p className="text-sm text-[var(--text-secondary)]">
-                    Free, on-device, no account needed. Perfect for most users.
-                  </p>
+                <div className="text-left flex items-start justify-between gap-2">
+                  <div>
+                    <h3 className="text-lg font-semibold text-[var(--text)]">Google Gemini Nano (Recommended)</h3>
+                    <p className="text-sm text-[var(--text-secondary)]">
+                      Free, on-device, no account needed. Perfect for most users.
+                    </p>
+                  </div>
+                  {selectedProvider === 'gemini-nano' && <span className="text-[var(--accent)] text-xl leading-none">✓</span>}
                 </div>
               </button>
 
               <button
-                onClick={() => {
-                  setSelectedProvider('anthropic-claude');
-                  setStep('api-key');
-                }}
+                onClick={() => setSelectedProvider('anthropic-claude')}
                 className={`w-full p-4 rounded-lg border-2 transition ${
                   selectedProvider === 'anthropic-claude'
-                    ? 'border-[var(--accent2)] bg-[var(--accent2)]/10'
+                    ? 'border-[var(--accent2)] bg-[var(--accent2)]/10 ring-2 ring-[var(--accent2)]'
                     : 'border-[var(--border)] bg-[var(--surface)]'
                 }`}
               >
-                <div className="text-left">
-                  <h3 className="text-lg font-semibold text-[var(--text)]">Anthropic Claude (Premium)</h3>
-                  <p className="text-sm text-[var(--text-secondary)]">
-                    More sophisticated analysis. Requires API key and internet.
-                  </p>
+                <div className="text-left flex items-start justify-between gap-2">
+                  <div>
+                    <h3 className="text-lg font-semibold text-[var(--text)]">Anthropic Claude (Premium)</h3>
+                    <p className="text-sm text-[var(--text-secondary)]">
+                      More sophisticated analysis. Requires API key and internet.
+                    </p>
+                  </div>
+                  {selectedProvider === 'anthropic-claude' && <span className="text-[var(--accent2)] text-xl leading-none">✓</span>}
                 </div>
               </button>
             </div>
+
+            <button
+              onClick={() => setStep(selectedProvider === 'anthropic-claude' ? 'api-key' : 'theme')}
+              className="w-full px-4 py-3 bg-[var(--accent)] text-white rounded-lg font-semibold hover:bg-[var(--accent-hover)]"
+            >
+              Continue with {selectedProvider === 'gemini-nano' ? 'Gemini Nano' : 'Anthropic Claude'}
+            </button>
           </div>
         )}
 
@@ -150,14 +157,18 @@ export function Onboarding() {
               {Object.entries(THEMES).map(([name, _]) => (
                 <button
                   key={name}
-                  onClick={() => setSelectedTheme(name as any)}
-                  className={`p-3 rounded-lg border-2 transition text-left ${
+                  onClick={() => {
+                    setSelectedTheme(name as any);
+                    updateSettings({ theme: name as any }); // live preview of the choice
+                  }}
+                  className={`p-3 rounded-lg border-2 transition text-left flex items-center justify-between ${
                     selectedTheme === name
-                      ? 'border-[var(--accent)] bg-[var(--accent)]/10'
+                      ? 'border-[var(--accent)] bg-[var(--accent)]/10 ring-2 ring-[var(--accent)]'
                       : 'border-[var(--border)] bg-[var(--surface)]'
                   }`}
                 >
                   <div className="capitalize font-semibold text-[var(--text)]">{name}</div>
+                  {selectedTheme === name && <span className="text-[var(--accent)]">✓</span>}
                 </button>
               ))}
             </div>

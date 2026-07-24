@@ -214,6 +214,9 @@ export function Commander() {
   const forgetMemory      = useSiftStore(s => s.forgetMemory);
 
   const { msgs, addAI, addUser } = useChat();
+  // Live transcript for multi-turn AI chat (refs don't go stale in callbacks)
+  const historyRef = useRef<CmdMsg[]>([]);
+  useEffect(() => { historyRef.current = msgs; }, [msgs]);
   const [draft, setDraft]        = useState('');
   const [busy, setBusy]          = useState(false);
   const bottomRef                = useRef<HTMLDivElement>(null);
@@ -917,14 +920,21 @@ export function Commander() {
         // Perch-style answer floor: never dead-end. Talk it through with the
         // AI chain (cloud → on-device); if no AI, give a helpful nudge.
         const q = (intent as { query?: string }).query || text;
-        const sys = "You are Commander, the friendly assistant inside Strenes, a private messaging app with an on-device AI filter. Answer the user's message helpfully and briefly (max 60 words, plain text). You can do: send replies (\"reply <name/number> <text>\"), mute/unmute people, set filter rules in plain words, show held messages, summaries, reminders. If they seem to want one of those, tell them the exact phrase to type. Otherwise just answer conversationally.";
+        const sys = "You are Commander, the AI assistant inside Strenes, a private messaging app. You are a full general-purpose assistant: answer questions, explain things, look up facts from your knowledge, help draft messages, translate, do math, brainstorm — like a regular AI chat. Reply in plain text (no markdown), usually under 120 words unless the question needs more. You can also run app actions — send replies (\"reply <name/number> <text>\"), mute/unmute people, set filter rules in plain words, show held messages, summaries, reminders — mention the exact phrase only when the user seems to want one of those.";
+        // Include recent turns so follow-up questions work like a real chat
+        const hist = historyRef.current
+          .filter(m => m.text.trim() && !m.streaming)
+          .slice(-10)
+          .map(m => `${m.role === 'user' ? 'User' : 'Commander'}: ${m.text.slice(0, 300)}`)
+          .join('\n');
+        const prompt = hist ? `Conversation so far:\n${hist}\n\nUser: ${q}\n\nRespond as Commander.` : q;
         const apiKey2 = settings.aiReplies?.anthropicKey ?? '';
         let reply: string | null = null;
-        try { reply = await promptCloud(sys, q, apiKey2, { maxTokens: 200 }); } catch { /* fall through */ }
-        if (!reply?.trim()) { try { reply = await promptNano(sys, q); } catch { /* fall through */ } }
+        try { reply = await promptCloud(sys, prompt, apiKey2, { maxTokens: 400 }); } catch { /* fall through */ }
+        if (!reply?.trim()) { try { reply = await promptNano(sys, prompt); } catch { /* fall through */ } }
         responses.push({
           text: reply?.trim() ||
-            "Tell me what you'd like — e.g. \"reply Maya running late\", \"mute Jay 4 hours\", \"hold anything asking for money\", \"show held\", or \"help\".",
+            "I can chat about anything once an AI engine is available (check Settings → AI). Meanwhile I can run commands — e.g. \"reply Maya running late\", \"mute Jay 4 hours\", \"hold anything asking for money\", \"show held\", or \"help\".",
         });
       }
     }
@@ -1061,7 +1071,7 @@ export function Commander() {
             value={draft}
             onChange={e => setDraft(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && !busy && handleSend()}
-            placeholder="reply +919876543210 say running late, mute Maya 4 hrs…"
+            placeholder="Ask me anything, or: reply +91… say running late, mute Maya 4 hrs"
             className="flex-1 bg-transparent px-3 text-sm text-main outline-none placeholder:dim"
             disabled={busy}
           />
