@@ -60,7 +60,7 @@ export function Digest() {
   return (
     <>
       <DigestHeader />
-      <div className="flex-1 overflow-y-auto px-3 pb-28 no-bar">
+      <div className="flex-1 overflow-y-auto px-3 nav-pad no-bar">
         {threads.length === 0 ? (
           <Empty />
         ) : (

@@ -59,7 +59,7 @@ export function ChatList() {
         })}
       </div>
 
-      <div className="flex-1 overflow-y-auto px-3 pb-28 no-bar">
+      <div className="flex-1 overflow-y-auto px-3 nav-pad no-bar">
         {activeFolder === 'review' ? (
           <ReviewFolder held={held} dropped={dropped} contacts={contacts} revealed={revealed} setRevealed={setRevealed} onApprove={approveMessage} onReject={rejectMessage} />
         ) : threads.length === 0 ? (

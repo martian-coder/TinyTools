@@ -34,7 +34,7 @@ export function Settings() {
   return (
     <>
 
-      <div className="flex-1 overflow-y-auto px-3 pb-28 no-bar space-y-3 pt-1">
+      <div className="flex-1 overflow-y-auto px-3 nav-pad no-bar space-y-3 pt-1">
 
         {/* Civility */}
         <div className="glass p-4 space-y-3" style={{ borderRadius: 20 }}>

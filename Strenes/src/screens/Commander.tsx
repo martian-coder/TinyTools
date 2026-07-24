@@ -1055,7 +1055,7 @@ export function Commander() {
       {/* Input */}
       {/* The bottom nav is position:fixed — reserve its height so it never
           covers the input box. */}
-      <div className="px-3 pt-1" style={{ paddingBottom: 'calc(var(--nav-height) + 16px)' }}>
+      <div className="px-3 pt-1" style={{ paddingBottom: 'calc(var(--nav-clear) + 10px)' }}>
         <div className="glass2 flex items-center gap-2 p-1.5" style={{ borderRadius: 999 }}>
           <input
             value={draft}

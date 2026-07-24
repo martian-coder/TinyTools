@@ -139,7 +139,7 @@ export function Groups() {
         </button>
       </div>
 
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto nav-pad">
         {loading && (
           <div className="flex items-center justify-center py-12 text-sm dim">Loading…</div>
         )}
@@ -325,7 +325,7 @@ function GroupChat({ group }: { group: Group }) {
       </div>
 
       {/* Input */}
-      <div className="px-3 py-2.5 border-t border-[var(--border)] flex gap-2 items-end">
+      <div className="px-3 pt-2.5 border-t border-[var(--border)] flex gap-2 items-end" style={{ paddingBottom: 'calc(var(--nav-clear) + 10px)' }}>
         <div className="flex-1 flex items-center gap-2 px-3 py-2 rounded-2xl" style={{ background: 'var(--glass)' }}>
           <input
             className="flex-1 bg-transparent text-sm text-main outline-none placeholder:text-[var(--dim)]"

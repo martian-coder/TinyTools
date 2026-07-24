@@ -102,7 +102,7 @@ export function Simulator() {
 
   return (
     <>
-      <div className="flex-1 overflow-y-auto px-4 pb-28 no-bar space-y-4 pt-3">
+      <div className="flex-1 overflow-y-auto px-4 nav-pad no-bar space-y-4 pt-3">
         {/* Quick examples */}
         <div className="flex flex-wrap gap-1.5">
           {EXAMPLES.map(e => (

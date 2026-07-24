@@ -200,7 +200,7 @@ export function Contacts() {
       </div>
 
       {/* Contacts List — bottom padding clears the fixed nav pill */}
-      <div className="flex-1 overflow-y-auto" style={{ paddingBottom: 'calc(var(--nav-height) + 16px)' }}>
+      <div className="flex-1 overflow-y-auto nav-pad">
         {Object.entries(backendContacts).length > 0 || contacts.length > 0 ? (
           <div className="divide-y divide-[var(--border)]">
             {(() => {
