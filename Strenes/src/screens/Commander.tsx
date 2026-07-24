@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { Send, ChevronRight, Loader2 } from 'lucide-react';
 import { useSiftStore } from '../store';
 import { parseIntent, formatUntil } from '../moderation/commander';
-import { proxyQuotaExceeded, localOnlyChosen, chooseLocalOnly, FREE_PROXY_LIMIT, providerLabel } from '../moderation/cloud';
+import { proxyQuotaExceeded, localOnlyChosen, chooseLocalOnly, clearLocalOnly, FREE_PROXY_LIMIT, providerLabel, lastProxyError } from '../moderation/cloud';
 import { sendMessage as backendSendMessage } from '../services/backend';
 import { promptCloud } from '../moderation/cloud';
 import { promptNano } from '../moderation/nano';
@@ -920,6 +920,16 @@ export function Commander() {
         // Perch-style answer floor: never dead-end. Talk it through with the
         // AI chain (cloud → on-device); if no AI, give a helpful nudge.
         const q = (intent as { query?: string }).query || text;
+
+        // Escape hatch: turn the free managed AI back on after "on-device only"
+        if (/^use\s+(free|cloud|managed|strenes)\s*ai$/i.test(q.trim())) {
+          clearLocalOnly();
+          responses.push({ text: proxyQuotaExceeded()
+            ? `Free Strenes AI is back on, but your ${FREE_PROXY_LIMIT} free requests are used up — paste a free Gemini API key in Settings → AI to keep chatting.`
+            : '✅ Free Strenes AI is back on — ask me anything!' });
+          break;
+        }
+
         const sys = "You are Commander, the AI assistant inside Strenes, a private messaging app. You are a full general-purpose assistant: answer questions, explain things, look up facts from your knowledge, help draft messages, translate, do math, brainstorm — like a regular AI chat. Reply in plain text (no markdown), usually under 120 words unless the question needs more. You can also run app actions — send replies (\"reply <name/number> <text>\"), mute/unmute people, set filter rules in plain words, show held messages, summaries, reminders — mention the exact phrase only when the user seems to want one of those.";
         // Include recent turns so follow-up questions work like a real chat
         const hist = historyRef.current
@@ -932,10 +942,27 @@ export function Commander() {
         let reply: string | null = null;
         try { reply = await promptCloud(sys, prompt, apiKey2, { maxTokens: 400 }); } catch { /* fall through */ }
         if (!reply?.trim()) { try { reply = await promptNano(sys, prompt); } catch { /* fall through */ } }
-        responses.push({
-          text: reply?.trim() ||
-            "I can chat about anything once an AI engine is available (check Settings → AI). Meanwhile I can run commands — e.g. \"reply Maya running late\", \"mute Jay 4 hours\", \"hold anything asking for money\", \"show held\", or \"help\".",
-        });
+        if (reply?.trim()) {
+          responses.push({ text: reply.trim() });
+        } else {
+          // No AI answered — say exactly why, so the user can fix it.
+          const hasKey = !!apiKey2.trim();
+          let why: string;
+          let chips: Chip[] | undefined;
+          if (hasKey) {
+            why = "Your pasted API key didn't work just now (wrong key, no credit, or no internet). Check Settings → AI or your connection and try again.";
+            chips = [{ label: '⚙️ Open Settings', action: 'settings' }];
+          } else if (localOnlyChosen()) {
+            why = "You picked on-device-only AI earlier, and this phone's browser doesn't include an on-device model — so I can't free-chat right now. Say \"use free AI\" to switch back to Strenes AI, or paste a free Gemini API key in Settings → AI.";
+            chips = [{ label: '⚡ Use free AI', action: 'command', command: 'use free ai' }, { label: '⚙️ Open Settings', action: 'settings' }];
+          } else if (proxyQuotaExceeded()) {
+            why = `You've used all ${FREE_PROXY_LIMIT} free Strenes AI requests. Paste a free Gemini API key in Settings → AI (takes 2 min at aistudio.google.com) and chat continues unlimited.`;
+            chips = [{ label: '⚙️ Open Settings', action: 'settings' }];
+          } else {
+            why = `I couldn't reach the AI service (${lastProxyError || 'unknown error'}). Check your internet and try again — commands like "show held" or "mute Jay 2 hrs" still work offline.`;
+          }
+          responses.push({ text: why, chips });
+        }
       }
     }
 

@@ -27,7 +27,7 @@ export function proxyAvailable(): boolean {
 // FREE_PROXY_LIMIT successful calls; after that the app asks the user to
 // paste their own key (Settings) or continue fully on-device.
 
-export const FREE_PROXY_LIMIT = 20;
+export const FREE_PROXY_LIMIT = 100;
 const USES_KEY = '__strenes_proxy_uses';
 const LOCAL_ONLY_KEY = '__strenes_ai_local_only';
 
@@ -67,6 +67,28 @@ export function cloudAvailable(apiKey: string | undefined): boolean {
   return proxyAvailable() && !proxyQuotaExceeded() && !localOnlyChosen();
 }
 
+/** Why the last managed-proxy call failed (for user-facing diagnostics). */
+export let lastProxyError = '';
+
+async function callProxy(
+  bearer: string,
+  system: string,
+  user: string,
+  maxTokens: number,
+  timeoutMs: number,
+): Promise<Response> {
+  return fetch(`${SUPABASE_URL}/functions/v1/${AI_PROXY_FN}`, {
+    method: 'POST',
+    signal: AbortSignal.timeout(timeoutMs),
+    headers: {
+      'content-type': 'application/json',
+      apikey: SUPABASE_ANON_KEY,
+      authorization: `Bearer ${bearer}`,
+    },
+    body: JSON.stringify({ system, user, maxTokens }),
+  });
+}
+
 async function promptViaProxy(
   system: string,
   user: string,
@@ -83,20 +105,23 @@ async function promptViaProxy(
       if (data.session?.access_token) bearer = data.session.access_token;
     } catch { /* demo/local builds without a backend still work via anon key */ }
 
-    const res = await fetch(`${SUPABASE_URL}/functions/v1/${AI_PROXY_FN}`, {
-      method: 'POST',
-      signal: AbortSignal.timeout(timeoutMs),
-      headers: {
-        'content-type': 'application/json',
-        apikey: SUPABASE_ANON_KEY,
-        authorization: `Bearer ${bearer}`,
-      },
-      body: JSON.stringify({ system, user, maxTokens }),
-    });
-    if (!res.ok) return null;
+    let res = await callProxy(bearer, system, user, maxTokens, timeoutMs);
+    // A stale/rejected session token must not kill AI — the anon key is
+    // always valid for this project, so retry with it once.
+    if (!res.ok && (res.status === 401 || res.status === 403) && bearer !== SUPABASE_ANON_KEY) {
+      res = await callProxy(SUPABASE_ANON_KEY, system, user, maxTokens, timeoutMs);
+    }
+    if (!res.ok) {
+      lastProxyError = `AI service returned ${res.status}`;
+      return null;
+    }
     const data = await res.json() as { text?: string | null };
-    return data.text || null;
-  } catch {
+    if (!data.text) { lastProxyError = 'AI service sent an empty reply'; return null; }
+    lastProxyError = '';
+    return data.text;
+  } catch (e) {
+    lastProxyError = e instanceof Error && e.name === 'TimeoutError'
+      ? 'AI service timed out' : 'No connection to the AI service';
     return null;
   }
 }
