@@ -25,6 +25,12 @@ interface SiftState {
   pendingAsk: { messageId: string; text: string } | null;
   revealed: Record<string, boolean>;
   banner: string | null;
+  /** Commander's chat transcript, persisted so leaving and returning to the
+   * tab (which unmounts the screen) restores the conversation instead of
+   * re-greeting from scratch. Untyped here deliberately — Commander owns the
+   * message shape (id/role/text/chips); the store just stores and restores it. */
+  commanderLog: unknown[];
+  setCommanderLog: (log: unknown[]) => void;
 
   setCurrentUser: (userId: string, phone: string) => void;
   clearCurrentUser: () => void;
@@ -142,6 +148,8 @@ export const useSiftStore = create<SiftState>()(
       pendingAsk:       null,
       revealed:         {},
       banner:           null,
+      commanderLog:     [],
+      setCommanderLog: log => set({ commanderLog: log }),
 
       setCurrentUser: (userId, phone) => set({ currentUserId: userId, currentUserPhone: phone }),
       clearCurrentUser: () => set({ currentUserId: null, currentUserPhone: null }),
@@ -527,7 +535,7 @@ export const useSiftStore = create<SiftState>()(
       // Key bump ('sift-v3' → 'strenes-v1') deliberately resets every existing
       // install to the new fresh-start state on update.
       name: 'strenes-v1',
-      partialize: s => ({ contacts: s.contacts, messages: s.messages, settings: s.settings }),
+      partialize: s => ({ contacts: s.contacts, messages: s.messages, settings: s.settings, commanderLog: s.commanderLog }),
     }
   )
 );

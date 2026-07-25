@@ -41,7 +41,19 @@ const nid = () => `cm${++_id}`;
 // with a short typing-pause gap between each message.
 
 function useChat() {
-  const [msgs, setMsgs] = useState<CmdMsg[]>([]);
+  // Restore the last session's transcript so leaving this tab and coming
+  // back (which unmounts the screen) doesn't wipe the conversation and
+  // re-run the greeting from scratch.
+  const [msgs, setMsgs] = useState<CmdMsg[]>(() => {
+    const restored = useSiftStore.getState().commanderLog as CmdMsg[];
+    if (!Array.isArray(restored) || restored.length === 0) return [];
+    for (const m of restored) {
+      const n = parseInt(String(m.id).replace(/\D/g, ''), 10);
+      if (n > _id) _id = n;
+    }
+    // Nothing should still be "streaming" after a restore.
+    return restored.map(m => ({ ...m, streaming: false }));
+  });
   const streamRef  = useRef<{ id: string; words: string[] } | null>(null);
   const pendingRef = useRef<{ text: string; chips?: Chip[] }[]>([]);
   const pauseRef   = useRef(0); // ticks to wait before starting next
@@ -88,6 +100,12 @@ function useChat() {
     // Flush pending queue so the user message appears immediately after current bubble
     setMsgs(prev => [...prev, { id: nid(), role: 'user', text }]);
   }, []);
+
+  // Persist once a bubble finishes streaming — not on every ~42ms tick.
+  useEffect(() => {
+    if (msgs.some(m => m.streaming)) return;
+    useSiftStore.getState().setCommanderLog(msgs);
+  }, [msgs]);
 
   return { msgs, addAI, addUser };
 }
@@ -369,10 +387,13 @@ export function Commander() {
     addAI("Try: 'mute Maya for 4 hours', 'no rants today', 'summaries should be professional', 'reply Alex yes'.");
   }, [unread, heldMessages, addAI, settings]);
 
-  /* ── Briefing: one bubble per sender, only once on mount ── */
+  /* ── Briefing: one bubble per sender, only on a truly fresh start ──
+   * Skipped when a transcript was restored (msgs already non-empty on
+   * mount) — otherwise every visit to this tab re-greets from scratch. */
   useEffect(() => {
     if (briefedRef.current) return;
     briefedRef.current = true;
+    if (msgs.length > 0) return;
     doBriefing();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 

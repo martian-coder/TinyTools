@@ -114,7 +114,17 @@ export default function App() {
     }
     (async () => {
       try {
-        if (Capacitor.isNativePlatform()) await LocalNotifications.requestPermissions();
+        if (Capacitor.isNativePlatform()) {
+          await LocalNotifications.requestPermissions();
+          // Android 8+ silently drops any notification whose channelId
+          // doesn't exist yet — this channel must be created once before
+          // the first schedule() call, or every message notification
+          // fails invisibly (the schedule() catch below swallows it).
+          await LocalNotifications.createChannel({
+            id: 'messages', name: 'Messages', description: 'New message alerts',
+            importance: 4, visibility: 1,
+          });
+        }
         else if (typeof Notification !== 'undefined' && Notification.permission === 'default') await Notification.requestPermission();
       } catch { /* no notification API */ }
     })();

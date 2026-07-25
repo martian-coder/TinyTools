@@ -44,7 +44,8 @@ export function ChatList() {
     return ids.map(id => {
       const cm = messages.filter(m => m.contactId === id);
       const last = [...cm].reverse().find(m => m.status === 'delivered' || m.dir === 'out');
-      return { id, c: cById(id), last };
+      const unread = cm.filter(m => m.dir === 'in' && m.status === 'delivered' && !m.readReceiptSent).length;
+      return { id, c: cById(id), last, unread };
     });
   })();
 
@@ -77,7 +78,7 @@ export function ChatList() {
           <EmptyState icon={Inbox} title="Nothing here yet" body="Messages sorted to this folder land here. Try the Test tab." />
         ) : (
           <div className="space-y-2 pt-1">
-            {threads.map(({ id, c, last }, i) => (
+            {threads.map(({ id, c, last, unread }, i) => (
               <button
                 key={id}
                 onClick={() => { if (longPressFiredRef.current) { longPressFiredRef.current = false; return; } openConversation(id); }}
@@ -93,10 +94,10 @@ export function ChatList() {
                 </span>
                 <div className="min-w-0 flex-1">
                   <div className="flex justify-between items-baseline gap-2">
-                    <span className="font-semibold text-main truncate">{c?.name}</span>
+                    <span className={`truncate ${unread > 0 ? 'font-bold text-main' : 'font-semibold text-main'}`}>{c?.name}</span>
                     <span className="text-[11px] dim shrink-0">{last?.time}</span>
                   </div>
-                  <div className="text-sm dim truncate flex items-center gap-1">
+                  <div className={`text-sm truncate flex items-center gap-1 ${unread > 0 ? 'text-main font-medium' : 'dim'}`}>
                     {/* Last outgoing message carries its receipt into the inbox row */}
                     {last?.dir === 'out' && (
                       last.receipt === 'read'
@@ -110,7 +111,16 @@ export function ChatList() {
                     <span className="truncate">{last?.text}</span>
                   </div>
                 </div>
-                <ChevronRight size={16} className="dim shrink-0" />
+                {unread > 0 ? (
+                  <span
+                    className="shrink-0 flex items-center justify-center text-[11px] font-bold text-white"
+                    style={{ minWidth: 20, height: 20, borderRadius: 999, background: 'var(--accent)', padding: '0 6px' }}
+                  >
+                    {unread > 99 ? '99+' : unread}
+                  </span>
+                ) : (
+                  <ChevronRight size={16} className="dim shrink-0" />
+                )}
               </button>
             ))}
           </div>

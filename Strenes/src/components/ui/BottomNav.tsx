@@ -15,6 +15,9 @@ export function BottomNav() {
   const activeScreen = useSiftStore(s => s.activeScreen);
   const setScreen    = useSiftStore(s => s.setScreen);
   const reviewCount  = useSiftStore(s => s.messages.filter(m => m.status === 'held').length);
+  // Delivered messages the user hasn't opened that chat to see yet.
+  const unreadCount  = useSiftStore(s => s.messages.filter(m => m.dir === 'in' && m.status === 'delivered' && !m.readReceiptSent).length);
+  const chatsBadge   = reviewCount + unreadCount;
 
   const activeTab: Tab =
     activeScreen === 'conversation' ? 'chats' :
@@ -31,9 +34,9 @@ export function BottomNav() {
           return (
             <button key={id} onClick={() => setScreen(id)} className={`nav-item ${active ? 'nav-on' : ''}`} style={{ position: 'relative' }} title={label}>
               <Icon size={19} />
-              {id === 'chats' && reviewCount > 0 && (
+              {id === 'chats' && chatsBadge > 0 && (
                 <span className="rev-dot" style={{ position: 'absolute', top: 4, right: 8 }}>
-                  {reviewCount}
+                  {chatsBadge > 99 ? '99+' : chatsBadge}
                 </span>
               )}
             </button>
