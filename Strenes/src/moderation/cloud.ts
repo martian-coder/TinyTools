@@ -27,7 +27,7 @@ export function proxyAvailable(): boolean {
 // FREE_PROXY_LIMIT successful calls; after that the app asks the user to
 // paste their own key (Settings) or continue fully on-device.
 
-export const FREE_PROXY_LIMIT = 20;
+export const FREE_PROXY_LIMIT = 40;
 const USES_KEY = '__strenes_proxy_uses';
 const LOCAL_ONLY_KEY = '__strenes_ai_local_only';
 
