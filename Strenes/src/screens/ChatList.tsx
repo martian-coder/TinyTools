@@ -1,6 +1,8 @@
+import { useState } from 'react';
 import { ShieldCheck, Inbox, Briefcase, Megaphone, Check, X, Eye, Forward, ChevronRight, AlertTriangle, UserCheck } from 'lucide-react';
 import { useSiftStore } from '../store';
 import { Avatar } from '../components/ui/Avatar';
+import { ContactProfileModal } from '../components/ContactProfileModal';
 import { CategoryBadge } from '../components/ui/Badge';
 import type { Folder, Contact, Message } from '../types';
 import { explainHold } from '../moderation/insights';
@@ -22,6 +24,7 @@ export function ChatList() {
   const rejectMessage     = useSiftStore(s => s.rejectMessage);
 
   const reviewCount = messages.filter(m => m.status === 'held').length;
+  const [profileId, setProfileId] = useState<string | null>(null);
 
   const cById = (id: string) => contacts.find(c => c.id === id);
 
@@ -59,6 +62,7 @@ export function ChatList() {
         })}
       </div>
 
+      {profileId && <ContactProfileModal contactId={profileId} onClose={() => setProfileId(null)} />}
       <div className="flex-1 overflow-y-auto px-3 nav-pad no-bar">
         {activeFolder === 'review' ? (
           <ReviewFolder held={held} dropped={dropped} contacts={contacts} revealed={revealed} setRevealed={setRevealed} onApprove={approveMessage} onReject={rejectMessage} />
@@ -73,7 +77,9 @@ export function ChatList() {
                 className="row glass w-full flex items-center gap-3 p-3 text-left pop"
                 style={{ animationDelay: `${i * 40}ms`, borderRadius: 18 }}
               >
-                <Avatar name={c?.name || '?'} grad={c?.grad || ''} size={44} trusted={c?.trusted} />
+                <span onClick={e => { e.stopPropagation(); setProfileId(id); }}>
+                  <Avatar name={c?.name || '?'} grad={c?.grad || ''} size={44} trusted={c?.trusted} />
+                </span>
                 <div className="min-w-0 flex-1">
                   <div className="flex justify-between items-baseline gap-2">
                     <span className="font-semibold text-main truncate">{c?.name}</span>

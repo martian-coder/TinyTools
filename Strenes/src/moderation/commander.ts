@@ -70,6 +70,7 @@ export interface ScheduleIntent {
   durationMinutes: number;  // default 30
 }
 export interface GuardianLinkIntent { type: 'guardian_link'; contactId: string; contactName: string }
+export interface RenameIntent { type: 'rename'; contactId: string; contactName: string; newName: string }
 export interface UnknownIntent { type: 'unknown'; query: string }
 
 export type Intent =
@@ -77,7 +78,7 @@ export type Intent =
   | ShowReviewIntent | SetRuleIntent | QueryIntent | DynamicRuleIntent
   | MuteIntent | UnmuteIntent | SummaryStyleIntent | SetProfileIntent | SetCircleIntent
   | RememberIntent | ForgetIntent | MemoryExportIntent | BusyWindowIntent | BusyOffIntent
-  | ScheduleIntent | GuardianLinkIntent | UnknownIntent;
+  | ScheduleIntent | GuardianLinkIntent | RenameIntent | UnknownIntent;
 
 /**
  * Parse a duration phrase out of a command. Returns the expiry timestamp and
@@ -206,6 +207,13 @@ function parsePrecise(text: string, contacts: Contact[]): Intent | null {
   if (guardM) {
     const c = matchContact(guardM[1], contacts);
     if (c) return { type: 'guardian_link', contactId: c.id, contactName: c.name };
+  }
+
+  // rename: "rename maya to mom", "save +919876543210 as ravi office"
+  const renameM = rest.match(/^(?:rename|save)\s+(.+?)\s+(?:to|as)\s+(.+)$/i);
+  if (renameM) {
+    const c = matchContact(renameM[1].trim(), contacts);
+    if (c) return { type: 'rename', contactId: c.id, contactName: c.name, newName: renameM[2].trim() };
   }
 
   // schedule: "schedule a meeting with maya tomorrow 3pm", "book a call friday noon"

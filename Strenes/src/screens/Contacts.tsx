@@ -1,9 +1,10 @@
 import { useState, useEffect, useRef } from 'react';
 import { useSiftStore } from '../store';
-import { UserPlus, Users, Search, X, Trash2, Ban, MessageCircle } from 'lucide-react';
+import { UserPlus, Users, Search, X, Trash2, Ban, MessageCircle, Pencil } from 'lucide-react';
 import { onUserSearch, addContact, onContactsChange } from '../services/backend';
 import { isSearchableNumber } from '../utils/phone';
 import { CIRCLE_META, type Circle } from '../moderation/profiles';
+import { ContactProfileModal } from '../components/ContactProfileModal';
 
 export function Contacts() {
   const currentUserId = useSiftStore(s => s.currentUserId);
@@ -15,6 +16,7 @@ export function Contacts() {
   const contacts = useSiftStore(s => s.contacts);
   const setBanner = useSiftStore(s => s.setBanner);
   const [searchPhone, setSearchPhone] = useState('');
+  const [profileId, setProfileId] = useState<string | null>(null);
   const [searchResult, setSearchResult] = useState<any>(null);
   const [searchDone, setSearchDone] = useState(false);
   const [searchError, setSearchError] = useState('');
@@ -145,6 +147,7 @@ export function Contacts() {
   return (
     <div className="flex flex-col h-full">
       {/* Screen title lives in the app header (App.tsx) — no local header. */}
+      {profileId && <ContactProfileModal contactId={profileId} onClose={() => setProfileId(null)} />}
 
       {/* Search */}
       <div className="px-4 py-3 space-y-2 border-b border-[var(--border)]">
@@ -218,7 +221,9 @@ export function Contacts() {
                 ? Object.entries(backendContacts)
                 : contacts.map(c => [c.id, { displayName: c.name, phone: c.phone, online: c.online }] as [string, any]);
               return contactList.map(([contactId, contactData]: [string, any]) => {
-              const contactCircle = contacts.find(c => c.id === contactId)?.circle;
+              const local = contacts.find(c => c.id === contactId);
+              const shownName = local?.name || contactData.displayName || contactData.phone || 'Unknown';
+              const contactCircle = local?.circle;
               const circleInfo = contactCircle ? CIRCLE_META[contactCircle] : null;
               return (
                 <button
@@ -233,7 +238,7 @@ export function Contacts() {
                   <div className="flex items-center justify-between">
                     <div className="flex-1">
                       <div className="font-medium text-[var(--text)]">
-                        {contactData.displayName || contactData.phone || 'Unknown'}
+                        {shownName}
                       </div>
                       <div className="text-xs text-[var(--text-secondary)]">
                         {contactData.phone}
@@ -247,6 +252,12 @@ export function Contacts() {
                         {circleInfo.emoji}
                       </div>
                     )}
+                    <span
+                      onClick={e => { e.stopPropagation(); setProfileId(contactId); }}
+                      className="ml-2 p-2 rounded-lg hover:bg-[var(--surface)] text-[var(--text-secondary)]"
+                    >
+                      <Pencil size={15} />
+                    </span>
                   </div>
                 </button>
               );

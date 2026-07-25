@@ -720,6 +720,12 @@ export function Commander() {
         break;
       }
 
+      case 'rename': {
+        useSiftStore.getState().upsertContact({ id: intent.contactId, name: intent.newName });
+        responses.push({ text: `✏️ Saved — "${intent.contactName}" is now "${intent.newName}" in your contacts. (Only you see this name.)` });
+        break;
+      }
+
       case 'guardian_link': {
         updateSettings({
           guardian: {
