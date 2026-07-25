@@ -54,6 +54,25 @@ export default function App() {
   const [showThemes, setShowThemes] = useState(false);
   const [authLoading, setAuthLoading] = useState(true);
 
+  // Drive .phone's height from the ACTUAL visible area (window.visualViewport)
+  // instead of trusting 100dvh alone. The native side resizes the WebView's
+  // own bounds for the on-screen keyboard (MainActivity's WindowInsets
+  // listener) — but that resize doesn't reliably reach Blink's viewport
+  // units on every WebView build, which is what left a stale, too-tall
+  // .phone with a dead gap between the composer and the keyboard. Measuring
+  // visualViewport directly is ground truth: it tracks the IME on every
+  // Chromium-based WebView version regardless of that native quirk.
+  useEffect(() => {
+    const vv = window.visualViewport;
+    if (!vv) return;
+    const apply = () => {
+      document.documentElement.style.setProperty('--app-vh', `${vv.height}px`);
+    };
+    apply();
+    vv.addEventListener('resize', apply);
+    return () => vv.removeEventListener('resize', apply);
+  }, []);
+
   // Listen to Firebase auth state
   useEffect(() => {
     // Check for demo mode first ('__strenes_demo' — the old '__demo_mode' flag

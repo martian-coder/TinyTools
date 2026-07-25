@@ -68,6 +68,10 @@ input, textarea { font-family: inherit; }
 /* ─── Phone frame ────────────────────────────────────────────────── */
 .phone {
   position: relative; width: 100%; height: 100vh; height: 100dvh;
+  /* --app-vh (set from window.visualViewport in App.tsx) tracks the on-screen
+     keyboard reliably; falls back to dvh until JS runs / on desktop preview,
+     where the @media rule below overrides height outright anyway. */
+  height: var(--app-vh, 100dvh);
   display: flex; flex-direction: column; overflow: hidden;
 }
 @media (min-width: 640px) {
