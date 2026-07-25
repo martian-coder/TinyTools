@@ -30,7 +30,8 @@ interface SiftState {
   clearCurrentUser: () => void;
   upsertContact: (contact: { id: string; name: string; phone?: string; online?: boolean }) => void;
   removeContact: (id: string) => void;
-  setBlocked: (id: string, blocked: boolean) => void;
+  setBlocked: (id: string, blocked: boolean, untilTs?: number) => void;
+  setDisappearMode: (id: string, mode: import('../types').DisappearingMessageMode | undefined) => void;
   activeCall: ActiveCall | null;
   setActiveCall: (call: ActiveCall | null) => void;
   setScreen: (s: Screen) => void;
@@ -104,19 +105,24 @@ function gradFor(id: string): string {
   return CONTACT_GRADS[h % CONTACT_GRADS.length];
 }
 
-function calcDisappearsAt(settings: UserSettings): number | undefined {
-  const dm = settings.disappearingMessages;
-  if (!dm.enabled || dm.defaultMode === 'off') return undefined;
+const DISAPPEAR_TTL_MS: Record<string, number> = {
+  onRead: 30_000,
+  '1m':   60_000,
+  '5m':   5 * 60_000,
+  '1h':   60 * 60_000,
+  '24h':  24 * 60 * 60_000,
+  '7d':   7 * 24 * 60 * 60_000,
+};
+
+/** A contact's own disappearMode overrides the app-wide default when set. */
+function calcDisappearsAt(settings: UserSettings, contact?: Contact): number | undefined {
+  const mode = contact?.disappearMode
+    ?? (settings.disappearingMessages.enabled ? settings.disappearingMessages.defaultMode : 'off');
+  if (mode === 'off') return undefined;
   const now = Date.now();
-  const MODES: Record<string, number> = {
-    onRead: 30_000,
-    '1m':   60_000,
-    '5m':   5 * 60_000,
-    '1h':   60 * 60_000,
-    '24h':  24 * 60 * 60_000,
-    custom: (dm.customMinutes ?? 5) * 60_000,
-  };
-  const ttl = MODES[dm.defaultMode];
+  const ttl = mode === 'custom'
+    ? (settings.disappearingMessages.customMinutes ?? 5) * 60_000
+    : DISAPPEAR_TTL_MS[mode];
   return ttl ? now + ttl : undefined;
 }
 
@@ -162,8 +168,11 @@ export const useSiftStore = create<SiftState>()(
         activeContactId: s.activeContactId === id ? null : s.activeContactId,
         activeScreen: s.activeContactId === id ? 'chats' : s.activeScreen,
       })),
-      setBlocked: (id, blocked) => set(s => ({
-        contacts: s.contacts.map(c => c.id === id ? { ...c, blocked } : c),
+      setBlocked: (id, blocked, untilTs) => set(s => ({
+        contacts: s.contacts.map(c => c.id === id ? { ...c, blocked, blockedUntil: blocked ? untilTs : undefined } : c),
+      })),
+      setDisappearMode: (id, mode) => set(s => ({
+        contacts: s.contacts.map(c => c.id === id ? { ...c, disappearMode: mode } : c),
       })),
       setScreen: s  => set({ activeScreen: s }),
       setFolder: f  => set({ activeFolder: f }),
@@ -178,7 +187,7 @@ export const useSiftStore = create<SiftState>()(
             id, contactId, text, dir: 'out',
             ts: Date.now(), time: nowTime(),
             folder: 'primary', status: 'delivered',
-            disappearsAt: calcDisappearsAt(s.settings),
+            disappearsAt: calcDisappearsAt(s.settings, s.contacts.find(c => c.id === contactId)),
             route,
           }],
         }));
@@ -244,13 +253,14 @@ export const useSiftStore = create<SiftState>()(
       })),
 
       receiveMessage: (contactId, text, route, verdict, meta) => {
-        const { settings } = get();
+        const { settings, contacts } = get();
         const newMsg: Message = {
           id: nid(), contactId, text, dir: 'in',
           ts: Date.now(), time: nowTime(),
           verdict, folder: route.folder, status: route.status,
           autoReply: route.autoReply,
-          disappearsAt: route.status === 'delivered' ? calcDisappearsAt(settings) : undefined,
+          disappearsAt: route.status === 'delivered'
+            ? calcDisappearsAt(settings, contacts.find(c => c.id === contactId)) : undefined,
           relayId: meta?.relayId,
         };
         set(s => {

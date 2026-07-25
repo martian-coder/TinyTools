@@ -1,18 +1,15 @@
 import { useState, useEffect, useRef } from 'react';
 import { useSiftStore } from '../store';
-import { UserPlus, Users, Search, X, Trash2, Ban, MessageCircle, Pencil } from 'lucide-react';
+import { UserPlus, Users, Search, Pencil } from 'lucide-react';
 import { onUserSearch, addContact, onContactsChange } from '../services/backend';
 import { isSearchableNumber } from '../utils/phone';
-import { CIRCLE_META, type Circle } from '../moderation/profiles';
+import { CIRCLE_META } from '../moderation/profiles';
 import { ContactProfileModal } from '../components/ContactProfileModal';
 
 export function Contacts() {
   const currentUserId = useSiftStore(s => s.currentUserId);
   const upsertContact = useSiftStore(s => s.upsertContact);
   const openConversation = useSiftStore(s => s.openConversation);
-  const setContactCircle = useSiftStore(s => s.setContactCircle);
-  const removeContact = useSiftStore(s => s.removeContact);
-  const setBlocked = useSiftStore(s => s.setBlocked);
   const contacts = useSiftStore(s => s.contacts);
   const setBanner = useSiftStore(s => s.setBanner);
   const [searchPhone, setSearchPhone] = useState('');
@@ -23,8 +20,7 @@ export function Contacts() {
   const [newName, setNewName] = useState('');
   const [loading, setLoading] = useState(false);
   const [backendContacts, setBackendContacts] = useState<Record<string, any>>({});
-  const [circleModalContactId, setCircleModalContactId] = useState<string | null>(null);
-  const [longPressActive, setLongPressActive] = useState(false);
+  const longPressFiredRef = useRef(false);
   const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const activeSearchRef = useRef<(() => void) | null>(null);
@@ -118,31 +114,22 @@ export function Contacts() {
   };
 
   const handleContactMouseDown = (contactId: string) => {
-    setLongPressActive(true);
+    longPressFiredRef.current = false;
     longPressTimerRef.current = setTimeout(() => {
-      setCircleModalContactId(contactId);
+      longPressFiredRef.current = true;
+      setProfileId(contactId);
     }, 500);
   };
 
-  const handleContactMouseUp = (contactId: string) => {
-    if (longPressTimerRef.current) {
-      clearTimeout(longPressTimerRef.current);
-    }
-    if (!longPressActive) return;
-    setLongPressActive(false);
-    if (circleModalContactId !== contactId) {
-      openConversation(contactId);
-    }
+  const handleContactMouseUp = () => {
+    if (longPressTimerRef.current) clearTimeout(longPressTimerRef.current);
   };
 
-  const handleSetCircle = (contactId: string, circle: Circle | undefined) => {
-    setContactCircle(contactId, circle);
-    setCircleModalContactId(null);
+  const handleContactClick = (contactId: string) => {
+    // A long-press already opened the options menu — don't also open the chat.
+    if (longPressFiredRef.current) { longPressFiredRef.current = false; return; }
+    openConversation(contactId);
   };
-
-  const contact = circleModalContactId
-    ? contacts.find(c => c.id === circleModalContactId)
-    : null;
 
   return (
     <div className="flex flex-col h-full">
@@ -229,10 +216,10 @@ export function Contacts() {
                 <button
                   key={contactId}
                   onMouseDown={() => handleContactMouseDown(contactId)}
-                  onMouseUp={() => handleContactMouseUp(contactId)}
+                  onMouseUp={handleContactMouseUp}
                   onTouchStart={() => handleContactMouseDown(contactId)}
-                  onTouchEnd={() => handleContactMouseUp(contactId)}
-                  onClick={() => openConversation(contactId)}
+                  onTouchEnd={handleContactMouseUp}
+                  onClick={() => handleContactClick(contactId)}
                   className="w-full text-left px-4 py-3 hover:bg-[var(--surface)] cursor-pointer"
                 >
                   <div className="flex items-center justify-between">
@@ -274,78 +261,6 @@ export function Contacts() {
           </div>
         )}
       </div>
-
-      {circleModalContactId && contact && (
-        <div
-          className="fixed inset-0 bg-black/40 flex items-end z-50"
-          onClick={() => setCircleModalContactId(null)}
-        >
-          <div
-            className="bg-[var(--surface)] w-full rounded-t-xl border border-[var(--border)] shadow-xl"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between p-4 border-b border-[var(--border)]">
-              <h3 className="font-semibold text-[var(--text)]">
-                {contact.name}
-              </h3>
-              <button
-                onClick={() => setCircleModalContactId(null)}
-                className="p-1 hover:bg-[var(--surface-hover)] rounded-lg"
-              >
-                <X size={20} className="text-[var(--text-secondary)]" />
-              </button>
-            </div>
-
-            <div className="p-4 space-y-2">
-              <div className="grid grid-cols-3 gap-2 pb-2 border-b border-[var(--border)] mb-2">
-                <button
-                  onClick={() => { openConversation(contact.id); setCircleModalContactId(null); }}
-                  className="flex flex-col items-center gap-1 py-2 rounded-lg hover:bg-[var(--surface-hover)] text-[var(--text)]"
-                >
-                  <MessageCircle size={18} /><span className="text-xs">Message</span>
-                </button>
-                <button
-                  onClick={() => { setBlocked(contact.id, !contact.blocked); setCircleModalContactId(null); }}
-                  className="flex flex-col items-center gap-1 py-2 rounded-lg hover:bg-[var(--surface-hover)] text-amber-400"
-                >
-                  <Ban size={18} /><span className="text-xs">{contact.blocked ? 'Unblock' : 'Block'}</span>
-                </button>
-                <button
-                  onClick={() => { if (confirm(`Remove ${contact.name}? This deletes the chat.`)) { removeContact(contact.id); setCircleModalContactId(null); } }}
-                  className="flex flex-col items-center gap-1 py-2 rounded-lg hover:bg-[var(--surface-hover)] text-red-400"
-                >
-                  <Trash2 size={18} /><span className="text-xs">Remove</span>
-                </button>
-              </div>
-              {(Object.entries(CIRCLE_META) as [Circle, typeof CIRCLE_META[Circle]][]).map(([circleId, meta]) => (
-                <button
-                  key={circleId}
-                  onClick={() => handleSetCircle(contact.id, circleId)}
-                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition ${
-                    contact.circle === circleId
-                      ? 'bg-[var(--accent)]/20 text-[var(--accent)]'
-                      : 'hover:bg-[var(--surface-hover)] text-[var(--text)]'
-                  }`}
-                >
-                  <span className="text-lg">{meta.emoji}</span>
-                  <span className="font-medium">{meta.label}</span>
-                </button>
-              ))}
-
-              <button
-                onClick={() => handleSetCircle(contact.id, undefined)}
-                className={`w-full px-4 py-3 rounded-lg transition ${
-                  !contact.circle
-                    ? 'bg-[var(--accent)]/20 text-[var(--accent)]'
-                    : 'hover:bg-[var(--surface-hover)] text-[var(--text)]'
-                }`}
-              >
-                <span className="font-medium">No circle</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

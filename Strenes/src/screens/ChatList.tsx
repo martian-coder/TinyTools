@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { ShieldCheck, Inbox, Briefcase, Megaphone, Check, X, Eye, Forward, ChevronRight, AlertTriangle, UserCheck } from 'lucide-react';
 import { useSiftStore } from '../store';
 import { Avatar } from '../components/ui/Avatar';
@@ -25,6 +25,13 @@ export function ChatList() {
 
   const reviewCount = messages.filter(m => m.status === 'held').length;
   const [profileId, setProfileId] = useState<string | null>(null);
+  const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const longPressFiredRef = useRef(false);
+  const startLongPress = (id: string) => {
+    longPressFiredRef.current = false;
+    longPressTimerRef.current = setTimeout(() => { longPressFiredRef.current = true; setProfileId(id); }, 500);
+  };
+  const endLongPress = () => { if (longPressTimerRef.current) clearTimeout(longPressTimerRef.current); };
 
   const cById = (id: string) => contacts.find(c => c.id === id);
 
@@ -73,7 +80,11 @@ export function ChatList() {
             {threads.map(({ id, c, last }, i) => (
               <button
                 key={id}
-                onClick={() => openConversation(id)}
+                onClick={() => { if (longPressFiredRef.current) { longPressFiredRef.current = false; return; } openConversation(id); }}
+                onMouseDown={() => startLongPress(id)}
+                onMouseUp={endLongPress}
+                onTouchStart={() => startLongPress(id)}
+                onTouchEnd={endLongPress}
                 className="row glass w-full flex items-center gap-3 p-3 text-left pop"
                 style={{ animationDelay: `${i * 40}ms`, borderRadius: 18 }}
               >

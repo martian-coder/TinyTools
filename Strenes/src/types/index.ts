@@ -3,7 +3,7 @@ export type Category = 'clean' | 'abusive' | 'spam' | 'business' | 'promo';
 export type BlockAction = 'review' | 'silentDrop' | 'askPerMessage';
 export type MessageRoute = 'ip' | 'sms' | 'queued';
 export type ThemeName = 'aurora' | 'sunset' | 'noir' | 'daylight' | 'terminal';
-export type DisappearingMessageMode = 'off' | 'onRead' | '1m' | '5m' | '1h' | '24h' | 'custom';
+export type DisappearingMessageMode = 'off' | 'onRead' | '1m' | '5m' | '1h' | '24h' | '7d' | 'custom';
 export type MessageTone = 'polite' | 'neutral' | 'assertive' | 'aggressive' | 'harsh';
 export type DrunkModeAction = 'prevent' | 'warn';
 
@@ -63,6 +63,10 @@ export interface Contact {
   name: string;
   trusted: boolean;
   blocked?: boolean;
+  /** Temp-block expiry (ms epoch). Present only for a timed block; absent = permanent when blocked=true. */
+  blockedUntil?: number;
+  /** Per-contact disappearing-messages override. Unset = follow the app-wide default. */
+  disappearMode?: DisappearingMessageMode;
   grad: string;
   isEmergency?: boolean;
   /** E.164 phone number, present for contacts synced from the backend. */

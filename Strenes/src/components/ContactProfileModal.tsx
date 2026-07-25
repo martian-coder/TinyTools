@@ -1,23 +1,52 @@
 import { useState } from 'react';
 import { useSiftStore } from '../store';
 import { Avatar } from './ui/Avatar';
-import { Check, ShieldCheck, Ban, Trash2 } from 'lucide-react';
+import { CIRCLE_META, type Circle } from '../moderation/profiles';
+import type { DisappearingMessageMode } from '../types';
+import { Check, ShieldCheck, Ban, Trash2, MessageCircle, Timer } from 'lucide-react';
+
+const BLOCK_OPTIONS: { label: string; hours?: number }[] = [
+  { label: '24 hours', hours: 24 },
+  { label: '7 days', hours: 24 * 7 },
+  { label: 'Forever' },
+];
+
+const DISAPPEAR_OPTIONS: { label: string; mode: DisappearingMessageMode | undefined }[] = [
+  { label: 'App default', mode: undefined },
+  { label: 'Off', mode: 'off' },
+  { label: '24 hours', mode: '24h' },
+  { label: '7 days', mode: '7d' },
+];
+
+function fmtRemaining(ts: number): string {
+  const ms = ts - Date.now();
+  if (ms <= 0) return 'expiring…';
+  const hrs = Math.ceil(ms / 3_600_000);
+  return hrs < 24 ? `${hrs}h left` : `${Math.ceil(hrs / 24)}d left`;
+}
 
 /**
- * The ONE contact profile dialog — openable from the inbox, Contacts,
- * the chat header, or Commander. Edit the name you call this person
- * (saved only on your device), trust, block, or remove them.
+ * The ONE contact long-press / options menu — openable from the inbox,
+ * Contacts, the chat header, or Commander. Rename (saved only on this
+ * device), message, trust, circle, temp/permanent block, per-chat
+ * disappearing messages, or remove.
  */
 export function ContactProfileModal({ contactId, onClose }: { contactId: string; onClose: () => void }) {
   const contact = useSiftStore(s => s.contacts.find(c => c.id === contactId));
   const upsertContact = useSiftStore(s => s.upsertContact);
   const toggleTrusted = useSiftStore(s => s.toggleTrusted);
   const setBlocked = useSiftStore(s => s.setBlocked);
+  const setDisappearMode = useSiftStore(s => s.setDisappearMode);
+  const setContactCircle = useSiftStore(s => s.setContactCircle);
   const removeContact = useSiftStore(s => s.removeContact);
+  const openConversation = useSiftStore(s => s.openConversation);
   const setBanner = useSiftStore(s => s.setBanner);
   const [nameEdit, setNameEdit] = useState(contact?.name ?? '');
+  const [showBlockPicker, setShowBlockPicker] = useState(false);
 
   if (!contact) return null;
+
+  const isBlocked = !!contact.blocked && (!contact.blockedUntil || contact.blockedUntil > Date.now());
 
   const save = () => {
     upsertContact({ id: contact.id, name: nameEdit.trim() || contact.name, phone: contact.phone });
@@ -25,9 +54,15 @@ export function ContactProfileModal({ contactId, onClose }: { contactId: string;
     onClose();
   };
 
+  const block = (hours?: number) => {
+    setBlocked(contact.id, true, hours ? Date.now() + hours * 3_600_000 : undefined);
+    setShowBlockPicker(false);
+    setBanner(hours ? `🚫 Blocked for ${hours < 24 ? hours + 'h' : hours / 24 + 'd'}` : '🚫 Blocked');
+  };
+
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] p-4" onClick={onClose}>
-      <div className="bg-[var(--surface)] w-full max-w-sm rounded-2xl border border-[var(--border)] p-5" onClick={e => e.stopPropagation()}>
+      <div className="bg-[var(--surface)] w-full max-w-sm rounded-2xl border border-[var(--border)] p-5 max-h-[85vh] overflow-y-auto no-bar" onClick={e => e.stopPropagation()}>
         <div className="flex flex-col items-center gap-2 pb-4 border-b border-[var(--border)]">
           <Avatar name={contact.name} grad={contact.grad} size={72} trusted={contact.trusted} />
           <div className="flex items-center gap-2 mt-1 w-full">
@@ -43,20 +78,79 @@ export function ContactProfileModal({ contactId, onClose }: { contactId: string;
             </button>
           </div>
           <div className="text-sm dim">{contact.phone || 'no number'}</div>
+          {isBlocked && contact.blockedUntil && (
+            <div className="text-xs text-amber-400">Blocked · {fmtRemaining(contact.blockedUntil)}</div>
+          )}
         </div>
+
         <div className="grid grid-cols-3 gap-2 pt-4">
+          <button onClick={() => { openConversation(contact.id); onClose(); }} className="flex flex-col items-center gap-1 py-2 rounded-lg hover:bg-[var(--surface-hover)] text-main">
+            <MessageCircle size={18} /><span className="text-xs">Message</span>
+          </button>
           <button onClick={() => toggleTrusted(contact.id)} className="flex flex-col items-center gap-1 py-2 rounded-lg hover:bg-[var(--surface-hover)] text-main">
             <ShieldCheck size={18} className={contact.trusted ? 'text-emerald-400' : ''} /><span className="text-xs">{contact.trusted ? 'Trusted' : 'Trust'}</span>
           </button>
-          <button onClick={() => setBlocked(contact.id, !contact.blocked)} className="flex flex-col items-center gap-1 py-2 rounded-lg hover:bg-[var(--surface-hover)] text-amber-400">
-            <Ban size={18} /><span className="text-xs">{contact.blocked ? 'Unblock' : 'Block'}</span>
-          </button>
-          <button onClick={() => { if (confirm(`Remove ${contact.name}? This deletes the chat.`)) { removeContact(contact.id); onClose(); } }}
-            className="flex flex-col items-center gap-1 py-2 rounded-lg hover:bg-[var(--surface-hover)] text-red-400">
-            <Trash2 size={18} /><span className="text-xs">Remove</span>
+          <button
+            onClick={() => {
+              if (isBlocked) { setBlocked(contact.id, false); setBanner('✓ Unblocked'); }
+              else setShowBlockPicker(v => !v);
+            }}
+            className="flex flex-col items-center gap-1 py-2 rounded-lg hover:bg-[var(--surface-hover)] text-amber-400"
+          >
+            <Ban size={18} /><span className="text-xs">{isBlocked ? 'Unblock' : 'Block'}</span>
           </button>
         </div>
-        <button onClick={onClose} className="w-full mt-4 py-2 text-sm dim">Close</button>
+
+        {showBlockPicker && !isBlocked && (
+          <div className="flex gap-2 mt-2 pb-1">
+            {BLOCK_OPTIONS.map(o => (
+              <button key={o.label} onClick={() => block(o.hours)}
+                className="flex-1 py-2 rounded-lg text-xs font-medium bg-[var(--surface-hover)] text-main hover:bg-amber-400/20">
+                {o.label}
+              </button>
+            ))}
+          </div>
+        )}
+
+        <div className="pt-4">
+          <div className="text-xs dim mb-1.5">Circle</div>
+          <div className="grid grid-cols-4 gap-2">
+            {(Object.entries(CIRCLE_META) as [Circle, typeof CIRCLE_META[Circle]][]).map(([id, meta]) => (
+              <button
+                key={id}
+                onClick={() => setContactCircle(contact.id, contact.circle === id ? undefined : id)}
+                className={`flex flex-col items-center gap-1 py-2 rounded-lg text-xs ${
+                  contact.circle === id ? 'bg-[var(--accent)]/20 text-[var(--accent)]' : 'hover:bg-[var(--surface-hover)] text-main'
+                }`}
+              >
+                <span className="text-base">{meta.emoji}</span>{meta.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="pt-4">
+          <div className="text-xs dim mb-1.5 flex items-center gap-1"><Timer size={11} /> Disappearing messages (this chat)</div>
+          <div className="grid grid-cols-4 gap-1.5">
+            {DISAPPEAR_OPTIONS.map(o => (
+              <button
+                key={o.label}
+                onClick={() => setDisappearMode(contact.id, o.mode)}
+                className={`py-2 rounded-lg text-[11px] font-medium ${
+                  contact.disappearMode === o.mode ? 'bg-[var(--accent)]/20 text-[var(--accent)]' : 'hover:bg-[var(--surface-hover)] text-main'
+                }`}
+              >
+                {o.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <button onClick={() => { if (confirm(`Remove ${contact.name}? This deletes the chat.`)) { removeContact(contact.id); onClose(); } }}
+          className="w-full mt-4 flex items-center justify-center gap-1.5 py-2 rounded-lg hover:bg-red-500/10 text-red-400 text-sm font-medium">
+          <Trash2 size={15} /> Remove contact
+        </button>
+        <button onClick={onClose} className="w-full mt-2 py-2 text-sm dim">Close</button>
       </div>
     </div>
   );

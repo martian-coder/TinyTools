@@ -148,8 +148,16 @@ export default function App() {
         return;
       }
 
-      // Blocked sender → ignore entirely, and never receipt back.
-      if (state.contacts.find(c => c.id === msg.from)?.blocked) return;
+      // Blocked sender → ignore entirely, and never receipt back. A temp
+      // block that has expired self-heals here instead of staying stuck.
+      const blockedContact = state.contacts.find(c => c.id === msg.from);
+      if (blockedContact?.blocked) {
+        if (blockedContact.blockedUntil && blockedContact.blockedUntil <= Date.now()) {
+          state.setBlocked(msg.from, false);
+        } else {
+          return;
+        }
+      }
 
       // Dedupe: the relay can redeliver; a message already stored is skipped.
       if (msg.id && state.messages.some(m => m.relayId === msg.id)) return;
