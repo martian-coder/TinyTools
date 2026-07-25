@@ -27,7 +27,7 @@ export function proxyAvailable(): boolean {
 // FREE_PROXY_LIMIT successful calls; after that the app asks the user to
 // paste their own key (Settings) or continue fully on-device.
 
-export const FREE_PROXY_LIMIT = 100;
+export const FREE_PROXY_LIMIT = 20;
 const USES_KEY = '__strenes_proxy_uses';
 const LOCAL_ONLY_KEY = '__strenes_ai_local_only';
 
@@ -147,6 +147,17 @@ export function providerLabel(apiKey: string): string {
 interface CloudOpts {
   maxTokens?: number;
   timeoutMs?: number;
+  /**
+   * Whether this call spends the user-visible free-quota counter (the one
+   * that triggers "add your API key" in Commander). Default true.
+   * Background/automatic calls the user never asked for — message
+   * moderation, reply suggestions, rule checks — pass false so they don't
+   * silently eat the quota reserved for Commander chat (mirrors Perch,
+   * which only ever spends its quota on an explicit parent question).
+   * The edge function's own per-caller rate limit is the real cost guard
+   * either way; this flag only controls the client-side UX counter.
+   */
+  countsTowardQuota?: boolean;
 }
 
 /**
@@ -161,15 +172,18 @@ export async function promptCloud(
   opts: CloudOpts = {},
 ): Promise<string | null> {
   const key = apiKey.trim();
-  const { maxTokens = 300, timeoutMs = 10_000 } = opts;
+  const { maxTokens = 300, timeoutMs = 10_000, countsTowardQuota = true } = opts;
 
   // No key pasted → managed server-side proxy (key never ships to clients).
   // Free quota spent or the user opted for on-device AI → return null so
   // every caller falls through to Gemini Nano / heuristics.
   if (!key) {
-    if (!proxyAvailable() || proxyQuotaExceeded() || localOnlyChosen()) return null;
+    // localOnlyChosen is a privacy choice (no message content leaves the
+    // device) — always honored. proxyQuotaExceeded only gates calls that
+    // spend the visible quota.
+    if (!proxyAvailable() || localOnlyChosen() || (countsTowardQuota && proxyQuotaExceeded())) return null;
     const out = await promptViaProxy(system, user, maxTokens, timeoutMs);
-    if (out) bumpProxyUses();
+    if (out && countsTowardQuota) bumpProxyUses();
     return out;
   }
 

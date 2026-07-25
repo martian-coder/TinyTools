@@ -77,7 +77,9 @@ export function createAnthropicModerator(apiKey: string): Moderator | null {
       const pre = classifyByRules(text, sensitivity);
       if (pre.category !== 'clean') return pre;
 
-      const raw = await promptCloud(SYSTEM_PROMPT(sensitivity), text, key, { maxTokens: 256 });
+      // Automatic background scan — never spend the visible Commander-chat
+      // quota on this (mirrors Perch: only an explicit human question does).
+      const raw = await promptCloud(SYSTEM_PROMPT(sensitivity), text, key, { maxTokens: 256, countsTowardQuota: false });
       if (!raw) return pre;
       const verdict = parseVerdict(raw);
       if (!verdict) return pre;

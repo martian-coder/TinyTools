@@ -51,8 +51,9 @@ async function suggestViaAnthropic(
   senderName: string,
   apiKey: string,
 ): Promise<string[] | null> {
-  // Routes to Claude or Gemini depending on the key the user pasted.
-  const raw = await promptCloud(SYSTEM, buildPrompt(history, senderName), apiKey, { maxTokens: 200 });
+  // Fires automatically on every incoming message — never spend the
+  // visible Commander-chat quota on this (mirrors Perch's behavior).
+  const raw = await promptCloud(SYSTEM, buildPrompt(history, senderName), apiKey, { maxTokens: 200, countsTowardQuota: false });
   if (!raw) return null;
   return parseReplies(raw);
 }

@@ -68,8 +68,9 @@ async function checkViaAnthropic(
   rule: DynamicRule,
   apiKey: string,
 ): Promise<{ matches: boolean; reason?: string } | null> {
-  // Routes to Claude or Gemini depending on the key the user pasted.
-  const raw = await promptCloud(ruleSystemPrompt(rule), `Incoming message: "${message}"`, apiKey, { maxTokens: 100 });
+  // Fires automatically on every incoming message — never spend the
+  // visible Commander-chat quota on this (mirrors Perch's behavior).
+  const raw = await promptCloud(ruleSystemPrompt(rule), `Incoming message: "${message}"`, apiKey, { maxTokens: 100, countsTowardQuota: false });
   if (!raw) return null;
   return parseMatch(raw);
 }
