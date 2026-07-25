@@ -73,10 +73,16 @@ export default function App() {
     }
 
     const unsubscribe = onAuthChange((user) => {
-      if (user) {
-        // The store's phone may be stale after reinstall; the locally saved
-        // one (written at profile completion) survives sessions.
-        const savedPhone = localStorage.getItem('__strenes_phone') || '';
+      // This fires the instant ANY Supabase session exists — including the
+      // anonymous session Auth.tsx creates mid-registration, well before the
+      // PIN claim or the profile/name step complete. Auto-logging in here
+      // would race ahead of Auth.tsx and skip straight past the name step.
+      // Only restore a session that already finished sign-up (Auth.tsx is
+      // the sole place that writes __strenes_phone, at PIN or profile
+      // completion) — a fresh mid-signup session is left for Auth.tsx to
+      // drive explicitly.
+      const savedPhone = localStorage.getItem('__strenes_phone') || '';
+      if (user && savedPhone) {
         setCurrentUser(user.uid, user.phoneNumber || savedPhone);
 
         // Self-heal discoverability: accounts created before profile
@@ -86,9 +92,8 @@ export default function App() {
         void (async () => {
           try {
             const prof = await getUserProfile(user.uid);
-            const phone = user.phoneNumber || savedPhone;
-            if (!prof?.phone && phone) {
-              await createUserProfile(user.uid, phone, prof?.displayName || '');
+            if (!prof?.phone) {
+              await createUserProfile(user.uid, savedPhone, prof?.displayName || '');
             }
           } catch { /* offline — retried on next launch */ }
         })();
