@@ -54,6 +54,18 @@ export default function App() {
 
   const [showThemes, setShowThemes] = useState(false);
   const [authLoading, setAuthLoading] = useState(true);
+  // @capacitor/splash-screen (the plugin that lets JS hold the native splash
+  // open for a set duration) was never actually installed, so the native
+  // splash auto-dismisses the instant the WebView first paints — often too
+  // fast to register as a real screen. This boot screen is what people
+  // actually see, so it enforces its OWN minimum visible time — regardless
+  // of how fast the login check underneath finishes — so the logo animation
+  // always gets its full moment on every cold start.
+  const [minBootElapsed, setMinBootElapsed] = useState(false);
+  useEffect(() => {
+    const t = setTimeout(() => setMinBootElapsed(true), 3600);
+    return () => clearTimeout(t);
+  }, []);
 
   // Keyboard avoidance: push content up by the REAL keyboard height instead
   // of resizing .phone and hoping CSS viewport units (vh/dvh) reflect the
@@ -335,7 +347,7 @@ export default function App() {
   const isConversation = activeScreen === 'conversation';
 
   // Show loading screen while checking auth
-  if (authLoading) {
+  if (authLoading || !minBootElapsed) {
     return (
       <div className="boot-screen">
         <div className="flex flex-col items-center gap-4">
