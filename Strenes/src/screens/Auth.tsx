@@ -7,7 +7,7 @@ import { isValidPhone, normalizePhone } from '../utils/phone';
 import { Phone, Lock, CheckCircle, Zap } from 'lucide-react';
 
 /**
- * Registration/sign-in: phone number + a 4-6 digit PIN.
+ * Registration/sign-in: phone number + a 4-digit PIN.
  * First use of a number sets its PIN; later sign-ins (reinstall, new
  * device) enter the same PIN and get the account back with history.
  * PINs are bcrypt-hashed server-side; 5 wrong tries → 15-min lockout.
@@ -66,8 +66,8 @@ export function Auth() {
   const handlePinSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    if (!/^\d{4,6}$/.test(pin)) {
-      setError('PIN must be 4-6 digits.');
+    if (!/^\d{4}$/.test(pin)) {
+      setError('PIN must be exactly 4 digits.');
       return;
     }
     if (creating && hasPin === false && pin !== pinConfirm) {
@@ -140,8 +140,8 @@ export function Auth() {
       inputMode="numeric"
       placeholder={placeholder}
       value={value}
-      onChange={(e) => onChange(e.target.value.replace(/\D/g, '').slice(0, 6))}
-      maxLength={6}
+      onChange={(e) => onChange(e.target.value.replace(/\D/g, '').slice(0, 4))}
+      maxLength={4}
       autoFocus={autoFocus}
       className="w-full px-4 py-3 bg-[var(--surface)] border border-[var(--border)] rounded-lg text-[var(--text)] text-center text-xl tracking-[.5em] focus:outline-none focus:border-[var(--accent2)]"
       required
@@ -251,9 +251,9 @@ export function Auth() {
               </h2>
               <p className="text-sm text-[var(--text-secondary)] mt-2">
                 {hasPin === true
-                  ? `Welcome back — unlock ${normalizePhone(phoneNumber)} with your 4-6 digit PIN.`
+                  ? `Welcome back — unlock ${normalizePhone(phoneNumber)} with your 4-digit PIN.`
                   : hasPin === false
-                    ? `Choose a 4-6 digit PIN for ${normalizePhone(phoneNumber)}. It protects your number and signs you back in after a reinstall — remember it.`
+                    ? `Choose a 4-digit PIN for ${normalizePhone(phoneNumber)}. It protects your number and signs you back in after a reinstall — remember it.`
                     : `Enter your PIN for ${normalizePhone(phoneNumber)} — or create one if this number is new.`}
               </p>
             </div>

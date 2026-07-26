@@ -342,7 +342,8 @@ export default function App() {
           <img src={logoUrl} alt="Strenes" className="boot-logo" style={{ width: 72, height: 72, borderRadius: 20 }} />
           <div className="text-center">
             <div className="text-xl font-bold" style={{ color: '#eef1ff' }}>Strenes</div>
-            <div className="text-xs mt-1" style={{ color: 'rgba(238,241,255,.55)' }}>by Martian Coders</div>
+            <div className="text-xs mt-1" style={{ color: 'rgba(238,241,255,.55)' }}>A product by Martian Coders</div>
+            <div className="text-[10px] mt-0.5" style={{ color: 'rgba(238,241,255,.4)' }}>Founder — Amit N</div>
           </div>
           <div className="boot-dots flex gap-1.5 mt-1">
             <span style={{ width: 6, height: 6, borderRadius: 999, background: '#7c83ff', display: 'inline-block' }} />
