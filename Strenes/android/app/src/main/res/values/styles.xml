@@ -17,6 +17,14 @@
 
 
     <style name="AppTheme.NoActionBarLaunch" parent="Theme.SplashScreen">
+        <!-- android:background is the legacy path Theme.SplashScreen's AndroidX
+             compat shim uses pre-Android 12. On Android 12+, the system splash
+             API ignores it and needs windowSplashScreenBackground explicitly —
+             without it, unset here before, the OS fell back to a default (often
+             white) background instead of the brand's dark navy. The launcher
+             icon (already the branded green/white mark) is used automatically
+             since no windowSplashScreenAnimatedIcon override is set. -->
         <item name="android:background">@drawable/splash</item>
+        <item name="android:windowSplashScreenBackground">#0b1020</item>
     </style>
 </resources>

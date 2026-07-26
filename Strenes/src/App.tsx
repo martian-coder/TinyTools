@@ -337,10 +337,18 @@ export default function App() {
   // Show loading screen while checking auth
   if (authLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-[var(--base)] to-[var(--base-dark)]">
-        <div className="text-center">
-          <div className="text-2xl font-bold text-[var(--text)]">Strenes</div>
-          <div className="text-sm text-[var(--text-secondary)] mt-2">Loading...</div>
+      <div className="boot-screen">
+        <div className="flex flex-col items-center gap-4">
+          <img src={logoUrl} alt="Strenes" className="boot-logo" style={{ width: 72, height: 72, borderRadius: 20 }} />
+          <div className="text-center">
+            <div className="text-xl font-bold" style={{ color: '#eef1ff' }}>Strenes</div>
+            <div className="text-xs mt-1" style={{ color: 'rgba(238,241,255,.55)' }}>by Martian Coders</div>
+          </div>
+          <div className="boot-dots flex gap-1.5 mt-1">
+            <span style={{ width: 6, height: 6, borderRadius: 999, background: '#7c83ff', display: 'inline-block' }} />
+            <span style={{ width: 6, height: 6, borderRadius: 999, background: '#7c83ff', display: 'inline-block' }} />
+            <span style={{ width: 6, height: 6, borderRadius: 999, background: '#7c83ff', display: 'inline-block' }} />
+          </div>
         </div>
       </div>
     );
