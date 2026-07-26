@@ -60,6 +60,10 @@ export function ContactProfileModal({ contactId, onClose }: { contactId: string;
     setBanner('✓ Name saved');
     onClose();
   };
+  // On-screen keyboard closing shifts the layout right as the tap lands, so
+  // a plain onClick on this button can miss (Save appears to do nothing).
+  // pointerdown fires before that reflow, so run save() there instead.
+  const savePointerDown = (e: React.PointerEvent) => { e.preventDefault(); save(); };
 
   const block = (hours?: number) => {
     setBlocked(contact.id, true, hours ? Date.now() + hours * 3_600_000 : undefined);
@@ -70,7 +74,8 @@ export function ContactProfileModal({ contactId, onClose }: { contactId: string;
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] p-4" onClick={onClose}>
       <div
-        className="bg-[var(--surface)] w-full max-w-sm rounded-2xl border border-[var(--border)] p-5 max-h-[85vh] overflow-y-auto no-bar"
+        className="w-full max-w-sm rounded-2xl border border-[var(--line)] p-5 max-h-[85vh] overflow-y-auto no-bar"
+        style={{ background: 'var(--base)', boxShadow: '0 24px 60px -12px rgba(0,0,0,.6)' }}
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
@@ -83,7 +88,7 @@ export function ContactProfileModal({ contactId, onClose }: { contactId: string;
               onKeyDown={e => e.key === 'Enter' && save()}
               className="flex-1 text-center font-semibold text-main bg-transparent border-b border-[var(--border)] py-1 focus:outline-none focus:border-[var(--accent)]"
             />
-            <button onClick={save}
+            <button onClick={save} onPointerDown={savePointerDown}
               className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-[var(--accent)] text-white text-sm font-semibold shrink-0">
               <Check size={15} /> Save
             </button>
