@@ -15,9 +15,17 @@ import com.getcapacitor.BridgeActivity;
  * honor view padding for page rendering, so the previous padding-based fix
  * still left the bottom nav pill under the system navigation bar. Applying
  * the insets as layout MARGINS shrinks the WebView itself, which every
- * Android version honors. IME insets are included so the layout also
- * shrinks above the on-screen keyboard (adjustResize no longer applies
- * once decorFitsSystemWindows is false).
+ * Android version honors.
+ *
+ * IME (on-screen keyboard) is deliberately EXCLUDED from this mask. Two
+ * earlier attempts to also shrink the WebView for the keyboard here (via
+ * this margin, and separately via windowSoftInputMode) both left a large
+ * dead gap above the keyboard — relying on the WebView's resized bounds to
+ * correctly propagate into CSS viewport units (vh/dvh) isn't reliable
+ * across WebView versions. Keyboard avoidance is now handled entirely by
+ * @capacitor/keyboard's native keyboardWillShow/Hide events (see App.tsx),
+ * which report the real keyboard height directly with no dependency on
+ * WebView relayout timing.
  */
 public class MainActivity extends BridgeActivity {
   @Override
@@ -30,15 +38,14 @@ public class MainActivity extends BridgeActivity {
     ViewCompat.setOnApplyWindowInsetsListener(getBridge().getWebView(), (view, insets) -> {
       Insets bars = insets.getInsets(
           WindowInsetsCompat.Type.systemBars()
-              | WindowInsetsCompat.Type.displayCutout()
-              | WindowInsetsCompat.Type.ime());
+              | WindowInsetsCompat.Type.displayCutout());
       ViewGroup.MarginLayoutParams mlp = (ViewGroup.MarginLayoutParams) view.getLayoutParams();
       mlp.leftMargin = bars.left;
       mlp.topMargin = bars.top;
       mlp.rightMargin = bars.right;
       mlp.bottomMargin = bars.bottom;
       view.setLayoutParams(mlp);
-      return WindowInsetsCompat.CONSUMED;
+      return insets;
     });
   }
 }

@@ -21,6 +21,7 @@ import { parseReceipt, sendReceipt, sendAutoNotice, isAutoNotice, looksLikeRecei
 import { getModerator, routeVerdict } from './moderation';
 import { LocalNotifications } from '@capacitor/local-notifications';
 import { Capacitor } from '@capacitor/core';
+import { Keyboard } from '@capacitor/keyboard';
 import { Phone, PhoneOff } from 'lucide-react';
 import type { ThemeName } from './types';
 
@@ -54,19 +55,33 @@ export default function App() {
   const [showThemes, setShowThemes] = useState(false);
   const [authLoading, setAuthLoading] = useState(true);
 
-  // Drive .phone's height from the ACTUAL visible area (window.visualViewport)
-  // instead of trusting 100dvh alone. The native side resizes the WebView's
-  // own bounds for the on-screen keyboard (MainActivity's WindowInsets
-  // listener) — but that resize doesn't reliably reach Blink's viewport
-  // units on every WebView build, which is what left a stale, too-tall
-  // .phone with a dead gap between the composer and the keyboard. Measuring
-  // visualViewport directly is ground truth: it tracks the IME on every
-  // Chromium-based WebView version regardless of that native quirk.
+  // Keyboard avoidance: push content up by the REAL keyboard height instead
+  // of resizing .phone and hoping CSS viewport units (vh/dvh) reflect the
+  // WebView's native resize — two earlier attempts at that (native margin,
+  // then window.visualViewport) both left a dead gap above the keyboard,
+  // because neither height source proved reliable across WebView builds.
+  // @capacitor/keyboard's events report the actual keyboard height straight
+  // from Android, no relayout-timing guesswork involved.
   useEffect(() => {
+    const root = document.documentElement;
+    if (Capacitor.isNativePlatform()) {
+      let showSub: { remove: () => void } | undefined;
+      let hideSub: { remove: () => void } | undefined;
+      void Keyboard.addListener('keyboardWillShow', info => {
+        root.style.setProperty('--kb-height', `${info.keyboardHeight}px`);
+      }).then(s => { showSub = s; });
+      void Keyboard.addListener('keyboardWillHide', () => {
+        root.style.setProperty('--kb-height', '0px');
+      }).then(s => { hideSub = s; });
+      return () => { showSub?.remove(); hideSub?.remove(); };
+    }
+    // Web/PWA (no native Keyboard plugin) — derive the same signal from
+    // how much the visual viewport has shrunk versus the full window.
     const vv = window.visualViewport;
     if (!vv) return;
     const apply = () => {
-      document.documentElement.style.setProperty('--app-vh', `${vv.height}px`);
+      const kb = Math.max(0, window.innerHeight - vv.height);
+      root.style.setProperty('--kb-height', `${kb}px`);
     };
     apply();
     vv.addEventListener('resize', apply);
