@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { Send, ChevronRight, Loader2 } from 'lucide-react';
 import { useSiftStore } from '../store';
 import { parseIntent, formatUntil } from '../moderation/commander';
-import { proxyQuotaExceeded, localOnlyChosen, chooseLocalOnly, clearLocalOnly, FREE_PROXY_LIMIT, providerLabel, lastProxyError } from '../moderation/cloud';
+import { proxyQuotaExceeded, localOnlyChosen, chooseLocalOnly, clearLocalOnly, FREE_PROXY_LIMIT, providerLabel, lastProxyError, lastDirectError } from '../moderation/cloud';
 import { sendMessage as backendSendMessage } from '../services/backend';
 import { promptCloud } from '../moderation/cloud';
 import { promptNano } from '../moderation/nano';
@@ -977,7 +977,7 @@ export function Commander() {
           let why: string;
           let chips: Chip[] | undefined;
           if (hasKey) {
-            why = "Your pasted API key didn't work just now (wrong key, no credit, or no internet). Check Settings → AI or your connection and try again.";
+            why = lastDirectError || "Your pasted API key didn't work just now — check Settings → AI or your connection and try again.";
             chips = [{ label: '⚙️ Open Settings', action: 'settings' }];
           } else if (localOnlyChosen()) {
             why = "You picked on-device-only AI earlier, and this phone's browser doesn't include an on-device model — so I can't free-chat right now. Say \"use free AI\" to switch back to Strenes AI, or paste a free Gemini API key in Settings → AI.";

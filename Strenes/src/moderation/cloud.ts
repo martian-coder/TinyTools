@@ -69,6 +69,8 @@ export function cloudAvailable(apiKey: string | undefined): boolean {
 
 /** Why the last managed-proxy call failed (for user-facing diagnostics). */
 export let lastProxyError = '';
+/** Why the last DIRECT (pasted-key) call failed — set by promptCloud below. */
+export let lastDirectError = '';
 
 async function callProxy(
   bearer: string,
@@ -190,9 +192,31 @@ export async function promptCloud(
   const provider = detectProvider(key);
   if (!provider) return null;
 
+  // One retry after a short pause for rate-limit/overload responses only —
+  // free-tier Gemini keys are capped around 10-15 requests/minute, so a
+  // single retry recovers the very common "just hit the per-minute cap"
+  // case instead of surfacing it as a random, unexplained failure.
+  const fetchWithRetry = async (url: string, init: RequestInit): Promise<Response> => {
+    const res = await fetch(url, init);
+    if (res.status !== 429 && res.status !== 503) return res;
+    await new Promise(r => setTimeout(r, 1500));
+    return fetch(url, init);
+  };
+
+  const describeError = async (res: Response, providerLabel: string): Promise<string> => {
+    let detail = '';
+    try {
+      const body = await res.json() as { error?: { message?: string } };
+      detail = body?.error?.message ?? '';
+    } catch { /* non-JSON error body */ }
+    if (res.status === 429) return `${providerLabel} rate limit hit (free-tier keys allow ~10-15 requests/min) — try again in a minute`;
+    if (res.status === 401 || res.status === 403) return `${providerLabel} rejected the key (${res.status}) — check it was copied correctly and is active`;
+    return `${providerLabel} error ${res.status}${detail ? `: ${detail.slice(0, 120)}` : ''}`;
+  };
+
   try {
     if (provider === 'gemini') {
-      const res = await fetch(
+      const res = await fetchWithRetry(
         'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent',
         {
           method: 'POST',
@@ -208,16 +232,18 @@ export async function promptCloud(
           }),
         },
       );
-      if (!res.ok) return null;
+      if (!res.ok) { lastDirectError = await describeError(res, 'Gemini'); return null; }
       const data = await res.json() as {
         candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
       };
       const text = data.candidates?.[0]?.content?.parts?.map(p => p.text ?? '').join('') ?? '';
-      return text || null;
+      if (!text) { lastDirectError = 'Gemini returned an empty response'; return null; }
+      lastDirectError = '';
+      return text;
     }
 
     // Claude
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
+    const res = await fetchWithRetry('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       signal: AbortSignal.timeout(timeoutMs),
       headers: {
@@ -233,10 +259,14 @@ export async function promptCloud(
         messages: [{ role: 'user', content: user }],
       }),
     });
-    if (!res.ok) return null;
+    if (!res.ok) { lastDirectError = await describeError(res, 'Claude'); return null; }
     const data = await res.json() as { content?: Array<{ type: string; text?: string }> };
-    return data.content?.find(b => b.type === 'text')?.text ?? null;
-  } catch {
+    const text = data.content?.find(b => b.type === 'text')?.text ?? null;
+    if (!text) { lastDirectError = 'Claude returned an empty response'; return null; }
+    lastDirectError = '';
+    return text;
+  } catch (e) {
+    lastDirectError = e instanceof Error && e.name === 'TimeoutError' ? 'Request timed out' : 'No connection';
     return null;
   }
 }
