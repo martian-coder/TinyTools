@@ -350,17 +350,19 @@ export default function App() {
   if (authLoading || !minBootElapsed) {
     return (
       <div className="boot-screen">
-        <div className="flex flex-col items-center gap-4">
-          <img src={logoUrl} alt="Strenes" className="boot-logo" style={{ width: 72, height: 72, borderRadius: 20 }} />
-          <div className="text-center">
-            <div className="text-xl font-bold" style={{ color: '#eef1ff' }}>Strenes</div>
-            <div className="text-xs mt-1" style={{ color: 'rgba(238,241,255,.55)' }}>A product by Martian Coders</div>
-            <div className="text-[10px] mt-0.5" style={{ color: 'rgba(238,241,255,.4)' }}>Founder — Amit N</div>
+        <div className="flex flex-col items-center gap-5">
+          <div className="boot-logo-wrap" style={{ width: 88, height: 88 }}>
+            <span className="boot-ring r1" />
+            <span className="boot-ring r2" />
+            <img src={logoUrl} alt="Strenes" className="boot-logo" style={{ width: 76, height: 76, borderRadius: 22 }} />
           </div>
-          <div className="boot-dots flex gap-1.5 mt-1">
-            <span style={{ width: 6, height: 6, borderRadius: 999, background: '#7c83ff', display: 'inline-block' }} />
-            <span style={{ width: 6, height: 6, borderRadius: 999, background: '#7c83ff', display: 'inline-block' }} />
-            <span style={{ width: 6, height: 6, borderRadius: 999, background: '#7c83ff', display: 'inline-block' }} />
+          <div className="text-center">
+            <div className="boot-word text-2xl font-extrabold tracking-tight">Strenes</div>
+            <div className="boot-tagline text-xs mt-1.5" style={{ color: 'rgba(238,241,255,.55)' }}>A product by Martian Coders</div>
+            <div className="boot-tagline text-[10px] mt-0.5" style={{ color: 'rgba(238,241,255,.4)' }}>Founder — Amit N</div>
+          </div>
+          <div className="boot-track">
+            <div className="boot-fill" />
           </div>
         </div>
       </div>

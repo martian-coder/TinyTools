@@ -977,7 +977,9 @@ export function Commander() {
           let why: string;
           let chips: Chip[] | undefined;
           if (hasKey) {
-            why = lastDirectError || "Your pasted API key didn't work just now — check Settings → AI or your connection and try again.";
+            // Confirm the key WAS found and used, so this reads as "your key
+            // hit a specific problem" rather than "AI doesn't see my key".
+            why = `Using your ${providerLabel(apiKey2) || 'pasted'} key — ${lastDirectError || "it just failed with no specific reason. Check Settings → AI or your connection and try again."}`;
             chips = [{ label: '⚙️ Open Settings', action: 'settings' }];
           } else if (localOnlyChosen()) {
             why = "You picked on-device-only AI earlier, and this phone's browser doesn't include an on-device model — so I can't free-chat right now. Say \"use free AI\" to switch back to Strenes AI, or paste a free Gemini API key in Settings → AI.";
@@ -986,7 +988,10 @@ export function Commander() {
             why = `You've used all ${FREE_PROXY_LIMIT} free Strenes AI requests. Paste a free Gemini API key in Settings → AI (takes 2 min at aistudio.google.com) and chat continues unlimited.`;
             chips = [{ label: '⚙️ Open Settings', action: 'settings' }];
           } else {
-            why = `I couldn't reach the AI service (${lastProxyError || 'unknown error'}). Check your internet and try again — commands like "show held" or "mute Jay 2 hrs" still work offline.`;
+            // No key pasted (free tier) and this specific request failed —
+            // spell out that a key ISN'T required normally, so this reads
+            // as "this one request failed" and not "AI is broken".
+            why = `You're on free Strenes AI (no key pasted) — this request failed${lastProxyError ? `: ${lastProxyError}` : ' (no response from the AI service)'}. Try again in a moment, or paste your own key in Settings → AI for reliability. Commands like "show held" or "mute Jay 2 hrs" still work right now.`;
           }
           responses.push({ text: why, chips });
         }
