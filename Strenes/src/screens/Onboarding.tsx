@@ -2,32 +2,24 @@ import { useState } from 'react';
 import { useSiftStore } from '../store';
 import { THEMES } from '../theme';
 
+/**
+ * First-run flow after registration. Everyone starts on the free Strenes
+ * managed AI (our Gemini key, no setup) so people experience full-quality
+ * filtering and Commander immediately — no upfront "pick a provider"
+ * decision. Commander itself prompts for a personal API key later, once
+ * the free quota is actually used up (see cloud.ts / Commander.tsx).
+ */
 export function Onboarding() {
-  const [step, setStep] = useState<'welcome' | 'ai-provider' | 'api-key' | 'theme' | 'complete'>('welcome');
-  const [selectedProvider, setSelectedProvider] = useState<'gemini-nano' | 'anthropic-claude'>('gemini-nano');
-  const [apiKey, setApiKey] = useState('');
+  const [step, setStep] = useState<'welcome' | 'theme' | 'complete'>('welcome');
   const [selectedTheme, setSelectedTheme] = useState<'aurora' | 'sunset' | 'noir' | 'daylight' | 'terminal'>('aurora');
   const { updateAiModeration, updateSettings, setScreen } = useSiftStore();
 
   const handleFinish = () => {
-    if (selectedProvider === 'anthropic-claude' && !apiKey.trim()) {
-      alert('Please enter your API key for Anthropic Claude');
-      return;
-    }
-
-    updateAiModeration({
-      provider: selectedProvider,
-      anthropicKey: selectedProvider === 'anthropic-claude' ? apiKey.trim() : '',
-    });
-
+    updateAiModeration({ provider: 'gemini-nano', anthropicKey: '' });
     updateSettings({ theme: selectedTheme });
 
-    // Mark onboarding as complete
     const settings = useSiftStore.getState().settings;
-    updateSettings({
-      ...settings,
-      _onboardingComplete: true,
-    });
+    updateSettings({ ...settings, _onboardingComplete: true });
 
     setScreen('chats');
   };
@@ -39,110 +31,14 @@ export function Onboarding() {
           <div className="text-center space-y-6">
             <h1 className="text-4xl font-bold text-[var(--text)]">Welcome to Strenes</h1>
             <p className="text-lg text-[var(--text-secondary)]">
-              Intelligent message filtering that runs entirely on your device.
+              Intelligent message filtering, on-device — with free AI-powered filtering and Commander built in, no setup needed.
             </p>
             <button
-              onClick={() => setStep('ai-provider')}
+              onClick={() => setStep('theme')}
               className="px-8 py-3 bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-white rounded-lg font-semibold"
             >
               Get Started
             </button>
-          </div>
-        )}
-
-        {step === 'ai-provider' && (
-          <div className="space-y-6">
-            <h2 className="text-3xl font-bold text-[var(--text)]">Choose Your AI Provider</h2>
-            <p className="text-[var(--text-secondary)]">
-              Select how you want message filtering to work:
-            </p>
-
-            <div className="space-y-4">
-              <button
-                onClick={() => setSelectedProvider('gemini-nano')}
-                className={`w-full p-4 rounded-lg border-2 transition ${
-                  selectedProvider === 'gemini-nano'
-                    ? 'border-[var(--accent)] bg-[var(--accent)]/10 ring-2 ring-[var(--accent)]'
-                    : 'border-[var(--border)] bg-[var(--surface)]'
-                }`}
-              >
-                <div className="text-left flex items-start justify-between gap-2">
-                  <div>
-                    <h3 className="text-lg font-semibold text-[var(--text)]">Google Gemini Nano (Recommended)</h3>
-                    <p className="text-sm text-[var(--text-secondary)]">
-                      Free, on-device, no account needed. Perfect for most users.
-                    </p>
-                  </div>
-                  {selectedProvider === 'gemini-nano' && <span className="text-[var(--accent)] text-xl leading-none">✓</span>}
-                </div>
-              </button>
-
-              <button
-                onClick={() => setSelectedProvider('anthropic-claude')}
-                className={`w-full p-4 rounded-lg border-2 transition ${
-                  selectedProvider === 'anthropic-claude'
-                    ? 'border-[var(--accent2)] bg-[var(--accent2)]/10 ring-2 ring-[var(--accent2)]'
-                    : 'border-[var(--border)] bg-[var(--surface)]'
-                }`}
-              >
-                <div className="text-left flex items-start justify-between gap-2">
-                  <div>
-                    <h3 className="text-lg font-semibold text-[var(--text)]">Anthropic Claude (Premium)</h3>
-                    <p className="text-sm text-[var(--text-secondary)]">
-                      More sophisticated analysis. Requires API key and internet.
-                    </p>
-                  </div>
-                  {selectedProvider === 'anthropic-claude' && <span className="text-[var(--accent2)] text-xl leading-none">✓</span>}
-                </div>
-              </button>
-            </div>
-
-            <button
-              onClick={() => setStep(selectedProvider === 'anthropic-claude' ? 'api-key' : 'theme')}
-              className="w-full px-4 py-3 bg-[var(--accent)] text-white rounded-lg font-semibold hover:bg-[var(--accent-hover)]"
-            >
-              Continue with {selectedProvider === 'gemini-nano' ? 'Gemini Nano' : 'Anthropic Claude'}
-            </button>
-          </div>
-        )}
-
-        {step === 'api-key' && (
-          <div className="space-y-6">
-            <h2 className="text-3xl font-bold text-[var(--text)]">Enter Your API Key</h2>
-            <p className="text-[var(--text-secondary)]">
-              Get your API key from{' '}
-              <a
-                href="https://console.anthropic.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-[var(--accent)] underline"
-              >
-                console.anthropic.com
-              </a>
-            </p>
-
-            <input
-              type="password"
-              placeholder="sk-..."
-              value={apiKey}
-              onChange={e => setApiKey(e.target.value)}
-              className="w-full px-4 py-3 bg-[var(--surface)] border border-[var(--border)] rounded-lg text-[var(--text)] placeholder-[var(--text-secondary)] focus:outline-none focus:border-[var(--accent)]"
-            />
-
-            <div className="flex gap-3">
-              <button
-                onClick={() => setStep('ai-provider')}
-                className="flex-1 px-4 py-3 bg-[var(--surface)] border border-[var(--border)] text-[var(--text)] rounded-lg font-semibold hover:bg-[var(--surface-hover)]"
-              >
-                Back
-              </button>
-              <button
-                onClick={() => setStep('theme')}
-                className="flex-1 px-4 py-3 bg-[var(--accent)] text-white rounded-lg font-semibold hover:bg-[var(--accent-hover)]"
-              >
-                Continue
-              </button>
-            </div>
           </div>
         )}
 
@@ -175,7 +71,7 @@ export function Onboarding() {
 
             <div className="flex gap-3">
               <button
-                onClick={() => setStep('ai-provider')}
+                onClick={() => setStep('welcome')}
                 className="flex-1 px-4 py-3 bg-[var(--surface)] border border-[var(--border)] text-[var(--text)] rounded-lg font-semibold hover:bg-[var(--surface-hover)]"
               >
                 Back
@@ -195,9 +91,9 @@ export function Onboarding() {
             <div className="text-5xl">✓</div>
             <h2 className="text-3xl font-bold text-[var(--text)]">All Set!</h2>
             <p className="text-[var(--text-secondary)]">
-              Your {selectedProvider === 'gemini-nano' ? 'Gemini Nano' : 'Anthropic Claude'} filter is ready.
+              You're on free Strenes AI — message filtering and Commander work right away, no key needed.
               <br />
-              Messages will be checked on-device before they reach you.
+              If you're a heavy user, we'll let you know when it's worth adding your own free API key for unlimited use.
             </p>
             <button
               onClick={handleFinish}
