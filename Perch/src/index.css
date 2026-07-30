@@ -19,6 +19,29 @@
   --line: rgba(15, 23, 42, .10);
 }
 
+/* Dark companion — follows the phone's system setting automatically (no
+   toggle, no stored state). Same teal/emerald identity, tuned for a dark
+   background: brighter accents for legibility, off-white text rather than
+   pure white to avoid the harsh, eye-straining look of stark black-on-white
+   contrast. */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --base: #000000;
+    --g1: rgba(45, 212, 191, .16);   /* brighter teal glow */
+    --g2: rgba(52, 211, 153, .14);   /* brighter emerald glow */
+    --g3: rgba(96, 165, 250, .08);   /* soft blue glow */
+    --accent: #2DD4BF;
+    --accent2: #34D399;
+    --danger: #FF453A;
+    --warn: #FF9F0A;
+    --text: rgba(235, 235, 245, .92);
+    --dim: rgba(235, 235, 245, .55);
+    --glass: rgba(255, 255, 255, .06);
+    --glass2: rgba(255, 255, 255, .10);
+    --line: rgba(255, 255, 255, .13);
+  }
+}
+
 /* ─── Layout ─────────────────────────────────────────────────────── */
 * { box-sizing: border-box; }
 html, body { margin: 0; padding: 0; height: 100%; overflow: hidden;

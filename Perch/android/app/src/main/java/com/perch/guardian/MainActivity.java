@@ -1,5 +1,6 @@
 package com.perch.guardian;
 
+import android.content.res.Configuration;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.view.ViewGroup;
@@ -21,7 +22,13 @@ public class MainActivity extends BridgeActivity {
     registerPlugin(PerchWatcherPlugin.class);
     super.onCreate(savedInstanceState);
     WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
-    getWindow().getDecorView().setBackgroundColor(Color.parseColor("#0a120e"));
+    // The strip behind the system bars/notch shows this — match whichever
+    // of the app's two CSS themes (light/dark) the phone's system setting
+    // will select, so it doesn't read as a mismatched flash of the wrong
+    // color at launch.
+    int nightMode = getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK;
+    boolean isDark = nightMode == Configuration.UI_MODE_NIGHT_YES;
+    getWindow().getDecorView().setBackgroundColor(Color.parseColor(isDark ? "#000000" : "#F8FAFC"));
     ViewCompat.setOnApplyWindowInsetsListener(getBridge().getWebView(), (view, insets) -> {
       Insets bars = insets.getInsets(
           WindowInsetsCompat.Type.systemBars()
