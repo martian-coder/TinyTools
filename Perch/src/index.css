@@ -1,27 +1,28 @@
 @import "tailwindcss";
 
-/* ─── Nightwatch tokens ──────────────────────────────────────────── */
-/* Perch has one theme: a moonlit forest at night, warmed by owl-amber. */
+/* ─── iOS tokens ─────────────────────────────────────────────────── */
+/* Matches Strenes' iOS theme: SF Blue accent, green secondary, clean
+   white cards on light system gray, -apple-system type. */
 :root {
-  --base: #0a120e;
-  --g1: rgba(245, 185, 66, .26);   /* amber glow */
-  --g2: rgba(52, 211, 153, .20);   /* moss green */
-  --g3: rgba(59, 130, 246, .12);   /* moonlight blue */
-  --accent: #f5b942;
-  --accent2: #34d399;
-  --danger: #fb7185;
-  --warn: #fbbf24;
-  --text: #f0f6f1;
-  --dim: rgba(240, 246, 241, .55);
-  --glass: rgba(255, 255, 255, .06);
-  --glass2: rgba(255, 255, 255, .12);
-  --line: rgba(255, 255, 255, .13);
+  --base: #F2F2F7;
+  --g1: rgba(0, 122, 255, .16);    /* SF blue glow */
+  --g2: rgba(52, 199, 89, .14);    /* iOS green glow */
+  --g3: rgba(175, 82, 222, .10);   /* iOS purple glow */
+  --accent: #007AFF;
+  --accent2: #34C759;
+  --danger: #FF3B30;
+  --warn: #FF9500;
+  --text: #1C1C1E;
+  --dim: rgba(60, 60, 67, .6);
+  --glass: rgba(255, 255, 255, .75);
+  --glass2: rgba(255, 255, 255, .9);
+  --line: rgba(60, 60, 67, .18);
 }
 
 /* ─── Layout ─────────────────────────────────────────────────────── */
 * { box-sizing: border-box; }
 html, body { margin: 0; padding: 0; height: 100%; overflow: hidden;
-  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", ui-sans-serif, system-ui, "Segoe UI", Roboto, sans-serif;
   -webkit-font-smoothing: antialiased; color: var(--text); }
 #root { height: 100%; }
 button { font-family: inherit; -webkit-appearance: none; border: none; cursor: pointer; background: none; color: inherit; }
