@@ -10,6 +10,7 @@
   --g3: rgba(37, 99, 235, .08);    /* soft blue glow */
   --accent: #0D9488;
   --accent2: #10B981;
+  --accent-contrast: #FFFFFF;
   --danger: #DC2626;
   --warn: #D97706;
   --text: #0F172A;
@@ -32,6 +33,7 @@
     --g3: rgba(96, 165, 250, .08);   /* soft blue glow */
     --accent: #2DD4BF;
     --accent2: #34D399;
+    --accent-contrast: #00251F;
     --danger: #FF453A;
     --warn: #FF9F0A;
     --text: rgba(235, 235, 245, .92);
@@ -94,6 +96,9 @@ input, textarea { font-family: inherit; }
   border-radius: 20px;
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
+  /* Faint top sheen — the actual "glossy" cue real frosted-glass iOS
+     materials have that a flat translucent fill alone doesn't. */
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.08);
 }
 .glass-hover:hover { background: var(--glass2); }
 

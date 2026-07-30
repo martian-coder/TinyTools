@@ -61,7 +61,7 @@ export function Chat() {
               }`}
               style={
                 m.role === 'parent'
-                  ? { background: 'var(--accent)', color: '#1a1206' }
+                  ? { background: 'var(--accent)', color: 'var(--accent-contrast)' }
                   : { background: 'var(--glass)', border: '1px solid var(--line)' }
               }
             >
@@ -107,7 +107,7 @@ export function Chat() {
             onClick={() => send(draft)}
             disabled={busy || !draft.trim()}
             className="grid h-10 w-10 place-items-center rounded-full transition active:scale-95 disabled:opacity-40"
-            style={{ background: 'var(--accent)', color: '#1a1206' }}
+            style={{ background: 'var(--accent)', color: 'var(--accent-contrast)' }}
           >
             <Send size={17} />
           </button>

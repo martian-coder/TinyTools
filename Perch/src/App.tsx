@@ -23,7 +23,7 @@ export default function App() {
         {demo && (
           <div
             className="mx-4 mt-3 rounded-2xl px-4 py-2 text-center text-[11.5px] font-semibold"
-            style={{ background: 'rgba(245,185,66,.12)', border: '1px solid rgba(245,185,66,.35)', color: 'var(--accent)' }}
+            style={{ background: 'var(--glass2)', border: '1px solid var(--line)', color: 'var(--accent)' }}
           >
             Demo mode — sample data. Reset from Settings.
           </div>

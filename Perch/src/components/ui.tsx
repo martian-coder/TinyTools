@@ -15,7 +15,14 @@ export function Btn({ children, onClick, kind = 'primary', disabled, className =
   disabled?: boolean; className?: string;
 }) {
   const styles: Record<string, React.CSSProperties> = {
-    primary: { background: 'var(--accent)', color: '#1a1206' },
+    // Gradient sheen + colored glow + inset top highlight — a flat solid
+    // fill reads flat; this is what actually makes a filled button look
+    // like glossy iOS "glass" chrome rather than a plain color swatch.
+    primary: {
+      background: 'linear-gradient(180deg, rgba(255,255,255,.3), rgba(255,255,255,0) 45%), var(--accent)',
+      color: 'var(--accent-contrast)',
+      boxShadow: '0 10px 24px -8px var(--accent), inset 0 1px 0 rgba(255,255,255,.4)',
+    },
     ghost: { background: 'var(--glass)', border: '1px solid var(--line)', color: 'var(--text)' },
     danger: { background: 'rgba(251,113,133,.15)', border: '1px solid rgba(251,113,133,.4)', color: 'var(--danger)' },
   };
