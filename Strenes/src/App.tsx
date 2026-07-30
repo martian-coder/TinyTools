@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { X, Palette, Check, Lock } from 'lucide-react';
+import { X, Lock } from 'lucide-react';
 import { useSiftStore } from './store';
 import { THEMES } from './theme';
 import { BottomNav } from './components/ui/BottomNav';
@@ -23,7 +23,6 @@ import { LocalNotifications } from '@capacitor/local-notifications';
 import { Capacitor } from '@capacitor/core';
 import { Keyboard } from '@capacitor/keyboard';
 import { Phone, PhoneOff } from 'lucide-react';
-import type { ThemeName } from './types';
 
 /** Header title + tagline per screen — the app shows one header, not one per screen. */
 const SCREEN_TITLES: Record<string, { title: string; sub: string }> = {
@@ -39,7 +38,6 @@ const SCREEN_TITLES: Record<string, { title: string; sub: string }> = {
 export default function App() {
   const activeScreen   = useSiftStore(s => s.activeScreen);
   const theme          = useSiftStore(s => s.settings.theme);
-  const updateSettings = useSiftStore(s => s.updateSettings);
   const pendingAsk     = useSiftStore(s => s.pendingAsk);
   const resolvePendingAsk = useSiftStore(s => s.resolvePendingAsk);
   const banner         = useSiftStore(s => s.banner);
@@ -52,7 +50,6 @@ export default function App() {
   const contacts       = useSiftStore(s => s.contacts);
   const openConversation = useSiftStore(s => s.openConversation);
 
-  const [showThemes, setShowThemes] = useState(false);
   const [authLoading, setAuthLoading] = useState(true);
   // @capacitor/splash-screen (the plugin that lets JS hold the native splash
   // open for a set duration) was never actually installed, so the native
@@ -474,38 +471,6 @@ export default function App() {
                 </span>
                 <span className="text-[11px] dim">Accept</span>
               </button>
-            </div>
-          </div>
-        )}
-
-        {/* Theme bottom sheet */}
-        {showThemes && (
-          <div
-            className="absolute inset-0 z-40 flex items-end"
-            onClick={() => setShowThemes(false)}
-          >
-            <div className="sheet-bg" />
-            <div
-              className="glass2 relative w-full p-4 slide-up"
-              style={{ borderTopLeftRadius: 26, borderTopRightRadius: 26 }}
-              onClick={e => e.stopPropagation()}
-            >
-              <div className="flex items-center gap-2 font-semibold text-main mb-3">
-                <Palette size={16} /> Theme
-              </div>
-              <div className="grid grid-cols-2 gap-2.5">
-                {(Object.entries(THEMES) as [ThemeName, typeof THEMES[ThemeName]][]).map(([k, t]) => (
-                  <button
-                    key={k}
-                    onClick={() => { updateSettings({ theme: k }); setShowThemes(false); }}
-                    className={`th-card ${theme === k ? 'th-on' : ''}`}
-                  >
-                    <span className="th-swatch" style={{ background: t.swatch }} />
-                    <span className="text-sm font-medium text-main">{t.label}</span>
-                    {theme === k && <Check size={14} className="accent-t" style={{ marginLeft: 'auto' }} />}
-                  </button>
-                ))}
-              </div>
             </div>
           </div>
         )}

@@ -1,9 +1,10 @@
 import { useState } from 'react';
-import { AlertTriangle, Briefcase, Forward, ShieldCheck, RotateCcw, Download, Brain, Trash2, Clock, Zap, Flame, Sparkles, KeyRound, Eye, EyeOff, MessageSquare, LogOut, Activity } from 'lucide-react';
+import { AlertTriangle, Briefcase, Forward, ShieldCheck, RotateCcw, Download, Brain, Trash2, Clock, Zap, Flame, Sparkles, KeyRound, Eye, EyeOff, MessageSquare, LogOut, Activity, Palette, Check } from 'lucide-react';
 import { useSiftStore } from '../store';
 import { logOut } from '../services/backend';
 import { runDiagnostics, type DiagStep } from '../services/diagnostics';
 import { providerLabel, proxyAvailable } from '../moderation/cloud';
+import { THEMES } from '../theme';
 import { Switch } from '../components/ui/Switch';
 import { Segment } from '../components/ui/Segment';
 import { Avatar } from '../components/ui/Avatar';
@@ -26,6 +27,7 @@ export function Settings() {
   const updateSmsFallback     = useSiftStore(s => s.updateSmsFallback);
   const setContactEmergency   = useSiftStore(s => s.setContactEmergency);
   const resetToSeed           = useSiftStore(s => s.resetToSeed);
+  const updateSettings        = useSiftStore(s => s.updateSettings);
   const [diag, setDiag] = useState<DiagStep[] | null>(null);
   const [diagRunning, setDiagRunning] = useState(false);
   const s = settings;
@@ -35,6 +37,36 @@ export function Settings() {
     <>
 
       <div className="flex-1 overflow-y-auto px-3 nav-pad no-bar space-y-3 pt-1">
+
+        {/* Appearance */}
+        <div className="glass p-4 space-y-3" style={{ borderRadius: 20 }}>
+          <div className="flex items-center gap-2 font-medium text-main">
+            <Palette size={16} style={{ color: 'var(--accent2)' }} /> Appearance
+          </div>
+          <div className="grid grid-cols-3 gap-2">
+            {Object.entries(THEMES).map(([name, meta]) => (
+              <button
+                key={name}
+                onClick={() => updateSettings({ theme: name as typeof s.theme })}
+                className="flex flex-col items-center gap-1.5 py-2.5 rounded-xl"
+                style={{
+                  background: 'var(--surface-hover)',
+                  outline: s.theme === name ? '2px solid var(--accent)' : '2px solid transparent',
+                }}
+              >
+                <span className="relative flex items-center justify-center">
+                  <span style={{ width: 28, height: 28, borderRadius: 999, background: meta.swatch, boxShadow: '0 4px 10px -4px rgba(0,0,0,.5)' }} />
+                  {s.theme === name && (
+                    <span className="absolute -top-1 -right-1 grid place-items-center" style={{ width: 14, height: 14, borderRadius: 999, background: 'var(--accent)' }}>
+                      <Check size={9} color="#fff" />
+                    </span>
+                  )}
+                </span>
+                <span className="text-[11px] font-medium text-main">{meta.label}</span>
+              </button>
+            ))}
+          </div>
+        </div>
 
         {/* Civility */}
         <div className="glass p-4 space-y-3" style={{ borderRadius: 20 }}>

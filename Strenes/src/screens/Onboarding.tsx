@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useSiftStore } from '../store';
 import { THEMES } from '../theme';
+import type { ThemeName } from '../types';
 
 /**
  * First-run flow after registration. Everyone starts on the free Strenes
@@ -11,7 +12,7 @@ import { THEMES } from '../theme';
  */
 export function Onboarding() {
   const [step, setStep] = useState<'welcome' | 'theme' | 'complete'>('welcome');
-  const [selectedTheme, setSelectedTheme] = useState<'aurora' | 'sunset' | 'noir' | 'daylight' | 'terminal'>('aurora');
+  const [selectedTheme, setSelectedTheme] = useState<ThemeName>('aurora');
   const { updateAiModeration, updateSettings, setScreen } = useSiftStore();
 
   const handleFinish = () => {
