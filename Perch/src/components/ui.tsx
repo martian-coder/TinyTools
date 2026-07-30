@@ -50,9 +50,5 @@ export function Chip({ children }: { children: ReactNode }) {
 }
 
 export function SectionTitle({ children }: { children: ReactNode }) {
-  return (
-    <div className="px-1 pb-2 pt-5 text-[11px] font-bold uppercase tracking-[.14em]" style={{ color: 'var(--dim)' }}>
-      {children}
-    </div>
-  );
+  return <div className="hud-title">{children}</div>;
 }

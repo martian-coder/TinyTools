@@ -122,3 +122,29 @@ input, textarea { font-family: inherit; }
   96% { transform: scaleY(.08); }
 }
 .owl-eye { transform-origin: center; animation: blink 5.5s ease-in-out infinite; }
+
+/* ─── Nest / guardian-console look ──────────────────────────────────
+   Small, restrained "sci-fi monitoring HUD" touches for the Nest
+   screen: a live status pulse, tabular-number readouts, and a glowing
+   divider on section headers — kept sparse so it reads as futuristic
+   without hurting legibility. */
+.mono-num { font-family: 'SF Mono', 'JetBrains Mono', ui-monospace, 'Cascadia Code', monospace; font-variant-numeric: tabular-nums; }
+
+.live-dot { position: relative; width: 7px; height: 7px; border-radius: 999px; background: var(--accent); flex-shrink: 0; }
+.live-dot::after {
+  content: ''; position: absolute; inset: -4px; border-radius: 999px;
+  border: 1.5px solid var(--accent); animation: live-ping 1.8s cubic-bezier(.2,.7,.3,1) infinite;
+}
+@keyframes live-ping { 0% { transform: scale(.6); opacity: .9; } 100% { transform: scale(1.9); opacity: 0; } }
+
+.hud-title {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 11px; font-weight: 700; letter-spacing: .16em; text-transform: uppercase;
+  color: var(--dim); padding: 20px 4px 8px;
+}
+.hud-title::before { content: ''; width: 3px; height: 12px; border-radius: 2px; background: var(--accent); box-shadow: 0 0 8px var(--accent); flex-shrink: 0; }
+.hud-title::after { content: ''; flex: 1; height: 1px; background: linear-gradient(90deg, var(--line), transparent); }
+
+.stat-tile { border-radius: 16px; padding: 10px 12px; background: var(--glass2); border: 1px solid var(--line); }
+.stat-tile .n { font-size: 22px; font-weight: 800; line-height: 1; }
+.stat-tile .l { font-size: 10px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--dim); margin-top: 4px; display: block; }

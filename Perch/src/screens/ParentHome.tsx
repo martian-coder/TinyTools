@@ -69,6 +69,8 @@ export function ParentHome() {
   }
 
   const alerts = events.filter(e => e.severity === 'alert');
+  const recent = events.filter(e => Date.now() - e.at <= 7 * 86_400_000);
+  const watches = recent.filter(e => e.severity === 'watch');
 
   return (
     <div className="scroll-y flex-1 px-4 pb-2">
@@ -76,8 +78,11 @@ export function ParentHome() {
         <OwlLogo size={44} />
         <div>
           <h1 className="text-xl font-extrabold" style={{ color: 'var(--accent)' }}>Perch</h1>
-          <p className="text-[11px]" style={{ color: 'var(--dim)' }}>
-            {demo ? 'Demo — sample data' : linked ? `watching over ${kidAlias}'s phone` : 'not linked yet'}
+          <p className="flex items-center gap-1.5 text-[11px]" style={{ color: 'var(--dim)' }}>
+            {(demo || linked) && <span className="live-dot" />}
+            <span className="mono-num">
+              {demo ? 'DEMO — SAMPLE DATA' : linked ? `MONITORING · ${kidAlias.toUpperCase()}'S PHONE` : 'NOT LINKED YET'}
+            </span>
           </p>
         </div>
       </header>
@@ -153,6 +158,20 @@ export function ParentHome() {
           )}
 
           <SectionTitle>This week</SectionTitle>
+          <div className="grid grid-cols-3 gap-2 pb-2.5">
+            <div className="stat-tile">
+              <span className="n mono-num" style={{ color: alerts.length ? 'var(--danger)' : 'var(--text)' }}>{alerts.length}</span>
+              <span className="l">Serious</span>
+            </div>
+            <div className="stat-tile">
+              <span className="n mono-num" style={{ color: watches.length ? 'var(--warn)' : 'var(--text)' }}>{watches.length}</span>
+              <span className="l">Watching</span>
+            </div>
+            <div className="stat-tile">
+              <span className="n mono-num">{recent.length}</span>
+              <span className="l">Total flags</span>
+            </div>
+          </div>
           <Glass className="p-4">
             <p className="whitespace-pre-line text-[13.5px] leading-relaxed">{briefing(events, kidAlias)}</p>
           </Glass>
