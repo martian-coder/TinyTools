@@ -12,7 +12,7 @@ import type { ThemeName } from '../types';
  */
 export function Onboarding() {
   const [step, setStep] = useState<'welcome' | 'theme' | 'complete'>('welcome');
-  const [selectedTheme, setSelectedTheme] = useState<ThemeName>('aurora');
+  const [selectedTheme, setSelectedTheme] = useState<ThemeName>('ios');
   const { updateAiModeration, updateSettings, setScreen } = useSiftStore();
 
   const handleFinish = () => {
