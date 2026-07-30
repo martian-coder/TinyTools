@@ -1,22 +1,22 @@
 @import "tailwindcss";
 
-/* ─── iOS tokens ─────────────────────────────────────────────────── */
-/* Matches Strenes' iOS theme: SF Blue accent, green secondary, clean
-   white cards on light system gray, -apple-system type. */
+/* ─── Guardian tokens ────────────────────────────────────────────── */
+/* Professional light theme, own identity from Strenes' iOS look: deep
+   teal accent, emerald secondary, crisp near-white base. */
 :root {
-  --base: #F2F2F7;
-  --g1: rgba(0, 122, 255, .16);    /* SF blue glow */
-  --g2: rgba(52, 199, 89, .14);    /* iOS green glow */
-  --g3: rgba(175, 82, 222, .10);   /* iOS purple glow */
-  --accent: #007AFF;
-  --accent2: #34C759;
-  --danger: #FF3B30;
-  --warn: #FF9500;
-  --text: #1C1C1E;
-  --dim: rgba(60, 60, 67, .6);
-  --glass: rgba(255, 255, 255, .75);
-  --glass2: rgba(255, 255, 255, .9);
-  --line: rgba(60, 60, 67, .18);
+  --base: #F8FAFC;
+  --g1: rgba(13, 148, 136, .14);   /* teal glow */
+  --g2: rgba(16, 185, 129, .12);   /* emerald glow */
+  --g3: rgba(37, 99, 235, .08);    /* soft blue glow */
+  --accent: #0D9488;
+  --accent2: #10B981;
+  --danger: #DC2626;
+  --warn: #D97706;
+  --text: #0F172A;
+  --dim: rgba(15, 23, 42, .6);
+  --glass: rgba(255, 255, 255, .85);
+  --glass2: rgba(255, 255, 255, .95);
+  --line: rgba(15, 23, 42, .10);
 }
 
 /* ─── Layout ─────────────────────────────────────────────────────── */
