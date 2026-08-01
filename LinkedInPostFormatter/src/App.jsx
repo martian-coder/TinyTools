@@ -6,6 +6,7 @@ import TemplateLibrary from './components/TemplateLibrary';
 import BlockComposer from './components/BlockComposer';
 import About from './components/About';
 import Logo from './components/Logo';
+import FloatingFormatBar from './components/FloatingFormatBar';
 import { applyStyle, stripStyle } from './utils/unicode.js';
 import { analyze, fixSpacing } from './utils/analyze.js';
 import { compileBlocks, starterBlocks } from './utils/blocks.js';
@@ -264,7 +265,6 @@ export default function App() {
           {mode === 'write' ? (
             <>
               <Toolbar
-                onApply={handleApply}
                 onInsert={handleInsert}
                 onFixSpacing={handleFixSpacing}
                 onClear={handleClear}
@@ -282,10 +282,10 @@ export default function App() {
                 onKeyUp={syncSelection}
                 onClick={syncSelection}
                 placeholder={
-                  'Write your post here.\n\nSelect any text and pick a style — what you see is exactly what publishes.'
+                  'Write your post here.\n\nSelect any text and a formatting bar appears — what you see is exactly what publishes.'
                 }
                 spellCheck
-                className="w-full h-[460px] p-4 resize-y bg-transparent outline-none text-[15px] leading-relaxed
+                className="w-full h-[520px] p-4 resize-y bg-transparent outline-none text-[15px] leading-relaxed
                            placeholder:text-slate-400 dark:placeholder:text-slate-500"
               />
             </>
@@ -346,6 +346,12 @@ export default function App() {
           )}
         </section>
       </main>
+
+      <FloatingFormatBar
+        textareaRef={textareaRef}
+        selection={mode === 'write' ? selection : { start: 0, end: 0 }}
+        onApply={handleApply}
+      />
 
       <About />
     </div>

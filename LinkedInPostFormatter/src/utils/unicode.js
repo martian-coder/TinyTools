@@ -145,16 +145,16 @@ export function styledRatio(text) {
 }
 
 export const STYLES = [
-  { id: 'bold', label: 'Bold', sample: 'Bold', description: 'Headlines and key points' },
-  { id: 'italic', label: 'Italic', sample: 'Italic', description: 'Subtle emphasis, asides' },
-  { id: 'boldItalic', label: 'Bold Italic', sample: 'Bold Italic', description: 'Strongest emphasis' },
-  { id: 'serifBold', label: 'Serif Bold', sample: 'Serif Bold', description: 'Display-weight headings' },
-  { id: 'underline', label: 'Underline', sample: 'Underline', description: 'Combining mark overlay' },
-  { id: 'strikethrough', label: 'Strikethrough', sample: 'Strikethrough', description: 'Corrections, before/after' },
-  { id: 'monospace', label: 'Monospace', sample: 'Monospace', description: 'Code, data, metrics' },
-  { id: 'script', label: 'Script', sample: 'Script', description: 'Decorative — use sparingly' },
-  { id: 'doubleStruck', label: 'Outline', sample: 'Outline', description: 'Decorative — use sparingly' },
-  { id: 'fullwidth', label: 'Wide', sample: 'Wide', description: 'Spaced-out accent lines' },
+  { id: 'bold', label: 'Bold', short: 'B', sample: 'Bold', description: 'Headlines and key points' },
+  { id: 'italic', label: 'Italic', short: 'I', sample: 'Italic', description: 'Subtle emphasis, asides' },
+  { id: 'boldItalic', label: 'Bold Italic', short: 'BI', sample: 'Bold Italic', description: 'Strongest emphasis' },
+  { id: 'serifBold', label: 'Serif Bold', short: 'Bs', sample: 'Serif Bold', description: 'Display-weight headings' },
+  { id: 'underline', label: 'Underline', short: 'U', sample: 'Underline', description: 'Combining mark overlay' },
+  { id: 'strikethrough', label: 'Strikethrough', short: 'S', sample: 'Strikethrough', description: 'Corrections, before/after' },
+  { id: 'monospace', label: 'Monospace', short: 'M', sample: 'Monospace', description: 'Code, data, metrics' },
+  { id: 'script', label: 'Script', short: 'Sc', sample: 'Script', description: 'Decorative — use sparingly' },
+  { id: 'doubleStruck', label: 'Outline', short: 'O', sample: 'Outline', description: 'Decorative — use sparingly' },
+  { id: 'fullwidth', label: 'Wide', short: 'W', sample: 'Wide', description: 'Spaced-out accent lines' },
 ];
 
 /** Bullet and divider characters that survive LinkedIn's plain-text pipeline. */
