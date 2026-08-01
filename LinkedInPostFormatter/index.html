@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- The title leads with what people actually type into search; the brand trails it. -->
+  <title>LinkedIn Post Formatter — Bold, Italic, Emoji &amp; Live Preview | Postline</title>
+  <meta name="description" content="Add bold, italic and emoji to LinkedIn posts, then see exactly how they will look on mobile before you publish. Catches broken hashtags other formatters miss. Free.">
+
+  <link rel="canonical" href="https://martian-coder.github.io/TinyTools/linkedin/">
+  <meta name="robots" content="index, follow, max-image-preview:large">
+  <meta name="theme-color" content="#0A66C2">
+
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Postline">
+  <meta property="og:title" content="LinkedIn Post Formatter — Bold, Italic, Emoji &amp; Live Preview">
+  <meta property="og:description" content="Format LinkedIn posts and see exactly how they will look before you publish. Catches styled hashtags, character-limit overruns and accessibility problems other formatters miss.">
+  <meta property="og:url" content="https://martian-coder.github.io/TinyTools/linkedin/">
+
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="LinkedIn Post Formatter — Bold, Italic, Emoji &amp; Live Preview">
+  <meta name="twitter:description" content="Format LinkedIn posts and see exactly how they will look before you publish. Free, no sign-up.">
+
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='78' font-size='80' font-family='Arial' font-weight='bold' fill='%230A66C2'>P</text></svg>">
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "SoftwareApplication",
+        "name": "Postline — LinkedIn Post Formatter",
+        "applicationCategory": "BusinessApplication",
+        "operatingSystem": "Any (web browser)",
+        "url": "https://martian-coder.github.io/TinyTools/linkedin/",
+        "description": "A LinkedIn post formatter that applies bold, italic, underline and other styles, inserts emoji and bullets, and previews the post exactly as LinkedIn will render it on mobile and desktop. Checks for styled hashtags, character-limit overruns, collapsed line breaks and accessibility problems.",
+        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+        "featureList": [
+          "Bold, italic, underline, strikethrough and monospace text",
+          "Live mobile and desktop preview with see-more truncation",
+          "Character counter accounting for styled-character cost",
+          "Accessibility and hashtag warnings",
+          "Drag-and-drop post builder",
+          "21 post templates",
+          "250+ searchable emoji"
+        ]
+      },
+      {
+        "@type": "FAQPage",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "Can you use bold text in a LinkedIn post?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Not natively. LinkedIn feed posts accept plain text only — there is no bold button and no Markdown or HTML support. Bold text is produced by substituting letters for characters from Unicode's Mathematical Alphanumeric Symbols block, which look bold and pass through LinkedIn untouched because they are ordinary text characters."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Why does my formatting disappear when I paste into LinkedIn?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Because LinkedIn discards formatting instructions. When you copy from Word or Google Docs, the styling travels alongside the text as rich-text markup, and LinkedIn strips all of it, leaving flat text. Styling built into the characters themselves survives, because there is nothing for LinkedIn to remove."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Do styled hashtags work on LinkedIn?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "No. LinkedIn matches hashtags on their literal characters, so a hashtag written in styled Unicode is not clickable and will not appear in any hashtag feed or search result. Hashtags and links should always be left as plain text."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "How many characters can a LinkedIn post be?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "3,000 characters. Styled characters count as two each, so a post that looks well under the limit can still be rejected. Roughly the first 140 characters are visible on mobile before the post is truncated with a see-more link."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Is Unicode formatting bad for accessibility?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Yes, and it cannot be fixed by any tool. Styled characters are not letters, so screen readers may announce their Unicode names or skip them entirely, and LinkedIn search cannot index them. The practical approach is to style headlines and a few key phrases only, leaving the body, hashtags, links and searchable terms as plain text."
+            }
+          }
+        ]
+      }
+    ]
+  }
+  </script>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="module" src="/src/main.jsx"></script>
+</body>
+</html>
