@@ -1,0 +1,19 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial,
+    sans-serif;
+}
+
+/* The editor holds styled Unicode from several blocks; this stack keeps the
+   fallback glyphs consistent instead of letting each block pick its own face. */
+textarea {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans Symbols 2', Roboto,
+    'Helvetica Neue', Arial, sans-serif;
+}

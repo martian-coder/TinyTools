@@ -1,12 +1,13 @@
 name: Deploy to GitHub Pages
 
-# Publishes six static surfaces:
+# Publishes seven static surfaces:
 #   /            -> MarkdownZipped/web  (the live compression studio, v1)
 #   /v2/         -> static PREVIEW of the SaaS frontend (saas/public)
 #   /strenes/    -> Strenes messaging-filter PWA (Strenes/)
 #   /strenes-home/ -> Strenes marketing landing page (Strenes/landing/)
 #   /perch/      -> Perch AI-guardian PWA (Perch/)
 #   /perch-home/ -> Perch marketing landing page (Perch/landing/)
+#   /linkedin/   -> LinkedIn post formatter (LinkedInPostFormatter/)
 #
 # Deploys ONLY from the default branch (main).
 
@@ -31,6 +32,7 @@ on:
       - "Perch/vite.config.ts"
       - "Perch/package.json"
       - "Perch/landing/**"
+      - "LinkedInPostFormatter/**"
       - ".github/workflows/pages.yml"
   workflow_dispatch:
   # Re-deploy after each APK build completes so the same-origin APK mirror
@@ -87,6 +89,14 @@ jobs:
           npm ci
           npm run build
 
+      - name: Build LinkedIn Post Formatter
+        working-directory: LinkedInPostFormatter
+        env:
+          VITE_BASE: ${{ steps.pages.outputs.base_path }}/linkedin/
+        run: |
+          npm ci
+          npm run build
+
       - name: Assemble site
         run: |
           mkdir -p _site
@@ -110,6 +120,10 @@ jobs:
           # /perch-home/ — Perch marketing landing page
           mkdir -p _site/perch-home
           cp -r Perch/landing/. _site/perch-home/
+          # /linkedin/ — LinkedIn post formatter
+          mkdir -p _site/linkedin
+          cp -r LinkedInPostFormatter/dist/. _site/linkedin/
+          cp LinkedInPostFormatter/dist/index.html _site/linkedin/404.html
           # Mirror the latest release APKs as SAME-ORIGIN static files so the
           # download buttons don't rely on GitHub's cross-host release
           # redirect — flaky mobile browsers (and in-app webviews) loop on
