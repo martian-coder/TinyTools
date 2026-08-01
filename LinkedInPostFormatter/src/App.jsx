@@ -194,11 +194,10 @@ export default function App() {
       <header className="sticky top-0 z-10 bg-white/90 dark:bg-slate-800/90 backdrop-blur border-b border-slate-200 dark:border-slate-700">
         <div className="max-w-7xl mx-auto px-4 h-14 flex items-center justify-between gap-3">
           <div className="flex items-baseline gap-2 min-w-0">
-            <span className="font-bold text-linkedin text-lg">in</span>
             <h1 className="font-semibold truncate">
-              Postline
+              LinkedIn Formatter
               <span className="hidden sm:inline font-normal text-slate-500 dark:text-slate-400">
-                {' '}— LinkedIn Post Formatter
+                {' '}— style, preview, publish
               </span>
             </h1>
           </div>

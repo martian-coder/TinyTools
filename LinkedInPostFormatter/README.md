@@ -1,4 +1,4 @@
-# Postline — LinkedIn Post Formatter
+# LinkedIn Formatter
 
 Write a LinkedIn post, style it, and paste it in knowing it will look exactly the way it looked
 in the editor.
