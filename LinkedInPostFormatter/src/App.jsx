@@ -3,12 +3,16 @@ import Toolbar from './components/Toolbar';
 import Preview from './components/Preview';
 import Insights from './components/Insights';
 import TemplateLibrary from './components/TemplateLibrary';
+import BlockComposer from './components/BlockComposer';
 import { applyStyle, stripStyle } from './utils/unicode.js';
 import { analyze, fixSpacing } from './utils/analyze.js';
+import { compileBlocks, starterBlocks } from './utils/blocks.js';
 
 const DRAFT_KEY = 'lpf.draft';
 const DRAFTS_KEY = 'lpf.drafts';
 const THEME_KEY = 'lpf.theme';
+const MODE_KEY = 'lpf.mode';
+const BLOCKS_KEY = 'lpf.blocks';
 
 export default function App() {
   const [text, setText] = useState(() => localStorage.getItem(DRAFT_KEY) || '');
@@ -23,6 +27,15 @@ export default function App() {
     }
   });
   const [dark, setDark] = useState(() => localStorage.getItem(THEME_KEY) === 'dark');
+  const [mode, setMode] = useState(() => localStorage.getItem(MODE_KEY) || 'write');
+  const [blocks, setBlocks] = useState(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem(BLOCKS_KEY) || 'null');
+      return Array.isArray(saved) && saved.length ? saved : starterBlocks();
+    } catch {
+      return starterBlocks();
+    }
+  });
 
   const textareaRef = useRef(null);
 
@@ -31,11 +44,24 @@ export default function App() {
   }, [text]);
 
   useEffect(() => {
+    localStorage.setItem(MODE_KEY, mode);
+  }, [mode]);
+
+  useEffect(() => {
+    localStorage.setItem(BLOCKS_KEY, JSON.stringify(blocks));
+  }, [blocks]);
+
+  useEffect(() => {
     document.documentElement.classList.toggle('dark', dark);
     localStorage.setItem(THEME_KEY, dark ? 'dark' : 'light');
   }, [dark]);
 
-  const result = useMemo(() => analyze(text), [text]);
+  // In build mode the blocks are the source of truth and the freeform text is
+  // ignored, so everything downstream — preview, checks, copy — reads activeText.
+  const blockText = useMemo(() => compileBlocks(blocks), [blocks]);
+  const activeText = mode === 'write' ? text : blockText;
+
+  const result = useMemo(() => analyze(activeText), [activeText]);
   const hasSelection = selection.end > selection.start;
 
   const syncSelection = useCallback(() => {
@@ -91,9 +117,9 @@ export default function App() {
    * which is exactly why rich-text copied from a document falls apart and this doesn't.
    */
   const handleCopy = useCallback(async () => {
-    if (!text) return;
+    if (!activeText) return;
     try {
-      await navigator.clipboard.writeText(text);
+      await navigator.clipboard.writeText(activeText);
     } catch {
       const ta = textareaRef.current;
       if (ta) {
@@ -104,18 +130,21 @@ export default function App() {
     }
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
-  }, [text]);
+  }, [activeText]);
 
   const handleSaveDraft = useCallback(() => {
-    if (!text.trim()) return;
-    const name = window.prompt('Name this draft:', text.slice(0, 40).replace(/\n/g, ' '));
+    if (!activeText.trim()) return;
+    const name = window.prompt('Name this draft:', activeText.slice(0, 40).replace(/\n/g, ' '));
     if (!name) return;
     setDrafts((current) => {
-      const next = [{ id: Date.now(), name, text, savedAt: Date.now() }, ...current].slice(0, 20);
+      const next = [
+        { id: Date.now(), name, text: activeText, savedAt: Date.now() },
+        ...current,
+      ].slice(0, 20);
       localStorage.setItem(DRAFTS_KEY, JSON.stringify(next));
       return next;
     });
-  }, [text]);
+  }, [activeText]);
 
   const handleDeleteDraft = useCallback((id) => {
     setDrafts((current) => {
@@ -129,12 +158,28 @@ export default function App() {
     (body) => {
       if (text.trim() && !window.confirm('Replace what you have written?')) return;
       setText(body);
+      setMode('write');
       setTab('preview');
     },
     [text]
   );
 
+  /** Compiles the blocks into the freeform editor so they can be styled. */
+  const sendBlocksToEditor = useCallback(() => {
+    if (!blockText.trim()) return;
+    if (text.trim() && !window.confirm('Replace what is in the editor?')) return;
+    setText(blockText);
+    setMode('write');
+  }, [text, blockText]);
+
   const errorCount = result.findings.filter((f) => f.severity === 'error').length;
+
+  const modeClass = (isActive) =>
+    `px-3 py-1.5 text-sm font-medium rounded-md transition ${
+      isActive
+        ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm'
+        : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
+    }`;
 
   const tabClass = (id) =>
     `px-3 py-1.5 text-sm font-medium rounded-md transition ${
@@ -164,7 +209,7 @@ export default function App() {
             <button
               type="button"
               onClick={handleSaveDraft}
-              disabled={!text.trim()}
+              disabled={!activeText.trim()}
               className="px-3 py-1.5 text-sm rounded-md border border-slate-300 dark:border-slate-600 hover:border-linkedin transition disabled:opacity-40 disabled:cursor-not-allowed"
             >
               Save
@@ -172,7 +217,7 @@ export default function App() {
             <button
               type="button"
               onClick={handleCopy}
-              disabled={!text}
+              disabled={!activeText}
               className="px-4 py-1.5 text-sm font-medium rounded-md bg-linkedin text-white hover:bg-linkedin-dark transition disabled:opacity-40 disabled:cursor-not-allowed"
             >
               {copied ? 'Copied ✓' : 'Copy for LinkedIn'}
@@ -183,31 +228,66 @@ export default function App() {
 
       <main className="max-w-7xl mx-auto px-4 py-5 grid lg:grid-cols-2 gap-5 items-start">
         <section className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 overflow-hidden">
-          <Toolbar
-            onApply={handleApply}
-            onInsert={handleInsert}
-            onFixSpacing={handleFixSpacing}
-            onClear={handleClear}
-            hasSelection={hasSelection}
-            hasText={text.length > 0}
-          />
-          <textarea
-            ref={textareaRef}
-            value={text}
-            onChange={(e) => {
-              setText(e.target.value);
-              syncSelection();
-            }}
-            onSelect={syncSelection}
-            onKeyUp={syncSelection}
-            onClick={syncSelection}
-            placeholder={
-              'Write your post here.\n\nSelect any text and pick a style — what you see is exactly what publishes.'
-            }
-            spellCheck
-            className="w-full h-[460px] p-4 resize-y bg-transparent outline-none text-[15px] leading-relaxed
-                       placeholder:text-slate-400 dark:placeholder:text-slate-500"
-          />
+          <div className="flex items-center gap-3 px-3 pt-3">
+            <div className="inline-flex gap-1 p-1 rounded-lg bg-slate-100 dark:bg-slate-900">
+              <button type="button" className={modeClass(mode === 'write')} onClick={() => setMode('write')}>
+                Write
+              </button>
+              <button type="button" className={modeClass(mode === 'build')} onClick={() => setMode('build')}>
+                Build
+              </button>
+            </div>
+            <span className="text-xs text-slate-500 dark:text-slate-400">
+              {mode === 'write'
+                ? 'Freeform, with styling.'
+                : 'Assemble from blocks, then send it across to style.'}
+            </span>
+          </div>
+
+          {mode === 'write' ? (
+            <>
+              <Toolbar
+                onApply={handleApply}
+                onInsert={handleInsert}
+                onFixSpacing={handleFixSpacing}
+                onClear={handleClear}
+                hasSelection={hasSelection}
+                hasText={text.length > 0}
+              />
+              <textarea
+                ref={textareaRef}
+                value={text}
+                onChange={(e) => {
+                  setText(e.target.value);
+                  syncSelection();
+                }}
+                onSelect={syncSelection}
+                onKeyUp={syncSelection}
+                onClick={syncSelection}
+                placeholder={
+                  'Write your post here.\n\nSelect any text and pick a style — what you see is exactly what publishes.'
+                }
+                spellCheck
+                className="w-full h-[460px] p-4 resize-y bg-transparent outline-none text-[15px] leading-relaxed
+                           placeholder:text-slate-400 dark:placeholder:text-slate-500"
+              />
+            </>
+          ) : (
+            <div className="p-3">
+              <BlockComposer blocks={blocks} onChange={setBlocks} />
+              <button
+                type="button"
+                onClick={sendBlocksToEditor}
+                disabled={!blockText.trim()}
+                className="mt-3 w-full px-4 py-2 text-sm font-medium rounded-md border border-linkedin
+                           text-linkedin hover:bg-linkedin-light dark:hover:bg-slate-700 transition
+                           disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                Send to editor to style →
+              </button>
+            </div>
+          )}
+
           <div className="px-4 py-2 border-t border-slate-200 dark:border-slate-700 text-xs text-slate-500 dark:text-slate-400 flex justify-between gap-3">
             <span>Saved to this browser automatically.</span>
             {errorCount > 0 && (
@@ -236,7 +316,7 @@ export default function App() {
             </button>
           </div>
 
-          {tab === 'preview' && <Preview text={text} />}
+          {tab === 'preview' && <Preview text={activeText} />}
           {tab === 'insights' && <Insights result={result} />}
           {tab === 'templates' && (
             <TemplateLibrary

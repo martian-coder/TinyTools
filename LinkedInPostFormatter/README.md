@@ -42,8 +42,24 @@ tool's most important warnings visible rather than theoretical.
 | Hook length | Mobile truncates around 140 characters, often mid-sentence |
 | Emoji count | Engagement flattens after two or three |
 
-**Templates** — six post structures and a set of opening lines. They are shapes, not scripts;
-every word is meant to be replaced.
+**A drag-and-drop builder.** Switch to Build mode and assemble a post from blocks — hook,
+paragraph, bullet list, numbered list, metric, quote, divider, closing ask, hashtags. Each block
+compiles to plain text and the post is joined together in whatever order you arrange them, so you
+can move the ask above the evidence and see what it does without retyping anything. Reordering
+works three ways: pointer drag, the arrow buttons, and those same buttons under keyboard focus.
+The arrows are not just an accessibility fallback — HTML5 drag events don't fire on touch screens
+at all, so on a phone they are the only way to reorder. Send the result to the editor when you're
+ready to style it.
+
+**21 post structures** across seven categories — story, insight, career, hiring, founder, data,
+milestone — plus opening lines and closing asks. Read any of them in full before using it. They
+are shapes, not scripts: the bracketed placeholders mark where a real number, name or quote has
+to go, because that specificity is the whole reason the structure works.
+
+**250+ emoji**, grouped by the job they do in a post rather than by Unicode category, with
+keyword search and a recents row. Note that GIFs cannot be embedded in post text by any tool —
+they work in comments, in messages, or attached as media, but the post body is plain text. Emoji
+are the only inline visual that renders.
 
 **Drafts** saved to your browser. Nothing is uploaded — there is no backend, no account, and no
 analytics. The whole app is static files.
@@ -79,14 +95,24 @@ src/
   utils/
     unicode.js     Character maps and the apply/strip transforms
     analyze.js     Every check, plus counting and spacing normalisation
-    templates.js   Post structures and opening lines
+    templates.js   Post structures, opening lines, closing asks
+    emoji.js       Categorised emoji with search keywords
+    blocks.js      Block types and the block-to-text compiler
   components/
-    Toolbar.jsx    Style buttons, symbol inserter, spacing fix
+    Toolbar.jsx    Style buttons, emoji, symbol inserter, spacing fix
     Preview.jsx    LinkedIn post card with truncation and link rendering
     Insights.jsx   Check results and counters
+    BlockComposer.jsx  Drag-and-drop builder
+    EmojiPicker.jsx
     TemplateLibrary.jsx
-  App.jsx          State, selection handling, clipboard
+  App.jsx          State, selection handling, clipboard, Write/Build modes
 ```
+
+Two things are worth knowing before changing the composer. Blocks are the source of truth in
+Build mode and the freeform text is ignored, so everything downstream reads a single `activeText`
+value. And the drop handler reads the dragged block's id back out of the `dataTransfer` rather
+than from React state — state set during `dragstart` has not necessarily flushed by the time
+`drop` fires, and the `dataTransfer` is the one thing the browser guarantees survives the gesture.
 
 The one piece worth reading before changing anything is the exception tables in `unicode.js`.
 Unicode had already encoded some of these glyphs in the Basic Multilingual Plane before the

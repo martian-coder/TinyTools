@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { STYLES, SYMBOLS, applyStyle } from '../utils/unicode.js';
+import EmojiPicker from './EmojiPicker.jsx';
 
 /**
  * Each style button renders its own label in the style it applies, so the button
@@ -29,6 +30,7 @@ function StyleButton({ style, onApply, disabled }) {
 
 export default function Toolbar({ onApply, onInsert, onFixSpacing, onClear, hasSelection, hasText }) {
   const [showSymbols, setShowSymbols] = useState(false);
+  const [showEmoji, setShowEmoji] = useState(false);
 
   return (
     <div className="border-b border-slate-200 dark:border-slate-700 p-3 space-y-3">
@@ -67,7 +69,23 @@ export default function Toolbar({ onApply, onInsert, onFixSpacing, onClear, hasS
       <div className="flex items-center gap-2 flex-wrap">
         <button
           type="button"
-          onClick={() => setShowSymbols((v) => !v)}
+          onClick={() => {
+            setShowEmoji((v) => !v);
+            setShowSymbols(false);
+          }}
+          className="px-3 py-1.5 rounded-md border border-slate-300 bg-white text-sm text-slate-700 transition
+                     hover:border-linkedin hover:bg-linkedin-light
+                     dark:bg-slate-900 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-700"
+        >
+          {showEmoji ? 'Hide emoji' : 'Emoji'}
+        </button>
+
+        <button
+          type="button"
+          onClick={() => {
+            setShowSymbols((v) => !v);
+            setShowEmoji(false);
+          }}
           className="px-3 py-1.5 rounded-md border border-slate-300 bg-white text-sm text-slate-700 transition
                      hover:border-linkedin hover:bg-linkedin-light
                      dark:bg-slate-900 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-700"
@@ -100,6 +118,8 @@ export default function Toolbar({ onApply, onInsert, onFixSpacing, onClear, hasS
           Clear all
         </button>
       </div>
+
+      {showEmoji && <EmojiPicker onPick={(char) => onInsert(char)} />}
 
       {showSymbols && (
         <div className="rounded-lg border border-slate-200 dark:border-slate-700 p-3 space-y-3 bg-slate-50 dark:bg-slate-800/50">
