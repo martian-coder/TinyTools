@@ -1,47 +1,46 @@
 @import "tailwindcss";
 
 /* ─── Guardian tokens ────────────────────────────────────────────── */
-/* Yellow + white identity: deep gold as the primary accent (pure bright
-   yellow reads poorly as text/fills on white), brighter yellow as the
-   gradient's vivid end, crisp white base. */
+/* Claude.ai-inspired identity: warm cream "paper" background, muted
+   terracotta/clay accent, calm and minimal rather than glowing/neon —
+   glow blobs are kept very subtle on purpose. Button/badge chrome
+   (gradient sheen, rounded-squircle icon badges) stays iOS-glossy. */
 :root {
-  --base: #FFFFFF;
-  --g1: rgba(202, 138, 4, .16);    /* deep gold glow */
-  --g2: rgba(250, 204, 21, .18);   /* bright yellow glow */
-  --g3: rgba(254, 240, 138, .14);  /* pale yellow glow */
-  --accent: #CA8A04;
-  --accent2: #FACC15;
+  --base: #F5F4EE;
+  --g1: rgba(218, 119, 86, .10);   /* terracotta glow, subtle */
+  --g2: rgba(193, 95, 60, .07);    /* deeper clay glow */
+  --g3: rgba(218, 119, 86, .05);
+  --accent: #DA7756;
+  --accent2: #C15F3C;
   --accent-contrast: #FFFFFF;
-  --danger: #DC2626;
-  --warn: #D97706;
-  --text: #1C1C1E;
-  --dim: rgba(28, 28, 30, .6);
-  --glass: rgba(255, 255, 255, .85);
-  --glass2: rgba(255, 255, 255, .95);
-  --line: rgba(28, 28, 30, .10);
+  --danger: #C0392B;
+  --warn: #B7791F;
+  --text: #3D3929;
+  --dim: rgba(61, 57, 41, .6);
+  --glass: rgba(255, 255, 255, .82);
+  --glass2: rgba(255, 255, 255, .96);
+  --line: rgba(61, 57, 41, .11);
 }
 
 /* Dark companion — follows the phone's system setting automatically (no
-   toggle, no stored state). Same yellow/gold identity, tuned for a dark
-   background: bright yellow now works as the fill itself (dark text on
-   top instead of white), off-white body text to avoid the harsh,
-   eye-straining look of stark black-on-white contrast. */
+   toggle, no stored state). Same warm terracotta identity on Claude's
+   actual dark-mode charcoal-brown instead of pure black. */
 @media (prefers-color-scheme: dark) {
   :root {
-    --base: #000000;
-    --g1: rgba(250, 204, 21, .18);   /* bright yellow glow */
-    --g2: rgba(245, 197, 24, .14);   /* gold glow */
-    --g3: rgba(180, 83, 9, .10);     /* amber glow */
-    --accent: #FACC15;
-    --accent2: #FDE047;
-    --accent-contrast: #241C00;
-    --danger: #FF453A;
-    --warn: #FF9F0A;
-    --text: rgba(235, 235, 245, .92);
-    --dim: rgba(235, 235, 245, .55);
+    --base: #262624;
+    --g1: rgba(224, 136, 99, .14);   /* terracotta glow */
+    --g2: rgba(193, 95, 60, .10);    /* deeper clay glow */
+    --g3: rgba(224, 136, 99, .07);
+    --accent: #E0885F;
+    --accent2: #C97A54;
+    --accent-contrast: #2B1710;
+    --danger: #E5766A;
+    --warn: #D9A441;
+    --text: #E8E6DC;
+    --dim: rgba(232, 230, 220, .58);
     --glass: rgba(255, 255, 255, .06);
     --glass2: rgba(255, 255, 255, .10);
-    --line: rgba(255, 255, 255, .13);
+    --line: rgba(255, 255, 255, .12);
   }
 }
 
