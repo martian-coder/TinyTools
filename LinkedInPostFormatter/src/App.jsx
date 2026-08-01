@@ -5,6 +5,7 @@ import Insights from './components/Insights';
 import TemplateLibrary from './components/TemplateLibrary';
 import BlockComposer from './components/BlockComposer';
 import About from './components/About';
+import Logo from './components/Logo';
 import { applyStyle, stripStyle } from './utils/unicode.js';
 import { analyze, fixSpacing } from './utils/analyze.js';
 import { compileBlocks, starterBlocks } from './utils/blocks.js';
@@ -192,14 +193,20 @@ export default function App() {
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100">
       <header className="sticky top-0 z-10 bg-white/90 dark:bg-slate-800/90 backdrop-blur border-b border-slate-200 dark:border-slate-700">
-        <div className="max-w-7xl mx-auto px-4 h-14 flex items-center justify-between gap-3">
-          <div className="flex items-baseline gap-2 min-w-0">
-            <h1 className="font-semibold truncate">
-              LinkedIn Formatter
-              <span className="hidden sm:inline font-normal text-slate-500 dark:text-slate-400">
-                {' '}— style, preview, publish
-              </span>
-            </h1>
+        <div className="max-w-7xl mx-auto px-3 sm:px-4 py-2 sm:py-0 sm:h-14 flex flex-wrap sm:flex-nowrap items-center justify-between gap-x-2 gap-y-2 sm:gap-3">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <Logo />
+            <div className="min-w-0 leading-tight">
+              <h1 className="font-semibold sm:truncate text-[15px] sm:text-base">
+                LinkedIn Formatter
+                <span className="hidden sm:inline font-normal text-slate-500 dark:text-slate-400">
+                  {' '}— style, preview, publish
+                </span>
+              </h1>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400 sm:truncate">
+                Developed by Amit
+              </p>
+            </div>
           </div>
 
           <div className="flex items-center gap-2">
@@ -215,7 +222,7 @@ export default function App() {
               type="button"
               onClick={handleSaveDraft}
               disabled={!activeText.trim()}
-              className="px-3 py-1.5 text-sm rounded-md border border-slate-300 dark:border-slate-600 hover:border-linkedin transition disabled:opacity-40 disabled:cursor-not-allowed"
+              className="px-2.5 sm:px-3 py-1.5 text-sm rounded-md border border-slate-300 dark:border-slate-600 hover:border-linkedin transition disabled:opacity-40 disabled:cursor-not-allowed"
             >
               Save
             </button>
@@ -223,9 +230,14 @@ export default function App() {
               type="button"
               onClick={handleCopy}
               disabled={!activeText}
-              className="px-4 py-1.5 text-sm font-medium rounded-md bg-linkedin text-white hover:bg-linkedin-dark transition disabled:opacity-40 disabled:cursor-not-allowed"
+              className="px-3 sm:px-4 py-1.5 text-sm font-medium rounded-md bg-linkedin text-white hover:bg-linkedin-dark transition disabled:opacity-40 disabled:cursor-not-allowed"
             >
-              {copied ? 'Copied ✓' : 'Copy for LinkedIn'}
+              {copied ? 'Copied ✓' : (
+                <>
+                  <span className="sm:hidden">Copy</span>
+                  <span className="hidden sm:inline">Copy for LinkedIn</span>
+                </>
+              )}
             </button>
           </div>
         </div>
