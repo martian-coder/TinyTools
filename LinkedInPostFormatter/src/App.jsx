@@ -4,6 +4,7 @@ import Preview from './components/Preview';
 import Insights from './components/Insights';
 import TemplateLibrary from './components/TemplateLibrary';
 import BlockComposer from './components/BlockComposer';
+import About from './components/About';
 import { applyStyle, stripStyle } from './utils/unicode.js';
 import { analyze, fixSpacing } from './utils/analyze.js';
 import { compileBlocks, starterBlocks } from './utils/blocks.js';
@@ -194,7 +195,12 @@ export default function App() {
         <div className="max-w-7xl mx-auto px-4 h-14 flex items-center justify-between gap-3">
           <div className="flex items-baseline gap-2 min-w-0">
             <span className="font-bold text-linkedin text-lg">in</span>
-            <h1 className="font-semibold truncate">Post Formatter</h1>
+            <h1 className="font-semibold truncate">
+              Postline
+              <span className="hidden sm:inline font-normal text-slate-500 dark:text-slate-400">
+                {' '}— LinkedIn Post Formatter
+              </span>
+            </h1>
           </div>
 
           <div className="flex items-center gap-2">
@@ -330,22 +336,7 @@ export default function App() {
         </section>
       </main>
 
-      <footer className="max-w-7xl mx-auto px-4 pb-10 pt-2">
-        <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-4 text-sm text-slate-600 dark:text-slate-400 leading-relaxed space-y-2">
-          <p>
-            <strong className="text-slate-900 dark:text-slate-200">Why paste normally breaks.</strong>{' '}
-            LinkedIn feed posts accept plain text only — no HTML, no Markdown. Copying styled text out
-            of a document sends formatting LinkedIn discards, which is why it arrives flat. This tool
-            builds the styling into the characters themselves, so nothing gets stripped on the way in.
-          </p>
-          <p>
-            <strong className="text-slate-900 dark:text-slate-200">The trade-off worth knowing.</strong>{' '}
-            Those characters are not real letters. Screen readers handle them badly and LinkedIn
-            search cannot index them. Style headlines and key phrases; leave hashtags, links and terms
-            you want to be found by as plain text. The Checks tab flags it when that slips.
-          </p>
-        </div>
-      </footer>
+      <About />
     </div>
   );
 }

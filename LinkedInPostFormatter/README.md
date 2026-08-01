@@ -1,4 +1,4 @@
-# LinkedIn Post Formatter
+# Postline — LinkedIn Post Formatter
 
 Write a LinkedIn post, style it, and paste it in knowing it will look exactly the way it looked
 in the editor.
@@ -119,3 +119,21 @@ Unicode had already encoded some of these glyphs in the Basic Multilingual Plane
 Mathematical Alphanumeric block existed, so those slots inside the block were left unassigned.
 Script and outline styles need those holes patched by hand; without the patches you get reserved
 code points that render as empty boxes.
+
+## A note on search visibility
+
+The on-page SEO is done properly: a keyword-leading `<title>`, a meta description inside the
+truncation limit, a single H1 carrying the target phrase, `SoftwareApplication` and `FAQPage`
+structured data, Open Graph and Twitter cards, and a canonical URL. The FAQ answers the questions
+people actually search before they find a tool like this, and the markup matches that visible
+content — rich results are only granted when it does.
+
+What that will not do on its own is outrank Typefully or Taplio. Ranking for a competitive term is
+mostly domain authority and backlinks, and a `github.io` subpath has close to none of either. It
+also cannot be moved to a custom domain without changing the canonical URL and the Open Graph URLs
+in `index.html`, which is a two-line edit when the domain is ready.
+
+The realistic path is: ship here, point a real domain at it, then earn links — a Show HN, the
+relevant subreddits, and answers on the existing questions about LinkedIn formatting that already
+rank. The accessibility and broken-hashtag checks are the genuinely novel part and the most
+linkable angle, because no competing tool warns about either.
