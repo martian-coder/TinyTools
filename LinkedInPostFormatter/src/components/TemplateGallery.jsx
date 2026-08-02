@@ -4,6 +4,7 @@ import { TEMPLATES, TEMPLATE_CATEGORIES, HOOKS, CLOSERS } from '../utils/templat
 import { compileMarkup } from '../utils/unicode.js';
 import MediaMock from './MediaMock.jsx';
 import BrandMark from './BrandMark.jsx';
+import { useI18n } from '../i18n/index.js';
 
 const NEUTRAL = { name: 'Your Name', headline: 'Your headline', accent: '#334155' };
 
@@ -27,6 +28,7 @@ const CATEGORIES = (() => {
 })();
 
 function Card({ template, onUse }) {
+  const { t } = useI18n();
   const [open, setOpen] = useState(false);
   const persona = template.persona || NEUTRAL;
   const initial = persona.name.trim().charAt(0).toUpperCase();
@@ -100,7 +102,7 @@ function Card({ template, onUse }) {
             onClick={() => onUse(template.compiled)}
             className="flex-1 px-3 py-1.5 text-sm font-medium rounded-md bg-linkedin text-white hover:bg-linkedin-dark transition"
           >
-            Use this
+            {t('gallery.useThis')}
           </button>
           <button
             type="button"
@@ -108,7 +110,7 @@ function Card({ template, onUse }) {
             aria-expanded={open}
             className="px-3 py-1.5 text-sm rounded-md border border-slate-300 dark:border-slate-600 hover:border-linkedin transition"
           >
-            {open ? 'Less' : 'Read'}
+            {open ? t('gallery.less') : t('gallery.read')}
           </button>
         </div>
       </div>
@@ -117,6 +119,7 @@ function Card({ template, onUse }) {
 }
 
 export default function TemplateGallery({ onUse, onInsert, drafts, onLoadDraft, onDeleteDraft }) {
+  const { t } = useI18n();
   const [category, setCategory] = useState('all');
 
   const shown = useMemo(
@@ -135,7 +138,7 @@ export default function TemplateGallery({ onUse, onInsert, drafts, onLoadDraft, 
     <section className="max-w-7xl mx-auto px-4 pb-6">
       <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-4 sm:p-5">
         <div className="flex items-baseline justify-between gap-3 flex-wrap mb-1">
-          <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">Templates</h2>
+          <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">{t('gallery.title')}</h2>
           <span className="text-xs text-slate-500 dark:text-slate-400">
             {shown.length} of {ALL.length}
           </span>
@@ -165,7 +168,7 @@ export default function TemplateGallery({ onUse, onInsert, drafts, onLoadDraft, 
 
         <div className="flex flex-wrap gap-1.5 mb-4">
           <button type="button" className={chip(category === 'all')} onClick={() => setCategory('all')}>
-            All
+            {t('gallery.all')}
           </button>
           {CATEGORIES.map((c) => (
             <button
@@ -197,7 +200,7 @@ export default function TemplateGallery({ onUse, onInsert, drafts, onLoadDraft, 
         <div className="grid gap-5 md:grid-cols-2 mt-6 pt-5 border-t border-slate-200 dark:border-slate-700">
           <div>
             <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-2">
-              Opening lines
+              {t('gallery.openingLines')}
             </h3>
             <div className="space-y-1.5">
               {HOOKS.slice(0, 6).map((hook) => (
@@ -214,7 +217,7 @@ export default function TemplateGallery({ onUse, onInsert, drafts, onLoadDraft, 
           </div>
           <div>
             <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-2">
-              Closing asks
+              {t('gallery.closingAsks')}
             </h3>
             <div className="space-y-1.5">
               {CLOSERS.slice(0, 6).map((closer) => (
@@ -234,7 +237,7 @@ export default function TemplateGallery({ onUse, onInsert, drafts, onLoadDraft, 
         {drafts.length > 0 && (
           <div className="mt-6 pt-5 border-t border-slate-200 dark:border-slate-700">
             <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-2">
-              Your saved drafts
+              {t('gallery.savedDrafts')}
             </h3>
             <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
               {drafts.map((d) => (
@@ -255,7 +258,7 @@ export default function TemplateGallery({ onUse, onInsert, drafts, onLoadDraft, 
                     onClick={() => onLoadDraft(d)}
                     className="px-2.5 py-1 text-xs rounded border border-slate-300 dark:border-slate-600 hover:border-linkedin transition"
                   >
-                    Load
+                    {t('gallery.load')}
                   </button>
                   <button
                     type="button"
