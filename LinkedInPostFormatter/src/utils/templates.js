@@ -98,7 +98,7 @@ Who gave you the feedback you needed rather than the feedback you wanted?
     name: 'Contrarian Take',
     description: 'Name the consensus, disagree precisely, back it with something you actually saw.',
     media: { type: 'diagram', caption: 'A simple before/after or flow sketch. Hand-drawn is fine and often better.' },
-    persona: { name: 'Daniel Mercer', headline: 'Independent Consultant · 18,400 followers', accent: '#0B7A6E' },
+    persona: { name: 'Julien Moreau', headline: 'Independent Consultant · 18,400 followers', accent: '#0B7A6E' },
     body: `**Everyone says you should niche down.**
 
 I didn't. It worked.
@@ -123,7 +123,7 @@ Where have you seen good advice given at the wrong time?
     name: 'Numbered Lessons',
     description: 'Scannable and highly shareable. Works when each point stands alone.',
     media: { type: 'carousel', caption: 'A carousel with one point per frame. They hold attention longer than a single image.' },
-    persona: { name: 'Nadia Haddad', headline: 'Engineering Manager · 12,900 followers', accent: '#0A66C2' },
+    persona: { name: 'Wei Zhang', headline: 'Engineering Manager · 12,900 followers', accent: '#0A66C2' },
     body: `**5 things I wish I'd known before my first management job:**
 
 1️⃣ **Your job is no longer to be the best at the work**
@@ -439,7 +439,7 @@ Full method in the comments for anyone who wants to pick holes in it. 👇
     name: 'Before / After',
     description: 'A concrete transformation with the mechanism in between. Good for case studies.',
     media: { type: 'stat', caption: 'The headline number as a plain stat card. Big number, one line of context.' },
-    persona: { name: 'Helena Brandt', headline: 'Chief of Staff · 10,400 followers', accent: '#0A66C2' },
+    persona: { name: 'Camille Laurent', headline: 'Chief of Staff · 10,400 followers', accent: '#0A66C2' },
     body: `**Before: 40 hours a week in meetings.**
 After: 12.
 
@@ -465,7 +465,7 @@ That turned out to be useful information too.
     name: 'Breakdown / Teardown',
     description: 'Analyse something publicly visible. High shareability, low risk.',
     media: { type: 'diagram', caption: 'A simple before/after or flow sketch. Hand-drawn is fine and often better.' },
-    persona: { name: 'Sam Iversen', headline: 'Strategy · 14,100 followers', accent: '#C2410C' },
+    persona: { name: 'Hao Chen', headline: 'Strategy · 14,100 followers', accent: '#C2410C' },
     body: `**[Company] just [did a specific public thing].**
 
 Most people are reading it as [the obvious interpretation]. I think it's [your read].
