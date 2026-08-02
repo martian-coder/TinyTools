@@ -62,6 +62,13 @@ const Icon = {
       <path d="M9 3v10M12 3v10M9 3H6.5a3 3 0 0 0 0 6H9" />
     </svg>
   ),
+  image: (
+    <svg viewBox="0 0 16 16" width="15" height="15" {...stroke}>
+      <rect x="2" y="3" width="12" height="10" rx="1.5" />
+      <circle cx="5.5" cy="6.5" r="1" />
+      <path d="m3 11 3.5-3 2.5 2 2-1.5 2 2.5" />
+    </svg>
+  ),
 };
 
 function Divider() {
@@ -111,11 +118,15 @@ export default function Ribbon({
   hasSelection,
   hasText,
   used,
+  onImage,
+  onRemoveImage,
+  hasImage,
 }) {
   const [panel, setPanel] = useState(null); // 'emoji' | 'symbols' | 'styles'
   const [hint, setHint] = useState('');
   const [target, setTarget] = useState('post');
   const hintTimer = useRef(null);
+  const fileRef = useRef(null);
 
   useEffect(() => () => clearTimeout(hintTimer.current), []);
 
@@ -134,6 +145,31 @@ export default function Ribbon({
   };
 
   const toggle = (name) => setPanel((current) => (current === name ? null : name));
+
+  /**
+   * The image never leaves the browser and is never inserted into the post —
+   * LinkedIn post text cannot contain one. It exists so the preview shows the
+   * post as it will actually appear; the file still gets uploaded to LinkedIn
+   * separately. Deliberately not persisted: a data URL would blow the
+   * localStorage quota.
+   */
+  const handleFile = (event) => {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      flash('That file is not an image.');
+      return;
+    }
+    if (file.size > 8 * 1024 * 1024) {
+      flash('Image is over 8MB — use a smaller one for the preview.');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => onImage(reader.result);
+    reader.onerror = () => flash('Could not read that file.');
+    reader.readAsDataURL(file);
+  };
 
   const field = limitById(target);
   const over = used > field.limit;
@@ -254,6 +290,25 @@ export default function Ribbon({
           <span aria-hidden="true">•</span>
           <span className="text-[13px]">Symbols</span>
         </Btn>
+        <Btn
+          onClick={() => (hasImage ? onRemoveImage() : fileRef.current?.click())}
+          active={hasImage}
+          title="Adds an image to the preview only. LinkedIn post text cannot contain an image, so you still upload the file to LinkedIn yourself."
+          label={hasImage ? 'Remove preview image' : 'Add image to preview'}
+          wide
+        >
+          {Icon.image}
+          <span className="text-[13px]">{hasImage ? 'Remove image' : 'Image'}</span>
+        </Btn>
+        <input
+          ref={fileRef}
+          type="file"
+          accept="image/*"
+          onChange={handleFile}
+          className="hidden"
+          tabIndex={-1}
+        />
+
         <Btn
           onClick={onFixSpacing}
           disabled={!hasText}

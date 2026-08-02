@@ -163,3 +163,21 @@ export const SYMBOLS = {
   numbers: ['1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣', '6️⃣', '7️⃣', '8️⃣', '9️⃣', '🔟'],
   dividers: ['━━━━━━━━━━', '──────────', '• • • • •', '⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯', '＿＿＿＿＿'],
 };
+
+/**
+ * Compiles a light authoring markup into styled Unicode.
+ *
+ * Templates are far easier to write and review as `**bold**` than as literal
+ * 𝗯𝗼𝗹𝗱 characters pasted into source, so they are authored in markup and
+ * compiled through the same engine the editor uses.
+ *
+ * Bold runs first; once it has been replaced the text holds Unicode rather than
+ * asterisks, so the single-asterisk italic pass cannot mistake a leftover.
+ */
+export function compileMarkup(text) {
+  if (!text) return '';
+  return text
+    .replace(/\*\*([\s\S]+?)\*\*/g, (_, inner) => applyStyle(inner, 'bold'))
+    .replace(/\*([^*\n]+)\*/g, (_, inner) => applyStyle(inner, 'italic'))
+    .replace(/__([^_\n]+)__/g, (_, inner) => applyStyle(inner, 'underline'));
+}

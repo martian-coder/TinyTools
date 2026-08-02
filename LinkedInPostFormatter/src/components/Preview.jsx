@@ -48,7 +48,7 @@ function ReactionBar({ dark }) {
   );
 }
 
-export default function Preview({ text }) {
+export default function Preview({ text, image }) {
   const [device, setDevice] = useState('mobile');
   const [dark, setDark] = useState(false);
   const [expanded, setExpanded] = useState(false);
@@ -144,7 +144,26 @@ export default function Preview({ text }) {
               </button>
             )}
 
-            {text && <ReactionBar dark={dark} />}
+          </div>
+
+          {/* LinkedIn crops very tall images in the feed rather than letting them run
+              the length of the screen, so cap it and keep the preview honest. */}
+          {image && (
+            <img
+              src={image}
+              alt="Attached preview"
+              className="w-full block"
+              style={{
+                maxHeight: 460,
+                objectFit: 'cover',
+                borderTop: `1px solid ${border}`,
+                borderBottom: `1px solid ${border}`,
+              }}
+            />
+          )}
+
+          <div className="px-3 pb-3">
+            {(text || image) && <ReactionBar dark={dark} />}
           </div>
         </div>
       </div>

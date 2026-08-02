@@ -51,10 +51,21 @@ The arrows are not just an accessibility fallback — HTML5 drag events don't fi
 at all, so on a phone they are the only way to reorder. Send the result to the editor when you're
 ready to style it.
 
-**21 post structures** across seven categories — story, insight, career, hiring, founder, data,
-milestone — plus opening lines and closing asks. Read any of them in full before using it. They
-are shapes, not scripts: the bracketed placeholders mark where a real number, name or quote has
-to go, because that specificity is the whole reason the structure works.
+**31 templates in a gallery below the preview**, each rendered as a LinkedIn-shaped card so you
+judge it as a post rather than as source text. Ten are pre-formatted showcase posts — launches,
+milestones, hiring, research, culture, partnerships — carrying bold headings, bullets and
+dividers already. The other 21 are plain structures whose value is the shape rather than the
+styling. All of them use bracketed placeholders to mark where a real number, name or link has to
+go, because that specificity is the whole reason any of them work.
+
+The showcase posts are original compositions with placeholder brands. Copying a real company's
+post would be copying their copy, and putting their logo on this tool would imply an endorsement
+that does not exist.
+
+**An image button that is honest about what it does.** LinkedIn post text cannot contain an
+image — an image is a separate media upload. The button adds one to the *preview* so you can see
+how the post will look, and nothing else: it never enters the text, never leaves your browser and
+is never uploaded. You still attach the file on LinkedIn yourself.
 
 **250+ emoji**, grouped by the job they do in a post rather than by Unicode category, with
 keyword search and a recents row. Note that GIFs cannot be embedded in post text by any tool —
@@ -95,16 +106,20 @@ src/
   utils/
     unicode.js     Character maps and the apply/strip transforms
     analyze.js     Every check, plus counting and spacing normalisation
-    templates.js   Post structures, opening lines, closing asks
+    templates.js   Plain post structures, opening lines, closing asks
+    showcase.js    Pre-formatted showcase posts, authored in light markup
     emoji.js       Categorised emoji with search keywords
+    symbols.js     181 symbols in ten searchable groups
+    limits.js      LinkedIn's published field limits
+    lists.js       Bullet and numbered list toggling
     blocks.js      Block types and the block-to-text compiler
   components/
-    Toolbar.jsx    Style buttons, emoji, symbol inserter, spacing fix
-    Preview.jsx    LinkedIn post card with truncation and link rendering
+    Ribbon.jsx     Formatting ribbon: undo/redo, styles, lists, image, counter
+    Preview.jsx    LinkedIn post card with truncation, links and preview image
     Insights.jsx   Check results and counters
     BlockComposer.jsx  Drag-and-drop builder
-    EmojiPicker.jsx
-    TemplateLibrary.jsx
+    TemplateGallery.jsx  Rendered template cards
+    EmojiPicker.jsx / SymbolPicker.jsx
   App.jsx          State, selection handling, clipboard, Write/Build modes
 ```
 
