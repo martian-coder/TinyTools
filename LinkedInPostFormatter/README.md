@@ -58,9 +58,17 @@ dividers already. The other 21 are plain structures whose value is the shape rat
 styling. All of them use bracketed placeholders to mark where a real number, name or link has to
 go, because that specificity is the whole reason any of them work.
 
-The showcase posts are original compositions with placeholder brands. Copying a real company's
-post would be copying their copy, and putting their logo on this tool would imply an endorsement
-that does not exist.
+Every template carries hashtags, and they are left **plain on purpose** — LinkedIn matches
+hashtags on their literal characters, so a styled one is not clickable and appears in no feed.
+
+Each showcase card also shows the kind of visual that post type usually carries: a product shot
+for a launch, a chart for a research drop, a logo lockup for a partnership. These are drawn as SVG
+from the template's accent colour and exist to tell you what to prepare — the image itself has to
+be uploaded to LinkedIn separately, since post text cannot contain one.
+
+The showcase posts are original compositions with placeholder brands, and the logo lockup is a
+generic placeholder. Copying a real company's post would be copying their copy, and putting their
+logo on this tool would imply an endorsement that does not exist.
 
 **An image button that is honest about what it does.** LinkedIn post text cannot contain an
 image — an image is a separate media upload. The button adds one to the *preview* so you can see
