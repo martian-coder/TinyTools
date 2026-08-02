@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Ribbon from './components/Ribbon';
 import Preview from './components/Preview';
 import Insights from './components/Insights';
-import TemplateLibrary from './components/TemplateLibrary';
+import TemplateGallery from './components/TemplateGallery';
 import BlockComposer from './components/BlockComposer';
 import About from './components/About';
 import Logo from './components/Logo';
@@ -30,6 +30,8 @@ export default function App() {
     }
   });
   const [dark, setDark] = useState(() => localStorage.getItem(THEME_KEY) === 'dark');
+  // Preview-only, and intentionally not persisted — see the note in Ribbon.
+  const [previewImage, setPreviewImage] = useState(null);
   const [mode, setMode] = useState(() => localStorage.getItem(MODE_KEY) || 'write');
   const [blocks, setBlocks] = useState(() => {
     try {
@@ -374,6 +376,9 @@ export default function App() {
                 hasSelection={hasSelection}
                 hasText={text.length > 0}
                 used={result.counts.utf16}
+                onImage={setPreviewImage}
+                onRemoveImage={() => setPreviewImage(null)}
+                hasImage={Boolean(previewImage)}
               />
               <textarea
                 ref={textareaRef}
@@ -434,24 +439,20 @@ export default function App() {
                 </span>
               )}
             </button>
-            <button type="button" className={tabClass('templates')} onClick={() => setTab('templates')}>
-              Templates
-            </button>
           </div>
 
-          {tab === 'preview' && <Preview text={activeText} />}
+          {tab === 'preview' && <Preview text={activeText} image={previewImage} />}
           {tab === 'insights' && <Insights result={result} />}
-          {tab === 'templates' && (
-            <TemplateLibrary
-              onUse={loadInto}
-              onInsert={handleInsert}
-              drafts={drafts}
-              onLoadDraft={(d) => loadInto(d.text)}
-              onDeleteDraft={handleDeleteDraft}
-            />
-          )}
         </section>
       </main>
+
+      <TemplateGallery
+        onUse={loadInto}
+        onInsert={handleInsert}
+        drafts={drafts}
+        onLoadDraft={(d) => loadInto(d.text)}
+        onDeleteDraft={handleDeleteDraft}
+      />
 
       <About />
     </div>
