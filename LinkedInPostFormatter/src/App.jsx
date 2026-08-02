@@ -8,11 +8,13 @@ import About from './components/About';
 import Logo from './components/Logo';
 import EmailCapture from './components/EmailCapture';
 import AccountPanel from './components/AccountPanel';
+import SignInGate from './components/SignInGate';
+import LanguagePicker from './components/LanguagePicker';
 import { applyStyle, stripStyle } from './utils/unicode.js';
 import { analyze, fixSpacing } from './utils/analyze.js';
 import { compileBlocks, starterBlocks } from './utils/blocks.js';
 import { lineRange, toggleList } from './utils/lists.js';
-import { useI18n, LANGUAGES } from './i18n/index.js';
+import { useI18n } from './i18n/index.js';
 
 const DRAFT_KEY = 'lpf.draft';
 const DRAFTS_KEY = 'lpf.drafts';
@@ -22,7 +24,7 @@ const BLOCKS_KEY = 'lpf.blocks';
 const IDENTITY_KEY = 'lpf.identity';
 
 export default function App() {
-  const { t, lang, setLang } = useI18n();
+  const { t } = useI18n();
   const [text, setText] = useState(() => localStorage.getItem(DRAFT_KEY) || '');
   const [selection, setSelection] = useState({ start: 0, end: 0 });
   const [copied, setCopied] = useState(false);
@@ -334,21 +336,7 @@ export default function App() {
           </div>
 
           <div className="flex items-center gap-2">
-            <select
-              value={lang}
-              onChange={(e) => setLang(e.target.value)}
-              aria-label={t('lang.label')}
-              title={t('lang.note')}
-              className="px-2 py-1.5 text-sm rounded-md border border-slate-300 dark:border-slate-600
-                         bg-transparent hover:border-linkedin transition cursor-pointer
-                         dark:bg-slate-800"
-            >
-              {LANGUAGES.map((l) => (
-                <option key={l.id} value={l.id}>
-                  {l.native}
-                </option>
-              ))}
-            </select>
+            <LanguagePicker />
             <button
               type="button"
               onClick={() => setDark((v) => !v)}
@@ -383,7 +371,8 @@ export default function App() {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 py-5 grid lg:grid-cols-2 gap-5 items-start">
-        <section className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 overflow-hidden">
+        <section className="relative rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 overflow-hidden">
+          <SignInGate />
           <div className="flex items-center gap-3 px-3 pt-3">
             <div className="inline-flex gap-1 p-1 rounded-lg bg-slate-100 dark:bg-slate-900">
               <button type="button" className={modeClass(mode === 'write')} onClick={() => setMode('write')}>

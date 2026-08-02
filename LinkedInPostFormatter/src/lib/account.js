@@ -74,6 +74,16 @@ export function useAccount() {
     return { error: error?.message ?? null };
   }, []);
 
+  const signInWithGoogle = useCallback(async () => {
+    const sb = await getSupabase();
+    if (!sb) return { error: 'Accounts are not configured for this build.' };
+    const { error } = await sb.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: window.location.href },
+    });
+    return { error: error?.message ?? null };
+  }, []);
+
   const signOut = useCallback(async () => {
     const sb = await getSupabase();
     await sb?.auth.signOut();
@@ -88,6 +98,7 @@ export function useAccount() {
     session,
     profile,
     signIn,
+    signInWithGoogle,
     signOut,
     remaining,
     isSubscriber,
