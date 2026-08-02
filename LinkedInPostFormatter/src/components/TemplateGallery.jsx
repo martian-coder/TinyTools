@@ -2,6 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { SHOWCASE, SHOWCASE_CATEGORIES } from '../utils/showcase.js';
 import { TEMPLATES, TEMPLATE_CATEGORIES, HOOKS, CLOSERS } from '../utils/templates.js';
 import { compileMarkup } from '../utils/unicode.js';
+import MediaMock from './MediaMock.jsx';
 
 const NEUTRAL = { name: 'Your Name', headline: 'Your headline', accent: '#334155' };
 
@@ -69,6 +70,22 @@ function Card({ template, onUse }) {
         )}
       </div>
 
+      {template.media && (
+        <div className="border-t border-slate-100 dark:border-slate-700">
+          <MediaMock
+            type={template.media.type}
+            accent={persona.accent}
+            label={`Suggested visual: ${template.media.type}`}
+          />
+          <p className="px-3 py-2 text-[11px] leading-relaxed text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-900/40">
+            <span className="font-semibold text-slate-600 dark:text-slate-300">
+              Suggested visual:
+            </span>{' '}
+            {template.media.caption}
+          </p>
+        </div>
+      )}
+
       <div className="p-3 pt-2 border-t border-slate-100 dark:border-slate-700">
         <div className="text-sm font-semibold text-slate-900 dark:text-slate-100">
           {template.name}
@@ -132,6 +149,13 @@ export default function TemplateGallery({ onUse, onInsert, drafts, onLoadDraft, 
           <span className="font-semibold text-linkedin">Formatted</span> already carry bold
           headings, bullets and dividers. Replace the bracketed placeholders — they mark where a
           real number, name or link has to go, which is the part that makes any of these work.
+        </p>
+        <p className="text-xs text-slate-500 dark:text-slate-400 mb-3 leading-relaxed">
+          The visual on each card shows the kind of image that post type usually carries — a chart,
+          a product shot, a logo lockup. It is a guide for what to prepare, not something that
+          copies across: LinkedIn post text cannot contain an image, so you attach the file on
+          LinkedIn yourself. Hashtags are left plain on purpose, because LinkedIn cannot match a
+          styled one.
         </p>
 
         <div className="flex flex-wrap gap-1.5 mb-4">

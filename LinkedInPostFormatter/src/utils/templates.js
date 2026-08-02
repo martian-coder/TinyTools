@@ -38,7 +38,9 @@ Here's what I got wrong:
 
 The account I won the following quarter came from asking exactly that question in the first meeting.
 
-What's the most expensive lesson your work has taught you?`,
+What's the most expensive lesson your work has taught you?
+
+#Leadership #Lessons #Sales`,
   },
   {
     id: 'story-failure',
@@ -59,7 +61,9 @@ She said one thing I've repeated ever since:
 
 "The bug was a mistake. Waiting would have been a decision."
 
-I've never sat on bad news again.`,
+I've never sat on bad news again.
+
+#Leadership #Engineering #Ownership`,
   },
   {
     id: 'story-mentor',
@@ -76,7 +80,9 @@ What she meant took me until my third job to understand: being reliable makes yo
 
 I still send her a message every time it pays off.
 
-Who gave you the feedback you needed rather than the feedback you wanted?`,
+Who gave you the feedback you needed rather than the feedback you wanted?
+
+#Mentorship #Leadership #CareerAdvice`,
   },
 
   // ─── Insight ────────────────────────────────────────────────────────────
@@ -99,7 +105,9 @@ It's "niche down once you have enough evidence to know which niche."
 
 Sequence matters more than the tactic.
 
-Where have you seen good advice given at the wrong time?`,
+Where have you seen good advice given at the wrong time?
+
+#Strategy #CareerAdvice #Leadership`,
   },
   {
     id: 'insight-listicle',
@@ -122,7 +130,9 @@ Do it well and you buy more trust than being right ever earns.
 
 5️⃣ Protect your calendar or someone else will fill it
 
-Which one took you longest to learn?`,
+Which one took you longest to learn?
+
+#Management #Leadership #FirstTimeManager`,
   },
   {
     id: 'insight-question',
@@ -141,7 +151,9 @@ The teams I've seen move fastest do one thing differently: they make changing yo
 
 "I was wrong about this, here's what changed" gets applause, not a raised eyebrow.
 
-How does your team handle it?`,
+How does your team handle it?
+
+#Leadership #DecisionMaking #Teams`,
   },
   {
     id: 'insight-myth',
@@ -166,7 +178,9 @@ The failure mode isn't remote. It's running a remote team on habits built for a 
 
 Every good remote team I know replaced something they lost, on purpose. The ones that struggled just took the office away and hoped.
 
-What did your team have to make deliberate?`,
+What did your team have to make deliberate?
+
+#RemoteWork #Culture #Leadership`,
   },
 
   // ─── Career ─────────────────────────────────────────────────────────────
@@ -185,7 +199,9 @@ The longer reason:
 
 I'm spending the first month mostly listening. If you work in [area] and have opinions about [specific problem], I'd genuinely like to hear them.
 
-And to the team at [previous company] — thank you. [One specific thing you're taking with you.]`,
+And to the team at [previous company] — thank you. [One specific thing you're taking with you.]
+
+#NewRole #Career #[Industry]`,
   },
   {
     id: 'career-leaving',
@@ -204,7 +220,9 @@ I could list what we shipped. Instead, three things I'm taking with me:
 
 That's the actual product of a good job. The rest is on a CV somewhere.
 
-Next: [what's next, or "taking a few weeks off before saying more"].`,
+Next: [what's next, or "taking a few weeks off before saying more"].
+
+#Career #Gratitude #NewChapter`,
   },
   {
     id: 'career-jobsearch',
@@ -227,7 +245,9 @@ What I'm looking for:
 
 What would help most: an introduction to anyone hiring in [area], or a 15-minute conversation if you've made a similar move.
 
-Happy to return the favour whenever it's useful. 🙏`,
+Happy to return the favour whenever it's useful. 🙏
+
+#OpenToWork #Hiring #[Function]`,
   },
 
   // ─── Hiring ─────────────────────────────────────────────────────────────
@@ -255,7 +275,9 @@ Salary: [range]. Location: [where]. We [do/don't] sponsor visas.
 
 If that sounds right, apply here: [link]
 
-If you're not sure, message me — I'd rather have a five-minute conversation than have you self-select out.`,
+If you're not sure, message me — I'd rather have a five-minute conversation than have you self-select out.
+
+#Hiring #[Function] #[Industry]`,
   },
   {
     id: 'hiring-lesson',
@@ -275,7 +297,9 @@ The second group outperformed the first, consistently, at every level.
 
 It isn't about being clever. It's a proxy for something harder to test: whether you're curious about the actual work or about getting the job.
 
-Interviewers — what's the question that changed your mind about a candidate?`,
+Interviewers — what's the question that changed your mind about a candidate?
+
+#Hiring #Recruiting #Interviewing`,
   },
 
   // ─── Founder ────────────────────────────────────────────────────────────
@@ -296,7 +320,9 @@ So we tried something different — [the mechanism].
 
 It's live now. Free while we learn from how people use it.
 
-If you've hit that wall before, I'd genuinely like to hear whether this clears it: [link]`,
+If you've hit that wall before, I'd genuinely like to hear whether this clears it: [link]
+
+#ProductLaunch #Startups #BuildInPublic`,
   },
   {
     id: 'founder-behind',
@@ -319,7 +345,9 @@ What didn't:
 What I'm stuck on:
 [A real open question. This is the part that gets useful replies.]
 
-Doing this in public because the version of this post I needed to read two years ago didn't exist. Happy to answer anything in the comments.`,
+Doing this in public because the version of this post I needed to read two years ago didn't exist. Happy to answer anything in the comments.
+
+#BuildInPublic #Startups #Founders`,
   },
   {
     id: 'founder-decision',
@@ -342,7 +370,9 @@ Question 3 killed it.
 
 It would have worked. That was the problem. We'd have spent three years building something we didn't want to own.
 
-Saying no to a good opportunity is much harder than saying no to a bad one. Nobody warns you about that.`,
+Saying no to a good opportunity is much harder than saying no to a bad one. Nobody warns you about that.
+
+#Founders #Strategy #Startups`,
   },
 
   // ─── Data ───────────────────────────────────────────────────────────────
@@ -367,7 +397,9 @@ What it changes in practice: [the actionable takeaway].
 
 Caveat worth stating: [an honest limitation of the data — sample, timeframe, selection bias].
 
-Full method in the comments for anyone who wants to pick holes in it. 👇`,
+Full method in the comments for anyone who wants to pick holes in it. 👇
+
+#Data #Research #[Industry]`,
   },
   {
     id: 'data-beforeafter',
@@ -389,7 +421,9 @@ Nothing broke.
 
 Three months on, the only complaint has been from people who liked meetings as a place to be seen.
 
-That turned out to be useful information too.`,
+That turned out to be useful information too.
+
+#Productivity #WaysOfWorking #Leadership`,
   },
   {
     id: 'data-teardown',
@@ -412,7 +446,9 @@ Put together, this looks less like [obvious interpretation] and more like [your 
 
 I could be wrong — [the strongest argument against your read].
 
-What am I missing?`,
+What am I missing?
+
+#Strategy #Analysis #[Industry]`,
   },
 
   // ─── Milestone ──────────────────────────────────────────────────────────
@@ -439,7 +475,9 @@ Thought disagreement was a risk to manage
 Thought seniority meant certainty
 → Fairly sure it means being comfortable saying "I don't know" in front of more people
 
-Thanks to everyone who dragged me from the left column to the right one. 🙏`,
+Thanks to everyone who dragged me from the left column to the right one. 🙏
+
+#WorkAnniversary #Gratitude #Career`,
   },
   {
     id: 'milestone-gratitude',
@@ -456,7 +494,9 @@ Thanks to everyone who dragged me from the left column to the right one. 🙏`,
 
 And to [person outside the team], who [what they did] without being asked and without needing the credit: noticed. 👏
 
-The post that just says "proud of the team" is easier to write. This one is more true.`,
+The post that just says "proud of the team" is easier to write. This one is more true.
+
+#Gratitude #Teamwork #Leadership`,
   },
   {
     id: 'milestone-award',
@@ -477,7 +517,9 @@ It cost us [what it cost — time, revenue, speed] for about [how long] before i
 
 To anyone in the middle of a bet that hasn't paid off yet: that's what the middle feels like. 🙏
 
-Thanks to [the people], and to [the customers/community] for the patience.`,
+Thanks to [the people], and to [the customers/community] for the patience.
+
+#Award #Gratitude #Startups`,
   },
 ];
 
