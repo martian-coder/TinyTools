@@ -11,6 +11,16 @@ export const TRUNCATE_MOBILE = 140;
 // LinkedIn's renderer collapses runs of blank lines beyond this.
 const MAX_CONSECUTIVE_BLANKS = 2;
 
+/**
+ * The Mathematical Alphanumeric Symbols block covers A-Z, a-z and 0-9 and nothing
+ * else. There is no bold é, no italic ü, and no styled CJK anywhere in Unicode —
+ * so styling silently skips those characters, which is far worse than refusing:
+ * a French word comes out half-bold, and a Chinese post comes out unchanged while
+ * the author believes it worked.
+ */
+const CJK = /[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uac00-\ud7af]/;
+const ACCENTED_LATIN = /[\u00c0-\u024f]/;
+
 const segmenter =
   typeof Intl !== 'undefined' && Intl.Segmenter
     ? new Intl.Segmenter(undefined, { granularity: 'grapheme' })
@@ -201,6 +211,27 @@ export function analyze(text) {
       severity: 'warning',
       title: 'Your first line gets cut off',
       detail: `Mobile truncates at about ${TRUNCATE_MOBILE} characters, and the cut lands mid-sentence. Put a complete, curiosity-creating thought in the first line and break after it.`,
+    });
+  }
+
+  // --- Scripts that cannot be styled ---
+  if (ratio > 0 && CJK.test(plain)) {
+    findings.push({
+      id: 'cjk-unstyleable',
+      severity: 'error',
+      title: 'Styling does not apply to Chinese, Japanese or Korean',
+      detail:
+        'Unicode has no bold or italic forms for CJK characters, so those parts of your post are being published exactly as typed while the styling silently does nothing. Any Latin words mixed in will be styled, which leaves the post looking half-formatted. Use line breaks, bullets and emoji for structure instead — they work in every script.',
+    });
+  }
+
+  if (ratio > 0 && ACCENTED_LATIN.test(plain)) {
+    findings.push({
+      id: 'accents-unstyleable',
+      severity: 'warning',
+      title: 'Accented letters stay unstyled inside styled words',
+      detail:
+        'There is no bold é, ü, ñ or ç in Unicode, so an accented letter keeps its plain form while the letters around it change — “Réussite” publishes as a mix. It reads as a rendering fault rather than emphasis. For French, German, Dutch, Spanish and Portuguese, style whole lines that avoid accents, or leave the text plain and structure it with bullets.',
     });
   }
 

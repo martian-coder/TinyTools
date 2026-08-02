@@ -1,5 +1,6 @@
 import React, { useRef, useState } from 'react';
 import { downscaleImage } from '../utils/avatar.js';
+import { useI18n } from '../i18n/index.js';
 import { hasStyling } from '../utils/unicode.js';
 import { TRUNCATE_DESKTOP, TRUNCATE_MOBILE } from '../utils/analyze.js';
 
@@ -50,6 +51,7 @@ function ReactionBar({ dark }) {
 }
 
 export default function Preview({ text, image, identity, onIdentityChange }) {
+  const { t } = useI18n();
   const [device, setDevice] = useState('mobile');
   const [dark, setDark] = useState(false);
   const [expanded, setExpanded] = useState(false);
@@ -90,14 +92,14 @@ export default function Preview({ text, image, identity, onIdentityChange }) {
     <div className="space-y-3">
       <div className="flex items-center gap-2 flex-wrap">
         <button type="button" className={device === 'mobile' ? controlActive : control} onClick={() => setDevice('mobile')}>
-          Mobile
+          {t('preview.mobile')}
         </button>
         <button type="button" className={device === 'desktop' ? controlActive : control} onClick={() => setDevice('desktop')}>
-          Desktop
+          {t('preview.desktop')}
         </button>
         <span className="w-px h-5 bg-slate-200 dark:bg-slate-700" />
         <button type="button" className={dark ? controlActive : control} onClick={() => setDark((v) => !v)}>
-          {dark ? 'Dark' : 'Light'}
+          {dark ? t('preview.dark') : t('preview.light')}
         </button>
         <button
           type="button"
@@ -105,7 +107,7 @@ export default function Preview({ text, image, identity, onIdentityChange }) {
           onClick={() => setEditing((v) => !v)}
           aria-expanded={editing}
         >
-          {editing ? 'Done' : 'Edit profile'}
+          {editing ? t('preview.done') : t('preview.editProfile')}
         </button>
       </div>
 
@@ -120,16 +122,16 @@ export default function Preview({ text, image, identity, onIdentityChange }) {
               type="text"
               value={identity.name}
               onChange={(e) => onIdentityChange({ ...identity, name: e.target.value })}
-              placeholder="Your name"
-              aria-label="Your name"
+              placeholder={t('preview.yourName')}
+              aria-label={t('preview.yourName')}
               className="px-3 py-1.5 text-sm rounded-md border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 outline-none focus:border-linkedin"
             />
             <input
               type="text"
               value={identity.headline}
               onChange={(e) => onIdentityChange({ ...identity, headline: e.target.value })}
-              placeholder="Your headline"
-              aria-label="Your headline"
+              placeholder={t('preview.yourHeadline')}
+              aria-label={t('preview.yourHeadline')}
               className="px-3 py-1.5 text-sm rounded-md border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 outline-none focus:border-linkedin"
             />
           </div>
@@ -139,7 +141,7 @@ export default function Preview({ text, image, identity, onIdentityChange }) {
               onClick={() => avatarRef.current?.click()}
               className="px-3 py-1.5 text-sm rounded-md border border-slate-300 dark:border-slate-600 hover:border-linkedin transition"
             >
-              {identity.avatar ? 'Change photo' : 'Upload photo or logo'}
+              {identity.avatar ? t('preview.changePhoto') : t('preview.uploadPhoto')}
             </button>
             {identity.avatar && (
               <button
@@ -147,7 +149,7 @@ export default function Preview({ text, image, identity, onIdentityChange }) {
                 onClick={() => onIdentityChange({ ...identity, avatar: null })}
                 className="px-3 py-1.5 text-sm rounded-md text-slate-500 hover:text-red-600 transition"
               >
-                Remove
+                {t('preview.remove')}
               </button>
             )}
             <input
@@ -208,7 +210,7 @@ export default function Preview({ text, image, identity, onIdentityChange }) {
               style={{ color: primary, fontFamily: '-apple-system, system-ui, "Segoe UI", Roboto, sans-serif' }}
             >
               {text ? renderTokens(shown, dark) : (
-                <span style={{ color: muted }}>Your post will appear here, exactly as LinkedIn will render it.</span>
+                <span style={{ color: muted }}>{t('preview.empty')}</span>
               )}
               {isTruncated && !expanded && (
                 <button

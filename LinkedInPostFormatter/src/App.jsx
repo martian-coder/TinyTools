@@ -10,6 +10,7 @@ import { applyStyle, stripStyle } from './utils/unicode.js';
 import { analyze, fixSpacing } from './utils/analyze.js';
 import { compileBlocks, starterBlocks } from './utils/blocks.js';
 import { lineRange, toggleList } from './utils/lists.js';
+import { useI18n, LANGUAGES } from './i18n/index.js';
 
 const DRAFT_KEY = 'lpf.draft';
 const DRAFTS_KEY = 'lpf.drafts';
@@ -19,6 +20,7 @@ const BLOCKS_KEY = 'lpf.blocks';
 const IDENTITY_KEY = 'lpf.identity';
 
 export default function App() {
+  const { t, lang, setLang } = useI18n();
   const [text, setText] = useState(() => localStorage.getItem(DRAFT_KEY) || '');
   const [selection, setSelection] = useState({ start: 0, end: 0 });
   const [copied, setCopied] = useState(false);
@@ -320,21 +322,36 @@ export default function App() {
               <h1 className="font-semibold sm:truncate text-[15px] sm:text-base">
                 LinkedIn Formatter
                 <span className="hidden sm:inline font-normal text-slate-500 dark:text-slate-400">
-                  {' '}— style, preview, publish
+                  {' '}— {t('app.tagline')}
                 </span>
               </h1>
               <p className="text-[11px] text-slate-500 dark:text-slate-400 sm:truncate">
-                Developed by Amit
+                {t('app.developedBy')}
               </p>
             </div>
           </div>
 
           <div className="flex items-center gap-2">
+            <select
+              value={lang}
+              onChange={(e) => setLang(e.target.value)}
+              aria-label={t('lang.label')}
+              title={t('lang.note')}
+              className="px-2 py-1.5 text-sm rounded-md border border-slate-300 dark:border-slate-600
+                         bg-transparent hover:border-linkedin transition cursor-pointer
+                         dark:bg-slate-800"
+            >
+              {LANGUAGES.map((l) => (
+                <option key={l.id} value={l.id}>
+                  {l.native}
+                </option>
+              ))}
+            </select>
             <button
               type="button"
               onClick={() => setDark((v) => !v)}
               className="px-2.5 py-1.5 text-sm rounded-md border border-slate-300 dark:border-slate-600 hover:border-linkedin transition"
-              aria-label="Toggle theme"
+              aria-label={t('header.theme')}
             >
               {dark ? '☀' : '☾'}
             </button>
@@ -344,7 +361,7 @@ export default function App() {
               disabled={!activeText.trim()}
               className="px-2.5 sm:px-3 py-1.5 text-sm rounded-md border border-slate-300 dark:border-slate-600 hover:border-linkedin transition disabled:opacity-40 disabled:cursor-not-allowed"
             >
-              Save
+              {t('header.save')}
             </button>
             <button
               type="button"
@@ -352,10 +369,10 @@ export default function App() {
               disabled={!activeText}
               className="px-3 sm:px-4 py-1.5 text-sm font-medium rounded-md bg-linkedin text-white hover:bg-linkedin-dark transition disabled:opacity-40 disabled:cursor-not-allowed"
             >
-              {copied ? 'Copied ✓' : (
+              {copied ? t('header.copied') : (
                 <>
-                  <span className="sm:hidden">Copy</span>
-                  <span className="hidden sm:inline">Copy for LinkedIn</span>
+                  <span className="sm:hidden">{t('header.copyShort')}</span>
+                  <span className="hidden sm:inline">{t('header.copy')}</span>
                 </>
               )}
             </button>
@@ -368,16 +385,14 @@ export default function App() {
           <div className="flex items-center gap-3 px-3 pt-3">
             <div className="inline-flex gap-1 p-1 rounded-lg bg-slate-100 dark:bg-slate-900">
               <button type="button" className={modeClass(mode === 'write')} onClick={() => setMode('write')}>
-                Write
+                {t('mode.write')}
               </button>
               <button type="button" className={modeClass(mode === 'build')} onClick={() => setMode('build')}>
-                Build
+                {t('mode.build')}
               </button>
             </div>
             <span className="text-xs text-slate-500 dark:text-slate-400">
-              {mode === 'write'
-                ? 'Freeform, with styling.'
-                : 'Assemble from blocks, then send it across to style.'}
+              {mode === 'write' ? t('mode.writeHint') : t('mode.buildHint')}
             </span>
           </div>
 
@@ -431,13 +446,13 @@ export default function App() {
                            text-linkedin hover:bg-linkedin-light dark:hover:bg-slate-700 transition
                            disabled:opacity-40 disabled:cursor-not-allowed"
               >
-                Send to editor to style →
+                {t('mode.sendToEditor')}
               </button>
             </div>
           )}
 
           <div className="px-4 py-2 border-t border-slate-200 dark:border-slate-700 text-xs text-slate-500 dark:text-slate-400 flex justify-between gap-3">
-            <span>Saved to this browser automatically.</span>
+            <span>{t('editor.saved')}</span>
             {errorCount > 0 && (
               <span className="text-red-600 dark:text-red-400 font-medium">
                 {errorCount} thing{errorCount > 1 ? 's' : ''} to fix
@@ -449,10 +464,10 @@ export default function App() {
         <section className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-4 lg:sticky lg:top-[4.5rem]">
           <div className="inline-flex gap-1 p-1 rounded-lg bg-slate-100 dark:bg-slate-900 mb-4">
             <button type="button" className={tabClass('preview')} onClick={() => setTab('preview')}>
-              Preview
+              {t('tabs.preview')}
             </button>
             <button type="button" className={tabClass('insights')} onClick={() => setTab('insights')}>
-              Checks
+              {t('tabs.checks')}
               {errorCount > 0 && (
                 <span className="ml-1.5 px-1.5 py-0.5 text-[10px] rounded-full bg-red-500 text-white">
                   {errorCount}

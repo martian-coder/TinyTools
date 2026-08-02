@@ -3,6 +3,7 @@ import { STYLES, applyStyle } from '../utils/unicode.js';
 import { LIMITS, limitById } from '../utils/limits.js';
 import EmojiPicker from './EmojiPicker.jsx';
 import SymbolPicker from './SymbolPicker.jsx';
+import { useI18n } from '../i18n/index.js';
 
 // The conventional five sit on the ribbon; the decorative ones live behind "Aa".
 const PRIMARY = ['bold', 'italic', 'underline', 'strikethrough', 'monospace'];
@@ -122,6 +123,7 @@ export default function Ribbon({
   onRemoveImage,
   hasImage,
 }) {
+  const { t } = useI18n();
   const [panel, setPanel] = useState(null); // 'emoji' | 'symbols' | 'styles'
   const [hint, setHint] = useState('');
   const [target, setTarget] = useState('post');
@@ -138,7 +140,7 @@ export default function Ribbon({
 
   const needsSelection = (run) => () => {
     if (!hasSelection) {
-      flash('Select some text first, then pick a style.');
+      flash(t('ribbon.selectFirst'));
       return;
     }
     run();
@@ -179,10 +181,10 @@ export default function Ribbon({
     <div className="border-b border-slate-200 dark:border-slate-700">
       {/* Formatting */}
       <div className="flex items-center gap-0.5 px-2 pt-1.5 flex-wrap">
-        <Btn onClick={onUndo} disabled={!canUndo} title="Undo (Ctrl+Z)" label="Undo">
+        <Btn onClick={onUndo} disabled={!canUndo} title={`${t('ribbon.undo')} (Ctrl+Z)`} label={t('ribbon.undo')}>
           {Icon.undo}
         </Btn>
-        <Btn onClick={onRedo} disabled={!canRedo} title="Redo (Ctrl+Shift+Z)" label="Redo">
+        <Btn onClick={onRedo} disabled={!canRedo} title={`${t('ribbon.redo')} (Ctrl+Shift+Z)`} label={t('ribbon.redo')}>
           {Icon.redo}
         </Btn>
 
@@ -191,35 +193,35 @@ export default function Ribbon({
         <Btn
           onClick={needsSelection(() => onApply('bold'))}
           title="Bold — headlines and key points"
-          label="Bold"
+          label={t('ribbon.bold')}
         >
           <span className="font-bold text-[15px]">B</span>
         </Btn>
         <Btn
           onClick={needsSelection(() => onApply('italic'))}
           title="Italic — subtle emphasis"
-          label="Italic"
+          label={t('ribbon.italic')}
         >
           <span className="italic font-serif text-[15px]">I</span>
         </Btn>
         <Btn
           onClick={needsSelection(() => onApply('underline'))}
           title="Underline"
-          label="Underline"
+          label={t('ribbon.underline')}
         >
           <span className="underline text-[15px]">U</span>
         </Btn>
         <Btn
           onClick={needsSelection(() => onApply('strikethrough'))}
           title="Strikethrough — before and after"
-          label="Strikethrough"
+          label={t('ribbon.strikethrough')}
         >
           <span className="line-through text-[15px]">S</span>
         </Btn>
         <Btn
           onClick={needsSelection(() => onApply('monospace'))}
           title="Monospace — code, data, metrics"
-          label="Monospace"
+          label={t('ribbon.monospace')}
         >
           <span className="font-mono text-xs">&lt;/&gt;</span>
         </Btn>
@@ -228,7 +230,7 @@ export default function Ribbon({
           onClick={() => toggle('styles')}
           active={panel === 'styles'}
           title="More styles"
-          label="More styles"
+          label={t('ribbon.moreStyles')}
           wide
         >
           <span className="text-[13px] font-medium">Aa</span>
@@ -238,7 +240,7 @@ export default function Ribbon({
         <Btn
           onClick={needsSelection(() => onApply('plain'))}
           title="Remove formatting from the selection"
-          label="Remove formatting"
+          label={t('ribbon.removeFormat')}
         >
           {Icon.clearFormat}
         </Btn>
@@ -248,21 +250,21 @@ export default function Ribbon({
         <Btn
           onClick={() => onToggleList('bullet')}
           title="Bulleted list — toggles • on the selected lines"
-          label="Bulleted list"
+          label={t('ribbon.bulletList')}
         >
           {Icon.bulletList}
         </Btn>
         <Btn
           onClick={() => onToggleList('number')}
           title="Numbered list — toggles numbering on the selected lines"
-          label="Numbered list"
+          label={t('ribbon.numberList')}
         >
           {Icon.numberList}
         </Btn>
         <Btn
           onClick={() => onInsert('\n━━━━━━━━━━\n')}
           title="Insert a divider line"
-          label="Insert divider"
+          label={t('ribbon.divider')}
         >
           {Icon.divider}
         </Btn>
@@ -274,31 +276,31 @@ export default function Ribbon({
           onClick={() => toggle('emoji')}
           active={panel === 'emoji'}
           title="Emoji"
-          label="Emoji"
+          label={t('ribbon.emoji')}
           wide
         >
           <span aria-hidden="true">🙂</span>
-          <span className="text-[13px]">Emoji</span>
+          <span className="text-[13px]">{t('ribbon.emoji')}</span>
         </Btn>
         <Btn
           onClick={() => toggle('symbols')}
           active={panel === 'symbols'}
           title="Bullets, numbers and dividers"
-          label="Symbols"
+          label={t('ribbon.symbols')}
           wide
         >
           <span aria-hidden="true">•</span>
-          <span className="text-[13px]">Symbols</span>
+          <span className="text-[13px]">{t('ribbon.symbols')}</span>
         </Btn>
         <Btn
           onClick={() => (hasImage ? onRemoveImage() : fileRef.current?.click())}
           active={hasImage}
           title="Adds an image to the preview only. LinkedIn post text cannot contain an image, so you still upload the file to LinkedIn yourself."
-          label={hasImage ? 'Remove preview image' : 'Add image to preview'}
+          label={hasImage ? t('ribbon.removeImage') : t('ribbon.image')}
           wide
         >
           {Icon.image}
-          <span className="text-[13px]">{hasImage ? 'Remove image' : 'Image'}</span>
+          <span className="text-[13px]">{hasImage ? t('ribbon.removeImage') : t('ribbon.image')}</span>
         </Btn>
         <input
           ref={fileRef}
@@ -313,11 +315,11 @@ export default function Ribbon({
           onClick={onFixSpacing}
           disabled={!hasText}
           title="Collapse blank-line runs and trim trailing spaces to match what LinkedIn renders"
-          label="Fix spacing"
+          label={t('ribbon.fixSpacing')}
           wide
         >
           {Icon.paragraph}
-          <span className="text-[13px]">Fix spacing</span>
+          <span className="text-[13px]">{t('ribbon.fixSpacing')}</span>
         </Btn>
 
         <span className="ml-auto flex items-center gap-3 pr-1">
@@ -361,7 +363,7 @@ export default function Ribbon({
             className="text-xs text-slate-400 hover:text-red-600 transition disabled:opacity-35
                        disabled:cursor-not-allowed"
           >
-            Clear all
+            {t('ribbon.clearAll')}
           </button>
         </span>
       </div>
