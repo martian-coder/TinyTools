@@ -12,10 +12,11 @@ const NEUTRAL = { name: 'Your Name', headline: 'Your headline', accent: '#334155
  * their value is the shape rather than the styling. Compiling once at module load
  * keeps the gallery from re-running the Unicode transform on every render.
  */
-const ALL = [
-  ...SHOWCASE.map((t) => ({ ...t, formatted: true, compiled: compileMarkup(t.body) })),
-  ...TEMPLATES.map((t) => ({ ...t, formatted: false, compiled: t.body, persona: NEUTRAL })),
-];
+const ALL = [...SHOWCASE, ...TEMPLATES].map((t) => ({
+  ...t,
+  compiled: compileMarkup(t.body),
+  persona: t.persona || NEUTRAL,
+}));
 
 const CATEGORIES = (() => {
   const seen = new Map();
@@ -54,11 +55,6 @@ function Card({ template, onUse }) {
               {persona.headline}
             </div>
           </div>
-          {template.formatted && (
-            <span className="ml-auto text-[10px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded bg-linkedin-light text-linkedin dark:bg-slate-700 dark:text-sky-300 shrink-0">
-              Formatted
-            </span>
-          )}
         </div>
       </div>
 
@@ -122,15 +118,10 @@ function Card({ template, onUse }) {
 
 export default function TemplateGallery({ onUse, onInsert, drafts, onLoadDraft, onDeleteDraft }) {
   const [category, setCategory] = useState('all');
-  const [onlyFormatted, setOnlyFormatted] = useState(false);
 
   const shown = useMemo(
-    () =>
-      ALL.filter(
-        (t) =>
-          (category === 'all' || t.category === category) && (!onlyFormatted || t.formatted)
-      ),
-    [category, onlyFormatted]
+    () => ALL.filter((t) => category === 'all' || t.category === category),
+    [category]
   );
 
   const chip = (isActive) =>
@@ -150,10 +141,10 @@ export default function TemplateGallery({ onUse, onInsert, drafts, onLoadDraft, 
           </span>
         </div>
         <p className="text-sm text-slate-600 dark:text-slate-400 mb-3 leading-relaxed">
-          Ready-made posts you can drop straight in. The ones marked{' '}
-          <span className="font-semibold text-linkedin">Formatted</span> already carry bold
-          headings, bullets and dividers. Replace the bracketed placeholders — they mark where a
-          real number, name or link has to go, which is the part that makes any of these work.
+          Ready-made posts you can drop straight in. Every one arrives formatted — bold headings,
+          bullets, dividers and hashtags already in place. Replace the bracketed placeholders, which
+          mark where a real number, name or link has to go; that specificity is what makes any of
+          these work.
         </p>
         <p className="text-xs text-slate-500 dark:text-slate-400 mb-3 leading-relaxed">
           The visual on each card shows the kind of image that post type usually carries — a chart,
@@ -161,6 +152,15 @@ export default function TemplateGallery({ onUse, onInsert, drafts, onLoadDraft, 
           copies across: LinkedIn post text cannot contain an image, so you attach the file on
           LinkedIn yourself. Hashtags are left plain on purpose, because LinkedIn cannot match a
           styled one.
+        </p>
+        <p className="text-xs text-slate-500 dark:text-slate-400 mb-4 leading-relaxed rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/40 px-3 py-2">
+          <span className="font-semibold text-slate-600 dark:text-slate-300">
+            These are example posts.
+          </span>{' '}
+          Every name, logo, headline, follower count and figure is invented — Northwind, Meridian
+          and the rest are not real companies, and none of this text is taken from anyone's actual
+          post. They exist to show the shape and formatting of a strong post, which is the part
+          worth reusing. The words should end up being yours.
         </p>
 
         <div className="flex flex-wrap gap-1.5 mb-4">
@@ -177,15 +177,6 @@ export default function TemplateGallery({ onUse, onInsert, drafts, onLoadDraft, 
               {c.name}
             </button>
           ))}
-          <span className="w-px h-6 bg-slate-200 dark:bg-slate-600 mx-1" />
-          <button
-            type="button"
-            className={chip(onlyFormatted)}
-            onClick={() => setOnlyFormatted((v) => !v)}
-            aria-pressed={onlyFormatted}
-          >
-            Formatted only
-          </button>
         </div>
 
         {/* items-start stops a row stretching to its tallest card. Without it,

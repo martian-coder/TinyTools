@@ -24,13 +24,15 @@ export const TEMPLATES = [
     category: 'story',
     name: 'Story → Lesson',
     description: 'A specific moment, what it cost, what it taught. The most reliable structure on the platform.',
-    body: `I got the email at 4pm on a Friday.
+    media: { type: 'quote', caption: 'Pull the key line out as a quote card. It gives the scroll something to land on.' },
+    persona: { name: 'Priya Raman', headline: 'Account Director · 4,200 followers', accent: '#0A66C2' },
+    body: `**I got the email at 4pm on a Friday.**
 
 We'd lost the account.
 
 Eight months of work, gone in three paragraphs.
 
-Here's what I got wrong:
+**Here's what I got wrong:**
 
 • I optimised for the person who liked me, not the person who signed
 • I confused activity with progress
@@ -47,7 +49,9 @@ What's the most expensive lesson your work has taught you?
     category: 'story',
     name: 'The Failure Post',
     description: 'Own a real mistake without performing humility. Requires an actual cost, stated plainly.',
-    body: `I shipped a bug that cost us £30,000 in refunds.
+    media: { type: 'quote', caption: 'Pull the key line out as a quote card. It gives the scroll something to land on.' },
+    persona: { name: 'Tom Okafor', headline: 'Engineering Lead · 7,800 followers', accent: '#C2410C' },
+    body: `**I shipped a bug that cost us £30,000 in refunds.**
 
 Not a metaphor. Thirty thousand pounds, in one weekend, because I skipped a test I'd decided was "obviously fine".
 
@@ -57,7 +61,7 @@ It's the 20 minutes between noticing and telling someone. Every instinct says wa
 
 I told my manager at 9:40am. By 11 we'd rolled back and drafted the customer email.
 
-She said one thing I've repeated ever since:
+**She said one thing I've repeated ever since:**
 
 "The bug was a mistake. Waiting would have been a decision."
 
@@ -70,7 +74,9 @@ I've never sat on bad news again.
     category: 'story',
     name: 'Someone Who Changed Things',
     description: 'Credit a specific person for a specific shift. Warm without being saccharine.',
-    body: `My first manager gave me feedback I hated for about two years.
+    media: { type: 'photo', caption: 'A real photo beats a stock one every time — people can tell, and it costs you credibility.' },
+    persona: { name: 'Sara Lindqvist', headline: 'Head of Design · 6,100 followers', accent: '#6B4EFF' },
+    body: `**My first manager gave me feedback I hated for about two years.**
 
 "You're solving the problem you were given. Nobody asked you to check whether it's the right problem."
 
@@ -91,7 +97,9 @@ Who gave you the feedback you needed rather than the feedback you wanted?
     category: 'insight',
     name: 'Contrarian Take',
     description: 'Name the consensus, disagree precisely, back it with something you actually saw.',
-    body: `Everyone says you should niche down.
+    media: { type: 'diagram', caption: 'A simple before/after or flow sketch. Hand-drawn is fine and often better.' },
+    persona: { name: 'Daniel Mercer', headline: 'Independent Consultant · 18,400 followers', accent: '#0B7A6E' },
+    body: `**Everyone says you should niche down.**
 
 I didn't. It worked.
 
@@ -114,21 +122,23 @@ Where have you seen good advice given at the wrong time?
     category: 'insight',
     name: 'Numbered Lessons',
     description: 'Scannable and highly shareable. Works when each point stands alone.',
-    body: `5 things I wish I'd known before my first management job:
+    media: { type: 'carousel', caption: 'A carousel with one point per frame. They hold attention longer than a single image.' },
+    persona: { name: 'Nadia Haddad', headline: 'Engineering Manager · 12,900 followers', accent: '#0A66C2' },
+    body: `**5 things I wish I'd known before my first management job:**
 
-1️⃣ Your job is no longer to be the best at the work
+1️⃣ **Your job is no longer to be the best at the work**
 It's to make the work happen without you.
 
-2️⃣ Silence in a 1:1 is information
+2️⃣ **Silence in a 1:1 is information**
 Sit in it. They're deciding whether to tell you something.
 
-3️⃣ Praise in public, specifics in private
+3️⃣ **Praise in public, specifics in private**
 "Great job" means nothing. "The way you handled the client's objection" means everything.
 
-4️⃣ You will be wrong in front of people
+4️⃣ **You will be wrong in front of people**
 Do it well and you buy more trust than being right ever earns.
 
-5️⃣ Protect your calendar or someone else will fill it
+5️⃣ **Protect your calendar or someone else will fill it**
 
 Which one took you longest to learn?
 
@@ -139,7 +149,9 @@ Which one took you longest to learn?
     category: 'insight',
     name: 'Question Opener',
     description: 'Opens a loop in the first line. Strong hook when the question is genuinely uncomfortable.',
-    body: `When was the last time you changed your mind about something important at work?
+    media: { type: 'quote', caption: 'Pull the key line out as a quote card. It gives the scroll something to land on.' },
+    persona: { name: 'Elena Vasquez', headline: 'Executive Coach · 22,600 followers', accent: '#6B4EFF' },
+    body: `**When was the last time you changed your mind about something important at work?**
 
 Not adjusted. Changed.
 
@@ -160,16 +172,18 @@ How does your team handle it?
     category: 'insight',
     name: 'Myth vs Reality',
     description: 'Two-column thinking in plain text. Good for correcting a widely repeated claim.',
-    body: `"Remote work kills culture."
+    media: { type: 'diagram', caption: 'A simple before/after or flow sketch. Hand-drawn is fine and often better.' },
+    persona: { name: 'Kestrel', headline: 'Remote-first Consultancy · 9,400 followers', accent: '#0B7A6E', mark: 'hex' },
+    body: `**"Remote work kills culture."**
 
-I've now run both. Here's what actually changed:
+**I've now run both. Here's what actually changed:**
 
-What people think happens:
+**What people think happens:**
 ❌ Nobody talks to each other
 ❌ Junior people stop learning
 ❌ Culture disappears
 
-What actually happens:
+**What actually happens:**
 ✅ Casual conversation drops to near zero — this part is true
 ✅ Junior people stop learning by osmosis and need it made explicit
 ✅ Culture doesn't disappear. It stops being accidental.
@@ -189,11 +203,13 @@ What did your team have to make deliberate?
     category: 'career',
     name: 'New Role',
     description: 'Announce a move without the corporate voice. Lead with the why, not the title.',
-    body: `I've joined [company] as [role].
+    media: { type: 'photo', caption: 'A real photo beats a stock one every time — people can tell, and it costs you credibility.' },
+    persona: { name: 'Jonas Weber', headline: 'Product Manager · 3,100 followers', accent: '#0A66C2' },
+    body: `**I've joined [company] as [role].**
 
 The short reason: I kept running into the same problem at my last three jobs, and they're the only team I've found actually working on it.
 
-The longer reason:
+**The longer reason:**
 
 [One or two sentences on the specific thing that convinced you — a conversation, a product decision, something you saw them do.]
 
@@ -208,7 +224,9 @@ And to the team at [previous company] — thank you. [One specific thing you're 
     category: 'career',
     name: 'Leaving a Role',
     description: 'A goodbye post that says something. Specific gratitude beats a list of adjectives.',
-    body: `Friday was my last day at [company], after [n] years.
+    media: { type: 'photo', caption: 'A real photo beats a stock one every time — people can tell, and it costs you credibility.' },
+    persona: { name: 'Amara Diallo', headline: 'Marketing Lead · 5,700 followers', accent: '#C2410C' },
+    body: `**Friday was my last day at [company], after [n] years.**
 
 I could list what we shipped. Instead, three things I'm taking with me:
 
@@ -229,16 +247,18 @@ Next: [what's next, or "taking a few weeks off before saying more"].
     category: 'career',
     name: 'Open to Work',
     description: 'Specific and useful rather than a plea. Makes it easy for someone to help.',
-    body: `I'm looking for my next role.
+    media: { type: 'photo', caption: 'A real photo beats a stock one every time — people can tell, and it costs you credibility.' },
+    persona: { name: 'Ravi Shankar', headline: 'Data Analyst · 2,400 followers', accent: '#6B4EFF' },
+    body: `**I'm looking for my next role.**
 
 Rather than list adjectives about myself, here's what I'm actually good at and what I'm looking for.
 
-What I do well:
+**What I do well:**
 • [Specific skill, with a number or outcome attached]
 • [Specific skill, with a number or outcome attached]
 • [The thing colleagues actually come to you for]
 
-What I'm looking for:
+**What I'm looking for:**
 • [Type of role and seniority]
 • [Industry or problem space, and why]
 • [Location, remote, hybrid]
@@ -256,16 +276,18 @@ Happy to return the favour whenever it's useful. 🙏
     category: 'hiring',
     name: "We're Hiring",
     description: 'A job post people actually read. Honest about the hard parts.',
-    body: `We're hiring a [role].
+    media: { type: 'photo', caption: 'A real photo beats a stock one every time — people can tell, and it costs you credibility.' },
+    persona: { name: 'Solstice', headline: 'Fintech · 11,200 followers', accent: '#0A66C2', mark: 'orbit' },
+    body: `**We're hiring a [role].**
 
 Before the link, the honest version.
 
-You'd be good at this if:
+**You'd be good at this if:**
 ✅ [Specific, testable thing]
 ✅ [Specific, testable thing]
 ✅ You're comfortable with [genuine ambiguity of the role]
 
-You'd hate it if:
+**You'd hate it if:**
 ❌ [Real downside — small team, no process, heavy travel, legacy code]
 ❌ [Another real downside]
 
@@ -284,7 +306,9 @@ If you're not sure, message me — I'd rather have a five-minute conversation th
     category: 'hiring',
     name: 'What Hiring Taught Me',
     description: 'Reframes a process everyone complains about. Strong comment driver.',
-    body: `I've now interviewed about 400 people.
+    media: { type: 'stat', caption: 'The headline number as a plain stat card. Big number, one line of context.' },
+    persona: { name: 'Marcus Bell', headline: 'VP Engineering · 16,300 followers', accent: '#0B7A6E' },
+    body: `**I've now interviewed about 400 people.**
 
 The single best predictor of whether someone would do well wasn't on any scorecard.
 
@@ -308,11 +332,13 @@ Interviewers — what's the question that changed your mind about a candidate?
     category: 'founder',
     name: 'Product Launch',
     description: 'News without the press-release voice. Lead with what it means for the reader.',
-    body: `We shipped something today that I've wanted to build for three years.
+    media: { type: 'screenshot', caption: 'A product shot showing the thing working, not a logo on a gradient.' },
+    persona: { name: 'Cobalt', headline: 'Developer Tools · 8,900 followers', accent: '#0A66C2', mark: 'chevron' },
+    body: `**We shipped something today that I've wanted to build for three years.**
 
 The short version: [what it does, in one sentence a stranger would understand].
 
-The longer version:
+**The longer version:**
 
 Most tools in this space solve [problem] by [common approach]. That works until [specific breaking point], which is exactly where our customers kept getting stuck.
 
@@ -329,20 +355,22 @@ If you've hit that wall before, I'd genuinely like to hear whether this clears i
     category: 'founder',
     name: 'Building in Public',
     description: 'Progress update with a real number and a real problem. Builds an audience over time.',
-    body: `Month [n] of building [product].
+    media: { type: 'barChart', caption: 'One chart showing the finding. One, not five.' },
+    persona: { name: 'Ines Costa', headline: 'Founder · 6,500 followers', accent: '#C2410C' },
+    body: `**Month [n] of building [product].**
 
-The numbers:
+**The numbers:**
 📈 [Metric]: [number] ([change] from last month)
 👥 [Metric]: [number]
 💰 [Metric]: [number]
 
-What worked:
+**What worked:**
 [One thing, specifically. Not "marketing" — the actual action.]
 
-What didn't:
+**What didn't:**
 [One thing that genuinely failed, and what it cost.]
 
-What I'm stuck on:
+**What I'm stuck on:**
 [A real open question. This is the part that gets useful replies.]
 
 Doing this in public because the version of this post I needed to read two years ago didn't exist. Happy to answer anything in the comments.
@@ -354,13 +382,15 @@ Doing this in public because the version of this post I needed to read two years
     category: 'founder',
     name: 'A Hard Decision',
     description: 'Walk through real reasoning. Earns trust faster than a win post.',
-    body: `We turned down [an opportunity most people would take].
+    media: { type: 'diagram', caption: 'A simple before/after or flow sketch. Hand-drawn is fine and often better.' },
+    persona: { name: 'Wren Labs', headline: 'Founder · 7,300 followers', accent: '#6B4EFF', mark: 'aperture' },
+    body: `**We turned down [an opportunity most people would take].**
 
 Here's the reasoning, because I think the framework is more useful than the decision.
 
 The offer: [what it was, and why it was genuinely tempting].
 
-Three questions we asked:
+**Three questions we asked:**
 
 1. Does this make the core product better, or just bigger?
 2. What do we stop doing to say yes?
@@ -381,13 +411,15 @@ Saying no to a good opportunity is much harder than saying no to a bad one. Nobo
     category: 'data',
     name: 'Surprising Finding',
     description: 'Lead with the counterintuitive number. Works only if the data is real.',
-    body: `We analysed [n] [things] and found something we didn't expect.
+    media: { type: 'barChart', caption: 'One chart showing the finding. One, not five.' },
+    persona: { name: 'Quarry', headline: 'Analytics · 19,800 followers', accent: '#0B7A6E', mark: 'bars' },
+    body: `**We analysed [n] [things] and found something we didn't expect.**
 
 [The surprising finding, in one sentence with a number.]
 
 We assumed [the intuitive expectation]. The data said the opposite.
 
-Digging in, three things explained it:
+**Digging in, three things explained it:**
 
 📊 [Explanation, with a supporting number]
 📊 [Explanation, with a supporting number]
@@ -406,7 +438,9 @@ Full method in the comments for anyone who wants to pick holes in it. 👇
     category: 'data',
     name: 'Before / After',
     description: 'A concrete transformation with the mechanism in between. Good for case studies.',
-    body: `Before: 40 hours a week in meetings.
+    media: { type: 'stat', caption: 'The headline number as a plain stat card. Big number, one line of context.' },
+    persona: { name: 'Helena Brandt', headline: 'Chief of Staff · 10,400 followers', accent: '#0A66C2' },
+    body: `**Before: 40 hours a week in meetings.**
 After: 12.
 
 Same output. Here's the change.
@@ -430,11 +464,13 @@ That turned out to be useful information too.
     category: 'data',
     name: 'Breakdown / Teardown',
     description: 'Analyse something publicly visible. High shareability, low risk.',
-    body: `[Company] just [did a specific public thing].
+    media: { type: 'diagram', caption: 'A simple before/after or flow sketch. Hand-drawn is fine and often better.' },
+    persona: { name: 'Sam Iversen', headline: 'Strategy · 14,100 followers', accent: '#C2410C' },
+    body: `**[Company] just [did a specific public thing].**
 
 Most people are reading it as [the obvious interpretation]. I think it's [your read].
 
-Three details worth noticing:
+**Three details worth noticing:**
 
 1. [Specific detail, and what it implies]
 
@@ -457,11 +493,13 @@ What am I missing?
     category: 'milestone',
     name: 'Work Anniversary',
     description: 'Avoids the "n years at X!" trap by making it about what changed.',
-    body: `[n] years at [company] today.
+    media: { type: 'photo', caption: 'A real photo beats a stock one every time — people can tell, and it costs you credibility.' },
+    persona: { name: 'Aria Nakamura', headline: 'Senior Engineer · 5,900 followers', accent: '#6B4EFF' },
+    body: `**[n] years at [company] today.**
 
 The version of me who started would not recognise how I work now.
 
-Then → Now:
+**Then → Now:**
 
 Measured a good week by how much I shipped
 → Measure it by how much moved without me
@@ -484,7 +522,9 @@ Thanks to everyone who dragged me from the left column to the right one. 🙏
     category: 'milestone',
     name: 'Thank You',
     description: 'Specific gratitude. Names people and says what they actually did.',
-    body: `[The thing] happened this week. I want to be specific about who made it happen, because "thanks to the team" is how people become invisible.
+    media: { type: 'photo', caption: 'A real photo beats a stock one every time — people can tell, and it costs you credibility.' },
+    persona: { name: 'Beacon Field', headline: 'Operations · 8,100 followers', accent: '#0B7A6E', mark: 'nodes' },
+    body: `**[The thing] happened this week. I want to be specific about who made it happen, because "thanks to the team" is how people become invisible.**
 
 [Name] — [the specific thing they did, and why it mattered].
 
@@ -503,7 +543,9 @@ The post that just says "proud of the team" is easier to write. This one is more
     category: 'milestone',
     name: 'Recognition',
     description: 'Accept an award without either false modesty or a victory lap.',
-    body: `We were named [award] this week.
+    media: { type: 'photo', caption: 'A real photo beats a stock one every time — people can tell, and it costs you credibility.' },
+    persona: { name: 'Verity', headline: 'Healthtech · 13,700 followers', accent: '#0A66C2', mark: 'link' },
+    body: `**We were named [award] this week.**
 
 I want to be honest about what that does and doesn't mean.
 
