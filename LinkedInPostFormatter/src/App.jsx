@@ -1,15 +1,15 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import Toolbar from './components/Toolbar';
+import Ribbon from './components/Ribbon';
 import Preview from './components/Preview';
 import Insights from './components/Insights';
 import TemplateLibrary from './components/TemplateLibrary';
 import BlockComposer from './components/BlockComposer';
 import About from './components/About';
 import Logo from './components/Logo';
-import FloatingFormatBar from './components/FloatingFormatBar';
 import { applyStyle, stripStyle } from './utils/unicode.js';
 import { analyze, fixSpacing } from './utils/analyze.js';
 import { compileBlocks, starterBlocks } from './utils/blocks.js';
+import { lineRange, toggleList } from './utils/lists.js';
 
 const DRAFT_KEY = 'lpf.draft';
 const DRAFTS_KEY = 'lpf.drafts';
@@ -41,6 +41,50 @@ export default function App() {
   });
 
   const textareaRef = useRef(null);
+  const history = useRef({ past: [], future: [], lastPush: 0 });
+  const [histTick, setHistTick] = useState(0);
+
+  /**
+   * Records a snapshot. Consecutive keystrokes coalesce into one entry so undo
+   * steps back by a phrase rather than a character.
+   */
+  const pushHistory = useCallback((snapshot, coalesce) => {
+    const h = history.current;
+    const now = Date.now();
+    const isRun = coalesce && h.past.length > 0 && now - h.lastPush < 700;
+    if (!isRun) {
+      h.past.push(snapshot);
+      if (h.past.length > 120) h.past.shift();
+    }
+    h.lastPush = now;
+    h.future.length = 0;
+    setHistTick((t) => t + 1);
+  }, []);
+
+  const undo = useCallback(() => {
+    const h = history.current;
+    if (!h.past.length) return;
+    h.future.push(text);
+    const previous = h.past.pop();
+    h.lastPush = 0;
+    setText(previous);
+    setHistTick((t) => t + 1);
+  }, [text]);
+
+  const redo = useCallback(() => {
+    const h = history.current;
+    if (!h.future.length) return;
+    h.past.push(text);
+    const next = h.future.pop();
+    h.lastPush = 0;
+    setText(next);
+    setHistTick((t) => t + 1);
+  }, [text]);
+
+  const { canUndo, canRedo } = useMemo(
+    () => ({ canUndo: history.current.past.length > 0, canRedo: history.current.future.length > 0 }),
+    [histTick]
+  );
 
   useEffect(() => {
     localStorage.setItem(DRAFT_KEY, text);
@@ -72,9 +116,27 @@ export default function App() {
     if (ta) setSelection({ start: ta.selectionStart, end: ta.selectionEnd });
   }, []);
 
+  /**
+   * React's onSelect misses selections that end outside the textarea — the most
+   * ordinary case being a mouse drag released over the page. The document-level
+   * selectionchange event fires for every one of them, so it is the reliable
+   * source of truth for whether anything is selected.
+   */
+  useEffect(() => {
+    const onSelectionChange = () => {
+      const ta = textareaRef.current;
+      if (ta && document.activeElement === ta) {
+        setSelection({ start: ta.selectionStart, end: ta.selectionEnd });
+      }
+    };
+    document.addEventListener('selectionchange', onSelectionChange);
+    return () => document.removeEventListener('selectionchange', onSelectionChange);
+  }, []);
+
   /** Replaces a range and restores the caret, so styling never loses the user's place. */
   const replaceRange = useCallback((start, end, replacement) => {
-    setText((current) => current.slice(0, start) + replacement + current.slice(end));
+    pushHistory(text, false);
+    setText(text.slice(0, start) + replacement + text.slice(end));
     requestAnimationFrame(() => {
       const ta = textareaRef.current;
       if (!ta) return;
@@ -83,7 +145,7 @@ export default function App() {
       ta.setSelectionRange(start, caret);
       setSelection({ start, end: caret });
     });
-  }, []);
+  }, [text, pushHistory]);
 
   const handleApply = useCallback(
     (style) => {
@@ -106,13 +168,27 @@ export default function App() {
     [selection, replaceRange]
   );
 
-  const handleFixSpacing = useCallback(() => setText((t) => fixSpacing(t)), []);
+  const handleToggleList = useCallback(
+    (kind) => {
+      const { from, to } = lineRange(text, selection.start, selection.end);
+      const block = text.slice(from, to);
+      const next = toggleList(block, kind);
+      if (next !== block) replaceRange(from, to, next);
+    },
+    [text, selection, replaceRange]
+  );
+
+  const handleFixSpacing = useCallback(() => {
+    pushHistory(text, false);
+    setText(fixSpacing(text));
+  }, [text, pushHistory]);
 
   const handleClear = useCallback(() => {
-    if (text && !window.confirm('Clear the whole post? This cannot be undone.')) return;
+    if (text && !window.confirm('Clear the whole post?')) return;
+    pushHistory(text, false);
     setText('');
     setSelection({ start: 0, end: 0 });
-  }, [text]);
+  }, [text, pushHistory]);
 
   /**
    * Writes plain text only. This is the whole trick: the styling lives in the
@@ -174,6 +250,27 @@ export default function App() {
     setText(blockText);
     setMode('write');
   }, [text, blockText]);
+
+  /** The shortcuts people already have in their fingers from every other editor. */
+  const handleKeyDown = useCallback(
+    (e) => {
+      if (!(e.ctrlKey || e.metaKey)) return;
+      const key = e.key.toLowerCase();
+      const shortcuts = { b: 'bold', i: 'italic', u: 'underline' };
+      if (shortcuts[key]) {
+        e.preventDefault();
+        handleApply(shortcuts[key]);
+      } else if (key === 'z' && !e.shiftKey) {
+        // Our own history replaces the browser's, which cannot see programmatic edits.
+        e.preventDefault();
+        undo();
+      } else if ((key === 'z' && e.shiftKey) || key === 'y') {
+        e.preventDefault();
+        redo();
+      }
+    },
+    [handleApply, undo, redo]
+  );
 
   const errorCount = result.findings.filter((f) => f.severity === 'error').length;
 
@@ -264,25 +361,34 @@ export default function App() {
 
           {mode === 'write' ? (
             <>
-              <Toolbar
+              <Ribbon
+                onApply={handleApply}
+                onToggleList={handleToggleList}
                 onInsert={handleInsert}
                 onFixSpacing={handleFixSpacing}
                 onClear={handleClear}
+                onUndo={undo}
+                onRedo={redo}
+                canUndo={canUndo}
+                canRedo={canRedo}
                 hasSelection={hasSelection}
                 hasText={text.length > 0}
+                used={result.counts.utf16}
               />
               <textarea
                 ref={textareaRef}
                 value={text}
                 onChange={(e) => {
+                  pushHistory(text, true);
                   setText(e.target.value);
                   syncSelection();
                 }}
+                onKeyDown={handleKeyDown}
                 onSelect={syncSelection}
                 onKeyUp={syncSelection}
                 onClick={syncSelection}
                 placeholder={
-                  'Write your post here.\n\nSelect any text and a formatting bar appears — what you see is exactly what publishes.'
+                  'Write your post here.\n\nSelect any text, then pick a style from the ribbon above — what you see is exactly what publishes.'
                 }
                 spellCheck
                 className="w-full h-[520px] p-4 resize-y bg-transparent outline-none text-[15px] leading-relaxed
@@ -346,12 +452,6 @@ export default function App() {
           )}
         </section>
       </main>
-
-      <FloatingFormatBar
-        textareaRef={textareaRef}
-        selection={mode === 'write' ? selection : { start: 0, end: 0 }}
-        onApply={handleApply}
-      />
 
       <About />
     </div>
