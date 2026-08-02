@@ -6,6 +6,7 @@ import TemplateGallery from './components/TemplateGallery';
 import BlockComposer from './components/BlockComposer';
 import About from './components/About';
 import Logo from './components/Logo';
+import EmailCapture from './components/EmailCapture';
 import { applyStyle, stripStyle } from './utils/unicode.js';
 import { analyze, fixSpacing } from './utils/analyze.js';
 import { compileBlocks, starterBlocks } from './utils/blocks.js';
@@ -495,6 +496,8 @@ export default function App() {
         onLoadDraft={(d) => loadInto(d.text)}
         onDeleteDraft={handleDeleteDraft}
       />
+
+      <EmailCapture />
 
       <About />
     </div>
