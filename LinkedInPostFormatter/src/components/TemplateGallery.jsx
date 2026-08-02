@@ -3,6 +3,7 @@ import { SHOWCASE, SHOWCASE_CATEGORIES } from '../utils/showcase.js';
 import { TEMPLATES, TEMPLATE_CATEGORIES, HOOKS, CLOSERS } from '../utils/templates.js';
 import { compileMarkup } from '../utils/unicode.js';
 import MediaMock from './MediaMock.jsx';
+import BrandMark from './BrandMark.jsx';
 
 const NEUTRAL = { name: 'Your Name', headline: 'Your headline', accent: '#334155' };
 
@@ -34,13 +35,17 @@ function Card({ template, onUse }) {
       {/* A LinkedIn-shaped card, so the template is judged as a post rather than as source text. */}
       <div className="p-3 border-b border-slate-100 dark:border-slate-700">
         <div className="flex items-center gap-2">
-          <div
-            className="w-10 h-10 rounded-full flex items-center justify-center text-white font-semibold shrink-0"
-            style={{ backgroundColor: persona.accent }}
-            aria-hidden="true"
-          >
-            {initial}
-          </div>
+          {persona.mark ? (
+            <BrandMark mark={persona.mark} accent={persona.accent} size={40} />
+          ) : (
+            <div
+              className="w-10 h-10 rounded-full flex items-center justify-center text-white font-semibold shrink-0"
+              style={{ backgroundColor: persona.accent }}
+              aria-hidden="true"
+            >
+              {initial}
+            </div>
+          )}
           <div className="min-w-0">
             <div className="text-sm font-semibold text-slate-900 dark:text-slate-100 truncate">
               {persona.name}
@@ -183,7 +188,10 @@ export default function TemplateGallery({ onUse, onInsert, drafts, onLoadDraft, 
           </button>
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        {/* items-start stops a row stretching to its tallest card. Without it,
+            expanding one card grew its siblings while their text stayed clamped,
+            leaving cut-off text above a block of dead space. */}
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 items-start">
           {shown.map((t) => (
             <Card key={t.id} template={t} onUse={onUse} />
           ))}

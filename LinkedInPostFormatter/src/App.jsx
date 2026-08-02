@@ -16,6 +16,7 @@ const DRAFTS_KEY = 'lpf.drafts';
 const THEME_KEY = 'lpf.theme';
 const MODE_KEY = 'lpf.mode';
 const BLOCKS_KEY = 'lpf.blocks';
+const IDENTITY_KEY = 'lpf.identity';
 
 export default function App() {
   const [text, setText] = useState(() => localStorage.getItem(DRAFT_KEY) || '');
@@ -32,6 +33,16 @@ export default function App() {
   const [dark, setDark] = useState(() => localStorage.getItem(THEME_KEY) === 'dark');
   // Preview-only, and intentionally not persisted — see the note in Ribbon.
   const [previewImage, setPreviewImage] = useState(null);
+  const [identity, setIdentity] = useState(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem(IDENTITY_KEY) || 'null');
+      return saved && typeof saved === 'object'
+        ? { name: '', headline: '', avatar: null, ...saved }
+        : { name: '', headline: '', avatar: null };
+    } catch {
+      return { name: '', headline: '', avatar: null };
+    }
+  });
   const [mode, setMode] = useState(() => localStorage.getItem(MODE_KEY) || 'write');
   const [blocks, setBlocks] = useState(() => {
     try {
@@ -95,6 +106,15 @@ export default function App() {
   useEffect(() => {
     localStorage.setItem(MODE_KEY, mode);
   }, [mode]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(IDENTITY_KEY, JSON.stringify(identity));
+    } catch {
+      // A quota failure here must not take down the editor; the avatar is
+      // already downscaled, so this only trips if storage is near full.
+    }
+  }, [identity]);
 
   useEffect(() => {
     localStorage.setItem(BLOCKS_KEY, JSON.stringify(blocks));
@@ -441,7 +461,14 @@ export default function App() {
             </button>
           </div>
 
-          {tab === 'preview' && <Preview text={activeText} image={previewImage} />}
+          {tab === 'preview' && (
+            <Preview
+              text={activeText}
+              image={previewImage}
+              identity={identity}
+              onIdentityChange={setIdentity}
+            />
+          )}
           {tab === 'insights' && <Insights result={result} />}
         </section>
       </main>

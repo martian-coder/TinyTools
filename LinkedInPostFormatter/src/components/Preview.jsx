@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
+import { downscaleImage } from '../utils/avatar.js';
 import { hasStyling } from '../utils/unicode.js';
 import { TRUNCATE_DESKTOP, TRUNCATE_MOBILE } from '../utils/analyze.js';
 
@@ -48,10 +49,26 @@ function ReactionBar({ dark }) {
   );
 }
 
-export default function Preview({ text, image }) {
+export default function Preview({ text, image, identity, onIdentityChange }) {
   const [device, setDevice] = useState('mobile');
   const [dark, setDark] = useState(false);
   const [expanded, setExpanded] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [avatarError, setAvatarError] = useState('');
+  const avatarRef = useRef(null);
+
+  const handleAvatar = async (event) => {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+    if (!file) return;
+    try {
+      const dataUrl = await downscaleImage(file);
+      onIdentityChange({ ...identity, avatar: dataUrl });
+      setAvatarError('');
+    } catch (err) {
+      setAvatarError(err.message);
+    }
+  };
 
   const limit = device === 'mobile' ? TRUNCATE_MOBILE : TRUNCATE_DESKTOP;
   const chars = [...text];
@@ -82,7 +99,71 @@ export default function Preview({ text, image }) {
         <button type="button" className={dark ? controlActive : control} onClick={() => setDark((v) => !v)}>
           {dark ? 'Dark' : 'Light'}
         </button>
+        <button
+          type="button"
+          className={`${editing ? controlActive : control} ml-auto`}
+          onClick={() => setEditing((v) => !v)}
+          aria-expanded={editing}
+        >
+          {editing ? 'Done' : 'Edit profile'}
+        </button>
       </div>
+
+      {editing && (
+        <div className="rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 p-3 space-y-2">
+          <p className="text-xs text-slate-500 dark:text-slate-400">
+            Your name, headline and photo, so the preview shows your post rather than a placeholder.
+            Stored in this browser only — nothing is uploaded.
+          </p>
+          <div className="grid gap-2 sm:grid-cols-2">
+            <input
+              type="text"
+              value={identity.name}
+              onChange={(e) => onIdentityChange({ ...identity, name: e.target.value })}
+              placeholder="Your name"
+              aria-label="Your name"
+              className="px-3 py-1.5 text-sm rounded-md border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 outline-none focus:border-linkedin"
+            />
+            <input
+              type="text"
+              value={identity.headline}
+              onChange={(e) => onIdentityChange({ ...identity, headline: e.target.value })}
+              placeholder="Your headline"
+              aria-label="Your headline"
+              className="px-3 py-1.5 text-sm rounded-md border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 outline-none focus:border-linkedin"
+            />
+          </div>
+          <div className="flex items-center gap-2 flex-wrap">
+            <button
+              type="button"
+              onClick={() => avatarRef.current?.click()}
+              className="px-3 py-1.5 text-sm rounded-md border border-slate-300 dark:border-slate-600 hover:border-linkedin transition"
+            >
+              {identity.avatar ? 'Change photo' : 'Upload photo or logo'}
+            </button>
+            {identity.avatar && (
+              <button
+                type="button"
+                onClick={() => onIdentityChange({ ...identity, avatar: null })}
+                className="px-3 py-1.5 text-sm rounded-md text-slate-500 hover:text-red-600 transition"
+              >
+                Remove
+              </button>
+            )}
+            <input
+              ref={avatarRef}
+              type="file"
+              accept="image/*"
+              onChange={handleAvatar}
+              className="hidden"
+              tabIndex={-1}
+            />
+            {avatarError && (
+              <span className="text-xs text-red-600 dark:text-red-400">{avatarError}</span>
+            )}
+          </div>
+        </div>
+      )}
 
       <div className="flex justify-center">
         <div
@@ -95,18 +176,26 @@ export default function Preview({ text, image }) {
         >
           <div className="p-3">
             <div className="flex items-center gap-2 mb-2">
-              <div
-                className="w-12 h-12 rounded-full flex items-center justify-center text-white font-semibold shrink-0"
-                style={{ backgroundColor: '#0A66C2' }}
-              >
-                You
-              </div>
+              {identity.avatar ? (
+                <img
+                  src={identity.avatar}
+                  alt=""
+                  className="w-12 h-12 rounded-full object-cover shrink-0"
+                />
+              ) : (
+                <div
+                  className="w-12 h-12 rounded-full flex items-center justify-center text-white font-semibold shrink-0"
+                  style={{ backgroundColor: '#0A66C2' }}
+                >
+                  {(identity.name || 'You').trim().charAt(0).toUpperCase()}
+                </div>
+              )}
               <div className="min-w-0">
                 <div className="font-semibold text-sm truncate" style={{ color: primary }}>
-                  Your Name
+                  {identity.name || 'Your Name'}
                 </div>
                 <div className="text-xs truncate" style={{ color: muted }}>
-                  Your headline goes here
+                  {identity.headline || 'Your headline goes here'}
                 </div>
                 <div className="text-xs" style={{ color: muted }}>
                   now · 🌐

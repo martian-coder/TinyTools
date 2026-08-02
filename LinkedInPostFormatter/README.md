@@ -66,9 +66,15 @@ for a launch, a chart for a research drop, a logo lockup for a partnership. Thes
 from the template's accent colour and exist to tell you what to prepare — the image itself has to
 be uploaded to LinkedIn separately, since post text cannot contain one.
 
-The showcase posts are original compositions with placeholder brands, and the logo lockup is a
-generic placeholder. Copying a real company's post would be copying their copy, and putting their
-logo on this tool would imply an endorsement that does not exist.
+**Your own profile in the preview.** Set your name, headline and photo or company logo from the
+Edit profile control, and the preview shows your post rather than a placeholder. The image is
+downscaled to 128px before being stored, because a full-size data URL would exhaust the
+localStorage quota and take your saved draft with it. Everything stays in your browser.
+
+The showcase posts are original compositions with invented brands, and their logo marks and the
+partnership lockup are original shapes. Putting a real company's name and mark on invented post
+text would present fabricated content as that company's own — a different thing from styling a
+template well, and the reason those stay placeholders.
 
 **An image button that is honest about what it does.** LinkedIn post text cannot contain an
 image — an image is a separate media upload. The button adds one to the *preview* so you can see

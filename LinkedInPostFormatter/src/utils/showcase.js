@@ -31,7 +31,7 @@ export const SHOWCASE = [
     name: 'Product Launch',
     description: 'Bold headline, three benefits, one number, a clear link. The standard launch shape.',
     media: { type: 'screenshot', caption: 'A product shot or short demo clip. Show the thing working, not a logo on a gradient.' },
-    persona: { name: 'Northwind', headline: 'Software · 12,400 followers', accent: '#0A66C2' },
+    persona: { name: 'Northwind', headline: 'Software · 12,400 followers', accent: '#0A66C2', mark: 'arcs' },
     body: `**Today we're shipping [Product].**
 
 Three years ago our customers told us the same thing in every interview: [the problem], and every workaround costs them [what it costs].
@@ -66,7 +66,7 @@ If you've been solving this with [the common workaround], I'd genuinely like to 
     name: 'Feature Update',
     description: 'Smaller than a launch. Leads with the customer request rather than the release note.',
     media: { type: 'carousel', caption: 'A two or three frame carousel walking through the steps. Carousels hold attention longer than a single image.' },
-    persona: { name: 'Meridian', headline: 'Product · 8,200 followers', accent: '#0B7A6E' },
+    persona: { name: 'Meridian', headline: 'Product · 8,200 followers', accent: '#0B7A6E', mark: 'chevron' },
     body: `**You asked. It's shipped.**
 
 [Feature] was the single most requested thing in our feedback board — [n] votes, going back to [date].
@@ -95,7 +95,7 @@ What should we build next? 👇
     name: 'Funding / Milestone',
     description: 'News without the press-release voice. Leads with what it changes, not the number.',
     media: { type: 'lineChart', caption: 'A growth chart, or a team photo. The chart earns more credibility; the photo earns more warmth.' },
-    persona: { name: 'Arcadia Labs', headline: 'Founder · 5,600 followers', accent: '#6B4EFF' },
+    persona: { name: 'Arcadia Labs', headline: 'Founder · 5,600 followers', accent: '#6B4EFF', mark: 'bars' },
     body: `**We raised [amount], led by [investor].**
 
 The number matters less than what it buys, so here's the plan.
@@ -128,7 +128,7 @@ We're hiring across [teams]: [link]
     name: 'Anniversary',
     description: 'A retrospective with real numbers and a real lesson. Reads as reflection, not celebration.',
     media: { type: 'photo', caption: 'An early photo next to a recent one. The contrast does the work the words cannot.' },
-    persona: { name: 'Halcyon', headline: 'Co-founder · 9,100 followers', accent: '#C2410C' },
+    persona: { name: 'Halcyon', headline: 'Co-founder · 9,100 followers', accent: '#C2410C', mark: 'orbit' },
     body: `**[n] years ago today, [company] was [what it was — two people, a spreadsheet, an idea].**
 
 Where it stands now:
@@ -164,7 +164,7 @@ To everyone who took a chance on us early — you know who you are. 🙏
     name: 'Hiring — Key Role',
     description: 'Honest about the hard parts, which is what makes strong candidates self-select in.',
     media: { type: 'photo', caption: 'A real photo of the team this person would join. Stock imagery reads as a red flag on hiring posts.' },
-    persona: { name: 'Vantage', headline: 'Talent · 15,300 followers', accent: '#0A66C2' },
+    persona: { name: 'Vantage', headline: 'Talent · 15,300 followers', accent: '#0A66C2', mark: 'nodes' },
     body: `**We're hiring a [Role].**
 
 Before the link, the honest version.
@@ -198,7 +198,7 @@ Not sure you're a fit? Message me. I'd rather spend five minutes than have you r
     name: 'Team Growth',
     description: 'Welcomes new joiners by what they will do, not by listing names alone.',
     media: { type: 'photo', caption: 'A grid of headshots, or the team together. Faces get stopped on.' },
-    persona: { name: 'Lumen', headline: 'People · 6,800 followers', accent: '#0B7A6E' },
+    persona: { name: 'Lumen', headline: 'People · 6,800 followers', accent: '#0B7A6E', mark: 'nodes' },
     body: `**[n] people joined us this month.**
 
 Rather than a list of names, here's what each of them is actually here to do.
@@ -226,7 +226,7 @@ Still open: [roles]. [Link]
     name: 'Research / Report',
     description: 'Leads with the counterintuitive finding and states its limits. Highly shareable.',
     media: { type: 'barChart', caption: 'The single chart that shows the surprising finding. One chart, not five.' },
-    persona: { name: 'Fieldwork', headline: 'Research · 21,000 followers', accent: '#6B4EFF' },
+    persona: { name: 'Fieldwork', headline: 'Research · 21,000 followers', accent: '#6B4EFF', mark: 'bars' },
     body: `**We analysed [n] [things]. One finding surprised us.**
 
 [The counterintuitive finding, in one sentence with a number.]
@@ -262,7 +262,7 @@ Poke holes in it. That's what it's for. 👇
     name: 'Analysis / Teardown',
     description: 'Analyse something public. High reach, low risk, positions you as a thinker.',
     media: { type: 'diagram', caption: 'A simple before/after or flow diagram of what changed. Hand-drawn works.' },
-    persona: { name: 'A. Rao', headline: 'Strategy · 11,700 followers', accent: '#C2410C' },
+    persona: { name: 'A. Rao', headline: 'Strategy · 11,700 followers', accent: '#C2410C', mark: 'hex' },
     body: `**[Company] just [did the specific public thing].**
 
 Most people are reading it as [the obvious interpretation]. I think it's [your read].
@@ -294,7 +294,7 @@ I could be wrong. What am I missing?
     name: 'Culture / Ways of Working',
     description: 'A specific practice with its cost stated. Avoids the values-poster trap.',
     media: { type: 'stat', caption: 'The headline number as a plain stat card. Big number, one line of context.' },
-    persona: { name: 'Beacon', headline: 'Operations · 7,400 followers', accent: '#0A66C2' },
+    persona: { name: 'Beacon', headline: 'Operations · 7,400 followers', accent: '#0A66C2', mark: 'aperture' },
     body: `**We deleted [n]% of our recurring meetings. Nothing broke.**
 
 We audited every one and asked a single question: *what decision does this produce?*
@@ -327,7 +327,7 @@ What's a practice your team changed that actually stuck?
     name: 'Partnership',
     description: 'Explains what the customer gets rather than congratulating both companies.',
     media: { type: 'logos', caption: 'A logo lockup of both companies. The most recognisable partnership visual there is.' },
-    persona: { name: 'Onyx', headline: 'Partnerships · 10,200 followers', accent: '#0B7A6E' },
+    persona: { name: 'Onyx', headline: 'Partnerships · 10,200 followers', accent: '#0B7A6E', mark: 'link' },
     body: `**[Company A] and [Company B] are now integrated.**
 
 Skipping the mutual congratulation — here's what changes for the people who use both.
