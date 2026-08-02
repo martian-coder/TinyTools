@@ -39,7 +39,9 @@ That is an argument for restraint rather than avoidance. Style a headline and a 
   },
   {
     q: 'Is it free?',
-    a: `Yes, with no account and no sign-up. Everything runs in your browser — there is no backend, nothing is uploaded, and your drafts are saved locally on your own device.`,
+    a: `Yes, with no account and no sign-up. Everything you write runs in your browser: your drafts, your profile details and any image you attach to the preview are stored on your own device and never sent anywhere.
+
+The one exception is the email list, and only if you choose to join it — then your email address is sent to the mailing service and nothing else goes with it. Your posts are never part of that.`,
   },
 ];
 
