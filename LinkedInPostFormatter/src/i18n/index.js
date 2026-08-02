@@ -10,13 +10,15 @@ import React, { createContext, useCallback, useContext, useEffect, useMemo, useS
  * until a native speaker writes them.
  */
 
+// A flag is a country, not a language, so the native name travels with it in the
+// menu — the flag alone would be a guess for anyone it does not represent.
 export const LANGUAGES = [
-  { id: 'en', name: 'English', native: 'English' },
-  { id: 'zh', name: 'Chinese', native: '中文' },
-  { id: 'fr', name: 'French', native: 'Français' },
-  { id: 'de', name: 'German', native: 'Deutsch' },
-  { id: 'nl', name: 'Dutch', native: 'Nederlands' },
-  { id: 'ja', name: 'Japanese', native: '日本語' },
+  { id: 'en', name: 'English', native: 'English', flag: '🇬🇧' },
+  { id: 'zh', name: 'Chinese', native: '中文', flag: '🇨🇳' },
+  { id: 'fr', name: 'French', native: 'Français', flag: '🇫🇷' },
+  { id: 'de', name: 'German', native: 'Deutsch', flag: '🇩🇪' },
+  { id: 'nl', name: 'Dutch', native: 'Nederlands', flag: '🇳🇱' },
+  { id: 'ja', name: 'Japanese', native: '日本語', flag: '🇯🇵' },
 ];
 
 const STRINGS = {
@@ -77,6 +79,12 @@ const STRINGS = {
     'gallery.load': 'Load',
     'editor.saved': 'Saved to this browser automatically.',
     'lang.label': 'Language',
+    'gate.title': 'Sign in to keep going',
+    'gate.body':
+      "You've been using LinkedIn Formatter for a couple of days. Sign in to carry on — it takes one tap, keeps your drafts across devices, and starts your 14-day trial.",
+    'gate.google': 'Continue with Google',
+    'gate.or': 'or use an email link',
+    'gate.emailLink': 'Email me a link',
     'lang.note':
       'The interface is translated. Guidance in Checks and the template text stay in English for now.',
   },
@@ -138,6 +146,11 @@ const STRINGS = {
     'gallery.load': '载入',
     'editor.saved': '已自动保存到此浏览器。',
     'lang.label': '语言',
+    'gate.title': '登录后继续使用',
+    'gate.body': '你已经使用 LinkedIn Formatter 两天了。登录即可继续使用，一步完成，草稿可跨设备同步，并开启 14 天试用。',
+    'gate.google': '使用 Google 继续',
+    'gate.or': '或使用邮件链接',
+    'gate.emailLink': '给我发送链接',
     'lang.note': '界面已翻译。检查建议与模板正文暂时仍为英文。',
   },
 
@@ -198,6 +211,11 @@ const STRINGS = {
     'gallery.load': 'Charger',
     'editor.saved': 'Enregistré automatiquement dans ce navigateur.',
     'lang.label': 'Langue',
+    'gate.title': 'Connectez-vous pour continuer',
+    'gate.body': "Vous utilisez LinkedIn Formatter depuis deux jours. Connectez-vous pour continuer : un seul clic, vos brouillons synchronisés, et votre essai de 14 jours commence.",
+    'gate.google': 'Continuer avec Google',
+    'gate.or': 'ou recevoir un lien par e-mail',
+    'gate.emailLink': 'Envoyez-moi un lien',
     'lang.note':
       "L'interface est traduite. Les conseils des Contrôles et le texte des modèles restent en anglais pour l'instant.",
   },
@@ -259,6 +277,11 @@ const STRINGS = {
     'gallery.load': 'Laden',
     'editor.saved': 'Automatisch in diesem Browser gespeichert.',
     'lang.label': 'Sprache',
+    'gate.title': 'Zum Weitermachen anmelden',
+    'gate.body': 'Sie nutzen LinkedIn Formatter seit zwei Tagen. Melden Sie sich an, um weiterzuarbeiten — ein Klick, Entwürfe auf allen Geräten, und Ihre 14-tägige Testphase beginnt.',
+    'gate.google': 'Weiter mit Google',
+    'gate.or': 'oder per E-Mail-Link',
+    'gate.emailLink': 'Link zusenden',
     'lang.note':
       'Die Oberfläche ist übersetzt. Hinweise unter Prüfungen und die Vorlagentexte bleiben vorerst auf Englisch.',
   },
@@ -320,6 +343,11 @@ const STRINGS = {
     'gallery.load': 'Laden',
     'editor.saved': 'Automatisch opgeslagen in deze browser.',
     'lang.label': 'Taal',
+    'gate.title': 'Log in om verder te gaan',
+    'gate.body': 'Je gebruikt LinkedIn Formatter nu een paar dagen. Log in om door te gaan — één klik, je concepten op al je apparaten, en je proefperiode van 14 dagen begint.',
+    'gate.google': 'Doorgaan met Google',
+    'gate.or': 'of gebruik een e-maillink',
+    'gate.emailLink': 'Stuur me een link',
     'lang.note':
       'De interface is vertaald. De uitleg bij Controles en de sjabloonteksten blijven voorlopig Engels.',
   },
@@ -381,6 +409,11 @@ const STRINGS = {
     'gallery.load': '読み込む',
     'editor.saved': 'このブラウザに自動保存されます。',
     'lang.label': '言語',
+    'gate.title': 'ログインして続ける',
+    'gate.body': 'LinkedIn Formatter を数日ご利用いただきました。ログインすると続けて使えます。ワンタップで、下書きが端末間で同期され、14日間の試用が始まります。',
+    'gate.google': 'Google で続ける',
+    'gate.or': 'またはメールリンクを使う',
+    'gate.emailLink': 'リンクを送る',
     'lang.note':
       'インターフェースは翻訳済みです。チェックの解説とテンプレート本文は当面英語のままです。',
   },
