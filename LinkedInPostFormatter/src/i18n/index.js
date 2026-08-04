@@ -78,6 +78,8 @@ const STRINGS = {
     'gallery.savedDrafts': 'Your saved drafts',
     'gallery.load': 'Load',
     'editor.saved': 'Saved to this browser automatically.',
+    'editor.placeholder':
+      'Write your post here.\n\nSelect any text, then pick a style from the ribbon above — what you see is exactly what publishes.',
     'lang.label': 'Language',
     'gate.title': 'Sign in to keep going',
     'gate.body':
@@ -145,6 +147,8 @@ const STRINGS = {
     'gallery.savedDrafts': '已保存的草稿',
     'gallery.load': '载入',
     'editor.saved': '已自动保存到此浏览器。',
+    'editor.placeholder':
+      '在这里撰写你的帖子。\n\n选中文字后，从上方工具栏选择样式——你看到的就是发布出来的样子。',
     'lang.label': '语言',
     'gate.title': '登录后继续使用',
     'gate.body': '你已经使用 LinkedIn Formatter 两天了。登录即可继续使用，一步完成，草稿可跨设备同步，并开启 14 天试用。',
@@ -210,6 +214,8 @@ const STRINGS = {
     'gallery.savedDrafts': 'Vos brouillons enregistrés',
     'gallery.load': 'Charger',
     'editor.saved': 'Enregistré automatiquement dans ce navigateur.',
+    'editor.placeholder':
+      'Rédigez votre publication ici.\n\nSélectionnez du texte, puis choisissez un style dans la barre ci-dessus — ce que vous voyez est exactement ce qui sera publié.',
     'lang.label': 'Langue',
     'gate.title': 'Connectez-vous pour continuer',
     'gate.body': "Vous utilisez LinkedIn Formatter depuis deux jours. Connectez-vous pour continuer : un seul clic, vos brouillons synchronisés, et votre essai de 14 jours commence.",
@@ -276,6 +282,8 @@ const STRINGS = {
     'gallery.savedDrafts': 'Ihre gespeicherten Entwürfe',
     'gallery.load': 'Laden',
     'editor.saved': 'Automatisch in diesem Browser gespeichert.',
+    'editor.placeholder':
+      'Schreiben Sie hier Ihren Beitrag.\n\nMarkieren Sie Text und wählen Sie oben einen Stil — was Sie sehen, wird genau so veröffentlicht.',
     'lang.label': 'Sprache',
     'gate.title': 'Zum Weitermachen anmelden',
     'gate.body': 'Sie nutzen LinkedIn Formatter seit zwei Tagen. Melden Sie sich an, um weiterzuarbeiten — ein Klick, Entwürfe auf allen Geräten, und Ihre 14-tägige Testphase beginnt.',
@@ -342,6 +350,8 @@ const STRINGS = {
     'gallery.savedDrafts': 'Je opgeslagen concepten',
     'gallery.load': 'Laden',
     'editor.saved': 'Automatisch opgeslagen in deze browser.',
+    'editor.placeholder':
+      'Schrijf hier je bericht.\n\nSelecteer tekst en kies hierboven een stijl — wat je ziet is precies wat er geplaatst wordt.',
     'lang.label': 'Taal',
     'gate.title': 'Log in om verder te gaan',
     'gate.body': 'Je gebruikt LinkedIn Formatter nu een paar dagen. Log in om door te gaan — één klik, je concepten op al je apparaten, en je proefperiode van 14 dagen begint.',
@@ -408,6 +418,8 @@ const STRINGS = {
     'gallery.savedDrafts': '保存した下書き',
     'gallery.load': '読み込む',
     'editor.saved': 'このブラウザに自動保存されます。',
+    'editor.placeholder':
+      'ここに投稿を書いてください。\n\nテキストを選択して、上のリボンから書式を選びます。表示されているものがそのまま公開されます。',
     'lang.label': '言語',
     'gate.title': 'ログインして続ける',
     'gate.body': 'LinkedIn Formatter を数日ご利用いただきました。ログインすると続けて使えます。ワンタップで、下書きが端末間で同期され、14日間の試用が始まります。',
