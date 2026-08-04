@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useI18n, LANGUAGES } from '../i18n/index.js';
 
 /**
@@ -11,8 +11,38 @@ import { useI18n, LANGUAGES } from '../i18n/index.js';
 export default function LanguagePicker() {
   const { lang, setLang, t } = useI18n();
   const [open, setOpen] = useState(false);
+  const [offset, setOffset] = useState(null);
   const ref = useRef(null);
+  const buttonRef = useRef(null);
+  const menuRef = useRef(null);
   const current = LANGUAGES.find((l) => l.id === lang) || LANGUAGES[0];
+
+  /**
+   * Right-aligning to the button works on desktop, where it sits at the right of
+   * the header. On a phone the header wraps and the button moves to the left, so
+   * right alignment pushed the menu off the left edge of the screen entirely.
+   *
+   * The position is measured and clamped to the viewport instead, which holds at
+   * any width and wherever the button ends up.
+   */
+  useLayoutEffect(() => {
+    if (!open) {
+      setOffset(null);
+      return;
+    }
+    const button = buttonRef.current;
+    const menu = menuRef.current;
+    if (!button || !menu) return;
+
+    const margin = 8;
+    const buttonBox = button.getBoundingClientRect();
+    const menuWidth = menu.offsetWidth;
+    const viewport = document.documentElement.clientWidth;
+
+    const preferred = buttonBox.right - menuWidth;
+    const clamped = Math.max(margin, Math.min(preferred, viewport - menuWidth - margin));
+    setOffset(clamped - buttonBox.left);
+  }, [open]);
 
   useEffect(() => {
     if (!open) return undefined;
@@ -31,6 +61,7 @@ export default function LanguagePicker() {
   return (
     <div className="relative" ref={ref}>
       <button
+        ref={buttonRef}
         type="button"
         onClick={() => setOpen((v) => !v)}
         aria-label={`${t('lang.label')}: ${current.native}`}
@@ -50,9 +81,12 @@ export default function LanguagePicker() {
 
       {open && (
         <ul
+          ref={menuRef}
           role="listbox"
           aria-label={t('lang.label')}
-          className="absolute right-0 mt-1 z-30 min-w-[160px] rounded-lg border border-slate-200
+          // Hidden until measured, so it never paints at the wrong position first.
+          style={{ left: offset ?? 0, visibility: offset === null ? 'hidden' : 'visible' }}
+          className="absolute mt-1 z-30 min-w-[160px] rounded-lg border border-slate-200
                      dark:border-slate-700 bg-white dark:bg-slate-800 shadow-lg py-1"
         >
           {LANGUAGES.map((l) => (

@@ -418,9 +418,7 @@ export default function App() {
                 onSelect={syncSelection}
                 onKeyUp={syncSelection}
                 onClick={syncSelection}
-                placeholder={
-                  'Write your post here.\n\nSelect any text, then pick a style from the ribbon above — what you see is exactly what publishes.'
-                }
+                placeholder={t('editor.placeholder')}
                 spellCheck
                 className="w-full h-[520px] p-4 resize-y bg-transparent outline-none text-[15px] leading-relaxed
                            placeholder:text-slate-400 dark:placeholder:text-slate-500"
