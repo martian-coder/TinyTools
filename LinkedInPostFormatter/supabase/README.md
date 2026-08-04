@@ -11,7 +11,26 @@ exactly as it does now with all of this left blank.
    `src/lib/supabase.js`.
 4. Authentication → Providers → Email → make sure **Magic Link** is on.
 
-That is sign-in working. No Google Cloud project needed.
+That alone is sign-in working, with no Google project needed.
+
+## 1b. Google sign-in
+
+The app offers Google first and the email link as a peer. Google needs one extra
+setup, and until it is done the Google button returns an error while the email
+link keeps working — sign-in is never blocked on this.
+
+1. Google Cloud Console → APIs & Services → **Credentials** → Create OAuth client
+   ID → **Web application**.
+2. Authorised redirect URI — take it from Supabase → Authentication → Providers →
+   Google. It looks like:
+   `https://<your-project>.supabase.co/auth/v1/callback`
+3. Copy the **Client ID** and **Client secret** into that same Supabase page and
+   enable the provider.
+4. OAuth consent screen: while it is in *Testing*, only accounts you list can
+   sign in. Publish it before launch or real users hit a Google error page.
+
+The app sends users back to whatever page they started on, so no extra redirect
+configuration is needed on this side.
 
 ## 2. PayPal
 
