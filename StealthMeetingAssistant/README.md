@@ -340,6 +340,30 @@ touches, so it is deliberately never written to disk.
 
 ---
 
+## Practice mode
+
+For rehearsing a meeting, a presentation or a difficult conversation. Turn on
+the mic, say your piece, then hit **Critique me** — it quotes your own words
+back, says what landed, and gives one tighter version. **Quiz me** asks a
+single question and stops, so you can answer aloud and go again.
+
+A delivery strip runs above the answer while you rehearse:
+
+```
+146 wpm   11 fillers (um)   81% talk   39w run
+```
+
+Pace, filler words, how much of the room you took, and the longest stretch you
+spoke without a pause. **All of it is counted locally** — no model call, no
+network, so it updates as you speak and costs nothing. Values only turn amber
+when they are actually off, and only then are they mentioned to the model:
+reading normal numbers back at someone who is doing fine is noise, not
+coaching.
+
+Filler detection is narrower than a word list: `like` only counts when it is a
+verbal tic (`"it was, like, slow"`), not a comparison (`"works like a
+charm"`), and `um` never fires inside `number`.
+
 ## Screen context
 
 With **See screen** enabled, a downscaled screenshot rides along with each
@@ -369,7 +393,7 @@ never before, so it cannot displace them.
 | **Executive** (default) | Decisions, owners, deadlines, risks. Written for someone with 10 seconds. |
 | **Technical** | Mechanisms, tradeoffs, blockers, sharp questions to ask, jargon in plain words. |
 | **Document Q&A** | Answers strictly from attached documents, every claim cited. Says "Not in the attached documents." rather than guessing. |
-| **Interview** | For the person *running* the interview: what the candidate evidenced vs asserted, the next probing question, what is still unknown. It will not write answers for a candidate to give. |
+| **Practice** | Rehearsal coaching. Critiques what you actually said, quoting the weak phrase, and offers one tighter rewrite. **Quiz me** asks one question at a time so you can answer aloud. |
 
 All three separate **from documents** (cited inline) from **from the discussion** from
 **suggestion**, so you always know whether you are reading a fact or the model's opinion.

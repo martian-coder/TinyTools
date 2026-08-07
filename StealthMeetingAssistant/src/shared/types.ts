@@ -3,13 +3,13 @@
  * overlay renderer. Kept dependency-free so the renderer can read it as docs.
  */
 
-export type AssistantMode = 'executive' | 'technical' | 'document' | 'interview';
+export type AssistantMode = 'executive' | 'technical' | 'document' | 'practice';
 
 export const ASSISTANT_MODES: AssistantMode[] = [
   'executive',
   'technical',
   'document',
-  'interview',
+  'practice',
 ];
 
 /** How a provider's HTTP API speaks. Ten providers, three dialects. */
@@ -82,7 +82,26 @@ export type QuickActionId =
   | 'suggest-reply'
   | 'explain-jargon'
   | 'follow-up-email'
-  | 'risks';
+  | 'risks'
+  | 'critique'
+  | 'quiz-me';
+
+/** Locally computed delivery stats — no model call, no network. */
+export interface DeliveryMetrics {
+  /** Words per minute across everything you said. */
+  wordsPerMinute: number;
+  wordCount: number;
+  speakingSeconds: number;
+  fillerCount: number;
+  /** Fillers per hundred words. */
+  fillerRate: number;
+  /** Most frequent fillers, worst first. */
+  topFillers: { word: string; count: number }[];
+  /** Longest uninterrupted stretch you spoke, in words. */
+  longestMonologueWords: number;
+  /** Share of all words in the room that were yours, 0-1. */
+  talkRatio: number;
+}
 
 /** One retrieved document chunk, as shown in the citation strip. */
 export interface RetrievedChunk {

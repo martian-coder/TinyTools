@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { deliveryMetrics } from '../session/delivery';
 import { retrieve } from '../rag/retrieve';
 import { transcript } from '../session/transcript';
 import type { SearchResponse } from '../../shared/types';
@@ -33,6 +34,13 @@ sessionRouter.get('/session/transcript', (req, res) => {
 sessionRouter.delete('/session/transcript', (_req, res) => {
   transcript.clear();
   res.json({ ok: true });
+});
+
+/** GET /api/session/delivery — pace, fillers and talk ratio, computed locally. */
+sessionRouter.get('/session/delivery', (req, res) => {
+  const minutes = Number(req.query.minutes ?? 0);
+  const lines = minutes > 0 ? transcript.since(minutes) : transcript.all();
+  res.json(deliveryMetrics(lines));
 });
 
 /** POST /api/retrieval/search — retrieval on its own, for the Ctrl+Shift+R hotkey. */

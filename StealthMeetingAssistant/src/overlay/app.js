@@ -696,6 +696,7 @@
       const data = await api('/api/session/transcript?limit=60');
       state.transcript = data.lines;
       renderTranscript();
+      refreshDelivery();
     } catch (err) {
       console.warn('transcript unavailable', err);
     }
@@ -735,6 +736,7 @@
               state.transcript.push(data.line);
             }
             renderTranscript();
+            refreshDelivery();
             considerAutoSuggest(data.line);
           }
         } catch {
@@ -854,6 +856,36 @@
     );
     $('transcript').classList.remove('collapsed');
     toast('Mock meeting loaded');
+  }
+
+  /* ── Delivery metrics ──────────────────────────────────────── */
+
+  /**
+   * Pace, fillers and talk ratio, measured locally from your own transcript
+   * lines. No model call, so this can refresh continuously while you rehearse.
+   */
+  async function refreshDelivery() {
+    if (state.mode !== 'practice') return;
+    try {
+      const m = await api('/api/session/delivery');
+      setMetric('mWpm', `${m.wordsPerMinute || '—'} wpm`, m.wordsPerMinute > 185 || (m.wordsPerMinute > 0 && m.wordsPerMinute < 105));
+      const worst = m.topFillers?.[0];
+      setMetric(
+        'mFillers',
+        `${m.fillerCount} filler${m.fillerCount === 1 ? '' : 's'}${worst ? ` (${worst.word})` : ''}`,
+        m.fillerRate > 3 && m.fillerCount >= 3,
+      );
+      setMetric('mRatio', `${Math.round((m.talkRatio || 0) * 100)}% talk`, m.talkRatio > 0.8 && m.wordCount > 120);
+      setMetric('mRun', `${m.longestMonologueWords}w run`, m.longestMonologueWords > 220);
+    } catch {
+      /* backend not ready yet */
+    }
+  }
+
+  function setMetric(id, text, warn) {
+    const el = $(id);
+    el.textContent = text;
+    el.classList.toggle('warn', Boolean(warn));
   }
 
   /* ── Preferences ───────────────────────────────────────────── */
@@ -1300,6 +1332,10 @@
   function setMode(mode) {
     state.mode = mode;
     savePreferences();
+    const practice = mode === 'practice';
+    for (const pill of document.querySelectorAll('.practice-only')) pill.hidden = !practice;
+    $('delivery').hidden = !practice;
+    if (practice) refreshDelivery();
     for (const button of document.querySelectorAll('.mode')) {
       button.classList.toggle('active', button.dataset.mode === mode);
     }

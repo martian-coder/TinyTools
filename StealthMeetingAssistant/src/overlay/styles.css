@@ -111,7 +111,7 @@ textarea {
   border: 1px solid var(--line);
   border-radius: 7px;
   padding: 3px 8px;
-  max-width: 148px;
+  max-width: 118px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -125,6 +125,7 @@ textarea {
 
 .modes {
   display: flex;
+  flex: none;
   border: 1px solid var(--line);
   border-radius: 7px;
   overflow: hidden;
@@ -192,6 +193,22 @@ textarea {
 }
 
 .statusline .dim { opacity: 0.7; text-overflow: ellipsis; overflow: hidden; }
+
+/* ── Delivery strip (practice mode) ────────────────────────── */
+
+.delivery {
+  display: flex;
+  gap: 10px;
+  padding: 4px 12px;
+  border-bottom: 1px solid var(--line);
+  font-size: 10.5px;
+  font-family: var(--mono);
+  color: var(--dim);
+}
+
+.metric { white-space: nowrap; }
+/* Amber, not red: this is rehearsal feedback, not an error. */
+.metric.warn { color: var(--warn); }
 
 /* ── Answer ────────────────────────────────────────────────── */
 

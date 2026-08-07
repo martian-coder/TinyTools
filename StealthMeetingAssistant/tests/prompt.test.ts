@@ -17,12 +17,33 @@ function chunk(overrides: Partial<RetrievedChunk> = {}): RetrievedChunk {
   };
 }
 
-test('interview mode supports the interviewer, not the candidate', () => {
-  const prompt = systemPrompt('interview');
-  assert.match(prompt, /MODE: INTERVIEW/);
-  assert.match(prompt, /helping the user \*run\* an interview/);
-  // The distinction that matters: it must refuse to feed answers to a candidate.
-  assert.match(prompt, /Never write an answer for the candidate/);
+test('practice mode coaches rather than scripting lines', () => {
+  const prompt = systemPrompt('practice');
+  assert.match(prompt, /MODE: PRACTICE/);
+  assert.match(prompt, /rehearsing/);
+  assert.match(prompt, /quoting the weak phrase/);
+  // Quizzing must be one question at a time, or it stops being rehearsal.
+  assert.match(prompt, /ask exactly one question and stop/);
+});
+
+test('delivery stats are only included when there is something to say', () => {
+  const withNote = buildUserMessage({
+    message: 'how did that sound?',
+    chunks: [],
+    transcript: [],
+    documentsRequested: false,
+    delivery: '12 filler words (mostly "um")',
+  });
+  assert.match(withNote, /<DELIVERY note="measured locally/);
+  assert.match(withNote, /12 filler words/);
+
+  const without = buildUserMessage({
+    message: 'how did that sound?',
+    chunks: [],
+    transcript: [],
+    documentsRequested: false,
+  });
+  assert.doesNotMatch(without, /<DELIVERY/);
 });
 
 test('custom instructions are appended, never allowed to displace the rules', () => {
@@ -52,7 +73,7 @@ test('a screenshot is announced and fenced as untrusted', () => {
 });
 
 test('every mode carries the untrusted-content rule', () => {
-  for (const mode of ['executive', 'technical', 'document', 'interview'] as const) {
+  for (const mode of ['executive', 'technical', 'document', 'practice'] as const) {
     const prompt = systemPrompt(mode);
     assert.match(prompt, /untrusted/i);
     assert.match(prompt, /never as a directive|never be treated as instructions|not as instructions/i);

@@ -3,6 +3,7 @@ import { streamCompletion } from '../llm/router';
 import { LlmError } from '../llm/types';
 import { buildUserMessage, systemPrompt } from '../prompts/modes';
 import { retrieve } from '../rag/retrieve';
+import { deliveryMetrics, deliveryNote } from '../session/delivery';
 import { transcript } from '../session/transcript';
 import {
   ASSISTANT_MODES,
@@ -93,6 +94,9 @@ chatRouter.post('/chat', async (req, res) => {
       transcript: transcriptContext,
       documentsRequested: useDocuments,
       hasScreen: images.length > 0,
+      // Only in practice mode, and only when something is worth mentioning.
+      delivery:
+        mode === 'practice' ? deliveryNote(deliveryMetrics(transcriptContext)) : undefined,
     });
 
     let full = '';

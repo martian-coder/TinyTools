@@ -21,7 +21,7 @@
           <button class="mode" data-mode="executive" title="Executive mode">Exec</button>
           <button class="mode" data-mode="technical" title="Technical mode">Tech</button>
           <button class="mode" data-mode="document" title="Document Q&amp;A mode">Docs</button>
-          <button class="mode" data-mode="interview" title="Interview mode — for running an interview">Intvw</button>
+          <button class="mode" data-mode="practice" title="Practice mode — rehearse and get coached">Prep</button>
         </div>
         <div class="spacer"></div>
         <button class="icon listen" id="btnListen" title="Start listening (Ctrl+Shift+L)" aria-label="Listen">
@@ -38,6 +38,14 @@
       <div class="statusline" id="statusLine">
         <span id="statusText">Ready</span>
         <span class="dim" id="statusMeta"></span>
+      </div>
+
+      <!-- ── Delivery (practice mode) ────────────────────────── -->
+      <div class="delivery" id="delivery" hidden>
+        <span class="metric" id="mWpm" title="Words per minute">— wpm</span>
+        <span class="metric" id="mFillers" title="Filler words">— fillers</span>
+        <span class="metric" id="mRatio" title="Share of the talking that was yours">— talk</span>
+        <span class="metric" id="mRun" title="Longest uninterrupted stretch">— run</span>
       </div>
 
       <!-- ── Answer ──────────────────────────────────────────── -->
@@ -93,6 +101,8 @@
           <button class="pill" data-action="suggest-reply">Reply</button>
           <button class="pill" data-action="explain-jargon">Explain</button>
           <button class="pill" data-action="follow-up-email">Email</button>
+          <button class="pill practice-only" data-action="critique" hidden>Critique me</button>
+          <button class="pill practice-only" data-action="quiz-me" hidden>Quiz me</button>
         </div>
         <div class="inputrow">
           <button class="icon" id="btnAttach" title="Attach document (Ctrl+Shift+D)">＋</button>
