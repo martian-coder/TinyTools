@@ -340,6 +340,28 @@ touches, so it is deliberately never written to disk.
 
 ---
 
+## Screen context
+
+With **See screen** enabled, a downscaled screenshot rides along with each
+question, so the assistant can read the deck, spreadsheet or diagram being
+shared rather than reasoning from audio alone. Works on any vision-capable
+model across all three dialects.
+
+The overlay excludes itself from that capture wherever content protection
+works, so it never reads its own previous answer back. The screenshot is
+fenced and labelled untrusted in the prompt, exactly like documents — a slide
+containing "ignore previous instructions" is data, not a command.
+
+Off by default: it sends a picture of your screen to your provider on every
+question, which is worth opting into deliberately.
+
+## Custom instructions
+
+Settings takes free-text context — your role, your stack, how blunt you want
+it. Unlike documents and transcripts, this is *yours*, so it is treated as
+instructions rather than quoted data. It is appended after the safety rules,
+never before, so it cannot displace them.
+
 ## Assistant modes
 
 | Mode | For |
@@ -347,6 +369,7 @@ touches, so it is deliberately never written to disk.
 | **Executive** (default) | Decisions, owners, deadlines, risks. Written for someone with 10 seconds. |
 | **Technical** | Mechanisms, tradeoffs, blockers, sharp questions to ask, jargon in plain words. |
 | **Document Q&A** | Answers strictly from attached documents, every claim cited. Says "Not in the attached documents." rather than guessing. |
+| **Interview** | For the person *running* the interview: what the candidate evidenced vs asserted, the next probing question, what is still unknown. It will not write answers for a candidate to give. |
 
 All three separate **from documents** (cited inline) from **from the discussion** from
 **suggestion**, so you always know whether you are reading a fact or the model's opinion.

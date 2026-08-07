@@ -3,9 +3,14 @@
  * overlay renderer. Kept dependency-free so the renderer can read it as docs.
  */
 
-export type AssistantMode = 'executive' | 'technical' | 'document';
+export type AssistantMode = 'executive' | 'technical' | 'document' | 'interview';
 
-export const ASSISTANT_MODES: AssistantMode[] = ['executive', 'technical', 'document'];
+export const ASSISTANT_MODES: AssistantMode[] = [
+  'executive',
+  'technical',
+  'document',
+  'interview',
+];
 
 /** How a provider's HTTP API speaks. Ten providers, three dialects. */
 export type ProviderKind = 'openai-compatible' | 'anthropic' | 'gemini';
@@ -39,6 +44,13 @@ export interface ChatMessage {
   content: string;
 }
 
+/** A screenshot passed alongside the question, as a base64 JPEG. */
+export interface ImageAttachment {
+  mediaType: 'image/jpeg' | 'image/png';
+  /** Base64 payload with no data: prefix. */
+  data: string;
+}
+
 export interface TranscriptEvent {
   speaker: string;
   text: string;
@@ -57,6 +69,10 @@ export interface ChatRequest {
   useDocuments?: boolean;
   /** Optional quick-action id, e.g. `summarize`, `action-items`. */
   action?: QuickActionId;
+  /** Screenshots giving the model the same view the user has. */
+  images?: ImageAttachment[];
+  /** Free-text persona/context the user set in Settings. */
+  customInstructions?: string;
 }
 
 export type QuickActionId =

@@ -9,6 +9,7 @@ import { anthropic } from './anthropic';
 import { gemini } from './gemini';
 import { openaiCompatible } from './openaiCompatible';
 import { LlmError, type LlmAdapter } from './types';
+import type { ImageAttachment } from '../../shared/types';
 
 const ADAPTERS: Record<string, LlmAdapter> = {
   'openai-compatible': openaiCompatible,
@@ -21,6 +22,7 @@ export interface StreamOptions {
   model?: string;
   system: string;
   messages: { role: 'user' | 'assistant'; content: string }[];
+  images?: ImageAttachment[];
   maxTokens?: number;
   temperature?: number;
   signal?: AbortSignal;
@@ -55,6 +57,7 @@ export async function* streamCompletion(
     model,
     system: opts.system,
     messages: opts.messages,
+    images: opts.images,
     maxTokens: opts.maxTokens ?? 1024,
     temperature: opts.temperature ?? 0.3,
     signal: opts.signal,

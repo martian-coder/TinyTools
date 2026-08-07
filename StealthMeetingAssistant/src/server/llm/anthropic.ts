@@ -1,6 +1,27 @@
 import { readSse } from './sse';
 import { httpError, LlmError, type LlmAdapter } from './types';
 
+/** Anthropic takes images as content blocks carrying raw base64. */
+function withImages(req: Parameters<LlmAdapter>[0]): unknown[] {
+  if (!req.images?.length) return req.messages;
+  const messages: unknown[] = req.messages.slice();
+  const last = req.messages[req.messages.length - 1];
+  if (!last || last.role !== 'user') return messages;
+
+  messages[messages.length - 1] = {
+    role: 'user',
+    content: [
+      // Images first: Anthropic recommends placing them before the question.
+      ...req.images.map((image) => ({
+        type: 'image',
+        source: { type: 'base64', media_type: image.mediaType, data: image.data },
+      })),
+      { type: 'text', text: last.content },
+    ],
+  };
+  return messages;
+}
+
 /** Anthropic Messages API — system prompt is a top-level field, not a message. */
 export const anthropic: LlmAdapter = async function* (req) {
   const res = await fetch(`${req.baseUrl}/messages`, {
@@ -18,7 +39,7 @@ export const anthropic: LlmAdapter = async function* (req) {
       system: req.system,
       max_tokens: req.maxTokens,
       temperature: req.temperature,
-      messages: req.messages,
+      messages: withImages(req),
     }),
   });
 

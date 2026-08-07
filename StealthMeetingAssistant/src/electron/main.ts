@@ -294,6 +294,38 @@ ipcMain.handle('overlay:config', () => ({
 
 ipcMain.handle('overlay:mic-access', () => ensureMicrophoneAccess());
 
+/**
+ * Grab the screen for visual context — the shared deck, spreadsheet or diagram
+ * the meeting is actually about.
+ *
+ * The overlay itself is excluded wherever content protection works, so the
+ * model never sees its own previous answer reflected back. Downscaled to
+ * 1280px because a full 4K frame costs a great many tokens for no extra
+ * legibility.
+ */
+ipcMain.handle('overlay:capture-screen', async () => {
+  try {
+    const { width, height } = screen.getPrimaryDisplay().size;
+    const scale = Math.min(1, 1280 / Math.max(width, height));
+    const sources = await desktopCapturer.getSources({
+      types: ['screen'],
+      thumbnailSize: { width: Math.round(width * scale), height: Math.round(height * scale) },
+      fetchWindowIcons: false,
+    });
+    const thumbnail = sources[0]?.thumbnail;
+    if (!thumbnail || thumbnail.isEmpty()) {
+      return { ok: false, error: 'No screen available to capture' };
+    }
+    return {
+      ok: true,
+      mediaType: 'image/jpeg' as const,
+      data: thumbnail.toJPEG(70).toString('base64'),
+    };
+  } catch (err) {
+    return { ok: false, error: (err as Error).message };
+  }
+});
+
 // macOS native system audio: the helper writes PCM straight into the backend,
 // so the renderer only starts and stops it.
 ipcMain.handle('overlay:system-audio-start', () => startSystemAudioHelper());

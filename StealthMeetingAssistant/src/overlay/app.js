@@ -69,6 +69,7 @@
       });
     }
 
+    loadPreferences();
     wireUi();
     initAudio();
     await Promise.all([loadModels(), loadDocuments(), loadTranscript(), loadSttProviders()]);
@@ -269,6 +270,10 @@
       transcriptContext: state.transcript.slice(-contextLines),
       useDocuments: $('useDocs').checked,
     };
+
+    // Captured per request so the model sees the screen as it is now.
+    payload.images = await captureScreen();
+    payload.customInstructions = $('customInstructions').value.trim() || undefined;
 
     let answer = '';
     try {
@@ -851,6 +856,91 @@
     toast('Mock meeting loaded');
   }
 
+  /* ── Preferences ───────────────────────────────────────────── */
+
+  const PREF_KEY = 'assistant.prefs.v1';
+
+  function loadPreferences() {
+    try {
+      const saved = JSON.parse(localStorage.getItem(PREF_KEY) ?? '{}');
+      if (typeof saved.customInstructions === 'string') {
+        $('customInstructions').value = saved.customInstructions;
+      }
+      if (typeof saved.mode === 'string') state.mode = saved.mode;
+      $('autoSuggest').checked = Boolean(saved.autoSuggest);
+      $('useScreen').checked = Boolean(saved.useScreen);
+      if (typeof saved.ctxLines === 'number') $('ctxLines').value = saved.ctxLines;
+    } catch {
+      /* first run, or corrupt prefs */
+    }
+  }
+
+  function savePreferences() {
+    try {
+      localStorage.setItem(
+        PREF_KEY,
+        JSON.stringify({
+          customInstructions: $('customInstructions').value,
+          mode: state.mode,
+          autoSuggest: $('autoSuggest').checked,
+          useScreen: $('useScreen').checked,
+          ctxLines: Number($('ctxLines').value) || 18,
+        }),
+      );
+    } catch {
+      /* storage disabled */
+    }
+  }
+
+  /**
+   * Grab the screen so the model sees the shared deck or spreadsheet the
+   * meeting is actually about. The overlay excludes itself wherever content
+   * protection works, so it never reads back its own last answer.
+   */
+  async function captureScreen() {
+    if (!$('useScreen').checked || !window.overlay?.captureScreen) return [];
+    try {
+      const shot = await window.overlay.captureScreen();
+      if (!shot?.ok) {
+        toast(shot?.error ?? 'Could not capture the screen', true);
+        return [];
+      }
+      return [{ mediaType: shot.mediaType, data: shot.data }];
+    } catch (err) {
+      toast(err.message, true);
+      return [];
+    }
+  }
+
+  /** Export the session as Markdown — the thing every notes tool is asked for. */
+  function exportNotes() {
+    const lines = [
+      `# Meeting notes — ${new Date().toLocaleString()}`,
+      '',
+      '## Transcript',
+      '',
+      ...state.transcript.map(
+        (l) => `- **${l.speaker}** (${new Date(l.timestamp).toLocaleTimeString()}): ${l.text}`,
+      ),
+      '',
+      '## Assistant',
+      '',
+    ];
+    for (const turn of state.history) {
+      lines.push(turn.role === 'user' ? `**Asked:** ${turn.content}` : turn.content, '');
+    }
+    const documents = state.documents.filter((d) => d.status === 'ready');
+    if (documents.length) {
+      lines.push('## Documents referenced', '', ...documents.map((d) => `- ${d.fileName}`));
+    }
+
+    const markdown = lines.join('\n');
+    navigator.clipboard
+      .writeText(markdown)
+      .then(() => toast('Meeting notes copied to clipboard'))
+      .catch(() => toast('Could not copy notes', true));
+  }
+
   /* ── Audio capture ─────────────────────────────────────────── */
 
   function initAudio() {
@@ -1209,6 +1299,7 @@
 
   function setMode(mode) {
     state.mode = mode;
+    savePreferences();
     for (const button of document.querySelectorAll('.mode')) {
       button.classList.toggle('active', button.dataset.mode === mode);
     }
@@ -1339,7 +1430,17 @@
       state.audioActive.system ? stopSource('system') : startSource('system'),
     );
     $('btnRefreshDevices').addEventListener('click', refreshDevices);
+    $('btnExport').addEventListener('click', exportNotes);
+    for (const id of ['customInstructions', 'ctxLines', 'useScreen']) {
+      $(id).addEventListener('change', savePreferences);
+    }
+    $('useScreen').addEventListener('change', (event) => {
+      if (event.target.checked) {
+        toast('Screen context on — a screenshot is sent with each question');
+      }
+    });
     $('autoSuggest').addEventListener('change', (event) => {
+      savePreferences();
       toast(
         event.target.checked
           ? 'Auto-suggest on — replies drafted when others pause'

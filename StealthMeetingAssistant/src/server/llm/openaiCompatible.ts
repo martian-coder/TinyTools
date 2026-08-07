@@ -26,7 +26,7 @@ export const openaiCompatible: LlmAdapter = async function* (req) {
       stream: true,
       temperature: req.temperature,
       max_tokens: req.maxTokens,
-      messages: [{ role: 'system', content: req.system }, ...req.messages],
+      messages: [{ role: 'system', content: req.system }, ...withImages(req)],
     }),
   });
 
@@ -50,6 +50,29 @@ export const openaiCompatible: LlmAdapter = async function* (req) {
     if (typeof text === 'string' && text) yield text;
   }
 };
+
+/**
+ * Attach screenshots to the final user turn. OpenAI-shaped APIs take a content
+ * array of parts, with images as data: URIs.
+ */
+function withImages(req: Parameters<LlmAdapter>[0]) {
+  if (!req.images?.length) return req.messages;
+  const messages = req.messages.slice();
+  const last = messages[messages.length - 1];
+  if (!last || last.role !== 'user') return messages;
+
+  messages[messages.length - 1] = {
+    role: 'user',
+    content: [
+      { type: 'text', text: last.content },
+      ...req.images.map((image) => ({
+        type: 'image_url',
+        image_url: { url: `data:${image.mediaType};base64,${image.data}` },
+      })),
+    ] as unknown as string,
+  };
+  return messages;
+}
 
 /** Ask an OpenAI-compatible endpoint what models it actually has. */
 export async function listOpenAiModels(

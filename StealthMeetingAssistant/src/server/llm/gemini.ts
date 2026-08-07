@@ -13,9 +13,18 @@ export const gemini: LlmAdapter = async function* (req) {
     headers: { 'content-type': 'application/json', accept: 'text/event-stream' },
     body: JSON.stringify({
       systemInstruction: { parts: [{ text: req.system }] },
-      contents: req.messages.map((m) => ({
+      contents: req.messages.map((m, i) => ({
         role: m.role === 'assistant' ? 'model' : 'user',
-        parts: [{ text: m.content }],
+        parts:
+          // Images ride along with the final user turn as inline_data.
+          i === req.messages.length - 1 && m.role === 'user' && req.images?.length
+            ? [
+                ...req.images.map((image) => ({
+                  inline_data: { mime_type: image.mediaType, data: image.data },
+                })),
+                { text: m.content },
+              ]
+            : [{ text: m.content }],
       })),
       generationConfig: {
         temperature: req.temperature,

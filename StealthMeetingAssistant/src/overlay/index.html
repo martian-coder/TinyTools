@@ -21,6 +21,7 @@
           <button class="mode" data-mode="executive" title="Executive mode">Exec</button>
           <button class="mode" data-mode="technical" title="Technical mode">Tech</button>
           <button class="mode" data-mode="document" title="Document Q&amp;A mode">Docs</button>
+          <button class="mode" data-mode="interview" title="Interview mode — for running an interview">Intvw</button>
         </div>
         <div class="spacer"></div>
         <button class="icon listen" id="btnListen" title="Start listening (Ctrl+Shift+L)" aria-label="Listen">
@@ -111,6 +112,10 @@
           <label class="usedocs" title="Suggest a reply automatically when the other side stops talking">
             <input type="checkbox" id="autoSuggest" />
             <span>Auto-suggest</span>
+          </label>
+          <label class="usedocs" title="Send a screenshot so the assistant can see the shared screen">
+            <input type="checkbox" id="useScreen" />
+            <span>See screen</span>
           </label>
         </div>
       </footer>
@@ -225,9 +230,20 @@
       <div class="panel-body">
         <div class="kv" id="settingsInfo"></div>
         <label class="field">
+          <span>Custom instructions — who you are, what matters to you</span>
+          <textarea
+            id="customInstructions"
+            rows="4"
+            placeholder="e.g. I'm the EM for checkout. Be blunt. Always name owners and dates. Our stack is Node + Postgres."
+          ></textarea>
+        </label>
+        <label class="field">
           <span>Transcript lines sent as context</span>
           <input id="ctxLines" type="number" min="0" max="60" value="18" />
         </label>
+        <div class="row">
+          <button class="ghost" id="btnExport">Export meeting notes</button>
+        </div>
         <div class="row">
           <button class="ghost" id="btnOpenData">Open data folder</button>
           <button class="ghost" id="btnToggleClickThrough">Toggle click-through</button>

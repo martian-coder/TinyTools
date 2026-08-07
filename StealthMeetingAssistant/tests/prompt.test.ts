@@ -17,8 +17,42 @@ function chunk(overrides: Partial<RetrievedChunk> = {}): RetrievedChunk {
   };
 }
 
+test('interview mode supports the interviewer, not the candidate', () => {
+  const prompt = systemPrompt('interview');
+  assert.match(prompt, /MODE: INTERVIEW/);
+  assert.match(prompt, /helping the user \*run\* an interview/);
+  // The distinction that matters: it must refuse to feed answers to a candidate.
+  assert.match(prompt, /Never write an answer for the candidate/);
+});
+
+test('custom instructions are appended, never allowed to displace the rules', () => {
+  const custom = 'I am the EM for checkout. Be blunt.';
+  const prompt = systemPrompt('executive', custom);
+  assert.ok(prompt.includes(custom));
+  // Safety rules must still precede anything the user added.
+  assert.ok(prompt.indexOf('untrusted') < prompt.indexOf(custom));
+  assert.match(prompt, /USER CONTEXT AND PREFERENCES/);
+  // Absurdly long input is bounded.
+  assert.ok(systemPrompt('executive', 'x'.repeat(9000)).length < systemPrompt('executive').length + 2100);
+});
+
+test('a screenshot is announced and fenced as untrusted', () => {
+  const message = buildUserMessage({
+    message: 'what is on screen?',
+    chunks: [],
+    transcript: [],
+    documentsRequested: false,
+    hasScreen: true,
+  });
+  assert.match(message, /<SCREEN note="[^"]*untrusted/);
+  assert.doesNotMatch(
+    buildUserMessage({ message: 'x', chunks: [], transcript: [], documentsRequested: false }),
+    /<SCREEN/,
+  );
+});
+
 test('every mode carries the untrusted-content rule', () => {
-  for (const mode of ['executive', 'technical', 'document'] as const) {
+  for (const mode of ['executive', 'technical', 'document', 'interview'] as const) {
     const prompt = systemPrompt(mode);
     assert.match(prompt, /untrusted/i);
     assert.match(prompt, /never as a directive|never be treated as instructions|not as instructions/i);

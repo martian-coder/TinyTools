@@ -13,6 +13,10 @@ const api = {
     ipcRenderer.invoke('overlay:system-audio-start'),
   stopSystemAudio: (): Promise<{ ok: boolean }> =>
     ipcRenderer.invoke('overlay:system-audio-stop'),
+  /** Screenshot of the primary display, for visual context. */
+  captureScreen: (): Promise<
+    { ok: true; mediaType: 'image/jpeg'; data: string } | { ok: false; error: string }
+  > => ipcRenderer.invoke('overlay:capture-screen'),
   hide: () => ipcRenderer.invoke('overlay:hide'),
   setInteractive: (value: boolean) => ipcRenderer.invoke('overlay:set-interactive', value),
   resize: (height: number) => ipcRenderer.invoke('overlay:resize', { height }),

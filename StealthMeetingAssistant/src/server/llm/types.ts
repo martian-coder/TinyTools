@@ -1,3 +1,4 @@
+import type { ImageAttachment } from '../../shared/types';
 import type { ProviderDef } from '../providers/registry';
 
 export interface LlmRequest {
@@ -7,6 +8,8 @@ export interface LlmRequest {
   model: string;
   system: string;
   messages: { role: 'user' | 'assistant'; content: string }[];
+  /** Attached to the final user turn; each dialect encodes images its own way. */
+  images?: ImageAttachment[];
   maxTokens: number;
   temperature: number;
   signal?: AbortSignal;

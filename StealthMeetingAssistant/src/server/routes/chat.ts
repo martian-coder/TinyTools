@@ -84,20 +84,24 @@ chatRouter.post('/chat', async (req, res) => {
         content: m.content.slice(0, 8000),
       }));
 
+    const images = Array.isArray(body.images) ? body.images.slice(0, 2) : [];
+
     const userMessage = buildUserMessage({
       message,
       action,
       chunks,
       transcript: transcriptContext,
       documentsRequested: useDocuments,
+      hasScreen: images.length > 0,
     });
 
     let full = '';
     for await (const delta of streamCompletion({
       provider: body.provider,
       model: body.model,
-      system: systemPrompt(mode),
+      system: systemPrompt(mode, body.customInstructions),
       messages: [...history, { role: 'user', content: userMessage }],
+      images,
       signal: controller.signal,
       maxTokens: action === 'follow-up-email' ? 900 : 700,
     })) {

@@ -153,6 +153,53 @@ test('an error frame mid-stream aborts with a readable message', async () => {
   );
 });
 
+test('screenshots are encoded per dialect and only on the final user turn', async () => {
+  const image = { mediaType: 'image/jpeg' as const, data: 'QUJD' };
+
+  // OpenAI-shaped: a content array with a data: URI.
+  handler = (_req, _body, res) => sse(res, ['[DONE]']);
+  await drain(
+    openaiCompatible({
+      ...REQUEST,
+      images: [image],
+      def: def('openai', 'openai-compatible'),
+      baseUrl: `${base}/v1`,
+    }),
+  );
+  const openaiContent = lastRequest.body.messages.at(-1).content;
+  assert.ok(Array.isArray(openaiContent));
+  assert.equal(openaiContent[0].type, 'text');
+  assert.equal(openaiContent[1].image_url.url, 'data:image/jpeg;base64,QUJD');
+
+  // Anthropic: content blocks carrying raw base64.
+  handler = (_req, _body, res) => sse(res, [JSON.stringify({ type: 'message_stop' })]);
+  await drain(
+    anthropic({ ...REQUEST, images: [image], def: def('anthropic', 'anthropic'), baseUrl: `${base}/v1`, apiKey: 'k' }),
+  );
+  const anthropicContent = lastRequest.body.messages.at(-1).content;
+  assert.equal(anthropicContent[0].type, 'image');
+  assert.equal(anthropicContent[0].source.media_type, 'image/jpeg');
+  assert.equal(anthropicContent[0].source.data, 'QUJD');
+  assert.equal(anthropicContent[1].type, 'text');
+
+  // Gemini: inline_data parts.
+  handler = (_req, _body, res) => sse(res, ['{}']);
+  await drain(
+    gemini({ ...REQUEST, images: [image], def: def('gemini', 'gemini'), baseUrl: base, apiKey: 'k' }),
+  );
+  const parts = lastRequest.body.contents.at(-1).parts;
+  assert.equal(parts[0].inline_data.mime_type, 'image/jpeg');
+  assert.equal(parts[0].inline_data.data, 'QUJD');
+});
+
+test('no images means the plain string message shape is preserved', async () => {
+  handler = (_req, _body, res) => sse(res, ['[DONE]']);
+  await drain(
+    openaiCompatible({ ...REQUEST, def: def('openai', 'openai-compatible'), baseUrl: `${base}/v1` }),
+  );
+  assert.equal(typeof lastRequest.body.messages.at(-1).content, 'string');
+});
+
 /* ── Anthropic ───────────────────────────────────────────────── */
 
 test('anthropic sends system top-level and reads content_block_delta', async () => {
