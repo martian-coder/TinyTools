@@ -2,7 +2,7 @@
   "name": "stealth-meeting-assistant",
   "version": "0.1.0",
   "private": true,
-  "description": "Local-first, provider-agnostic meeting assistant that floats over your screen as a capture-protected Electron overlay.",
+  "description": "Capture-protected meeting assistant overlay with live transcription and document-grounded answers.",
   "main": "dist/electron/main.js",
   "scripts": {
     "dev": "npm run build:ts && concurrently -n server,electron -c blue,magenta \"npm:dev:server\" \"npm:dev:electron\"",
@@ -16,7 +16,10 @@
     "mock-transcript": "tsx scripts/mock-transcript.ts",
     "test": "node --import tsx --test tests/*.test.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "build:macos-audio": "node scripts/build-macos-audio.mjs"
+    "build:macos-audio": "node scripts/build-macos-audio.mjs",
+    "dist:win": "npm run build:ts && npm run build:assets && electron-builder --win --x64 --publish never",
+    "dist:dir": "npm run build:ts && npm run build:assets && electron-builder --dir --publish never",
+    "screenshots": "npm run build && xvfb-run -a electron scripts/screenshot.js"
   },
   "dependencies": {
     "cors": "^2.8.5",
@@ -40,10 +43,83 @@
     "concurrently": "^9.1.2",
     "cross-env": "^7.0.3",
     "electron": "^33.3.1",
+    "electron-builder": "^25.1.8",
     "tsx": "^4.19.2",
     "typescript": "^5.7.3"
   },
   "engines": {
     "node": ">=20"
+  },
+  "author": {
+    "name": "amit"
+  },
+  "build": {
+    "appId": "com.tinytools.stealthmeetingassistant",
+    "productName": "Meeting Assistant",
+    "copyright": "Copyright \u00a9 2026 amit",
+    "directories": {
+      "output": "release",
+      "buildResources": "build"
+    },
+    "files": [
+      "dist/**/*",
+      "package.json",
+      "!**/*.map"
+    ],
+    "extraResources": [
+      {
+        "from": ".env.example",
+        "to": ".env.example"
+      },
+      {
+        "from": "samples",
+        "to": "samples"
+      }
+    ],
+    "asar": true,
+    "asarUnpack": [
+      "**/node_modules/@huggingface/**",
+      "**/*.node"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "build/icon.ico",
+      "artifactName": "MeetingAssistant-Setup-${version}.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Meeting Assistant",
+      "deleteAppDataOnUninstall": false
+    },
+    "mac": {
+      "target": [
+        "dmg"
+      ],
+      "icon": "build/icon.png",
+      "category": "public.app-category.productivity"
+    },
+    "linux": {
+      "target": [
+        "AppImage"
+      ],
+      "icon": "build/icon.png",
+      "category": "Office"
+    }
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/martian-coder/TinyTools.git",
+    "directory": "StealthMeetingAssistant"
   }
 }

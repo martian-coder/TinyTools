@@ -1,0 +1,49 @@
+name: Meeting Assistant — Windows installer
+
+# The NSIS installer must be built on Windows; cross-building it from Linux
+# needs Wine, which is not worth carrying in CI.
+on:
+  workflow_dispatch:
+  push:
+    branches: [claude/stealth-meeting-assistant-wv5tic]
+    paths: ['StealthMeetingAssistant/**']
+
+jobs:
+  build:
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: StealthMeetingAssistant
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: StealthMeetingAssistant/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Test
+        run: npm test
+
+      - name: Build installer
+        run: npm run dist:win
+        env:
+          # Nothing is code-signed; this stops electron-builder looking for a
+          # certificate and failing the build.
+          CSC_IDENTITY_AUTO_DISCOVERY: false
+
+      - name: Upload installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: MeetingAssistant-Windows-Setup
+          path: StealthMeetingAssistant/release/*.exe
+          if-no-files-found: error
+          retention-days: 30

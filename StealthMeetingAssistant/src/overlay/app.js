@@ -29,7 +29,19 @@
     systemAudio: null,
     devices: [],
     audioActive: { mic: false, system: false },
+    // Auto-suggest
+    autoTimer: null,
+    lastAutoAt: 0,
+    autoPending: [],
+    lastAnswerWasAuto: false,
   };
+
+  /** Wait for the other side to actually stop talking before reacting. */
+  const AUTO_SETTLE_MS = 1600;
+  /** Never fire more often than this, however chatty the meeting is. */
+  const AUTO_COOLDOWN_MS = 12_000;
+  /** Ignore throat-clearing; react to something with content in it. */
+  const AUTO_MIN_CHARS = 24;
 
   /* ── Bootstrap ─────────────────────────────────────────────── */
 
@@ -239,6 +251,13 @@
     body.classList.add('streaming');
     $('sources').hidden = true;
 
+    // Make it obvious when the assistant spoke up on its own. This lives in
+    // the status line rather than above the answer, which scrolls away.
+    const auto = state.lastAnswerWasAuto;
+    state.lastAnswerWasAuto = false;
+    $('autoBadge').hidden = !auto;
+    state.answerWasAuto = auto;
+
     const contextLines = Number($('ctxLines').value) || 18;
     const payload = {
       provider: state.provider,
@@ -276,7 +295,13 @@
         } else if (frame.type === 'done') {
           answer = frame.text || answer;
           body.innerHTML = renderMarkdown(answer);
-          setStatus('ready', `Done in ${(frame.elapsedMs / 1000).toFixed(1)}s`);
+          // Streaming pins the view to the bottom; once it is complete, put
+          // the reader back at the lead sentence, which is the point of it.
+          $('answer').scrollTop = 0;
+          setStatus(
+            'ready',
+            `${state.answerWasAuto ? 'Auto-suggested · ' : ''}Done in ${(frame.elapsedMs / 1000).toFixed(1)}s`,
+          );
         } else if (frame.type === 'error') {
           showError(frame.message, frame.retryable);
           setStatus('error', 'Error');
@@ -705,6 +730,7 @@
               state.transcript.push(data.line);
             }
             renderTranscript();
+            considerAutoSuggest(data.line);
           }
         } catch {
           /* ignore malformed frame */
@@ -714,6 +740,60 @@
     } catch (err) {
       console.warn('transcript socket unavailable', err);
     }
+  }
+
+  /**
+   * Auto-suggest: when the other side finishes a thought, draft a reply
+   * without being asked. This is the behaviour that makes an overlay feel
+   * live rather than a chat box you have to poke.
+   *
+   * Guarded so it stays useful rather than noisy: only final lines, only from
+   * someone other than the user, only after a real pause, rate limited, and
+   * never while the user is typing their own question.
+   */
+  function considerAutoSuggest(line) {
+    if (!$('autoSuggest').checked || state.paused) return;
+    if (!line?.isFinal) return;
+    // Your own voice is not something to suggest a reply to.
+    if (isSelfSpeaker(line.speaker)) return;
+
+    state.autoPending.push(line.text);
+    clearTimeout(state.autoTimer);
+    state.autoTimer = setTimeout(fireAutoSuggest, AUTO_SETTLE_MS);
+  }
+
+  function isSelfSpeaker(speaker) {
+    return typeof speaker === 'string' && /^you\b/i.test(speaker.trim());
+  }
+
+  function fireAutoSuggest() {
+    const said = state.autoPending.join(' ').trim();
+    state.autoPending = [];
+
+    if (state.busy) return;
+    if (!$('autoSuggest').checked || state.paused) return;
+    // Typing means the user is already composing; do not hijack the pane.
+    if ($('input').value.trim()) return;
+
+    const isQuestion = /\?\s*$/.test(said);
+    if (!isQuestion && said.length < AUTO_MIN_CHARS) return;
+
+    const now = Date.now();
+    // A direct question is worth interrupting the cooldown for.
+    if (!isQuestion && now - state.lastAutoAt < AUTO_COOLDOWN_MS) return;
+    if (now - state.lastAutoAt < 3000) return;
+
+    state.lastAutoAt = now;
+    state.lastAnswerWasAuto = true;
+    markTriggerLine();
+    ask({ action: 'suggest-reply' });
+  }
+
+  /** Highlight the transcript line that prompted the suggestion. */
+  function markTriggerLine() {
+    const rows = $('transcriptBody').querySelectorAll('.tline');
+    for (const row of rows) row.classList.remove('trigger');
+    rows[rows.length - 1]?.classList.add('trigger');
   }
 
   async function pushTranscript(events) {
@@ -1206,6 +1286,7 @@
       const message = $('input').value.trim();
       if (!message) return;
       $('input').value = '';
+      state.lastAnswerWasAuto = false;
       ask({ message, action: 'ask' });
     }
 
@@ -1244,12 +1325,12 @@
 
     $('btnBrowse').addEventListener('click', () => browse());
 
+    // The button always opens the panel — while listening, that is the only
+    // route to the device and engine controls. Ctrl+Shift+L is the quick
+    // start/stop toggle.
     $('btnListen').addEventListener('click', () => {
-      if (state.audioActive.mic || state.audioActive.system) toggleListening();
-      else {
-        openPanel('panelAudio');
-        refreshDevices();
-      }
+      openPanel('panelAudio');
+      refreshDevices();
     });
     $('btnMic').addEventListener('click', () =>
       state.audioActive.mic ? stopSource('mic') : startSource('mic'),
@@ -1258,6 +1339,13 @@
       state.audioActive.system ? stopSource('system') : startSource('system'),
     );
     $('btnRefreshDevices').addEventListener('click', refreshDevices);
+    $('autoSuggest').addEventListener('change', (event) => {
+      toast(
+        event.target.checked
+          ? 'Auto-suggest on — replies drafted when others pause'
+          : 'Auto-suggest off',
+      );
+    });
     $('btnStopAll').addEventListener('click', async () => {
       await stopSource('mic');
       await stopSource('system');
@@ -1284,6 +1372,10 @@
       renderTranscript();
     });
 
+    $('btnOpenData').addEventListener('click', async () => {
+      const dir = await window.overlay?.openDataDir?.();
+      toast(dir ? `Opened ${dir}` : 'Data folder unavailable');
+    });
     $('btnToggleClickThrough').addEventListener('click', () => {
       window.overlay?.setInteractive(!state.interactive);
     });

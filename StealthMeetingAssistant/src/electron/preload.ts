@@ -17,6 +17,8 @@ const api = {
   setInteractive: (value: boolean) => ipcRenderer.invoke('overlay:set-interactive', value),
   resize: (height: number) => ipcRenderer.invoke('overlay:resize', { height }),
   quit: () => ipcRenderer.invoke('overlay:quit'),
+  /** Reveal the folder containing .env, documents and embeddings. */
+  openDataDir: (): Promise<string> => ipcRenderer.invoke('overlay:open-data-dir'),
 
   onHotkey: (handler: (action: string) => void) => {
     const listener = (_e: unknown, payload: { action: string }) => handler(payload.action);

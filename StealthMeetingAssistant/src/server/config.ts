@@ -1,14 +1,54 @@
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import dotenv from 'dotenv';
 
-/** Load .env once, from the project root, without clobbering real env vars. */
+/**
+ * Load .env once, without clobbering real env vars.
+ *
+ * Several locations are tried because an installed build and a checkout live
+ * in very different places: an installed app's directory is read-only, so the
+ * file the user edits has to sit beside their data instead.
+ */
 let loaded = false;
 export function loadEnv(): void {
   if (loaded) return;
   loaded = true;
-  dotenv.config({ path: path.join(projectRoot(), '.env') });
+  for (const candidate of envCandidates()) {
+    if (candidate && fs.existsSync(candidate)) {
+      dotenv.config({ path: candidate });
+      return;
+    }
+  }
+}
+
+function envCandidates(): (string | undefined)[] {
+  return [
+    process.env.ASSISTANT_ENV_FILE,
+    // Writable per-user location, which is where an installed build looks.
+    path.join(dataDir(), '.env'),
+    // Beside the executable, for a portable build.
+    path.join(path.dirname(process.execPath), '.env'),
+    // A plain checkout.
+    path.join(projectRoot(), '.env'),
+  ];
+}
+
+/**
+ * Seed a per-user .env from the template on first run, so an installed build
+ * gives the user a real file to edit instead of a missing-key error.
+ */
+export function ensureUserEnvFile(templatePath: string): string | undefined {
+  const target = path.join(dataDir(), '.env');
+  if (fs.existsSync(target)) return target;
+  try {
+    if (!fs.existsSync(templatePath)) return undefined;
+    fs.copyFileSync(templatePath, target);
+    return target;
+  } catch {
+    return undefined;
+  }
 }
 
 export function projectRoot(): string {
@@ -16,12 +56,43 @@ export function projectRoot(): string {
   return path.resolve(__dirname, '..', '..');
 }
 
+let resolvedDataDir: string | undefined;
+
+/**
+ * Where documents, embeddings, the session token and the user's .env live.
+ *
+ * In a packaged app the project root is inside a read-only asar archive, so
+ * writing there fails. Rather than depend on the caller having set DATA_DIR,
+ * fall back to a per-user directory whenever the preferred one is not
+ * writable — an unwritable data directory would otherwise take the whole app
+ * down at startup.
+ */
 export function dataDir(): string {
-  const dir = process.env.DATA_DIR
-    ? path.resolve(projectRoot(), process.env.DATA_DIR)
-    : path.join(projectRoot(), 'data');
-  fs.mkdirSync(dir, { recursive: true });
-  return dir;
+  if (resolvedDataDir) return resolvedDataDir;
+
+  const candidates = [
+    process.env.DATA_DIR ? path.resolve(projectRoot(), process.env.DATA_DIR) : undefined,
+    path.join(projectRoot(), 'data'),
+    path.join(os.homedir(), '.stealth-meeting-assistant'),
+    path.join(os.tmpdir(), 'stealth-meeting-assistant'),
+  ].filter((d): d is string => Boolean(d));
+
+  for (const dir of candidates) {
+    try {
+      fs.mkdirSync(dir, { recursive: true });
+      fs.accessSync(dir, fs.constants.W_OK);
+      resolvedDataDir = dir;
+      return dir;
+    } catch {
+      // Read-only (inside an asar) or otherwise unusable; try the next one.
+    }
+  }
+  throw new Error('No writable data directory found');
+}
+
+/** Tests reset this between runs. */
+export function resetDataDir(): void {
+  resolvedDataDir = undefined;
 }
 
 export function dataPath(...parts: string[]): string {

@@ -30,6 +30,42 @@ prompt you send to the provider you chose.
 
 ---
 
+## Screenshots
+
+Real captures of the running overlay (`npm run screenshots`), not mockups — see
+[`docs/screenshots`](docs/screenshots).
+
+| | |
+|---|---|
+| ![Answer with citations](docs/screenshots/02-answer-with-citations.png) | ![Auto-suggested reply](docs/screenshots/04-auto-suggested-reply.png) |
+| Streamed answer, sources cited by file and section | Auto-suggested reply, drafted when the other side asked a question |
+| ![Audio panel](docs/screenshots/06-audio-panel.png) | ![Documents](docs/screenshots/05-documents.png) |
+| Live capture, per-source level meters | Indexed documents with chunk counts |
+
+## Install on Windows
+
+```
+Download MeetingAssistant-Setup-<version>.exe  →  run it  →  done
+```
+
+The installer is built by CI on a Windows runner (Actions →
+**Meeting Assistant — Windows installer** → latest run → Artifacts). NSIS
+installers cannot be cross-built from Linux without Wine, so this is the
+supported path. To build one yourself on a Windows machine:
+
+```bash
+npm ci
+npm run dist:win     # -> release/MeetingAssistant-Setup-0.1.0.exe
+```
+
+It is a per-user install, so no admin rights are needed and nothing lands in
+Program Files. **The build is not code-signed**, so SmartScreen will show
+"Windows protected your PC" on first run — *More info* → *Run anyway*.
+
+On first launch a `.env` is created in your user data folder; open it from
+**Settings → Open data folder**, add a key, and restart. Documents, embeddings
+and the token live in the same place.
+
 ## Quick start
 
 ```bash
@@ -50,6 +86,8 @@ No key handy? Run [Ollama](https://ollama.com) locally and it works with zero co
 | `npm test` | 97 tests: chunking, SSE parsing, vector store, prompts, VAD, STT adapters, audio path, all provider dialects, full API |
 | `npm run build:macos-audio` | Compile the macOS system-audio helper (macOS only) |
 | `npm run mock-transcript` | Stream a scripted meeting into a running backend |
+| `npm run dist:win` | Build the Windows installer (must run on Windows) |
+| `npm run screenshots` | Recapture the screenshots above from the running app |
 
 ---
 
@@ -68,6 +106,13 @@ Global, so they work while Zoom or Teams has focus.
 | `Ctrl/Cmd + Shift + A` | Extract action items |
 | `Ctrl/Cmd + Shift + R` | Retrieve document context for the current discussion (no model call) |
 | `Ctrl/Cmd + Shift + L` | Start / stop listening |
+
+**Auto-suggest** (toggle next to the input box) drafts a reply on its own when
+someone else finishes a thought — no keypress. It waits for a real pause,
+ignores your own voice and short filler, rate-limits itself, and stays quiet
+while you are typing your own question. A direct question bypasses the
+cooldown, because that is exactly when you need it. The transcript line that
+triggered it is highlighted.
 
 If another app already owns a combination, registration fails for that one key and is logged —
 the rest still work.

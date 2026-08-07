@@ -51,6 +51,7 @@
             <li><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>L</kbd> start listening</li>
           </ul>
         </div>
+        <span class="autobadge" id="autoBadge" hidden>auto-suggested</span>
         <article class="markdown" id="answerBody"></article>
         <div class="sources" id="sources" hidden></div>
         <div class="errorbox" id="errorBox" hidden>
@@ -60,14 +61,15 @@
       </main>
 
       <!-- ── Transcript ──────────────────────────────────────── -->
-      <section class="transcript collapsed" id="transcript">
+      <section class="transcript" id="transcript">
         <button class="transcript-head" id="transcriptToggle">
           <span class="caret">▸</span>
           <span>Transcript</span>
           <span class="dim" id="transcriptCount">0 lines</span>
         </button>
         <div class="transcript-body" id="transcriptBody"></div>
-        <div class="transcript-tools">
+        <details class="transcript-tools">
+          <summary>Add manually</summary>
           <textarea
             id="transcriptPaste"
             rows="2"
@@ -78,7 +80,7 @@
             <button class="ghost" id="btnMockTranscript">Mock meeting</button>
             <button class="ghost" id="btnClearTranscript">Clear</button>
           </div>
-        </div>
+        </details>
       </section>
 
       <!-- ── Composer ────────────────────────────────────────── -->
@@ -101,10 +103,16 @@
           />
           <button class="icon send" id="btnSend" title="Send">➤</button>
         </div>
-        <label class="usedocs">
-          <input type="checkbox" id="useDocs" checked />
-          <span>Use documents</span>
-        </label>
+        <div class="toggles">
+          <label class="usedocs">
+            <input type="checkbox" id="useDocs" checked />
+            <span>Use documents</span>
+          </label>
+          <label class="usedocs" title="Suggest a reply automatically when the other side stops talking">
+            <input type="checkbox" id="autoSuggest" />
+            <span>Auto-suggest</span>
+          </label>
+        </div>
       </footer>
     </div>
 
@@ -221,6 +229,7 @@
           <input id="ctxLines" type="number" min="0" max="60" value="18" />
         </label>
         <div class="row">
+          <button class="ghost" id="btnOpenData">Open data folder</button>
           <button class="ghost" id="btnToggleClickThrough">Toggle click-through</button>
           <button class="ghost" id="btnQuit">Quit</button>
         </div>

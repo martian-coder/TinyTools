@@ -10,7 +10,13 @@ import {
   shell,
   systemPreferences,
 } from 'electron';
-import { loadEnv, port as configuredPort, sessionToken } from '../server/config';
+import {
+  dataDir,
+  ensureUserEnvFile,
+  loadEnv,
+  port as configuredPort,
+  sessionToken,
+} from '../server/config';
 import { startServer, type RunningServer } from '../server/app';
 import { setNativeSystemAudio } from '../server/routes/audio';
 import {
@@ -226,7 +232,17 @@ async function ensureMicrophoneAccess(): Promise<boolean> {
 }
 
 async function bootstrap(): Promise<void> {
+  // An installed app's own directory is read-only, so documents, embeddings,
+  // the session token and the user's .env all live under userData instead.
+  if (app.isPackaged && !process.env.DATA_DIR) {
+    process.env.DATA_DIR = app.getPath('userData');
+  }
+  if (app.isPackaged) {
+    // First run gets a real .env to edit rather than a missing-key error.
+    ensureUserEnvFile(path.join(process.resourcesPath, '.env.example'));
+  }
   loadEnv();
+  console.log(`[assistant] data directory: ${dataDir()}`);
   configureMediaAccess();
   setNativeSystemAudio(helperAvailable());
 
@@ -288,6 +304,13 @@ ipcMain.handle('overlay:system-audio-stop', () => {
 ipcMain.handle('overlay:hide', () => hideOverlay());
 ipcMain.handle('overlay:set-interactive', (_e, next: boolean) => setInteractive(Boolean(next)));
 ipcMain.handle('overlay:quit', () => app.quit());
+
+/** Opens the folder holding .env, documents and embeddings. */
+ipcMain.handle('overlay:open-data-dir', () => {
+  const dir = process.env.DATA_DIR ?? app.getPath('userData');
+  shell.openPath(dir);
+  return dir;
+});
 
 /** The UI grows for the document panel and shrinks back afterwards. */
 ipcMain.handle('overlay:resize', (_e, payload: { height?: number }) => {
