@@ -788,6 +788,13 @@
         state.audioActive[source] = active;
         renderAudioButtons();
       },
+      onSilent: (source) => {
+        if (source === 'mic') {
+          audioError('Mic is capturing silence — check the input device or your mute switch.');
+          return;
+        }
+        audioError(silentSystemAudioHint());
+      },
     });
   }
 
@@ -858,7 +865,11 @@
       const automatic =
         state.systemAudio?.method === 'loopback' ||
         state.systemAudio?.method === 'screencapturekit';
+      select.disabled = false;
       if (filterSystem && automatic) {
+        // Automatic first, but still offer any loopback-ish input device as an
+        // override — on Windows that is the escape hatch when the meeting app
+        // plays to an endpoint the system loopback is not listening to.
         const option = document.createElement('option');
         option.value = '';
         option.textContent =
@@ -866,10 +877,7 @@
             ? 'ScreenCaptureKit (automatic)'
             : 'System loopback (automatic)';
         select.append(option);
-        select.disabled = true;
-        return;
       }
-      select.disabled = false;
       if (!filterSystem) {
         const option = document.createElement('option');
         option.value = '';
@@ -939,6 +947,28 @@
     }
   }
 
+  /**
+   * The most common cause differs per platform, so name the actual fix rather
+   * than a generic "no audio" message.
+   */
+  function silentSystemAudioHint() {
+    const method = state.systemAudio?.method;
+    if (method === 'loopback') {
+      return (
+        'Meeting audio is silent. Windows plays Teams/Zoom through the Default ' +
+        'Communications Device, but loopback listens to the Default Device — ' +
+        'set both to the same output in Sound settings › Playback.'
+      );
+    }
+    if (method === 'screencapturekit') {
+      return 'Meeting audio is silent. Check Screen Recording permission is granted.';
+    }
+    if (method === 'monitor-device') {
+      return 'Meeting audio is silent. Pick the ".monitor" source matching your active output.';
+    }
+    return 'Meeting audio is silent. Check that the virtual device is your meeting app output.';
+  }
+
   function audioError(message) {
     const el = $('audioError');
     el.className = 'hint error';
@@ -985,9 +1015,11 @@
       if (source === 'mic') {
         await state.capture.startMic($('micDevice').value || undefined);
       } else {
+        const override = $('systemDevice').value || undefined;
         await state.capture.startSystem(
-          state.systemAudio?.method,
-          $('systemDevice').value || undefined,
+          // An explicitly chosen device always beats the automatic path.
+          override ? 'device' : state.systemAudio?.method,
+          override,
         );
       }
       state.stt = provider.id;

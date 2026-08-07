@@ -49,9 +49,29 @@
 
       await this.openSocket();
 
+      this.silentChunks = 0;
+      this.warnedSilent = false;
+
       this.node.port.onmessage = (event) => {
         const { pcm, peak } = event.data;
         this.options.onLevel?.(this.source, peak);
+
+        // Digital silence for a sustained stretch almost always means we are
+        // capturing the wrong endpoint — on Windows, typically because the
+        // meeting app is playing to the Default Communications Device while
+        // loopback listens to the Default Device. Say so instead of sitting
+        // there looking like it works.
+        if (peak < 0.0005) {
+          this.silentChunks++;
+          // 128 ms per chunk, so ~12s of continuous digital silence.
+          if (this.silentChunks > 94 && !this.warnedSilent) {
+            this.warnedSilent = true;
+            this.options.onSilent?.(this.source);
+          }
+        } else {
+          this.silentChunks = 0;
+        }
+
         if (this.socket?.readyState === WebSocket.OPEN) this.socket.send(pcm);
       };
 
@@ -175,22 +195,27 @@
 
       if (method === 'loopback') {
         // Windows: Electron's display-media handler substitutes WASAPI
-        // loopback for us. Video is requested because getDisplayMedia
-        // requires it, then dropped immediately.
+        // loopback for us. getDisplayMedia requires a video track, so ask for
+        // the smallest, slowest one possible.
         stream = await navigator.mediaDevices.getDisplayMedia({
-          video: true,
+          video: { width: { max: 2 }, height: { max: 2 }, frameRate: { max: 1 } },
           audio: true,
         });
-        for (const track of stream.getVideoTracks()) {
-          track.stop();
-          stream.removeTrack(track);
-        }
+
+        // Disable the video track rather than stopping it. Stopping a track
+        // from a getDisplayMedia session can tear the whole session down,
+        // taking the loopback audio with it — a silent failure that looks
+        // exactly like "the meeting has no sound".
+        for (const track of stream.getVideoTracks()) track.enabled = false;
+
         if (!stream.getAudioTracks().length) {
-          throw new Error('No system audio track was returned. Loopback may be unavailable.');
+          throw new Error(
+            'Windows returned no system audio track. Loopback needs Windows 10 2004 or newer.',
+          );
         }
       } else {
-        // macOS / Linux: the "system audio" is an input device — a PulseAudio
-        // .monitor source or a virtual cable like BlackHole.
+        // 'device': an input device carrying system audio — a PulseAudio
+        // .monitor source, a virtual cable like BlackHole, or Stereo Mix.
         if (!deviceId) {
           throw new Error('Pick a system audio input device first');
         }

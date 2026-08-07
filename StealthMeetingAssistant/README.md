@@ -239,7 +239,7 @@ Capturing the *other* participants is the hard part, and it works differently ev
 
 | Platform | How | Setup |
 |---|---|---|
-| **Windows** | WASAPI loopback via Electron | None. |
+| **Windows** | WASAPI loopback via Electron | None — but see the note below. |
 | **macOS** | ScreenCaptureKit helper | `npm run build:macos-audio` once, then grant Screen Recording permission. |
 | **macOS** (fallback) | Virtual audio device | If the helper is not built: install [BlackHole](https://existential.audio/blackhole/), route your meeting app through it, pick it in the audio panel. |
 | **Linux** | PulseAudio `.monitor` source | Pick the monitor device in the audio panel. |
@@ -251,6 +251,19 @@ through `AVAudioPCMBuffer` rather than casting the raw block buffer to a flat `F
 That second point is a correctness fix — ScreenCaptureKit delivers *non-interleaved* stereo, so
 flattening it concatenates left-then-right instead of interleaving, which sounds like the call
 playing twice at half speed.
+
+**Windows: if meeting audio comes through silent**, it is almost always the two-defaults
+problem. Windows keeps a *Default Device* and a separate *Default Communications Device*, and
+Teams/Zoom deliberately play to the communications one — while loopback listens to the default.
+If they are different outputs, loopback records silence from an idle device.
+
+Fix: Sound settings › Playback, and set the **same** output as both Default and Default
+Communications. The overlay detects this itself — about 12 seconds of digital silence on an
+active source raises the message rather than leaving you wondering. Failing that, pick a
+"Stereo Mix" or virtual-cable input from the meeting audio dropdown to override loopback.
+
+Windows 10 build 2004 or newer is required; older builds return no audio track at all, and the
+overlay says so.
 
 Diarization (splitting the remote side into Speaker 1 / Speaker 2) is available on engines that
 support it; lines then read `Meeting · Speaker 2`.
