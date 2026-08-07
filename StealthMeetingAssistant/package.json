@@ -1,0 +1,48 @@
+{
+  "name": "stealth-meeting-assistant",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Local-first, provider-agnostic meeting assistant that floats over your screen as a capture-protected Electron overlay.",
+  "main": "dist/electron/main.js",
+  "scripts": {
+    "dev": "npm run build:ts && concurrently -n server,electron -c blue,magenta \"npm:dev:server\" \"npm:dev:electron\"",
+    "dev:server": "tsx watch src/server/standalone.ts",
+    "dev:electron": "cross-env ASSISTANT_EXTERNAL_SERVER=1 electron .",
+    "build": "npm run build:ts && npm run build:assets",
+    "build:ts": "tsc -p tsconfig.json",
+    "build:assets": "node scripts/copy-assets.mjs",
+    "start": "npm run build && electron .",
+    "server": "npm run build:ts && node dist/server/standalone.js",
+    "mock-transcript": "tsx scripts/mock-transcript.ts",
+    "test": "node --import tsx --test tests/*.test.ts",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "mammoth": "^1.8.0",
+    "multer": "^2.0.1",
+    "pdfjs-dist": "^4.10.38",
+    "ws": "^8.18.0"
+  },
+  "optionalDependencies": {
+    "@huggingface/transformers": "^3.3.3",
+    "exceljs": "^4.4.0"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.17",
+    "@types/express": "^4.17.21",
+    "@types/multer": "^1.4.12",
+    "@types/node": "^22.10.5",
+    "@types/ws": "^8.5.13",
+    "concurrently": "^9.1.2",
+    "cross-env": "^7.0.3",
+    "electron": "^33.3.1",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.3"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

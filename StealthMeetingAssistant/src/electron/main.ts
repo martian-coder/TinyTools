@@ -1,0 +1,220 @@
+import path from 'node:path';
+import { app, BrowserWindow, globalShortcut, ipcMain, screen, shell } from 'electron';
+import { loadEnv, port as configuredPort, sessionToken } from '../server/config';
+import { startServer, type RunningServer } from '../server/app';
+
+const WIDTH = 420;
+const HEIGHT = 520;
+const MARGIN = 24;
+
+let win: BrowserWindow | undefined;
+let backend: RunningServer | undefined;
+/** Click-through: pointer events pass to the meeting app underneath. */
+let interactive = true;
+let visible = true;
+
+/** Single instance — a second launch just reveals the existing overlay. */
+if (!app.requestSingleInstanceLock()) {
+  app.quit();
+} else {
+  app.on('second-instance', () => showOverlay());
+}
+
+function createWindow(url: string): BrowserWindow {
+  const display = screen.getPrimaryDisplay().workArea;
+
+  const overlay = new BrowserWindow({
+    width: WIDTH,
+    height: HEIGHT,
+    x: display.x + display.width - WIDTH - MARGIN,
+    y: display.y + MARGIN,
+    minWidth: 320,
+    minHeight: 260,
+    show: false,
+    frame: false,
+    transparent: true,
+    backgroundColor: '#00000000',
+    hasShadow: false,
+    resizable: true,
+    movable: true,
+    skipTaskbar: true,
+    // Never take focus from Zoom/Teams when it appears.
+    focusable: true,
+    alwaysOnTop: true,
+    fullscreenable: false,
+    // macOS: no traffic lights, no title bar, but still draggable via CSS.
+    titleBarStyle: 'hidden',
+    webPreferences: {
+      preload: path.join(__dirname, 'preload.js'),
+      contextIsolation: true,
+      nodeIntegration: false,
+      sandbox: false,
+      devTools: !app.isPackaged,
+    },
+  });
+
+  /**
+   * The whole point of the exercise: ask the OS to exclude this window from
+   * screen capture. On macOS this maps to NSWindowSharingNone; on Windows to
+   * SetWindowDisplayAffinity(WDA_EXCLUDEFROMCAPTURE), which needs Win10 2004+.
+   * On Linux/X11 there is no equivalent and the call is a no-op — see README.
+   */
+  overlay.setContentProtection(true);
+
+  // 'screen-saver' keeps it above full-screen meeting windows.
+  overlay.setAlwaysOnTop(true, 'screen-saver');
+  overlay.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
+
+  overlay.loadURL(url);
+
+  overlay.once('ready-to-show', () => {
+    // showInactive, not show: the meeting app keeps keyboard focus.
+    overlay.showInactive();
+    visible = true;
+  });
+
+  // External links open in the real browser, never inside the overlay.
+  overlay.webContents.setWindowOpenHandler(({ url: target }) => {
+    shell.openExternal(target);
+    return { action: 'deny' };
+  });
+  overlay.webContents.on('will-navigate', (event, target) => {
+    if (!target.startsWith(url.split('?')[0].replace(/index\.html$/, ''))) {
+      event.preventDefault();
+    }
+  });
+
+  overlay.on('closed', () => {
+    win = undefined;
+  });
+
+  return overlay;
+}
+
+function showOverlay(): void {
+  if (!win) return;
+  win.showInactive();
+  win.setAlwaysOnTop(true, 'screen-saver');
+  visible = true;
+  send('visibility', { visible });
+}
+
+function hideOverlay(): void {
+  if (!win) return;
+  win.hide();
+  visible = false;
+  send('visibility', { visible });
+}
+
+/** Panic key. Hide is instant and unconditional. */
+function toggleVisibility(): void {
+  if (!win) return;
+  if (visible && win.isVisible()) hideOverlay();
+  else showOverlay();
+}
+
+function setInteractive(next: boolean): void {
+  if (!win) return;
+  interactive = next;
+  // forward:true still lets the renderer see hover while ignoring clicks.
+  win.setIgnoreMouseEvents(!interactive, { forward: true });
+  send('interactive', { interactive });
+}
+
+function send(channel: string, payload: unknown): void {
+  if (win && !win.isDestroyed()) win.webContents.send(channel, payload);
+}
+
+/** Route a hotkey to the renderer, revealing the overlay first if hidden. */
+function dispatch(action: string): void {
+  if (!win) return;
+  if (!visible) showOverlay();
+  if (!interactive) setInteractive(true);
+  send('hotkey', { action });
+}
+
+function registerShortcuts(): void {
+  const bindings: Record<string, () => void> = {
+    'CommandOrControl+Shift+H': toggleVisibility,
+    'CommandOrControl+Shift+I': () => setInteractive(!interactive),
+    'CommandOrControl+Shift+M': () => dispatch('models'),
+    'CommandOrControl+Shift+D': () => dispatch('documents'),
+    'CommandOrControl+Shift+P': () => dispatch('pause'),
+    'CommandOrControl+Shift+S': () => dispatch('summarize'),
+    'CommandOrControl+Shift+A': () => dispatch('action-items'),
+    'CommandOrControl+Shift+R': () => dispatch('retrieve'),
+  };
+
+  for (const [accelerator, handler] of Object.entries(bindings)) {
+    // Another app may already own the combo; log rather than crash.
+    if (!globalShortcut.register(accelerator, handler)) {
+      console.warn(`[hotkeys] Could not register ${accelerator} — already taken?`);
+    }
+  }
+}
+
+async function bootstrap(): Promise<void> {
+  loadEnv();
+
+  // `npm run dev` runs the backend in a separate watched process.
+  const external = process.env.ASSISTANT_EXTERNAL_SERVER === '1';
+  let baseUrl: string;
+
+  if (external) {
+    baseUrl = `http://127.0.0.1:${configuredPort()}`;
+  } else {
+    // Port 0 = let the OS pick, so we never collide with a stale process.
+    backend = await startServer(0);
+    baseUrl = backend.url;
+  }
+
+  const token = sessionToken();
+  const url = `${baseUrl}/index.html?token=${encodeURIComponent(token)}`;
+
+  win = createWindow(url);
+  registerShortcuts();
+  setInteractive(true);
+}
+
+app.whenReady().then(() => {
+  // macOS: keep the overlay out of the Dock and the app switcher.
+  if (process.platform === 'darwin') app.dock?.hide();
+
+  bootstrap().catch((err) => {
+    console.error('Failed to start overlay:', err);
+    app.quit();
+  });
+
+  app.on('activate', () => {
+    if (!BrowserWindow.getAllWindows().length) bootstrap();
+  });
+});
+
+ipcMain.handle('overlay:config', () => ({
+  token: sessionToken(),
+  baseUrl: backend?.url ?? `http://127.0.0.1:${configuredPort()}`,
+  platform: process.platform,
+  // Windows and macOS honour setContentProtection; X11 does not.
+  contentProtectionSupported: process.platform === 'darwin' || process.platform === 'win32',
+  interactive,
+}));
+
+ipcMain.handle('overlay:hide', () => hideOverlay());
+ipcMain.handle('overlay:set-interactive', (_e, next: boolean) => setInteractive(Boolean(next)));
+ipcMain.handle('overlay:quit', () => app.quit());
+
+/** The UI grows for the document panel and shrinks back afterwards. */
+ipcMain.handle('overlay:resize', (_e, payload: { height?: number }) => {
+  if (!win) return;
+  const height = Math.max(260, Math.min(900, Math.round(payload?.height ?? HEIGHT)));
+  const [w] = win.getSize();
+  win.setSize(w, height, false);
+});
+
+app.on('will-quit', () => {
+  globalShortcut.unregisterAll();
+  backend?.close().catch(() => undefined);
+});
+
+// The overlay is the app; closing it should not leave a headless process.
+app.on('window-all-closed', () => app.quit());

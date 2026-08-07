@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src http://127.0.0.1:* http://localhost:* ws://127.0.0.1:* ws://localhost:*; font-src 'self';"
+    />
+    <title>Meeting Assistant</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="shell" id="shell">
+      <!-- ── Top bar ─────────────────────────────────────────── -->
+      <header class="topbar" id="topbar">
+        <div class="status" id="statusDot" title="Status"></div>
+        <button class="chip" id="providerChip" title="Switch provider / model (Ctrl+Shift+M)">
+          <span id="providerLabel">loading…</span>
+        </button>
+        <div class="modes" id="modes" role="tablist">
+          <button class="mode" data-mode="executive" title="Executive mode">Exec</button>
+          <button class="mode" data-mode="technical" title="Technical mode">Tech</button>
+          <button class="mode" data-mode="document" title="Document Q&amp;A mode">Docs</button>
+        </div>
+        <div class="spacer"></div>
+        <button class="icon" id="btnDocs" title="Documents (Ctrl+Shift+D)" aria-label="Documents">
+          <span class="badge" id="docBadge">0</span>❐
+        </button>
+        <button class="icon" id="btnSettings" title="Settings" aria-label="Settings">⚙</button>
+        <button class="icon" id="btnHide" title="Hide overlay (Ctrl+Shift+H)" aria-label="Hide">✕</button>
+      </header>
+
+      <!-- ── Status line ─────────────────────────────────────── -->
+      <div class="statusline" id="statusLine">
+        <span id="statusText">Ready</span>
+        <span class="dim" id="statusMeta"></span>
+      </div>
+
+      <!-- ── Answer ──────────────────────────────────────────── -->
+      <main class="answer" id="answer">
+        <div class="empty" id="emptyState">
+          <p class="empty-title">Meeting assistant ready</p>
+          <ul class="empty-hints">
+            <li><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>H</kbd> hide / show</li>
+            <li><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>S</kbd> summarize</li>
+            <li><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>A</kbd> action items</li>
+            <li><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>D</kbd> attach documents</li>
+          </ul>
+        </div>
+        <article class="markdown" id="answerBody"></article>
+        <div class="sources" id="sources" hidden></div>
+        <div class="errorbox" id="errorBox" hidden>
+          <span id="errorText"></span>
+          <button class="linkbtn" id="btnRetry">Retry</button>
+        </div>
+      </main>
+
+      <!-- ── Transcript ──────────────────────────────────────── -->
+      <section class="transcript collapsed" id="transcript">
+        <button class="transcript-head" id="transcriptToggle">
+          <span class="caret">▸</span>
+          <span>Transcript</span>
+          <span class="dim" id="transcriptCount">0 lines</span>
+        </button>
+        <div class="transcript-body" id="transcriptBody"></div>
+        <div class="transcript-tools">
+          <textarea
+            id="transcriptPaste"
+            rows="2"
+            placeholder="Paste transcript lines — &quot;Speaker: text&quot;, one per line"
+          ></textarea>
+          <div class="row">
+            <button class="ghost" id="btnPasteTranscript">Add</button>
+            <button class="ghost" id="btnMockTranscript">Mock meeting</button>
+            <button class="ghost" id="btnClearTranscript">Clear</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── Composer ────────────────────────────────────────── -->
+      <footer class="composer">
+        <div class="actions">
+          <button class="pill" data-action="summarize" title="Ctrl+Shift+S">Summary</button>
+          <button class="pill" data-action="action-items" title="Ctrl+Shift+A">Actions</button>
+          <button class="pill" data-action="risks">Risks</button>
+          <button class="pill" data-action="suggest-reply">Reply</button>
+          <button class="pill" data-action="explain-jargon">Explain</button>
+          <button class="pill" data-action="follow-up-email">Email</button>
+        </div>
+        <div class="inputrow">
+          <button class="icon" id="btnAttach" title="Attach document (Ctrl+Shift+D)">＋</button>
+          <input
+            id="input"
+            type="text"
+            autocomplete="off"
+            placeholder="Ask about the meeting or your documents…"
+          />
+          <button class="icon send" id="btnSend" title="Send">➤</button>
+        </div>
+        <label class="usedocs">
+          <input type="checkbox" id="useDocs" checked />
+          <span>Use documents</span>
+        </label>
+      </footer>
+    </div>
+
+    <!-- ── Panels ────────────────────────────────────────────── -->
+    <div class="panel" id="panelModels" hidden>
+      <div class="panel-head">
+        <strong>Provider &amp; model</strong>
+        <button class="icon" data-close="panelModels">✕</button>
+      </div>
+      <div class="panel-body">
+        <label class="field">
+          <span>Provider</span>
+          <select id="providerSelect"></select>
+        </label>
+        <label class="field">
+          <span>Model</span>
+          <input id="modelInput" list="modelList" placeholder="model name" />
+          <datalist id="modelList"></datalist>
+        </label>
+        <p class="hint" id="providerHint"></p>
+        <div class="row">
+          <button class="ghost" id="btnRefreshModels">Refresh list</button>
+          <button class="primary" id="btnApplyModel">Use this model</button>
+        </div>
+        <details class="custom">
+          <summary>Add a custom OpenAI-compatible provider</summary>
+          <label class="field"><span>Name</span><input id="cpId" placeholder="my-company-llm" /></label>
+          <label class="field"><span>Base URL</span><input id="cpUrl" placeholder="https://llm.corp.internal/v1" /></label>
+          <label class="field"><span>API key env var</span><input id="cpKeyEnv" placeholder="MY_COMPANY_LLM_KEY" /></label>
+          <label class="field"><span>Default model</span><input id="cpModel" placeholder="internal-70b" /></label>
+          <p class="hint">The key itself stays in your .env — only the variable name is stored.</p>
+          <button class="ghost" id="btnAddProvider">Add provider</button>
+        </details>
+      </div>
+    </div>
+
+    <div class="panel" id="panelDocs" hidden>
+      <div class="panel-head">
+        <strong>Documents</strong>
+        <button class="icon" data-close="panelDocs">✕</button>
+      </div>
+      <div class="panel-body">
+        <div class="dropzone" id="dropzone">
+          <p>Drop files here</p>
+          <p class="hint">.txt .md .pdf .docx .csv .xlsx .json</p>
+        </div>
+        <div class="row">
+          <button class="ghost" id="btnBrowse">Browse files…</button>
+        </div>
+        <div class="browser" id="browser" hidden>
+          <div class="browser-path" id="browserPath"></div>
+          <div class="browser-list" id="browserList"></div>
+        </div>
+        <ul class="doclist" id="docList"></ul>
+      </div>
+    </div>
+
+    <div class="panel" id="panelSettings" hidden>
+      <div class="panel-head">
+        <strong>Settings</strong>
+        <button class="icon" data-close="panelSettings">✕</button>
+      </div>
+      <div class="panel-body">
+        <div class="kv" id="settingsInfo"></div>
+        <label class="field">
+          <span>Transcript lines sent as context</span>
+          <input id="ctxLines" type="number" min="0" max="60" value="18" />
+        </label>
+        <div class="row">
+          <button class="ghost" id="btnToggleClickThrough">Toggle click-through</button>
+          <button class="ghost" id="btnQuit">Quit</button>
+        </div>
+        <p class="hint" id="protectionHint"></p>
+      </div>
+    </div>
+
+    <div class="toast" id="toast" hidden></div>
+
+    <script src="app.js"></script>
+  </body>
+</html>

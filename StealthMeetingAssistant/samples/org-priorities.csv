@@ -1,0 +1,9 @@
+priority,initiative,owner,quarter,status,risk_level,notes
+P0,Checkout revamp v2,Priya Raman,Q3,In progress,Medium,Blocked on payment retry path and vendor contract
+P0,Payment gateway contract renewal,Priya Raman,Q3,Not started,High,Unsigned; sandbox access lapses first if it expires
+P1,Reconciliation service hardening,Maya Lindqvist,Q3,In progress,High,Single maintainer with deploy access
+P1,Guest checkout rollout,Tom Reyes,Q3,In progress,Low,Behind feature flag at 5 percent
+P2,Multi-currency support,Unassigned,Q4,Not started,Medium,Depends on checkout revamp completing
+P2,Wallet integrations,Unassigned,Q4,Not started,Low,Explicitly out of scope for v2
+P1,Load test coverage for checkout,Maya Lindqvist,Q3,Not started,High,No measured numbers at the 15 second timeout
+P3,Design system refresh,Tom Reyes,Q4,Not started,Low,Nice to have; no dependency on checkout work
