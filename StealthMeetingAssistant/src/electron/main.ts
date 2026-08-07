@@ -1,7 +1,23 @@
 import path from 'node:path';
-import { app, BrowserWindow, globalShortcut, ipcMain, screen, shell } from 'electron';
+import {
+  app,
+  BrowserWindow,
+  desktopCapturer,
+  globalShortcut,
+  ipcMain,
+  screen,
+  session,
+  shell,
+  systemPreferences,
+} from 'electron';
 import { loadEnv, port as configuredPort, sessionToken } from '../server/config';
 import { startServer, type RunningServer } from '../server/app';
+import { setNativeSystemAudio } from '../server/routes/audio';
+import {
+  helperAvailable,
+  startSystemAudioHelper,
+  stopSystemAudioHelper,
+} from './systemAudio';
 
 const WIDTH = 420;
 const HEIGHT = 520;
@@ -143,6 +159,9 @@ function registerShortcuts(): void {
     'CommandOrControl+Shift+S': () => dispatch('summarize'),
     'CommandOrControl+Shift+A': () => dispatch('action-items'),
     'CommandOrControl+Shift+R': () => dispatch('retrieve'),
+    // Start/stop listening without touching the overlay — the one hotkey you
+    // want when a meeting starts unexpectedly.
+    'CommandOrControl+Shift+L': () => dispatch('listen'),
   };
 
   for (const [accelerator, handler] of Object.entries(bindings)) {
@@ -153,8 +172,63 @@ function registerShortcuts(): void {
   }
 }
 
+/**
+ * Wire up audio capture permissions and the system-audio path.
+ *
+ * `audio: 'loopback'` is Windows-only in Electron; macOS and Linux capture
+ * system audio through an input device instead (BlackHole, a PulseAudio
+ * .monitor source), which needs nothing here.
+ */
+function configureMediaAccess(): void {
+  const current = session.defaultSession;
+
+  current.setDisplayMediaRequestHandler(
+    (_request, callback) => {
+      desktopCapturer
+        .getSources({ types: ['screen'], fetchWindowIcons: false })
+        .then((sources) => {
+          if (!sources.length) return callback({ video: undefined });
+          // The video track is required to obtain the stream and is dropped by
+          // the renderer immediately — only the loopback audio is wanted.
+          callback({
+            video: sources[0],
+            audio: process.platform === 'win32' ? 'loopback' : undefined,
+          });
+        })
+        .catch(() => callback({ video: undefined }));
+    },
+    // Suppresses the "app is sharing your screen" system overlay, which would
+    // otherwise appear on screen — and in the share — the moment we capture.
+    { useSystemPicker: false },
+  );
+
+  // The overlay is local and trusted; anything else is denied.
+  current.setPermissionRequestHandler((contents, permission, callback) => {
+    // 'media' covers microphone; 'display-capture' is the loopback path.
+    const allowed = permission === 'media' || permission === 'display-capture';
+    callback(allowed && contents === win?.webContents);
+  });
+  // The synchronous check only ever sees 'media' for audio capture.
+  current.setPermissionCheckHandler((_contents, permission) => permission === 'media');
+}
+
+/** macOS gates the microphone behind an explicit, one-time consent prompt. */
+async function ensureMicrophoneAccess(): Promise<boolean> {
+  if (process.platform !== 'darwin') return true;
+  const state = systemPreferences.getMediaAccessStatus('microphone');
+  if (state === 'granted') return true;
+  if (state === 'denied') return false;
+  try {
+    return await systemPreferences.askForMediaAccess('microphone');
+  } catch {
+    return false;
+  }
+}
+
 async function bootstrap(): Promise<void> {
   loadEnv();
+  configureMediaAccess();
+  setNativeSystemAudio(helperAvailable());
 
   // `npm run dev` runs the backend in a separate watched process.
   const external = process.env.ASSISTANT_EXTERNAL_SERVER === '1';
@@ -196,9 +270,21 @@ ipcMain.handle('overlay:config', () => ({
   platform: process.platform,
   // Windows and macOS honour setContentProtection; X11 does not.
   contentProtectionSupported: process.platform === 'darwin' || process.platform === 'win32',
+  // True when the ScreenCaptureKit helper is built, which removes the
+  // BlackHole requirement for macOS system audio.
+  nativeSystemAudio: helperAvailable(),
   interactive,
 }));
 
+ipcMain.handle('overlay:mic-access', () => ensureMicrophoneAccess());
+
+// macOS native system audio: the helper writes PCM straight into the backend,
+// so the renderer only starts and stops it.
+ipcMain.handle('overlay:system-audio-start', () => startSystemAudioHelper());
+ipcMain.handle('overlay:system-audio-stop', () => {
+  stopSystemAudioHelper();
+  return { ok: true };
+});
 ipcMain.handle('overlay:hide', () => hideOverlay());
 ipcMain.handle('overlay:set-interactive', (_e, next: boolean) => setInteractive(Boolean(next)));
 ipcMain.handle('overlay:quit', () => app.quit());
@@ -212,6 +298,7 @@ ipcMain.handle('overlay:resize', (_e, payload: { height?: number }) => {
 });
 
 app.on('will-quit', () => {
+  stopSystemAudioHelper();
   globalShortcut.unregisterAll();
   backend?.close().catch(() => undefined);
 });

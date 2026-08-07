@@ -584,3 +584,78 @@ kbd {
 /* Click-through mode: dim slightly so the state is obvious at a glance. */
 body.click-through .shell { opacity: 0.82; }
 body.click-through .composer { opacity: 0.5; }
+
+/* ── Audio capture ─────────────────────────────────────────── */
+
+.icon.listen { overflow: hidden; }
+.icon.listen.on { color: var(--ok); }
+
+/* Level indicator fills the mic button from the bottom while listening. */
+.level {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(to top, rgba(74, 222, 128, 0.45), transparent);
+  transform: scaleY(0);
+  transform-origin: bottom;
+  transition: transform 0.08s linear;
+  pointer-events: none;
+}
+
+.capture-row { display: flex; gap: 8px; margin: 10px 0 4px; }
+
+.capture {
+  flex: 1;
+  min-width: 0;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  padding: 8px;
+}
+
+.capture-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+  font-size: 11.5px;
+}
+
+.capture select {
+  width: 100%;
+  background: rgba(0, 0, 0, 0.32);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 4px 6px;
+  font-size: 10.5px;
+  margin-bottom: 6px;
+  text-overflow: ellipsis;
+}
+
+.capture select:disabled { opacity: 0.55; }
+.capture select option { background: var(--bg-solid); }
+
+.meter {
+  flex: 1;
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.1);
+  overflow: hidden;
+}
+
+.meter i {
+  display: block;
+  height: 100%;
+  width: 0;
+  background: var(--ok);
+  transition: width 0.08s linear;
+}
+
+.wide { width: 100%; }
+
+.ghost.on {
+  background: rgba(74, 222, 128, 0.16);
+  border-color: var(--ok);
+  color: var(--ok);
+}

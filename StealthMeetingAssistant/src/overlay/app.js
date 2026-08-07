@@ -22,6 +22,13 @@
     contentProtection: false,
     lastRequest: null,
     abort: null,
+    // Audio capture
+    capture: null,
+    sttProviders: [],
+    stt: '',
+    systemAudio: null,
+    devices: [],
+    audioActive: { mic: false, system: false },
   };
 
   /* ── Bootstrap ─────────────────────────────────────────────── */
@@ -51,8 +58,10 @@
     }
 
     wireUi();
-    await Promise.all([loadModels(), loadDocuments(), loadTranscript()]);
+    initAudio();
+    await Promise.all([loadModels(), loadDocuments(), loadTranscript(), loadSttProviders()]);
     subscribeDocumentEvents();
+    subscribeAudioEvents();
     connectTranscriptSocket();
     setStatus('ready', 'Ready');
   }
@@ -762,6 +771,277 @@
     toast('Mock meeting loaded');
   }
 
+  /* ── Audio capture ─────────────────────────────────────────── */
+
+  function initAudio() {
+    state.capture = new AudioCapture({
+      baseUrl: state.baseUrl,
+      token: state.token,
+      onLevel: (source, peak) => {
+        const meter = $(source === 'mic' ? 'meterMic' : 'meterSystem');
+        if (meter) meter.style.width = `${Math.min(100, Math.round(peak * 140))}%`;
+        if (source === 'mic' || !state.audioActive.mic) {
+          $('levelBar').style.transform = `scaleY(${Math.min(1, peak * 3).toFixed(2)})`;
+        }
+      },
+      onState: (source, active) => {
+        state.audioActive[source] = active;
+        renderAudioButtons();
+      },
+    });
+  }
+
+  async function loadSttProviders() {
+    try {
+      const data = await api('/api/audio/providers');
+      state.sttProviders = data.providers;
+      state.systemAudio = data.systemAudio;
+      state.stt = state.stt || data.defaultProvider;
+      applyAudioStatus(data.status);
+      renderSttPanel();
+    } catch (err) {
+      console.warn('stt providers unavailable', err);
+    }
+  }
+
+  function renderSttPanel() {
+    const select = $('sttSelect');
+    select.innerHTML = '';
+    for (const provider of state.sttProviders) {
+      const option = document.createElement('option');
+      option.value = provider.id;
+      option.textContent = provider.available
+        ? `${provider.label} (${provider.kind})`
+        : `${provider.label} — unavailable`;
+      option.disabled = !provider.available;
+      option.selected = provider.id === state.stt;
+      select.append(option);
+    }
+    syncSttHint();
+    $('systemHint').textContent = state.systemAudio?.hint ?? '';
+    $('diarize').disabled = !currentStt()?.supportsDiarization;
+  }
+
+  function currentStt() {
+    return state.sttProviders.find((p) => p.id === $('sttSelect').value || p.id === state.stt);
+  }
+
+  function syncSttHint() {
+    const provider = state.sttProviders.find((p) => p.id === $('sttSelect').value);
+    const hint = $('sttHint');
+    if (!provider) {
+      hint.textContent = '';
+      return;
+    }
+    hint.className = provider.available ? 'hint' : 'hint error';
+    hint.textContent = provider.available
+      ? provider.note
+      : `${provider.unavailableReason}. ${provider.note}`;
+  }
+
+  /**
+   * Devices only report real labels once permission has been granted, so the
+   * first listing after starting the mic is the useful one.
+   */
+  async function refreshDevices() {
+    try {
+      state.devices = await AudioCapture.listInputDevices();
+    } catch (err) {
+      audioError(err.message);
+      return;
+    }
+
+    const fill = (id, filterSystem) => {
+      const select = $(id);
+      const previous = select.value;
+      select.innerHTML = '';
+      const automatic =
+        state.systemAudio?.method === 'loopback' ||
+        state.systemAudio?.method === 'screencapturekit';
+      if (filterSystem && automatic) {
+        const option = document.createElement('option');
+        option.value = '';
+        option.textContent =
+          state.systemAudio.method === 'screencapturekit'
+            ? 'ScreenCaptureKit (automatic)'
+            : 'System loopback (automatic)';
+        select.append(option);
+        select.disabled = true;
+        return;
+      }
+      select.disabled = false;
+      if (!filterSystem) {
+        const option = document.createElement('option');
+        option.value = '';
+        option.textContent = 'Default microphone';
+        select.append(option);
+      }
+      for (const device of state.devices) {
+        // Only offer monitor/virtual devices as "meeting audio", and hide them
+        // from the mic list where they would be a mistake.
+        if (filterSystem !== device.likelySystemAudio) continue;
+        const option = document.createElement('option');
+        option.value = device.deviceId;
+        option.textContent = device.label;
+        select.append(option);
+      }
+      if (filterSystem && !select.options.length) {
+        const option = document.createElement('option');
+        option.value = '';
+        option.textContent = 'No loopback device found';
+        select.append(option);
+      }
+      if (previous) select.value = previous;
+    };
+
+    fill('micDevice', false);
+    fill('systemDevice', true);
+  }
+
+  function renderAudioButtons() {
+    const mic = state.audioActive.mic;
+    const system = state.audioActive.system;
+    $('btnMic').textContent = mic ? 'Stop mic' : 'Start mic';
+    $('btnMic').classList.toggle('on', mic);
+    $('btnSystem').textContent = system ? 'Stop meeting audio' : 'Start meeting audio';
+    $('btnSystem').classList.toggle('on', system);
+
+    const listening = mic || system;
+    $('btnListen').classList.toggle('on', listening);
+    $('btnListen').title = listening ? 'Listening — click to stop' : 'Start listening (Ctrl+Shift+L)';
+    if (!listening) $('levelBar').style.transform = 'scaleY(0)';
+    setStatus(
+      listening ? 'ready' : state.paused ? 'paused' : 'ready',
+      listening ? `Listening · ${[mic && 'mic', system && 'meeting'].filter(Boolean).join(' + ')}` : 'Ready',
+    );
+  }
+
+  function applyAudioStatus(status) {
+    for (const entry of status?.sources ?? []) {
+      if (entry.error) audioError(`${entry.source}: ${entry.error}`);
+    }
+  }
+
+  function subscribeAudioEvents() {
+    try {
+      const source = new EventSource(
+        `${state.baseUrl}/api/audio/events?token=${encodeURIComponent(state.token)}`,
+      );
+      source.onmessage = (event) => {
+        try {
+          applyAudioStatus(JSON.parse(event.data));
+        } catch {
+          /* ignore */
+        }
+      };
+    } catch (err) {
+      console.warn('audio events unavailable', err);
+    }
+  }
+
+  function audioError(message) {
+    const el = $('audioError');
+    el.className = 'hint error';
+    el.textContent = message;
+    toast(message, true);
+  }
+
+  function clearAudioError() {
+    $('audioError').textContent = '';
+  }
+
+  /**
+   * Starting a source is two steps that must both succeed: open the STT
+   * session on the backend, then start capturing. If capture fails we tear the
+   * session back down, otherwise it would sit there billing for silence.
+   */
+  async function startSource(source) {
+    clearAudioError();
+    const provider = state.sttProviders.find((p) => p.id === $('sttSelect').value);
+    if (!provider) return audioError('No speech engine selected');
+    if (!provider.available) return audioError(provider.unavailableReason);
+
+    if (source === 'mic' && window.overlay?.requestMicAccess) {
+      const granted = await window.overlay.requestMicAccess();
+      if (!granted) {
+        return audioError('Microphone access denied. Enable it in System Settings › Privacy.');
+      }
+    }
+
+    try {
+      await api('/api/audio/start', {
+        method: 'POST',
+        body: JSON.stringify({
+          source,
+          provider: provider.id,
+          diarize: $('diarize').checked,
+        }),
+      });
+    } catch (err) {
+      return audioError(`Could not start ${provider.label}: ${err.message}`);
+    }
+
+    try {
+      if (source === 'mic') {
+        await state.capture.startMic($('micDevice').value || undefined);
+      } else {
+        await state.capture.startSystem(
+          state.systemAudio?.method,
+          $('systemDevice').value || undefined,
+        );
+      }
+      state.stt = provider.id;
+      toast(source === 'mic' ? 'Mic on' : 'Meeting audio on');
+      // Labels arrive only after the first permission grant.
+      refreshDevices();
+    } catch (err) {
+      await api('/api/audio/stop', {
+        method: 'POST',
+        body: JSON.stringify({ source }),
+      }).catch(() => undefined);
+      audioError(friendlyCaptureError(err, source));
+    }
+  }
+
+  async function stopSource(source) {
+    await state.capture.stop(source);
+    await api('/api/audio/stop', {
+      method: 'POST',
+      body: JSON.stringify({ source }),
+    }).catch(() => undefined);
+  }
+
+  function friendlyCaptureError(err, source) {
+    const name = err?.name ?? '';
+    if (name === 'NotAllowedError') {
+      return source === 'mic'
+        ? 'Microphone permission denied.'
+        : 'Screen/audio capture was refused.';
+    }
+    if (name === 'NotFoundError') return 'No matching audio device found.';
+    if (name === 'NotReadableError') return 'The device is in use by another app.';
+    return err?.message ?? 'Could not start capture';
+  }
+
+  /** Ctrl+Shift+L: one key to start or stop everything. */
+  async function toggleListening() {
+    if (state.audioActive.mic || state.audioActive.system) {
+      await stopSource('mic');
+      await stopSource('system');
+      toast('Stopped listening');
+      return;
+    }
+    openPanel('panelAudio');
+    await refreshDevices();
+    await startSource('mic');
+    // Meeting audio starts itself wherever capture is automatic; elsewhere it
+    // needs a device chosen first.
+    const automatic =
+      state.systemAudio?.method === 'loopback' ||
+      state.systemAudio?.method === 'screencapturekit';
+    if (automatic) await startSource('system');
+  }
+
   /* ── UI plumbing ───────────────────────────────────────────── */
 
   function setStatus(kind, text, meta) {
@@ -811,7 +1091,7 @@
   }
 
   function closePanels() {
-    for (const id of ['panelModels', 'panelDocs', 'panelSettings']) $(id).hidden = true;
+    for (const id of ['panelModels', 'panelDocs', 'panelSettings', 'panelAudio']) $(id).hidden = true;
     $('browser').hidden = true;
   }
 
@@ -846,6 +1126,9 @@
       case 'retrieve':
         closePanels();
         retrieveContext();
+        break;
+      case 'listen':
+        toggleListening();
         break;
       default:
         break;
@@ -928,6 +1211,31 @@
     $('btnAddProvider').addEventListener('click', addCustomProvider);
 
     $('btnBrowse').addEventListener('click', () => browse());
+
+    $('btnListen').addEventListener('click', () => {
+      if (state.audioActive.mic || state.audioActive.system) toggleListening();
+      else {
+        openPanel('panelAudio');
+        refreshDevices();
+      }
+    });
+    $('btnMic').addEventListener('click', () =>
+      state.audioActive.mic ? stopSource('mic') : startSource('mic'),
+    );
+    $('btnSystem').addEventListener('click', () =>
+      state.audioActive.system ? stopSource('system') : startSource('system'),
+    );
+    $('btnRefreshDevices').addEventListener('click', refreshDevices);
+    $('btnStopAll').addEventListener('click', async () => {
+      await stopSource('mic');
+      await stopSource('system');
+    });
+    $('sttSelect').addEventListener('change', () => {
+      syncSttHint();
+      $('diarize').disabled = !state.sttProviders.find(
+        (p) => p.id === $('sttSelect').value,
+      )?.supportsDiarization;
+    });
     $('transcriptToggle').addEventListener('click', () => {
       $('transcript').classList.toggle('collapsed');
     });
@@ -978,6 +1286,13 @@
       ['Model', state.model || '—'],
       ['Documents', `${state.documents.filter((d) => d.status === 'ready').length} indexed`],
       ['Transcript', `${state.transcript.length} lines (memory only)`],
+      [
+        'Listening',
+        [state.audioActive.mic && 'mic', state.audioActive.system && 'meeting audio']
+          .filter(Boolean)
+          .join(' + ') || 'off',
+      ],
+      ['Speech engine', state.stt || '—'],
     ];
     $('settingsInfo').innerHTML = '';
     for (const [key, value] of rows) {

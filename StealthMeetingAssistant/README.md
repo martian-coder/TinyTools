@@ -47,7 +47,8 @@ No key handy? Run [Ollama](https://ollama.com) locally and it works with zero co
 | `npm run dev` | Watched backend in one process + Electron in another |
 | `npm run build` | Compile TypeScript and copy the overlay assets |
 | `npm run server` | Backend only, no window — for curl/testing |
-| `npm test` | 61 tests: chunking, SSE parsing, vector store, prompts, all three provider dialects, full API |
+| `npm test` | 97 tests: chunking, SSE parsing, vector store, prompts, VAD, STT adapters, audio path, all provider dialects, full API |
+| `npm run build:macos-audio` | Compile the macOS system-audio helper (macOS only) |
 | `npm run mock-transcript` | Stream a scripted meeting into a running backend |
 
 ---
@@ -66,6 +67,7 @@ Global, so they work while Zoom or Teams has focus.
 | `Ctrl/Cmd + Shift + S` | Summarize the last few minutes |
 | `Ctrl/Cmd + Shift + A` | Extract action items |
 | `Ctrl/Cmd + Shift + R` | Retrieve document context for the current discussion (no model call) |
+| `Ctrl/Cmd + Shift + L` | Start / stop listening |
 
 If another app already owns a combination, registration fails for that one key and is logged —
 the rest still work.
@@ -193,9 +195,70 @@ the most common way a setup like this breaks on someone else's machine.
 
 ---
 
+## Audio capture
+
+Two sources are captured independently — **your mic** and **the meeting's system audio** —
+each with its own transcription session and a fixed speaker label. Mixing them into one stream
+would make "who said this" unrecoverable, which is the thing that makes a transcript worth
+having.
+
+`Ctrl/Cmd + Shift + L` starts and stops listening without touching the overlay.
+
+Audio is converted to 16 kHz mono PCM in an AudioWorklet, streamed over a local WebSocket, and
+handed to the engine. **It is never written to disk** and never buffered beyond what the engine
+needs.
+
+### Speech engines
+
+| Engine | Kind | Needs |
+|---|---|---|
+| Deepgram | streaming | `DEEPGRAM_API_KEY` |
+| AssemblyAI | streaming | `ASSEMBLYAI_API_KEY` |
+| Groq Whisper | batch | `GROQ_API_KEY` — very fast |
+| OpenAI Whisper | batch | `OPENAI_API_KEY` |
+| **Local Parakeet** | batch | `LOCAL_PARAKEET_BASE_URL` — audio never leaves your machine |
+| **Local Whisper** | batch | `LOCAL_WHISPER_BASE_URL` — audio never leaves your machine |
+
+*Streaming* engines emit words as you speak. *Batch* engines transcribe each utterance after a
+pause, so text lands a beat later — a voice activity detector cuts the stream into complete
+sentences and uploads them one at a time.
+
+For a fully local setup, NVIDIA's [Parakeet](https://huggingface.co/nvidia/parakeet-tdt-0.6b-v2)
+(open weights, CC-BY-4.0) is faster and more accurate than Whisper on English meetings. Serve it
+through anything OpenAI-compatible, e.g. [speaches](https://github.com/speaches-ai/speaches):
+
+```bash
+docker run -p 8000:8000 ghcr.io/speaches-ai/speaches:latest
+# then in .env:
+LOCAL_PARAKEET_BASE_URL=http://localhost:8000/v1
+```
+
+### System audio, per platform
+
+Capturing the *other* participants is the hard part, and it works differently everywhere:
+
+| Platform | How | Setup |
+|---|---|---|
+| **Windows** | WASAPI loopback via Electron | None. |
+| **macOS** | ScreenCaptureKit helper | `npm run build:macos-audio` once, then grant Screen Recording permission. |
+| **macOS** (fallback) | Virtual audio device | If the helper is not built: install [BlackHole](https://existential.audio/blackhole/), route your meeting app through it, pick it in the audio panel. |
+| **Linux** | PulseAudio `.monitor` source | Pick the monitor device in the audio panel. |
+
+The macOS helper (`native/macos/SystemAudioCapture.swift`) is the standard ScreenCaptureKit
+pattern, also used by MIT-licensed tools like `sohzm/cheating-daddy`. It is written fresh here
+for two reasons: it emits 16 kHz mono directly so Node never resamples, and it reads audio
+through `AVAudioPCMBuffer` rather than casting the raw block buffer to a flat `Float32` array.
+That second point is a correctness fix — ScreenCaptureKit delivers *non-interleaved* stereo, so
+flattening it concatenates left-then-right instead of interleaving, which sounds like the call
+playing twice at half speed.
+
+Diarization (splitting the remote side into Speaker 1 / Speaker 2) is available on engines that
+support it; lines then read `Meeting · Speaker 2`.
+
 ## Transcript
 
-MVP does not capture audio. It exposes an ingestion layer so any STT engine can feed it:
+Audio capture feeds the same buffer as everything else. You can also push transcripts in from
+any external source:
 
 ```bash
 # HTTP
@@ -208,8 +271,9 @@ ws://127.0.0.1:5173/ws/transcript?token=$TOKEN
 ```
 
 Interim results (`isFinal: false`) from the same speaker replace each other, which is how
-Deepgram, AssemblyAI and streaming Whisper emit partials. To wire one up, translate its events
-into that shape and POST them — nothing else needs to change.
+Deepgram, AssemblyAI and streaming Whisper emit partials. To add another engine, implement the
+`SttAdapter` interface in `src/server/stt/` and add a registry entry — or just POST events in
+this shape from anywhere.
 
 For testing without any of that: paste lines into the transcript panel, or hit **Mock meeting**.
 
@@ -251,6 +315,10 @@ Everything is on `127.0.0.1` only and needs a token — see [Security](#security
 | `POST /api/retrieval/search` | Retrieval on its own, with scores |
 | `POST /api/session/transcript` · `GET` · `DELETE` | Transcript buffer |
 | `GET /api/files/browse?dir=` | In-overlay file picker (home directory only) |
+| `GET /api/audio/providers` | Speech engines, availability, system-audio method for this OS |
+| `POST /api/audio/start` · `stop` | Open / close a transcription session per source |
+| `GET /api/audio/events` | SSE stream of capture status |
+| `ws://…/ws/audio?source=` | Raw 16 kHz mono PCM16 ingest |
 
 `POST /api/chat` streams newline-delimited JSON rather than SSE, because the request carries a
 body and `EventSource` cannot POST:
@@ -325,11 +393,16 @@ src/
     llm/                 router + openaiCompatible | anthropic | gemini + SSE reader
     prompts/modes.ts     system prompts, quick actions, prompt assembly
     rag/                 parse → chunk → embed → vectorStore → retrieve
+      stt/                 registry + deepgram | assemblyai | whisper-batch + VAD
     session/transcript.ts   rolling buffer
+    session/audioSession.ts capture -> STT -> transcript, one session per source
     routes/              health · models · chat · documents · session
   electron/main.ts       window, content protection, global hotkeys
+  electron/systemAudio.ts  macOS ScreenCaptureKit helper process
   electron/preload.ts    the only renderer↔main bridge
   overlay/               HTML/CSS/JS — no framework, no build step
+  overlay/audio.js       capture -> 16 kHz PCM -> WebSocket
+native/macos/            Swift system-audio helper
 ```
 
 ## Assumptions made
@@ -342,3 +415,17 @@ src/
 - **Plain HTML/CSS/JS overlay instead of React** — no bundler in the loop for a 420×520 window.
 - **Transformers.js is an optional dependency** with a graceful fallback chain, so a failed
   model download degrades quality instead of breaking the app.
+- **Mic and system audio run as two sessions, not one mixed stream.** It costs twice the STT
+  minutes when both are on, and it is the only way to keep speaker attribution correct.
+
+## Not verified on real hardware
+
+Everything above is tested, but this environment is headless Linux with no audio device and no
+macOS, so two things could only be verified structurally:
+
+- **The macOS Swift helper has never been compiled or run.** The Node side that spawns it, reads
+  its PCM and reports its errors is tested; the Swift itself is not. Run
+  `npm run build:macos-audio` and expect to iterate.
+- **Real microphone and real loopback devices.** Capture was driven end to end with a synthetic
+  oscillator stream through the actual UI — worklet, resampling, WebSocket, STT adapter and
+  transcript all confirmed working — but no physical device was ever opened.

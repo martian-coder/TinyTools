@@ -5,10 +5,12 @@ import express, { type Express } from 'express';
 import { WebSocketServer } from 'ws';
 import { requireToken, sameOriginOnly } from './auth';
 import { authEnabled, loadEnv, port as configuredPort, sessionToken } from './config';
+import { audioRouter } from './routes/audio';
 import { chatRouter } from './routes/chat';
 import { documentsRouter } from './routes/documents';
 import { modelsRouter } from './routes/models';
 import { sessionRouter } from './routes/session';
+import { stopAllAudio, writeAudio } from './session/audioSession';
 import { getEmbedder } from './rag/embeddings';
 import { listDocuments } from './rag/documents';
 import { transcript } from './session/transcript';
@@ -49,6 +51,7 @@ export function createApp(): Express {
   app.use('/api', requireToken, chatRouter);
   app.use('/api', requireToken, documentsRouter);
   app.use('/api', requireToken, sessionRouter);
+  app.use('/api', requireToken, audioRouter);
 
   // The overlay is served from here so it has a real http origin (file://
   // pages get null origins and inconsistent fetch behaviour).
@@ -83,7 +86,7 @@ export interface RunningServer {
 export function startServer(port = configuredPort()): Promise<RunningServer> {
   const app = createApp();
   const server = http.createServer(app);
-  attachTranscriptSocket(server);
+  attachSockets(server);
 
   return new Promise((resolve, reject) => {
     server.once('error', reject);
@@ -96,25 +99,82 @@ export function startServer(port = configuredPort()): Promise<RunningServer> {
         port: actualPort,
         token: sessionToken(),
         url: `http://127.0.0.1:${actualPort}`,
-        close: () =>
-          new Promise<void>((done) => {
+        close: async () => {
+          // Close upstream STT sockets first so they flush their final
+          // utterance instead of being cut off mid-word.
+          await stopAllAudio();
+          await new Promise<void>((done) => {
             server.closeAllConnections?.();
             server.close(() => done());
-          }),
+          });
+        },
       });
     });
   });
 }
 
 /**
- * WebSocket transcript ingest at /ws/transcript. Accepts the same event shape
- * as the HTTP endpoint and echoes appended lines to every listener, so the
- * overlay updates live while an STT bridge pushes.
+ * Raw PCM ingest at /ws/audio?source=mic|system.
+ *
+ * Binary frames are 16 kHz mono signed 16-bit little-endian PCM and go
+ * straight to the STT engine for that source. Audio is never written to disk
+ * and never buffered beyond what the engine needs.
  */
-function attachTranscriptSocket(server: http.Server): void {
-  const wss = new WebSocketServer({ server, path: '/ws/transcript' });
+function attachSockets(server: http.Server): void {
+  // Both endpoints must share one 'upgrade' listener. Two WebSocketServers
+  // bound to the same server with different `path` options do not compose:
+  // whichever sees the request first aborts the handshake with 400 when the
+  // path is not its own.
+  const audioWss = new WebSocketServer({ noServer: true, maxPayload: 1 << 20 });
+  const transcriptWss = new WebSocketServer({ noServer: true });
 
-  wss.on('connection', (socket, req) => {
+  server.on('upgrade', (req, socket, head) => {
+    const { pathname } = new URL(req.url ?? '/', 'http://127.0.0.1');
+    const wss =
+      pathname === '/ws/audio'
+        ? audioWss
+        : pathname === '/ws/transcript'
+          ? transcriptWss
+          : undefined;
+
+    if (!wss) {
+      socket.write('HTTP/1.1 404 Not Found\r\n\r\n');
+      socket.destroy();
+      return;
+    }
+    wss.handleUpgrade(req, socket, head, (client) => wss.emit('connection', client, req));
+  });
+
+  audioWss.on('connection', (socket, req) => {
+    const url = new URL(req.url ?? '/', 'http://127.0.0.1');
+    if (authEnabled() && url.searchParams.get('token') !== sessionToken()) {
+      socket.close(4401, 'Unauthorized');
+      return;
+    }
+
+    const source = url.searchParams.get('source');
+    if (source !== 'mic' && source !== 'system') {
+      socket.close(4400, 'source must be mic or system');
+      return;
+    }
+
+    socket.on('message', (raw, isBinary) => {
+      if (!isBinary) return; // control messages go over HTTP, not here
+      const pcm = Buffer.isBuffer(raw) ? raw : Buffer.from(raw as ArrayBuffer);
+      if (!writeAudio(source, pcm)) {
+        // No session open for this source — tell the renderer to stop sending
+        // rather than silently discarding the user's audio.
+        socket.send(JSON.stringify({ type: 'inactive', source }));
+      }
+    });
+  });
+
+  /**
+   * Transcript ingest at /ws/transcript. Accepts the same event shape as the
+   * HTTP endpoint and echoes appended lines to every listener, so the overlay
+   * updates live while an STT bridge pushes.
+   */
+  transcriptWss.on('connection', (socket, req) => {
     const url = new URL(req.url ?? '/', 'http://127.0.0.1');
     const presented = url.searchParams.get('token');
     if (authEnabled() && presented !== sessionToken()) {

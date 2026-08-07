@@ -8,14 +8,15 @@
     "dev": "npm run build:ts && concurrently -n server,electron -c blue,magenta \"npm:dev:server\" \"npm:dev:electron\"",
     "dev:server": "tsx watch src/server/standalone.ts",
     "dev:electron": "cross-env ASSISTANT_EXTERNAL_SERVER=1 electron .",
-    "build": "npm run build:ts && npm run build:assets",
+    "build": "npm run build:ts && npm run build:assets && npm run build:macos-audio",
     "build:ts": "tsc -p tsconfig.json",
     "build:assets": "node scripts/copy-assets.mjs",
     "start": "npm run build && electron .",
     "server": "npm run build:ts && node dist/server/standalone.js",
     "mock-transcript": "tsx scripts/mock-transcript.ts",
     "test": "node --import tsx --test tests/*.test.ts",
-    "typecheck": "tsc -p tsconfig.json --noEmit"
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "build:macos-audio": "node scripts/build-macos-audio.mjs"
   },
   "dependencies": {
     "cors": "^2.8.5",

@@ -23,6 +23,9 @@
           <button class="mode" data-mode="document" title="Document Q&amp;A mode">Docs</button>
         </div>
         <div class="spacer"></div>
+        <button class="icon listen" id="btnListen" title="Start listening (Ctrl+Shift+L)" aria-label="Listen">
+          <span class="level" id="levelBar"></span>🎙
+        </button>
         <button class="icon" id="btnDocs" title="Documents (Ctrl+Shift+D)" aria-label="Documents">
           <span class="badge" id="docBadge">0</span>❐
         </button>
@@ -45,6 +48,7 @@
             <li><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>S</kbd> summarize</li>
             <li><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>A</kbd> action items</li>
             <li><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>D</kbd> attach documents</li>
+            <li><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>L</kbd> start listening</li>
           </ul>
         </div>
         <article class="markdown" id="answerBody"></article>
@@ -158,6 +162,53 @@
       </div>
     </div>
 
+    <div class="panel" id="panelAudio" hidden>
+      <div class="panel-head">
+        <strong>Listening</strong>
+        <button class="icon" data-close="panelAudio">✕</button>
+      </div>
+      <div class="panel-body">
+        <label class="field">
+          <span>Speech engine</span>
+          <select id="sttSelect"></select>
+        </label>
+        <p class="hint" id="sttHint"></p>
+
+        <div class="capture-row">
+          <div class="capture">
+            <div class="capture-head">
+              <strong>Your mic</strong>
+              <span class="meter"><i id="meterMic"></i></span>
+            </div>
+            <select id="micDevice"></select>
+            <button class="ghost wide" id="btnMic">Start mic</button>
+          </div>
+
+          <div class="capture">
+            <div class="capture-head">
+              <strong>Meeting audio</strong>
+              <span class="meter"><i id="meterSystem"></i></span>
+            </div>
+            <select id="systemDevice"></select>
+            <button class="ghost wide" id="btnSystem">Start meeting audio</button>
+          </div>
+        </div>
+
+        <p class="hint" id="systemHint"></p>
+
+        <label class="usedocs">
+          <input type="checkbox" id="diarize" />
+          <span>Split speakers in meeting audio (if supported)</span>
+        </label>
+
+        <div class="row">
+          <button class="ghost" id="btnRefreshDevices">Refresh devices</button>
+          <button class="ghost" id="btnStopAll">Stop all</button>
+        </div>
+        <p class="hint" id="audioError"></p>
+      </div>
+    </div>
+
     <div class="panel" id="panelSettings" hidden>
       <div class="panel-head">
         <strong>Settings</strong>
@@ -179,6 +230,7 @@
 
     <div class="toast" id="toast" hidden></div>
 
+    <script src="audio.js"></script>
     <script src="app.js"></script>
   </body>
 </html>

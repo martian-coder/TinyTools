@@ -6,6 +6,13 @@ import { contextBridge, ipcRenderer } from 'electron';
  */
 const api = {
   getConfig: () => ipcRenderer.invoke('overlay:config'),
+  /** macOS only: triggers the one-time microphone consent prompt. */
+  requestMicAccess: (): Promise<boolean> => ipcRenderer.invoke('overlay:mic-access'),
+  /** macOS only: start/stop the native ScreenCaptureKit audio helper. */
+  startSystemAudio: (): Promise<{ ok: boolean; error?: string }> =>
+    ipcRenderer.invoke('overlay:system-audio-start'),
+  stopSystemAudio: (): Promise<{ ok: boolean }> =>
+    ipcRenderer.invoke('overlay:system-audio-stop'),
   hide: () => ipcRenderer.invoke('overlay:hide'),
   setInteractive: (value: boolean) => ipcRenderer.invoke('overlay:set-interactive', value),
   resize: (height: number) => ipcRenderer.invoke('overlay:resize', { height }),

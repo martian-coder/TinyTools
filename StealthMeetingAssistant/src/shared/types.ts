@@ -116,6 +116,50 @@ export interface SearchResponse {
   note?: string;
 }
 
+/* ── Audio capture ─────────────────────────────────────────── */
+
+/** `mic` is the user's own voice; `system` is everyone else in the call. */
+export type AudioSource = 'mic' | 'system';
+
+export interface SttProviderInfo {
+  id: string;
+  label: string;
+  kind: 'streaming' | 'batch';
+  available: boolean;
+  unavailableReason?: string;
+  apiKeyEnv?: string;
+  defaultModel: string;
+  models: string[];
+  supportsDiarization: boolean;
+  note: string;
+}
+
+export interface AudioSourceStatus {
+  source: AudioSource;
+  active: boolean;
+  provider?: string;
+  speakerLabel?: string;
+  secondsCaptured: number;
+  error?: string;
+}
+
+export interface AudioStatus {
+  sources: AudioSourceStatus[];
+}
+
+export interface SttProvidersResponse {
+  providers: SttProviderInfo[];
+  defaultProvider: string;
+  status: AudioStatus;
+  /** How system audio can be captured on this OS — see the README table. */
+  systemAudio: {
+    platform: NodeJS.Platform;
+    method: 'loopback' | 'monitor-device' | 'virtual-device' | 'screencapturekit';
+    supported: boolean;
+    hint: string;
+  };
+}
+
 export interface HealthResponse {
   ok: true;
   version: string;
