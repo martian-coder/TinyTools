@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { streamCompletion } from '../llm/router';
 import { LlmError } from '../llm/types';
+import { detectFocus } from '../prompts/intent';
 import { buildUserMessage, systemPrompt } from '../prompts/modes';
 import { retrieve } from '../rag/retrieve';
 import { deliveryMetrics, deliveryNote } from '../session/delivery';
@@ -35,7 +36,7 @@ chatRouter.post('/chat', async (req, res) => {
     return res.status(400).json({ error: 'provider is required' });
   }
 
-  const mode: AssistantMode = ASSISTANT_MODES.includes(body.mode) ? body.mode : 'executive';
+  const mode: AssistantMode = ASSISTANT_MODES.includes(body.mode) ? body.mode : 'auto';
 
   res.status(200);
   res.setHeader('content-type', 'application/x-ndjson; charset=utf-8');
@@ -57,7 +58,6 @@ chatRouter.post('/chat', async (req, res) => {
   });
 
   const started = Date.now();
-  send({ type: 'meta', provider: body.provider, model: body.model, mode });
 
   try {
     const transcriptContext = Array.isArray(body.transcriptContext) && body.transcriptContext.length
@@ -68,14 +68,31 @@ chatRouter.post('/chat', async (req, res) => {
     const useDocuments = mode === 'document' ? true : body.useDocuments !== false;
 
     let chunks: RetrievedChunk[] = [];
+    let retrievalNote: string | undefined;
     if (useDocuments) {
       const result = await retrieve({
         query: message || `Meeting assistant action: ${action}`,
         transcript: transcriptContext,
       });
       chunks = result.chunks;
-      send({ type: 'sources', sources: chunks, note: result.note });
+      retrievalNote = result.note;
     }
+
+    // Meta goes out after retrieval so it can report what auto mode decided.
+    const focus = detectFocus({
+      message,
+      action,
+      transcript: transcriptContext,
+      hasDocumentContext: chunks.length > 0,
+    });
+    send({
+      type: 'meta',
+      provider: body.provider,
+      model: body.model,
+      mode,
+      focus: mode === 'auto' ? focus : undefined,
+    });
+    if (useDocuments) send({ type: 'sources', sources: chunks, note: retrievalNote });
 
     const history = (body.history ?? [])
       .filter((m) => m && typeof m.content === 'string' && m.content.trim())
@@ -103,7 +120,7 @@ chatRouter.post('/chat', async (req, res) => {
     for await (const delta of streamCompletion({
       provider: body.provider,
       model: body.model,
-      system: systemPrompt(mode, body.customInstructions),
+      system: systemPrompt(mode, body.customInstructions, focus),
       messages: [...history, { role: 'user', content: userMessage }],
       images,
       signal: controller.signal,

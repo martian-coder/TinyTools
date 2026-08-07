@@ -111,7 +111,7 @@ textarea {
   border: 1px solid var(--line);
   border-radius: 7px;
   padding: 3px 8px;
-  max-width: 118px;
+  max-width: 132px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -123,13 +123,21 @@ textarea {
 .chip:hover { background: rgba(255, 255, 255, 0.12); }
 .chip.unavailable { color: var(--err); border-color: rgba(248, 113, 113, 0.4); }
 
-.modes {
-  display: flex;
+.modeselect {
   flex: none;
+  max-width: 92px;
+  background: rgba(255, 255, 255, 0.06);
   border: 1px solid var(--line);
   border-radius: 7px;
-  overflow: hidden;
+  padding: 3px 4px;
+  font-size: 11px;
+  color: var(--text);
+  cursor: pointer;
 }
+
+.modeselect:hover { background: rgba(255, 255, 255, 0.12); }
+.modeselect:focus { outline: none; border-color: var(--accent); }
+.modeselect option { background: var(--bg-solid); color: var(--text); }
 
 .mode {
   background: transparent;

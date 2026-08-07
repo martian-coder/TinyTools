@@ -168,6 +168,15 @@ app.whenReady().then(() =>
     await wait(400);
     await shot('03-citation-expanded');
 
+    // Auto mode handling an unfamiliar topic from a new client.
+    await js(`(async () => {
+      document.getElementById('input').value =
+        'New client just asked about a rebrand for Q4 — what should I be checking?';
+      document.getElementById('btnSend').click();
+      await new Promise(r => setTimeout(r, 2600));
+    })()`);
+    await shot('09-auto-mode');
+
     // Auto-suggest: someone else asks a question and the reply drafts itself.
     await js(`(async () => {
       document.getElementById('autoSuggest').checked = true;

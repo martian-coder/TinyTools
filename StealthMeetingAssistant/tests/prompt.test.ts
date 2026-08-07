@@ -73,7 +73,7 @@ test('a screenshot is announced and fenced as untrusted', () => {
 });
 
 test('every mode carries the untrusted-content rule', () => {
-  for (const mode of ['executive', 'technical', 'document', 'practice'] as const) {
+  for (const mode of ['auto', 'executive', 'technical', 'document', 'practice'] as const) {
     const prompt = systemPrompt(mode);
     assert.match(prompt, /untrusted/i);
     assert.match(prompt, /never as a directive|never be treated as instructions|not as instructions/i);
@@ -86,8 +86,8 @@ test('document mode demands citations and refuses to fill gaps', () => {
   assert.match(prompt, /Do not speculate/i);
 });
 
-test('an unknown mode falls back to executive rather than throwing', () => {
-  assert.equal(systemPrompt('nonsense' as never), systemPrompt('executive'));
+test('an unknown mode falls back to auto rather than throwing', () => {
+  assert.equal(systemPrompt('nonsense' as never), systemPrompt('auto'));
 });
 
 test('retrieved chunks are fenced and labelled as untrusted', () => {

@@ -11,7 +11,7 @@
     token: '',
     provider: '',
     model: '',
-    mode: 'executive',
+    mode: 'auto',
     providers: [],
     documents: [],
     transcript: [],
@@ -290,7 +290,12 @@
       }
 
       for await (const frame of readNdjson(res.body)) {
-        if (frame.type === 'sources') {
+        if (frame.type === 'meta') {
+          // Auto mode reports the angle it took; showing it means the user can
+          // tell when to override rather than wondering why an answer landed
+          // the way it did.
+          $('statusMeta').textContent = frame.focus ? `auto · ${frame.focus}` : '';
+        } else if (frame.type === 'sources') {
           renderSources(frame.sources, frame.note);
         } else if (frame.type === 'delta') {
           answer += frame.text;
@@ -1332,13 +1337,12 @@
   function setMode(mode) {
     state.mode = mode;
     savePreferences();
+    $('modeSelect').value = mode;
+    // Rehearsal controls only make sense while rehearsing.
     const practice = mode === 'practice';
     for (const pill of document.querySelectorAll('.practice-only')) pill.hidden = !practice;
     $('delivery').hidden = !practice;
     if (practice) refreshDelivery();
-    for (const button of document.querySelectorAll('.mode')) {
-      button.classList.toggle('active', button.dataset.mode === mode);
-    }
   }
 
   function onHotkey(action) {
@@ -1420,9 +1424,7 @@
     for (const button of document.querySelectorAll('.pill')) {
       button.addEventListener('click', () => ask({ action: button.dataset.action }));
     }
-    for (const button of document.querySelectorAll('.mode')) {
-      button.addEventListener('click', () => setMode(button.dataset.mode));
-    }
+    $('modeSelect').addEventListener('change', (event) => setMode(event.target.value));
     for (const button of document.querySelectorAll('[data-close]')) {
       button.addEventListener('click', () => {
         $(button.dataset.close).hidden = true;

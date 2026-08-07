@@ -17,12 +17,13 @@
         <button class="chip" id="providerChip" title="Switch provider / model (Ctrl+Shift+M)">
           <span id="providerLabel">loading…</span>
         </button>
-        <div class="modes" id="modes" role="tablist">
-          <button class="mode" data-mode="executive" title="Executive mode">Exec</button>
-          <button class="mode" data-mode="technical" title="Technical mode">Tech</button>
-          <button class="mode" data-mode="document" title="Document Q&amp;A mode">Docs</button>
-          <button class="mode" data-mode="practice" title="Practice mode — rehearse and get coached">Prep</button>
-        </div>
+        <select class="modeselect" id="modeSelect" title="Auto adapts to whatever the meeting is. The rest are manual overrides.">
+          <option value="auto">Auto</option>
+          <option value="executive">Executive</option>
+          <option value="technical">Technical</option>
+          <option value="document">Documents</option>
+          <option value="practice">Practice</option>
+        </select>
         <div class="spacer"></div>
         <button class="icon listen" id="btnListen" title="Start listening (Ctrl+Shift+L)" aria-label="Listen">
           <span class="level" id="levelBar"></span>🎙

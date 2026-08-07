@@ -3,9 +3,10 @@
  * overlay renderer. Kept dependency-free so the renderer can read it as docs.
  */
 
-export type AssistantMode = 'executive' | 'technical' | 'document' | 'practice';
+export type AssistantMode = 'auto' | 'executive' | 'technical' | 'document' | 'practice';
 
 export const ASSISTANT_MODES: AssistantMode[] = [
+  'auto',
   'executive',
   'technical',
   'document',
@@ -117,7 +118,14 @@ export interface RetrievedChunk {
 
 /** NDJSON frames streamed from POST /api/chat. */
 export type ChatStreamFrame =
-  | { type: 'meta'; provider: string; model: string; mode: AssistantMode }
+  | {
+      type: 'meta';
+      provider: string;
+      model: string;
+      mode: AssistantMode;
+      /** What auto mode decided this question needed. */
+      focus?: string;
+    }
   | { type: 'sources'; sources: RetrievedChunk[]; note?: string }
   | { type: 'delta'; text: string }
   | { type: 'done'; text: string; elapsedMs: number }

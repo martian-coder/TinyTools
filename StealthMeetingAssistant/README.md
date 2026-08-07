@@ -388,9 +388,30 @@ never before, so it cannot displace them.
 
 ## Assistant modes
 
+**Auto is the default, and the point is that you never touch this.** A new
+client raising an unfamiliar topic, a design review, a manager handing you an
+assignment, a rehearsal — same mode, no switching. Every question is routed on
+what it actually is:
+
+| Question | Routed as |
+|---|---|
+| *"What should I say to that?"* | a sayable reply |
+| *"Why is p99 latency spiking after the migration?"* | technical depth |
+| *"What does the spec say about the timeout?"* | documents, cited |
+| *"They brought up a rebrand, no idea what that involves"* | footing on a new topic |
+
+Routing is a deterministic local heuristic — no extra model call, no latency,
+no cost — and it only ever biases emphasis. The assistant has the full context
+either way, so a misread changes the angle, never the substance. When the
+question gives nothing away it reads the recent transcript instead.
+
+The status line shows what it chose (`auto · technical`), so when it reads a
+situation wrong you can see why and override it from the dropdown. The explicit
+modes below are those overrides:
+
 | Mode | For |
 |---|---|
-| **Executive** (default) | Decisions, owners, deadlines, risks. Written for someone with 10 seconds. |
+| **Executive** | Decisions, owners, deadlines, risks. Written for someone with 10 seconds. |
 | **Technical** | Mechanisms, tradeoffs, blockers, sharp questions to ask, jargon in plain words. |
 | **Document Q&A** | Answers strictly from attached documents, every claim cited. Says "Not in the attached documents." rather than guessing. |
 | **Practice** | Rehearsal coaching. Critiques what you actually said, quoting the weak phrase, and offers one tighter rewrite. **Quiz me** asks one question at a time so you can answer aloud. |
