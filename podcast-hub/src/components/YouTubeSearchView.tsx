@@ -639,23 +639,23 @@ export const YouTubeSearchView: React.FC<YouTubeSearchViewProps> = ({
   return (
     <div className="space-y-5 sm:space-y-6">
       {/* Top Banner Header */}
-      <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white rounded-3xl p-4 sm:p-7 shadow-xs space-y-4 border border-indigo-900/50 relative overflow-hidden">
+      <div className="bg-gradient-to-r from-[#0f0f0f] via-blue-950/40 to-[#0f0f0f] text-white rounded-3xl p-4 sm:p-7 shadow-xs space-y-4 border border-[#272727] relative overflow-hidden">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 sm:gap-4">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-red-500/20 border border-red-500/40 flex items-center justify-center text-red-400 shadow-md shadow-red-500/10 shrink-0">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-[#3ea6ff]/20 border border-[#3ea6ff]/40 flex items-center justify-center text-[#3ea6ff] shadow-md shadow-[#3ea6ff]/10 shrink-0">
               <Tv className="w-5 h-5 sm:w-6 sm:h-6" />
             </div>
             <div>
               <div className="flex items-center gap-2 flex-wrap">
                 <h1 className="text-lg sm:text-2xl font-bold text-white tracking-tight">
-                  Watch & Search YouTube Podcasts
+                  Watch &amp; Search YouTube Podcasts
                 </h1>
                 {ytApiKey || isLiveApi ? (
                   <span className="inline-flex items-center gap-1 text-[9px] sm:text-[10px] uppercase tracking-wider font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded-full">
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" /> Live YouTube API
                   </span>
                 ) : (
-                  <span className="inline-flex items-center gap-1 text-[9px] sm:text-[10px] uppercase tracking-wider font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 px-2 py-0.5 rounded-full">
+                  <span className="inline-flex items-center gap-1 text-[9px] sm:text-[10px] uppercase tracking-wider font-bold bg-[#3ea6ff]/20 text-[#3ea6ff] border border-[#3ea6ff]/30 px-2 py-0.5 rounded-full">
                     AI Curated Search
                   </span>
                 )}
@@ -674,19 +674,19 @@ export const YouTubeSearchView: React.FC<YouTubeSearchViewProps> = ({
                   const name = prompt('Enter name for new Knowledge Group (e.g. AI Agents, SaaS Ideas):');
                   if (name && name.trim()) onCreateKnowledgeGroup(name.trim());
                 }}
-                className="px-3.5 py-2 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold flex items-center gap-1.5 transition-all shadow-md shadow-indigo-600/30 cursor-pointer shrink-0"
+                className="px-3.5 py-2 rounded-2xl bg-[#3ea6ff] hover:bg-[#2697ff] text-black text-xs font-bold flex items-center gap-1.5 transition-all shadow-md shadow-[#3ea6ff]/30 cursor-pointer shrink-0"
               >
-                <FolderPlus className="w-4 h-4 text-amber-300" />
+                <FolderPlus className="w-4 h-4 text-black" />
                 <span>+ Create Group</span>
               </button>
             )}
 
             {connectedProfile ? (
-              <div className="flex items-center gap-2 bg-slate-800/80 border border-slate-700/80 pl-2 pr-3 py-1.5 rounded-2xl">
-                <img src={connectedProfile.avatar} alt="Profile" className="w-7 h-7 rounded-full object-cover border border-red-400 shrink-0" />
+              <div className="flex items-center gap-2 bg-[#212121] border border-[#272727] pl-2 pr-3 py-1.5 rounded-2xl">
+                <img src={connectedProfile.avatar} alt="Profile" className="w-7 h-7 rounded-full object-cover border border-[#3ea6ff] shrink-0" />
                 <div className="text-left">
                   <p className="text-xs font-semibold text-white leading-tight truncate">{connectedProfile.name}</p>
-                  <p className="text-[10px] text-red-400 font-medium truncate">{connectedProfile.handle}</p>
+                  <p className="text-[10px] text-[#3ea6ff] font-medium truncate">{connectedProfile.handle}</p>
                 </div>
                 <button
                   onClick={handleDisconnectProfile}
@@ -699,9 +699,9 @@ export const YouTubeSearchView: React.FC<YouTubeSearchViewProps> = ({
             ) : (
               <button
                 onClick={() => setShowApiSettings(true)}
-                className="px-3 py-2 rounded-2xl bg-red-600/90 hover:bg-red-500 border border-red-400/40 text-white text-xs font-semibold flex items-center gap-2 transition-all shadow-md cursor-pointer shrink-0"
+                className="px-3 py-2 rounded-2xl bg-[#3ea6ff] hover:bg-[#2697ff] border border-[#3ea6ff]/40 text-black text-xs font-extrabold flex items-center gap-2 transition-all shadow-md cursor-pointer shrink-0"
               >
-                <Tv className="w-4 h-4 text-white shrink-0" />
+                <Tv className="w-4 h-4 text-black shrink-0" />
                 <span>Connect YouTube</span>
               </button>
             )}
@@ -711,16 +711,16 @@ export const YouTubeSearchView: React.FC<YouTubeSearchViewProps> = ({
         {/* Quick Popular Searches */}
         <div className="flex items-center gap-2 overflow-x-auto pt-1 scrollbar-none text-xs -mx-1 px-1">
           <span className="text-slate-400 flex items-center gap-1 shrink-0 font-medium text-[11px]">
-            <TrendingUp className="w-3.5 h-3.5 text-red-400" /> Popular:
+            <TrendingUp className="w-3.5 h-3.5 text-[#3ea6ff]" /> Popular:
           </span>
           {quickTopics.map((topic, idx) => (
             <button
               key={idx}
               disabled={isSearching}
               onClick={() => handleSearch(topic)}
-              className="px-2.5 py-1.5 rounded-xl bg-slate-950/80 border border-slate-800 hover:border-red-500/50 hover:bg-red-950/40 text-slate-300 hover:text-white shrink-0 transition-all cursor-pointer text-xs flex items-center gap-1.5 disabled:opacity-50"
+              className="px-2.5 py-1.5 rounded-xl bg-[#212121] border border-[#272727] hover:border-[#3ea6ff]/50 hover:bg-[#272727] text-slate-300 hover:text-white shrink-0 transition-all cursor-pointer text-xs flex items-center gap-1.5 disabled:opacity-50"
             >
-              <Sparkles className="w-3 h-3 text-amber-400 shrink-0" />
+              <Sparkles className="w-3 h-3 text-[#3ea6ff] shrink-0" />
               <span>{topic}</span>
             </button>
           ))}
@@ -736,7 +736,7 @@ export const YouTubeSearchView: React.FC<YouTubeSearchViewProps> = ({
             const fullProf = {
               name: prof.name,
               handle: prof.handle,
-              avatar: prof.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(prof.name)}&background=ef4444&color=fff&size=200&bold=true`,
+              avatar: prof.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(prof.name)}&background=3ea6ff&color=000&size=200&bold=true`,
             };
             setConnectedProfile(fullProf);
             setShowApiSettings(false);
@@ -747,17 +747,17 @@ export const YouTubeSearchView: React.FC<YouTubeSearchViewProps> = ({
       )}
 
       {/* Subscribed YouTube Channels Carousel Bar */}
-      <div className="bg-gradient-to-r from-slate-900 via-slate-900 to-indigo-950 border border-slate-800 rounded-3xl p-4 sm:p-5 space-y-3 shadow-md">
+      <div className="bg-[#181818] border border-[#272727] rounded-3xl p-4 sm:p-5 space-y-3 shadow-md">
         <div className="flex flex-wrap items-center justify-between gap-2 text-xs font-semibold text-slate-300">
           <div className="flex items-center gap-2">
-            <span className="flex items-center gap-1.5 text-red-500 font-bold text-xs sm:text-sm">
-              <Tv className="w-4 h-4 text-red-500 fill-red-500" />
+            <span className="flex items-center gap-1.5 text-[#3ea6ff] font-bold text-xs sm:text-sm">
+              <Tv className="w-4 h-4 text-[#3ea6ff] fill-[#3ea6ff]" />
               Subscribed Channels ({userSubscriptions.length})
             </span>
             {selectedChannelFilter && (
               <button
                 onClick={() => setSelectedChannelFilter(null)}
-                className="px-2 py-0.5 rounded-lg bg-red-500/20 text-red-300 border border-red-500/40 text-[11px] font-bold flex items-center gap-1 cursor-pointer"
+                className="px-2 py-0.5 rounded-lg bg-[#3ea6ff]/20 text-[#3ea6ff] border border-[#3ea6ff]/40 text-[11px] font-bold flex items-center gap-1 cursor-pointer"
               >
                 <span>Filter: {selectedChannelFilter}</span>
                 <X className="w-3 h-3" />

@@ -114,13 +114,13 @@ export const Navbar: React.FC<NavbarProps> = ({
             className="flex items-center gap-2 sm:gap-3 cursor-pointer select-none shrink-0"
             onClick={() => setCurrentTab('dashboard')}
           >
-            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-2xl bg-red-600 flex items-center justify-center text-white shadow-lg shadow-red-600/30 hover:scale-105 transition-all shrink-0">
-              <Tv className="w-4 h-4 sm:w-5 sm:h-5 fill-white" />
+            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-2xl bg-[#3ea6ff] flex items-center justify-center text-black shadow-lg shadow-[#3ea6ff]/30 hover:scale-105 transition-all shrink-0">
+              <Tv className="w-4 h-4 sm:w-5 sm:h-5 fill-black text-black" />
             </div>
             <div>
               <h1 className="text-sm sm:text-lg font-black tracking-tight text-white flex items-center gap-1.5 sm:gap-2">
                 PodSummarizer{' '}
-                <span className="text-[9px] sm:text-[10px] px-1.5 sm:px-2 py-0.5 rounded-full bg-red-600/20 text-red-400 border border-red-500/30 font-bold uppercase tracking-wider">
+                <span className="text-[9px] sm:text-[10px] px-1.5 sm:px-2 py-0.5 rounded-full bg-[#3ea6ff]/20 text-[#3ea6ff] border border-[#3ea6ff]/30 font-bold uppercase tracking-wider">
                   YouTube Studio
                 </span>
               </h1>
@@ -133,7 +133,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           {/* Quick Metrics Badges */}
           <div className="hidden xl:flex items-center gap-3 text-xs font-medium text-[#aaaaaa] bg-[#212121] px-3.5 py-1.5 rounded-full border border-[#272727]">
             <div className="flex items-center gap-1.5" title="Summarized Podcasts">
-              <BookOpen className="w-3.5 h-3.5 text-red-500" />
+              <BookOpen className="w-3.5 h-3.5 text-[#3ea6ff]" />
               <span>
                 <strong className="font-semibold text-white">{stats.totalPodcasts}</strong> Podcasts
               </span>
@@ -168,7 +168,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 }
               }}
               placeholder="Search YouTube podcasts, hosts, product ideas..."
-              className="w-full bg-[#121212] border border-[#272727] rounded-full pl-8 sm:pl-10 pr-8 sm:pr-10 py-1.5 sm:py-2 text-xs sm:text-sm text-[#f1f1f1] placeholder-[#717171] focus:outline-none focus:border-red-600 font-normal"
+              className="w-full bg-[#121212] border border-[#272727] rounded-full pl-8 sm:pl-10 pr-8 sm:pr-10 py-1.5 sm:py-2 text-xs sm:text-sm text-[#f1f1f1] placeholder-[#717171] focus:outline-none focus:border-[#3ea6ff] font-normal"
             />
             {searchQuery && (
               <button
@@ -191,10 +191,10 @@ export const Navbar: React.FC<NavbarProps> = ({
                     setShowYtLoginModal(true);
                   }
                 }}
-                className="flex items-center gap-1.5 bg-red-600 hover:bg-red-700 text-white px-3 py-1.5 rounded-full text-xs font-bold shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer border border-red-500/40 shrink-0"
+                className="flex items-center gap-1.5 bg-[#3ea6ff] hover:bg-[#2697ff] text-black px-3.5 py-1.5 rounded-full text-xs font-extrabold shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer shrink-0"
                 title="Sign in with YouTube"
               >
-                <Tv className="w-3.5 h-3.5 fill-white text-red-600 shrink-0" />
+                <Tv className="w-3.5 h-3.5 fill-black text-black shrink-0" />
                 <span className="hidden sm:inline">Sign in</span>
                 <span className="sm:hidden text-[11px]">YouTube</span>
               </button>
@@ -203,7 +203,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 <img
                   src={ytProfile.avatar}
                   alt={ytProfile.name}
-                  className="w-6 h-6 rounded-full object-cover border border-red-500 cursor-pointer shrink-0"
+                  className="w-6 h-6 rounded-full object-cover border border-[#3ea6ff] cursor-pointer shrink-0"
                   onClick={() => {
                     if (onOpenLoginModal) onOpenLoginModal();
                     else setCurrentTab('yt_search');
@@ -211,7 +211,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 />
                 <button
                   onClick={() => setCurrentTab('yt_search')}
-                  className="text-xs font-bold text-white hover:text-red-400 transition-colors hidden md:block"
+                  className="text-xs font-bold text-white hover:text-[#3ea6ff] transition-colors hidden md:block"
                 >
                   {ytProfile.name}
                 </button>

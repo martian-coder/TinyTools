@@ -76,8 +76,8 @@ export const YouTubeVideoCard: React.FC<YouTubeVideoCardProps> = ({
 
         {/* Dark Hover Overlay with Big Play Icon */}
         <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-          <div className="w-12 h-12 rounded-full bg-red-600/90 text-white flex items-center justify-center shadow-2xl scale-95 group-hover:scale-100 transition-transform">
-            <Play className="w-6 h-6 fill-white ml-0.5" />
+          <div className="w-12 h-12 rounded-full bg-[#3ea6ff] text-black flex items-center justify-center shadow-2xl scale-95 group-hover:scale-100 transition-transform">
+            <Play className="w-6 h-6 fill-black ml-0.5" />
           </div>
         </div>
 
@@ -96,12 +96,12 @@ export const YouTubeVideoCard: React.FC<YouTubeVideoCardProps> = ({
             }}
             className={`absolute top-2 right-2 p-2 rounded-full backdrop-blur-md transition-all ${
               video.isFavorite
-                ? 'bg-red-600 text-white shadow-lg'
+                ? 'bg-[#3ea6ff] text-black shadow-lg'
                 : 'bg-black/60 text-slate-300 hover:text-white hover:bg-black/80'
             }`}
             title={video.isFavorite ? 'Favorited' : 'Add to Favorites'}
           >
-            <Heart className={`w-4 h-4 ${video.isFavorite ? 'fill-white' : ''}`} />
+            <Heart className={`w-4 h-4 ${video.isFavorite ? 'fill-black' : ''}`} />
           </button>
         )}
       </div>
@@ -119,7 +119,7 @@ export const YouTubeVideoCard: React.FC<YouTubeVideoCardProps> = ({
           {/* Title */}
           <h3
             onClick={() => onSummarize && onSummarize(video)}
-            className="text-sm font-semibold text-[#f1f1f1] leading-snug line-clamp-2 hover:text-red-400 transition-colors"
+            className="text-sm font-semibold text-[#f1f1f1] leading-snug line-clamp-2 hover:text-[#3ea6ff] transition-colors"
             title={video.title}
           >
             {video.title}
@@ -132,12 +132,12 @@ export const YouTubeVideoCard: React.FC<YouTubeVideoCardProps> = ({
                 e.stopPropagation();
                 if (onSubscribeChannel) onSubscribeChannel(video.channel, e);
               }}
-              className="font-medium hover:text-white truncate"
+              className="font-medium hover:text-[#3ea6ff] truncate"
             >
               {video.channel}
             </span>
             {isSubscribed && (
-              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+              <CheckCircle2 className="w-3.5 h-3.5 text-[#3ea6ff] shrink-0" />
             )}
             {video.publishedAt && (
               <span className="text-[#717171] truncate">• {video.publishedAt}</span>
@@ -169,7 +169,7 @@ export const YouTubeVideoCard: React.FC<YouTubeVideoCardProps> = ({
                   e.stopPropagation();
                   onBrainstorm(video);
                 }}
-                className="px-2.5 py-1 rounded-full bg-[#272727] hover:bg-indigo-600 text-indigo-300 hover:text-white border border-[#3f3f3f] text-[11px] font-semibold transition-all cursor-pointer flex items-center gap-1"
+                className="px-2.5 py-1 rounded-full bg-[#272727] hover:bg-blue-600 text-blue-300 hover:text-white border border-[#3f3f3f] text-[11px] font-semibold transition-all cursor-pointer flex items-center gap-1"
                 title="Brainstorm with AI"
               >
                 <Brain className="w-3.5 h-3.5" />
@@ -188,12 +188,12 @@ export const YouTubeVideoCard: React.FC<YouTubeVideoCardProps> = ({
                 className={`px-3 py-1 rounded-full text-[11px] font-bold transition-all cursor-pointer flex items-center gap-1 ${
                   video.isImported
                     ? 'bg-emerald-600 text-white'
-                    : 'bg-red-600 hover:bg-red-700 text-white shadow-md'
+                    : 'bg-[#3ea6ff] hover:bg-[#2697ff] text-black font-extrabold shadow-md'
                 }`}
               >
                 {isImporting ? (
                   <>
-                    <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    <div className="w-3 h-3 border-2 border-black border-t-transparent rounded-full animate-spin" />
                     <span>Analyzing...</span>
                   </>
                 ) : video.isImported ? (

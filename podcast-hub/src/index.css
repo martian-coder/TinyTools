@@ -2,7 +2,7 @@
 
 @layer base {
   body {
-    @apply bg-[#0f0f0f] text-[#f1f1f1] antialiased transition-colors duration-300 selection:bg-red-600 selection:text-white;
+    @apply bg-[#0f0f0f] text-[#f1f1f1] antialiased transition-colors duration-300 selection:bg-[#3ea6ff] selection:text-black;
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   }
 
@@ -49,17 +49,26 @@
   color: #717171;
 }
 
+/* YouTube Premium Blue Accent Utilities */
+.yt-text-blue {
+  color: #3ea6ff;
+}
+
+.yt-bg-blue {
+  background-color: #3ea6ff;
+}
+
 /* YouTube Chips & Buttons */
 .yt-chip {
   @apply px-3.5 py-1.5 rounded-full text-xs font-semibold bg-[#272727] hover:bg-[#3f3f3f] text-[#f1f1f1] border border-transparent transition-all cursor-pointer whitespace-nowrap shrink-0;
 }
 
 .yt-chip-active {
-  @apply bg-white text-black font-bold shadow-md hover:bg-slate-200 border-transparent;
+  @apply bg-[#3ea6ff] text-black font-bold shadow-md hover:bg-[#65b8ff] border-transparent;
 }
 
 .yt-btn-primary {
-  @apply bg-red-600 hover:bg-red-700 text-white font-bold px-4 py-2 rounded-full text-xs transition-all shadow-md cursor-pointer flex items-center justify-center gap-2;
+  @apply bg-[#3ea6ff] hover:bg-[#2697ff] text-black font-bold px-4 py-2 rounded-full text-xs transition-all shadow-md cursor-pointer flex items-center justify-center gap-2;
 }
 
 .yt-btn-secondary {
