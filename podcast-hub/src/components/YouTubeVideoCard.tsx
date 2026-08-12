@@ -83,10 +83,10 @@ export const YouTubeVideoCard: React.FC<YouTubeVideoCardProps> = ({
   const avatar = getRealChannelAvatar(video.channel, video.avatarUrl, video.channelAvatar);
 
   return (
-    <div className="group flex flex-col space-y-3 bg-white border border-slate-200 hover:border-indigo-300 rounded-2xl p-3 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer select-none">
+    <div className="group flex flex-col space-y-3 bg-white border border-slate-200 hover:border-sky-300 rounded-xl p-3 shadow-2xs hover:shadow-xs transition-all duration-200 cursor-pointer select-none">
       {/* 16:9 Thumbnail (Not Minimized) */}
       <div
-        className="relative aspect-video w-full rounded-xl overflow-hidden bg-slate-100 border border-slate-200 group-hover:border-indigo-200 transition-all shadow-xs"
+        className="relative aspect-video w-full rounded-lg overflow-hidden bg-slate-100 border border-slate-200 group-hover:border-sky-200 transition-all shadow-2xs"
         onClick={() => onPlay && onPlay(video)}
       >
         <VideoThumbnail
@@ -98,7 +98,7 @@ export const YouTubeVideoCard: React.FC<YouTubeVideoCardProps> = ({
 
         {/* Dark Hover Overlay with Big Play Icon */}
         <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-          <div className="w-11 h-11 rounded-xl bg-[#6200ea] text-white flex items-center justify-center shadow-xl scale-95 group-hover:scale-100 transition-transform">
+          <div className="w-10 h-10 rounded-lg bg-sky-500 text-white flex items-center justify-center shadow-md scale-95 group-hover:scale-100 transition-transform border border-sky-400">
             <Play className="w-5 h-5 fill-white ml-0.5" />
           </div>
         </div>
@@ -116,9 +116,9 @@ export const YouTubeVideoCard: React.FC<YouTubeVideoCardProps> = ({
               e.stopPropagation();
               onToggleFavorite(video.videoId, e);
             }}
-            className={`absolute top-2 right-2 p-2 rounded-xl backdrop-blur-md transition-all ${
+            className={`absolute top-2 right-2 p-1.5 rounded-lg backdrop-blur-md transition-all ${
               video.isFavorite
-                ? 'bg-[#6200ea] text-white shadow-md'
+                ? 'bg-sky-500 text-white shadow-sm border border-sky-400'
                 : 'bg-slate-900/60 text-slate-200 hover:text-white hover:bg-slate-900/80'
             }`}
             title={video.isFavorite ? 'Favorited' : 'Add to Favorites'}
@@ -134,14 +134,14 @@ export const YouTubeVideoCard: React.FC<YouTubeVideoCardProps> = ({
         <img
           src={avatar}
           alt={video.channel}
-          className="w-8 h-8 rounded-full object-cover border border-slate-200 shrink-0 mt-0.5 shadow-xs"
+          className="w-8 h-8 rounded-lg object-cover border border-slate-200 shrink-0 mt-0.5 shadow-2xs"
         />
 
         <div className="flex-1 min-w-0 space-y-1">
           {/* Title */}
           <h3
             onClick={() => onSummarize && onSummarize(video)}
-            className="text-xs sm:text-sm font-extrabold text-slate-900 leading-snug line-clamp-2 hover:text-[#6200ea] transition-colors"
+            className="text-xs sm:text-sm font-extrabold text-slate-900 leading-snug line-clamp-2 hover:text-sky-600 transition-colors"
             title={video.title}
           >
             {video.title}
@@ -154,12 +154,12 @@ export const YouTubeVideoCard: React.FC<YouTubeVideoCardProps> = ({
                 e.stopPropagation();
                 if (onSubscribeChannel) onSubscribeChannel(video.channel, e);
               }}
-              className="font-bold hover:text-[#6200ea] truncate text-[11px]"
+              className="font-bold hover:text-sky-600 truncate text-[11px]"
             >
               {video.channel}
             </span>
             {isSubscribed && (
-              <CheckCircle2 className="w-3 h-3 text-[#6200ea] shrink-0" />
+              <CheckCircle2 className="w-3 h-3 text-sky-500 shrink-0" />
             )}
             {video.publishedAt && (
               <span className="text-slate-400 truncate text-[10px]">• {video.publishedAt}</span>
@@ -180,7 +180,7 @@ export const YouTubeVideoCard: React.FC<YouTubeVideoCardProps> = ({
                 groups={groups}
                 onAddToGroup={onAddToGroup}
                 onCreateGroup={onCreateGroup}
-                buttonClassName="px-2.5 py-1 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-200 text-[11px] font-semibold transition-all cursor-pointer flex items-center gap-1"
+                buttonClassName="px-2.5 py-1 rounded-lg bg-sky-50 hover:bg-sky-100 text-sky-800 border border-sky-200 text-[11px] font-bold transition-all cursor-pointer flex items-center gap-1 shadow-2xs"
               />
             )}
 
@@ -191,10 +191,10 @@ export const YouTubeVideoCard: React.FC<YouTubeVideoCardProps> = ({
                   e.stopPropagation();
                   onBrainstorm(video);
                 }}
-                className="px-2.5 py-1 rounded-xl bg-slate-100 hover:bg-indigo-50 text-indigo-700 hover:text-indigo-900 border border-slate-200 text-[11px] font-semibold transition-all cursor-pointer flex items-center gap-1"
+                className="px-2.5 py-1 rounded-lg bg-sky-50 hover:bg-sky-100 text-sky-800 border border-sky-200 text-[11px] font-bold transition-all cursor-pointer flex items-center gap-1 shadow-2xs"
                 title="Brainstorm with AI"
               >
-                <Brain className="w-3.5 h-3.5" />
+                <Brain className="w-3.5 h-3.5 text-sky-600" />
                 <span>AI Brainstorm</span>
               </button>
             )}
@@ -207,10 +207,10 @@ export const YouTubeVideoCard: React.FC<YouTubeVideoCardProps> = ({
                   onSummarize(video);
                 }}
                 disabled={isImporting}
-                className={`px-3 py-1 rounded-xl text-[11px] font-bold transition-all cursor-pointer flex items-center gap-1 ${
+                className={`px-3 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer flex items-center gap-1 ${
                   video.isImported
-                    ? 'bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-200'
-                    : 'bg-[#6200ea] hover:bg-[#5200c4] text-white font-extrabold shadow-xs'
+                    ? 'bg-sky-50 hover:bg-sky-100 text-sky-900 border border-sky-200 shadow-2xs'
+                    : 'bg-sky-500 hover:bg-sky-600 text-white font-extrabold shadow-2xs border border-sky-400'
                 }`}
               >
                 {isImporting ? (

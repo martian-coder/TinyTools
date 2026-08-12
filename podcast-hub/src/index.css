@@ -10,7 +10,7 @@
 
   body {
     font-family: var(--font-claude-sans);
-    @apply bg-[#f8fafc] text-slate-900 antialiased transition-colors duration-300 selection:bg-[#6200ea] selection:text-white;
+    @apply bg-[#f8fafc] text-slate-900 antialiased transition-colors duration-300 selection:bg-sky-500 selection:text-white;
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   }
 
@@ -28,7 +28,7 @@
   }
 }
 
-/* Glance Design Dashboard Light Theme Palette & Cards */
+/* Glance Light Blue Design Tokens */
 .yt-bg-base {
   background-color: #f8fafc;
 }
@@ -42,7 +42,7 @@
 }
 
 .yt-bg-hover {
-  background-color: #f1f5f9;
+  background-color: #f0f9ff;
 }
 
 .yt-border {
@@ -50,7 +50,7 @@
 }
 
 .yt-border-light {
-  border-color: #cbd5e1;
+  border-color: #bae6fd;
 }
 
 .yt-text-primary {
@@ -58,45 +58,45 @@
 }
 
 .yt-text-secondary {
-  color: #475569;
+  color: #0369a1;
 }
 
 .yt-text-muted {
   color: #64748b;
 }
 
-/* Glance Primary Accent Utilities */
+/* Light Blue Accent Utilities */
 .yt-text-blue {
-  color: #6200ea;
+  color: #0ea5e9;
 }
 
 .yt-bg-blue {
-  background-color: #6200ea;
+  background-color: #0ea5e9;
 }
 
-/* Glance Light Mode Chips & Buttons */
+/* ─── Light Blue Executive Rectangular Buttons & Chips ─── */
 .yt-chip {
-  @apply px-4 py-1.5 rounded-xl text-xs font-semibold bg-white hover:bg-slate-100 text-slate-700 hover:text-slate-900 border border-slate-200 transition-all cursor-pointer whitespace-nowrap shrink-0 shadow-xs;
+  @apply px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-white hover:bg-sky-50 text-slate-700 hover:text-sky-900 border border-slate-200 hover:border-sky-300 transition-all cursor-pointer whitespace-nowrap shrink-0 shadow-2xs;
   font-family: var(--font-claude-sans);
 }
 
 .yt-chip-active {
-  @apply bg-[#6200ea] text-white font-extrabold shadow-md shadow-indigo-500/20 border-transparent hover:bg-[#5200c4];
+  @apply bg-sky-500 text-white font-bold shadow-xs shadow-sky-500/25 border-sky-500 hover:bg-sky-600;
 }
 
 .yt-btn-primary {
-  @apply bg-[#6200ea] hover:bg-[#5200c4] text-white font-bold px-4 py-2 rounded-xl text-xs transition-all shadow-md shadow-indigo-500/20 cursor-pointer flex items-center justify-center gap-2;
+  @apply bg-sky-500 hover:bg-sky-600 active:bg-sky-700 text-white font-bold px-4 py-2 rounded-lg text-xs transition-all shadow-sm shadow-sky-500/25 border border-sky-400 cursor-pointer flex items-center justify-center gap-2;
   font-family: var(--font-claude-sans);
 }
 
 .yt-btn-secondary {
-  @apply bg-white hover:bg-slate-100 text-slate-800 border border-slate-200 font-semibold px-3.5 py-2 rounded-xl text-xs transition-all cursor-pointer flex items-center justify-center gap-2;
+  @apply bg-sky-50 hover:bg-sky-100 text-sky-800 border border-sky-200 hover:border-sky-300 font-bold px-3.5 py-2 rounded-lg text-xs transition-all cursor-pointer flex items-center justify-center gap-2 shadow-2xs;
   font-family: var(--font-claude-sans);
 }
 
-/* Glance Signature Cards */
+/* Signature Rectangular Panel Cards */
 .glance-card {
-  @apply bg-white border border-slate-200 rounded-2xl shadow-sm transition-all hover:border-slate-300 hover:shadow-md;
+  @apply bg-white border border-slate-200 rounded-xl shadow-2xs transition-all hover:border-sky-300 hover:shadow-xs;
 }
 
 /* Custom scrollbars */
@@ -116,9 +116,9 @@
   background: #f8fafc;
 }
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
-  border-radius: 9999px;
+  background: #bae6fd;
+  border-radius: 4px;
 }
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
+  background: #38bdf8;
 }

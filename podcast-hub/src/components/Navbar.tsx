@@ -114,14 +114,14 @@ export const Navbar: React.FC<NavbarProps> = ({
             className="flex items-center gap-2 sm:gap-3 cursor-pointer select-none shrink-0"
             onClick={() => setCurrentTab('dashboard')}
           >
-            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-2xl bg-[#6200ea] flex items-center justify-center text-white shadow-lg shadow-indigo-500/25 hover:scale-105 transition-all shrink-0">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-sky-500 flex items-center justify-center text-white shadow-md shadow-sky-500/25 hover:scale-105 transition-all shrink-0">
               <Tv className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
             </div>
             <div>
               <h1 className="text-sm sm:text-lg font-extrabold tracking-tight text-slate-900 flex items-center gap-1.5 sm:gap-2">
                 PodSummarizer{' '}
-                <span className="text-[9px] sm:text-[10px] px-2 py-0.5 rounded-full bg-[#6200ea]/10 text-[#6200ea] border border-[#6200ea]/20 font-bold uppercase tracking-wider">
-                  Glance Design
+                <span className="text-[9px] sm:text-[10px] px-2 py-0.5 rounded-md bg-sky-50 text-sky-700 border border-sky-200 font-bold uppercase tracking-wider">
+                  Glance Executive
                 </span>
               </h1>
               <p className="text-xs text-slate-500 hidden md:block font-medium">
@@ -131,21 +131,21 @@ export const Navbar: React.FC<NavbarProps> = ({
           </div>
 
           {/* Quick Metrics Badges */}
-          <div className="hidden xl:flex items-center gap-3 text-xs font-medium text-slate-600 bg-slate-50 px-3.5 py-1.5 rounded-xl border border-slate-200">
+          <div className="hidden xl:flex items-center gap-3 text-xs font-medium text-slate-600 bg-sky-50/60 px-3.5 py-1.5 rounded-lg border border-sky-100">
             <div className="flex items-center gap-1.5" title="Summarized Podcasts">
-              <BookOpen className="w-3.5 h-3.5 text-[#6200ea]" />
+              <BookOpen className="w-3.5 h-3.5 text-sky-600" />
               <span>
                 <strong className="font-semibold text-slate-900">{stats.totalPodcasts}</strong> Podcasts
               </span>
             </div>
-            <div className="h-3 w-px bg-slate-300" />
+            <div className="h-3 w-px bg-sky-200" />
             <div className="flex items-center gap-1.5" title="Monetization Opportunities">
               <Lightbulb className="w-3.5 h-3.5 text-[#f59e0b]" />
               <span>
                 <strong className="font-semibold text-slate-900">{stats.totalMonetizationIdeas}</strong> Ideas
               </span>
             </div>
-            <div className="h-3 w-px bg-slate-300" />
+            <div className="h-3 w-px bg-sky-200" />
             <div className="flex items-center gap-1.5" title="Estimated Listening Hours Saved">
               <Zap className="w-3.5 h-3.5 text-[#10b981]" />
               <span>
@@ -168,7 +168,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 }
               }}
               placeholder="Search YouTube podcasts, hosts, product ideas..."
-              className="w-full bg-slate-100 border border-slate-200 rounded-xl pl-8 sm:pl-10 pr-8 sm:pr-10 py-1.5 sm:py-2 text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-[#6200ea] font-normal"
+              className="w-full bg-slate-50 border border-slate-200 rounded-lg pl-8 sm:pl-10 pr-8 sm:pr-10 py-1.5 sm:py-2 text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20 font-normal"
             />
             {searchQuery && (
               <button
@@ -191,7 +191,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                     setShowYtLoginModal(true);
                   }
                 }}
-                className="flex items-center gap-1.5 bg-[#6200ea] hover:bg-[#5200c4] text-white px-4 py-1.5 rounded-xl text-xs font-bold shadow-md shadow-indigo-500/20 transition-all cursor-pointer shrink-0"
+                className="flex items-center gap-1.5 bg-sky-500 hover:bg-sky-600 text-white px-4 py-1.5 rounded-lg text-xs font-bold shadow-sm shadow-sky-500/25 border border-sky-400 transition-all cursor-pointer shrink-0"
                 title="Sign in with YouTube"
               >
                 <Tv className="w-3.5 h-3.5 text-white shrink-0" />
@@ -199,11 +199,11 @@ export const Navbar: React.FC<NavbarProps> = ({
                 <span className="sm:hidden text-[11px]">YouTube</span>
               </button>
             ) : (
-              <div className="flex items-center gap-1.5 bg-slate-100 border border-slate-200 pl-1.5 pr-3 py-1 rounded-xl shadow-xs shrink-0">
+              <div className="flex items-center gap-1.5 bg-sky-50 border border-sky-200 pl-1.5 pr-3 py-1 rounded-lg shadow-2xs shrink-0">
                 <img
                   src={ytProfile.avatar}
                   alt={ytProfile.name}
-                  className="w-6 h-6 rounded-full object-cover border border-[#6200ea] cursor-pointer shrink-0"
+                  className="w-6 h-6 rounded-md object-cover border border-sky-500 cursor-pointer shrink-0"
                   onClick={() => {
                     if (onOpenLoginModal) onOpenLoginModal();
                     else setCurrentTab('yt_search');
@@ -211,7 +211,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 />
                 <button
                   onClick={() => setCurrentTab('yt_search')}
-                  className="text-xs font-bold text-slate-800 hover:text-[#6200ea] transition-colors hidden md:block"
+                  className="text-xs font-bold text-slate-800 hover:text-sky-600 transition-colors hidden md:block"
                 >
                   {ytProfile.name}
                 </button>

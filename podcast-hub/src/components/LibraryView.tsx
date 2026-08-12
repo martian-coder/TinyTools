@@ -211,7 +211,7 @@ export const LibraryView: React.FC<LibraryViewProps> = ({
   return (
     <div className="space-y-8 animate-in fade-in duration-300">
       {/* ─── Modern Glance Design Light Mode Executive Header Bar ─────────── */}
-      <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-5">
+      <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-2xs space-y-5">
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 pb-4 border-b border-slate-200">
           <div className="flex items-center gap-3.5">
             {ytProfile ? (
@@ -219,18 +219,18 @@ export const LibraryView: React.FC<LibraryViewProps> = ({
                 <img
                   src={ytProfile.avatar}
                   alt={ytProfile.name}
-                  className="w-12 h-12 rounded-full object-cover border-2 border-[#6200ea] shadow-sm"
+                  className="w-12 h-12 rounded-lg object-cover border-2 border-sky-500 shadow-2xs"
                   onError={(e) => {
-                    (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(ytProfile.name)}&background=6200ea&color=fff&size=200&bold=true`;
+                    (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(ytProfile.name)}&background=0ea5e9&color=fff&size=200&bold=true`;
                   }}
                 />
-                <span className="absolute bottom-0 right-0 w-3.5 h-3.5 rounded-full bg-[#10b981] border-2 border-white flex items-center justify-center">
+                <span className="absolute bottom-0 right-0 w-3.5 h-3.5 rounded-md bg-[#10b981] border-2 border-white flex items-center justify-center">
                   <CheckCircle2 className="w-2.5 h-2.5 text-white" />
                 </span>
               </div>
             ) : (
-              <div className="w-12 h-12 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-[#6200ea] shrink-0">
-                <User className="w-6 h-6 text-[#6200ea]" />
+              <div className="w-12 h-12 rounded-lg bg-sky-50 border border-sky-200 flex items-center justify-center text-sky-600 shrink-0">
+                <User className="w-6 h-6 text-sky-600" />
               </div>
             )}
 
@@ -240,10 +240,10 @@ export const LibraryView: React.FC<LibraryViewProps> = ({
                   <h1 className="text-lg font-extrabold text-slate-900 tracking-tight">
                     {ytProfile.name}
                   </h1>
-                  <span className="inline-flex items-center gap-1 text-[9px] uppercase tracking-wider font-extrabold bg-[#10b981]/15 text-[#10b981] border border-[#10b981]/30 px-2 py-0.5 rounded-full">
+                  <span className="inline-flex items-center gap-1 text-[9px] uppercase tracking-wider font-extrabold bg-[#10b981]/15 text-[#10b981] border border-[#10b981]/30 px-2 py-0.5 rounded-md">
                     <span className="w-1.5 h-1.5 rounded-full bg-[#10b981] animate-pulse" /> Auto-Synced
                   </span>
-                  <span className="text-xs text-[#6200ea] font-semibold">{ytProfile.handle}</span>
+                  <span className="text-xs text-sky-600 font-semibold">{ytProfile.handle}</span>
                 </div>
               ) : (
                 <h1 className="text-lg font-extrabold text-slate-900 tracking-tight">
@@ -261,7 +261,7 @@ export const LibraryView: React.FC<LibraryViewProps> = ({
               <>
                 <button
                   onClick={() => setShowLoginModal(true)}
-                  className="px-3.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-200 text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer"
+                  className="px-3.5 py-2 rounded-lg bg-sky-50 hover:bg-sky-100 text-sky-800 border border-sky-200 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-2xs"
                   title="Sync Account"
                 >
                   <Sparkles className="w-3.5 h-3.5 text-[#f59e0b]" />
@@ -269,14 +269,14 @@ export const LibraryView: React.FC<LibraryViewProps> = ({
                 </button>
                 <button
                   onClick={() => onNavigateTab('yt_search')}
-                  className="px-3.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-200 text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer"
+                  className="px-3.5 py-2 rounded-lg bg-sky-50 hover:bg-sky-100 text-sky-800 border border-sky-200 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-2xs"
                 >
-                  <Tv className="w-3.5 h-3.5 text-[#6200ea]" />
+                  <Tv className="w-3.5 h-3.5 text-sky-600" />
                   <span>Watch Feed</span>
                 </button>
                 <button
                   onClick={onOpenImport}
-                  className="px-4 py-1.5 rounded-xl bg-[#6200ea] hover:bg-[#5200c4] text-white text-xs font-bold flex items-center gap-1.5 transition-all shadow-md shadow-indigo-500/20 cursor-pointer"
+                  className="px-4 py-2 rounded-lg bg-sky-500 hover:bg-sky-600 text-white text-xs font-bold flex items-center gap-1.5 transition-all shadow-sm shadow-sky-500/25 border border-sky-400 cursor-pointer"
                 >
                   <PlusCircle className="w-3.5 h-3.5 text-white" />
                   <span>Import Podcast</span>
@@ -286,14 +286,14 @@ export const LibraryView: React.FC<LibraryViewProps> = ({
               <>
                 <button
                   onClick={() => setShowLoginModal(true)}
-                  className="px-4 py-1.5 rounded-xl bg-[#6200ea] hover:bg-[#5200c4] text-white text-xs font-bold flex items-center gap-1.5 transition-all shadow-md shadow-indigo-500/20 cursor-pointer"
+                  className="px-4 py-2 rounded-lg bg-sky-500 hover:bg-sky-600 text-white text-xs font-bold flex items-center gap-1.5 transition-all shadow-sm shadow-sky-500/25 border border-sky-400 cursor-pointer"
                 >
                   <Tv className="w-3.5 h-3.5 text-white" />
                   <span>Sign in with Google</span>
                 </button>
                 <button
                   onClick={onOpenImport}
-                  className="px-3.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer border border-slate-200"
+                  className="px-3.5 py-2 rounded-lg bg-sky-50 hover:bg-sky-100 text-sky-800 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer border border-sky-200 shadow-2xs"
                 >
                   <PlusCircle className="w-3.5 h-3.5 text-[#f59e0b]" />
                   <span>Import Podcast</span>
@@ -303,48 +303,48 @@ export const LibraryView: React.FC<LibraryViewProps> = ({
           </div>
         </div>
 
-        {/* Glance Signature 4-Grid Metric Widget Cards (Light Mode) */}
+        {/* Glance Signature 4-Grid Metric Widget Cards (Light Blue Executive Rectangular) */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
-          {/* Card 1: Purple */}
-          <div className="bg-white border border-slate-200 border-t-4 border-t-[#6200ea] rounded-xl p-3.5 flex items-center justify-between shadow-xs hover:border-[#6200ea]/50 transition-all">
+          {/* Card 1: Light Blue Sky */}
+          <div className="bg-white border border-slate-200 border-t-4 border-t-sky-500 rounded-lg p-3.5 flex items-center justify-between shadow-2xs hover:border-sky-300 transition-all">
             <div>
               <p className="text-[11px] font-extrabold text-slate-500 uppercase tracking-wider">Saved Episodes</p>
               <h3 className="text-2xl font-extrabold text-slate-900 mt-0.5">{podcasts.length}</h3>
             </div>
-            <div className="w-10 h-10 rounded-xl bg-[#6200ea]/10 border border-[#6200ea]/20 flex items-center justify-center text-[#6200ea] shrink-0">
+            <div className="w-10 h-10 rounded-lg bg-sky-50 border border-sky-200 flex items-center justify-center text-sky-600 shrink-0">
               <BookOpen className="w-5 h-5" />
             </div>
           </div>
 
           {/* Card 2: Cyan Blue */}
-          <div className="bg-white border border-slate-200 border-t-4 border-t-[#0284c7] rounded-xl p-3.5 flex items-center justify-between shadow-xs hover:border-[#0284c7]/50 transition-all">
+          <div className="bg-white border border-slate-200 border-t-4 border-t-cyan-500 rounded-lg p-3.5 flex items-center justify-between shadow-2xs hover:border-cyan-300 transition-all">
             <div>
               <p className="text-[11px] font-extrabold text-slate-500 uppercase tracking-wider">Favorites</p>
               <h3 className="text-2xl font-extrabold text-slate-900 mt-0.5">{favoritePodcasts.length}</h3>
             </div>
-            <div className="w-10 h-10 rounded-xl bg-[#0284c7]/10 border border-[#0284c7]/20 flex items-center justify-center text-[#0284c7] shrink-0">
+            <div className="w-10 h-10 rounded-lg bg-cyan-50 border border-cyan-200 flex items-center justify-center text-cyan-600 shrink-0">
               <Heart className="w-5 h-5" />
             </div>
           </div>
 
           {/* Card 3: Emerald */}
-          <div className="bg-white border border-slate-200 border-t-4 border-t-[#10b981] rounded-xl p-3.5 flex items-center justify-between shadow-xs hover:border-[#10b981]/50 transition-all">
+          <div className="bg-white border border-slate-200 border-t-4 border-t-[#10b981] rounded-lg p-3.5 flex items-center justify-between shadow-2xs hover:border-[#10b981]/50 transition-all">
             <div>
               <p className="text-[11px] font-extrabold text-slate-500 uppercase tracking-wider">Watch Later</p>
               <h3 className="text-2xl font-extrabold text-slate-900 mt-0.5">{watchLaterPodcasts.length}</h3>
             </div>
-            <div className="w-10 h-10 rounded-xl bg-[#10b981]/10 border border-[#10b981]/20 flex items-center justify-center text-[#10b981] shrink-0">
+            <div className="w-10 h-10 rounded-lg bg-emerald-50 border border-emerald-200 flex items-center justify-center text-[#10b981] shrink-0">
               <Clock className="w-5 h-5" />
             </div>
           </div>
 
           {/* Card 4: Amber */}
-          <div className="bg-white border border-slate-200 border-t-4 border-t-[#f59e0b] rounded-xl p-3.5 flex items-center justify-between shadow-xs hover:border-[#f59e0b]/50 transition-all">
+          <div className="bg-white border border-slate-200 border-t-4 border-t-[#f59e0b] rounded-lg p-3.5 flex items-center justify-between shadow-2xs hover:border-[#f59e0b]/50 transition-all">
             <div>
               <p className="text-[11px] font-extrabold text-slate-500 uppercase tracking-wider">Playlists</p>
               <h3 className="text-2xl font-extrabold text-slate-900 mt-0.5">{collections.length + liveYtPlaylists.length}</h3>
             </div>
-            <div className="w-10 h-10 rounded-xl bg-[#f59e0b]/10 border border-[#f59e0b]/20 flex items-center justify-center text-[#f59e0b] shrink-0">
+            <div className="w-10 h-10 rounded-lg bg-amber-50 border border-amber-200 flex items-center justify-center text-[#f59e0b] shrink-0">
               <Folder className="w-5 h-5" />
             </div>
           </div>

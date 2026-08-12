@@ -638,8 +638,8 @@ export const YouTubeSearchView: React.FC<YouTubeSearchViewProps> = ({
 
   return (
     <div className="space-y-5">
-      {/* Modern Compact Glance Design Header Toolbar (Light Mode) */}
-      <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-3">
+      {/* Modern Compact Glance Design Header Toolbar (Light Blue Rectangular) */}
+      <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-2xs flex flex-col md:flex-row md:items-center justify-between gap-3">
         {/* Topic Pills */}
         <div className="flex items-center gap-2 overflow-x-auto scrollbar-none py-1">
           <button
@@ -668,7 +668,7 @@ export const YouTubeSearchView: React.FC<YouTubeSearchViewProps> = ({
                 const name = prompt('Enter name for new Knowledge Group (e.g. AI Agents, SaaS Ideas):');
                 if (name && name.trim()) onCreateKnowledgeGroup(name.trim());
               }}
-              className="px-3.5 py-1.5 rounded-xl bg-[#6200ea] hover:bg-[#5200c4] text-white text-xs font-bold flex items-center gap-1.5 transition-all shadow-md shadow-indigo-500/20 cursor-pointer shrink-0"
+              className="px-3.5 py-2 rounded-lg bg-sky-500 hover:bg-sky-600 text-white text-xs font-bold flex items-center gap-1.5 transition-all shadow-sm shadow-sky-500/25 border border-sky-400 cursor-pointer shrink-0"
             >
               <FolderPlus className="w-3.5 h-3.5 text-white" />
               <span>+ Create Group</span>
@@ -678,14 +678,14 @@ export const YouTubeSearchView: React.FC<YouTubeSearchViewProps> = ({
           {!connectedProfile ? (
             <button
               onClick={() => setShowApiSettings(true)}
-              className="px-3.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-800 text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer shrink-0"
+              className="px-3.5 py-2 rounded-lg bg-sky-50 hover:bg-sky-100 border border-sky-200 text-sky-800 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer shrink-0 shadow-2xs"
             >
-              <Tv className="w-3.5 h-3.5 text-[#6200ea]" />
+              <Tv className="w-3.5 h-3.5 text-sky-600" />
               <span>Connect Channel</span>
             </button>
           ) : (
-            <div className="flex items-center gap-2 bg-slate-100 border border-slate-200 pl-2 pr-3 py-1 rounded-xl">
-              <img src={connectedProfile.avatar} alt="Profile" className="w-5 h-5 rounded-full object-cover border border-[#6200ea] shrink-0" />
+            <div className="flex items-center gap-2 bg-sky-50 border border-sky-200 pl-2 pr-3 py-1 rounded-lg">
+              <img src={connectedProfile.avatar} alt="Profile" className="w-5 h-5 rounded-md object-cover border border-sky-500 shrink-0" />
               <span className="text-xs font-bold text-slate-900 truncate">{connectedProfile.name}</span>
               <button
                 onClick={handleDisconnectProfile}
