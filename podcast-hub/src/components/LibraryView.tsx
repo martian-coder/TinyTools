@@ -210,124 +210,95 @@ export const LibraryView: React.FC<LibraryViewProps> = ({
 
   return (
     <div className="space-y-8 animate-in fade-in duration-300">
-      {/* ─── YouTube-Style Header / Account Section ──────────────────────── */}
-      <div className="bg-gradient-to-r from-slate-900 via-slate-900 to-indigo-950 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl space-y-6">
-        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-          <div className="flex items-center gap-4">
-            {ytProfile ? (
-              <div className="relative shrink-0">
-                <img
-                  src={ytProfile.avatar}
-                  alt={ytProfile.name}
-                  className="w-16 h-16 sm:w-20 sm:h-20 rounded-full object-cover border-2 border-red-500 shadow-xl shadow-red-500/20"
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(ytProfile.name)}&background=ef4444&color=fff&size=200&bold=true`;
-                  }}
-                />
-                <span className="absolute bottom-0 right-0 w-5 h-5 rounded-full bg-emerald-500 border-2 border-slate-900 flex items-center justify-center">
-                  <CheckCircle2 className="w-3 h-3 text-white" />
-                </span>
-              </div>
-            ) : (
-              <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-slate-800 border-2 border-slate-700 flex items-center justify-center text-slate-400 shrink-0">
-                <User className="w-8 h-8 sm:w-10 sm:h-10" />
-              </div>
-            )}
-
-            <div className="space-y-1">
-              {ytProfile ? (
-                <>
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <h1 className="text-xl sm:text-2xl font-black text-white tracking-tight">
-                      {ytProfile.name}
-                    </h1>
-                    <span className="inline-flex items-center gap-1 text-[10px] uppercase tracking-wider font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-2.5 py-0.5 rounded-full">
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" /> ⚡ Live Auto-Sync Active
-                    </span>
-                  </div>
-                  <p className="text-xs text-red-400 font-semibold">{ytProfile.handle}</p>
-                  <p className="text-xs text-slate-400">
-                    Manage your saved podcast playlists, favorites, and watch history
-                  </p>
-                </>
-              ) : (
-                <>
-                  <h1 className="text-xl sm:text-2xl font-black text-white tracking-tight">
-                    My YouTube Library &amp; Podcasts
-                  </h1>
-                  <p className="text-xs sm:text-sm text-slate-400">
-                    Sign in to sync your YouTube subscriptions, saved playlists, and watch history
-                  </p>
-                </>
-              )}
+      {/* ─── Modern YouTube Studio Executive Header Bar ───────────────────── */}
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 pb-4 border-b border-[#272727]">
+        <div className="flex items-center gap-3.5">
+          {ytProfile ? (
+            <div className="relative shrink-0">
+              <img
+                src={ytProfile.avatar}
+                alt={ytProfile.name}
+                className="w-12 h-12 rounded-full object-cover border-2 border-[#3ea6ff] shadow-md"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(ytProfile.name)}&background=3ea6ff&color=000&size=200&bold=true`;
+                }}
+              />
+              <span className="absolute bottom-0 right-0 w-3.5 h-3.5 rounded-full bg-emerald-500 border-2 border-[#0f0f0f] flex items-center justify-center">
+                <CheckCircle2 className="w-2.5 h-2.5 text-white" />
+              </span>
             </div>
-          </div>
+          ) : (
+            <div className="w-12 h-12 rounded-full bg-[#212121] border border-[#272727] flex items-center justify-center text-slate-400 shrink-0">
+              <User className="w-6 h-6 text-[#3ea6ff]" />
+            </div>
+          )}
 
-          <div className="flex items-center gap-2.5 flex-wrap shrink-0">
+          <div className="space-y-0.5">
             {ytProfile ? (
-              <>
-                <button
-                  onClick={() => setShowLoginModal(true)}
-                  className="px-3.5 py-2.5 rounded-2xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer"
-                  title="Refresh Google OAuth connection to sync latest YouTube playlists"
-                >
-                  <Sparkles className="w-4 h-4 text-amber-400" />
-                  <span>Sync Account</span>
-                </button>
-                <button
-                  onClick={() => onNavigateTab('yt_search')}
-                  className="px-4 py-2.5 rounded-2xl bg-red-600 hover:bg-red-500 text-white text-xs font-bold flex items-center gap-2 transition-all shadow-md shadow-red-600/30 cursor-pointer"
-                >
-                  <Tv className="w-4 h-4 text-white" />
-                  <span>Watch Feed</span>
-                </button>
-                <button
-                  onClick={onOpenImport}
-                  className="px-4 py-2.5 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold flex items-center gap-2 transition-all shadow-md shadow-indigo-600/30 cursor-pointer"
-                >
-                  <PlusCircle className="w-4 h-4 text-amber-300" />
-                  <span>Import Podcast</span>
-                </button>
-              </>
+              <div className="flex items-center gap-2 flex-wrap">
+                <h1 className="text-lg font-bold text-white tracking-tight">
+                  {ytProfile.name}
+                </h1>
+                <span className="inline-flex items-center gap-1 text-[9px] uppercase tracking-wider font-extrabold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded-full">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" /> Auto-Synced
+                </span>
+                <span className="text-xs text-[#3ea6ff] font-semibold">{ytProfile.handle}</span>
+              </div>
             ) : (
-              <>
-                <button
-                  onClick={() => setShowLoginModal(true)}
-                  className="px-4 py-2.5 rounded-2xl bg-red-600 hover:bg-red-500 text-white text-xs font-bold flex items-center gap-2 transition-all shadow-md shadow-red-600/30 cursor-pointer"
-                >
-                  <Tv className="w-4 h-4 text-white" />
-                  <span>Sign in with Google</span>
-                </button>
-                <button
-                  onClick={onOpenImport}
-                  className="px-4 py-2.5 rounded-2xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold flex items-center gap-2 transition-all cursor-pointer border border-slate-700"
-                >
-                  <PlusCircle className="w-4 h-4 text-amber-400" />
-                  <span>Import Podcast</span>
-                </button>
-              </>
+              <h1 className="text-lg font-bold text-white tracking-tight">
+                My YouTube Library &amp; Podcasts
+              </h1>
             )}
+            <p className="text-xs text-[#aaaaaa]">
+              {podcasts.length} saved episodes • {favoritePodcasts.length} favorites • {collections.length + liveYtPlaylists.length} playlists
+            </p>
           </div>
         </div>
 
-        {/* Quick Library Stats Bar */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-4 border-t border-slate-800 text-xs">
-          <div className="bg-slate-950/60 p-3 rounded-2xl border border-slate-800/80">
-            <div className="text-slate-400 font-medium">Total Saved</div>
-            <div className="text-lg font-bold text-white mt-0.5">{podcasts.length} Episodes</div>
-          </div>
-          <div className="bg-slate-950/60 p-3 rounded-2xl border border-slate-800/80">
-            <div className="text-slate-400 font-medium">Favorites</div>
-            <div className="text-lg font-bold text-amber-400 mt-0.5">{favoritePodcasts.length} Podcasts</div>
-          </div>
-          <div className="bg-slate-950/60 p-3 rounded-2xl border border-slate-800/80">
-            <div className="text-slate-400 font-medium">Watch Later</div>
-            <div className="text-lg font-bold text-indigo-400 mt-0.5">{watchLaterPodcasts.length} Pending</div>
-          </div>
-          <div className="bg-slate-950/60 p-3 rounded-2xl border border-slate-800/80">
-            <div className="text-slate-400 font-medium">Playlists</div>
-            <div className="text-lg font-bold text-emerald-400 mt-0.5">{collections.length} Folders</div>
-          </div>
+        <div className="flex items-center gap-2 shrink-0 self-end md:self-auto flex-wrap">
+          {ytProfile ? (
+            <>
+              <button
+                onClick={() => setShowLoginModal(true)}
+                className="px-3.5 py-1.5 rounded-full bg-[#272727] hover:bg-[#3f3f3f] text-[#f1f1f1] border border-[#3f3f3f] text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer"
+                title="Sync Account"
+              >
+                <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                <span>Sync Account</span>
+              </button>
+              <button
+                onClick={() => onNavigateTab('yt_search')}
+                className="px-3.5 py-1.5 rounded-full bg-[#272727] hover:bg-[#3f3f3f] text-[#f1f1f1] border border-[#3f3f3f] text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer"
+              >
+                <Tv className="w-3.5 h-3.5 text-[#3ea6ff]" />
+                <span>Watch Feed</span>
+              </button>
+              <button
+                onClick={onOpenImport}
+                className="px-3.5 py-1.5 rounded-full bg-[#3ea6ff] hover:bg-[#2697ff] text-black text-xs font-extrabold flex items-center gap-1.5 transition-all shadow-md cursor-pointer"
+              >
+                <PlusCircle className="w-3.5 h-3.5 text-black" />
+                <span>Import Podcast</span>
+              </button>
+            </>
+          ) : (
+            <>
+              <button
+                onClick={() => setShowLoginModal(true)}
+                className="px-4 py-1.5 rounded-full bg-[#3ea6ff] hover:bg-[#2697ff] text-black text-xs font-extrabold flex items-center gap-1.5 transition-all shadow-md cursor-pointer"
+              >
+                <Tv className="w-3.5 h-3.5 text-black" />
+                <span>Sign in with Google</span>
+              </button>
+              <button
+                onClick={onOpenImport}
+                className="px-3.5 py-1.5 rounded-full bg-[#272727] hover:bg-[#3f3f3f] text-[#f1f1f1] text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer border border-[#3f3f3f]"
+              >
+                <PlusCircle className="w-3.5 h-3.5 text-amber-400" />
+                <span>Import Podcast</span>
+              </button>
+            </>
+          )}
         </div>
       </div>
 
@@ -339,11 +310,7 @@ export const LibraryView: React.FC<LibraryViewProps> = ({
               setActiveFilter('All');
               setSelectedCollectionId(null);
             }}
-            className={`px-4 py-2 rounded-2xl font-bold transition-all cursor-pointer whitespace-nowrap ${
-              activeFilter === 'All' && !selectedCollectionId
-                ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/20'
-                : 'bg-slate-900 text-slate-400 hover:text-white border border-slate-800'
-            }`}
+            className={`yt-chip ${activeFilter === 'All' && !selectedCollectionId ? 'yt-chip-active' : ''}`}
           >
             All History ({podcasts.length})
           </button>
@@ -352,13 +319,9 @@ export const LibraryView: React.FC<LibraryViewProps> = ({
               setActiveFilter('Favorites');
               setSelectedCollectionId(null);
             }}
-            className={`px-4 py-2 rounded-2xl font-bold transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5 ${
-              activeFilter === 'Favorites'
-                ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20'
-                : 'bg-slate-900 text-slate-400 hover:text-white border border-slate-800'
-            }`}
+            className={`yt-chip flex items-center gap-1.5 ${activeFilter === 'Favorites' ? 'yt-chip-active' : ''}`}
           >
-            <Heart className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+            <Heart className={`w-3.5 h-3.5 ${activeFilter === 'Favorites' ? 'fill-black text-black' : 'text-[#3ea6ff]'}`} />
             <span>Favorites ({favoritePodcasts.length})</span>
           </button>
           <button
@@ -366,13 +329,9 @@ export const LibraryView: React.FC<LibraryViewProps> = ({
               setActiveFilter('WatchLater');
               setSelectedCollectionId(null);
             }}
-            className={`px-4 py-2 rounded-2xl font-bold transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5 ${
-              activeFilter === 'WatchLater'
-                ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/20'
-                : 'bg-slate-900 text-slate-400 hover:text-white border border-slate-800'
-            }`}
+            className={`yt-chip flex items-center gap-1.5 ${activeFilter === 'WatchLater' ? 'yt-chip-active' : ''}`}
           >
-            <Clock className="w-3.5 h-3.5 text-indigo-400" />
+            <Clock className={`w-3.5 h-3.5 ${activeFilter === 'WatchLater' ? 'text-black' : 'text-[#3ea6ff]'}`} />
             <span>Watch Later ({watchLaterPodcasts.length})</span>
           </button>
           <button
@@ -380,22 +339,18 @@ export const LibraryView: React.FC<LibraryViewProps> = ({
               setActiveFilter('Completed');
               setSelectedCollectionId(null);
             }}
-            className={`px-4 py-2 rounded-2xl font-bold transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5 ${
-              activeFilter === 'Completed'
-                ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/20'
-                : 'bg-slate-900 text-slate-400 hover:text-white border border-slate-800'
-            }`}
+            className={`yt-chip flex items-center gap-1.5 ${activeFilter === 'Completed' ? 'yt-chip-active' : ''}`}
           >
-            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+            <CheckCircle2 className={`w-3.5 h-3.5 ${activeFilter === 'Completed' ? 'text-black' : 'text-emerald-400'}`} />
             <span>Completed ({completedPodcasts.length})</span>
           </button>
         </div>
 
         <button
           onClick={() => setShowCreateFolderModal(true)}
-          className="px-3.5 py-2 rounded-2xl bg-slate-900 hover:bg-slate-800 border border-slate-800 text-indigo-400 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer shrink-0"
+          className="px-3 py-1.5 rounded-full bg-[#272727] hover:bg-[#3f3f3f] border border-[#3f3f3f] text-[#3ea6ff] text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer shrink-0"
         >
-          <FolderPlus className="w-4 h-4" />
+          <FolderPlus className="w-3.5 h-3.5" />
           <span>+ New Playlist</span>
         </button>
       </div>

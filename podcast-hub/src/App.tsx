@@ -285,7 +285,7 @@ export default function App() {
       .then((prof) => {
         if (prof) {
           setUserProfile((prev) => ({ ...prev, name: prof.name }));
-          setCurrentTab('yt_search');
+          setCurrentTab('dashboard');
           window.dispatchEvent(new Event('yt_profile_updated'));
         }
       })
