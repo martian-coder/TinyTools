@@ -379,16 +379,16 @@ export const LibraryView: React.FC<LibraryViewProps> = ({
                 href={`https://www.youtube.com/playlist?list=${ytCol.id}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="p-3.5 rounded-2xl border border-red-500/30 bg-red-950/20 hover:bg-red-950/40 text-slate-200 transition-all shrink-0 text-left min-w-[170px] cursor-pointer group"
+                className="p-3.5 rounded-2xl border border-[#272727] bg-[#212121] hover:bg-[#272727] text-[#f1f1f1] transition-all shrink-0 text-left min-w-[170px] cursor-pointer group shadow-sm"
               >
                 <div className="flex items-center justify-between mb-1.5">
-                  <Tv className="w-4 h-4 text-red-500 shrink-0" />
-                  <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-md bg-red-500/20 text-red-300 border border-red-500/30">
+                  <Tv className="w-4 h-4 text-[#3ea6ff] shrink-0" />
+                  <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-md bg-[#3ea6ff]/15 text-[#3ea6ff] border border-[#3ea6ff]/30">
                     {ytCol.itemCount} videos
                   </span>
                 </div>
-                <div className="font-bold text-xs truncate group-hover:text-red-400 transition-colors">{ytCol.name}</div>
-                <div className="text-[10px] text-slate-400 truncate mt-0.5">
+                <div className="font-bold text-xs text-[#f1f1f1] truncate group-hover:text-[#3ea6ff] transition-colors">{ytCol.name}</div>
+                <div className="text-[10px] text-[#aaaaaa] truncate mt-0.5">
                   YouTube Playlist
                 </div>
               </a>
@@ -411,20 +411,20 @@ export const LibraryView: React.FC<LibraryViewProps> = ({
                   }}
                   className={`p-3.5 rounded-2xl border transition-all shrink-0 text-left min-w-[170px] cursor-pointer ${
                     isSelected
-                      ? 'bg-indigo-600 text-white border-indigo-500 shadow-lg'
-                      : 'bg-slate-900 hover:bg-slate-850 text-slate-200 border-slate-800 hover:border-indigo-500/40'
+                      ? 'bg-[#3ea6ff] text-black border-[#3ea6ff] font-extrabold shadow-lg'
+                      : 'bg-[#212121] hover:bg-[#272727] text-[#f1f1f1] border-[#272727] hover:border-[#3ea6ff]/40'
                   }`}
                 >
                   <div className="flex items-center justify-between mb-1.5">
-                    <Folder className={`w-4 h-4 ${isSelected ? 'text-white' : 'text-indigo-400'}`} />
+                    <Folder className={`w-4 h-4 ${isSelected ? 'text-black' : 'text-[#3ea6ff]'}`} />
                     <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-md ${
-                      isSelected ? 'bg-white/20 text-white' : 'bg-slate-950 text-slate-400 border border-slate-800'
+                      isSelected ? 'bg-black/20 text-black' : 'bg-[#181818] text-[#3ea6ff] border border-[#272727]'
                     }`}>
                       {count} items
                     </span>
                   </div>
                   <div className="font-bold text-xs truncate">{col.name}</div>
-                  <div className={`text-[10px] truncate mt-0.5 ${isSelected ? 'text-indigo-100' : 'text-slate-400'}`}>
+                  <div className={`text-[10px] truncate mt-0.5 ${isSelected ? 'text-black/80' : 'text-[#aaaaaa]'}`}>
                     {col.description || 'Playlist Collection'}
                   </div>
                 </button>

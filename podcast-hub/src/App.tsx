@@ -251,9 +251,7 @@ export default function App() {
     }
   };
 
-  const [theme, setTheme] = useState<ThemeMode>(() => {
-    return (localStorage.getItem('podsummarizer_theme') as ThemeMode) || 'light';
-  });
+  const [theme, setTheme] = useState<ThemeMode>('dark');
 
   const [currentTab, setCurrentTab] = useState<ViewTab>('dashboard');
   const [selectedPodcast, setSelectedPodcast] = useState<PodcastItem | null>(null);
@@ -638,13 +636,7 @@ export default function App() {
   };
 
   return (
-    <div
-      className={`min-h-screen font-sans antialiased selection:bg-indigo-500 selection:text-white flex flex-col justify-between transition-colors duration-200 ${
-        theme === 'light'
-          ? 'bg-slate-50 text-slate-800'
-          : 'bg-slate-950 text-slate-100'
-      }`}
-    >
+    <div className="min-h-screen font-sans antialiased bg-[#0f0f0f] text-[#f1f1f1] flex flex-col justify-between selection:bg-[#3ea6ff] selection:text-black">
       {/* Top Navbar */}
       <Navbar
         currentTab={currentTab}

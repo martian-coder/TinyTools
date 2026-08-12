@@ -187,18 +187,18 @@ export const YouTubeVideoCard: React.FC<YouTubeVideoCardProps> = ({
                 disabled={isImporting}
                 className={`px-3 py-1 rounded-full text-[11px] font-bold transition-all cursor-pointer flex items-center gap-1 ${
                   video.isImported
-                    ? 'bg-emerald-600 text-white'
+                    ? 'bg-[#272727] hover:bg-[#3f3f3f] text-[#f1f1f1] border border-[#3f3f3f]'
                     : 'bg-[#3ea6ff] hover:bg-[#2697ff] text-black font-extrabold shadow-md'
                 }`}
               >
                 {isImporting ? (
                   <>
-                    <div className="w-3 h-3 border-2 border-black border-t-transparent rounded-full animate-spin" />
+                    <div className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" />
                     <span>Analyzing...</span>
                   </>
                 ) : video.isImported ? (
                   <>
-                    <Check className="w-3 h-3" />
+                    <Check className="w-3 h-3 text-emerald-400" />
                     <span>View Notes</span>
                   </>
                 ) : (
