@@ -3,6 +3,7 @@ import { PodcastItem, ViewTab, PodcastStatus, ThemeMode, SavedCollection, UserPr
 import { INITIAL_PODCASTS } from './data/initialPodcasts';
 import { resolveGoogleRedirectResult } from './lib/auth';
 import { Navbar } from './components/Navbar';
+import { Sidebar } from './components/Sidebar';
 import { GoogleSignInCard } from './components/GoogleSignInCard';
 import { LibraryView } from './components/LibraryView';
 import { PodcastCard } from './components/PodcastCard';
@@ -252,6 +253,7 @@ export default function App() {
   };
 
   const [theme, setTheme] = useState<ThemeMode>('light');
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   const [currentTab, setCurrentTab] = useState<ViewTab>('dashboard');
   const [selectedPodcast, setSelectedPodcast] = useState<PodcastItem | null>(null);
@@ -636,7 +638,7 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen font-sans antialiased bg-[#f8fafc] text-slate-900 flex flex-col justify-between selection:bg-[#6200ea] selection:text-white">
+    <div className="min-h-screen font-sans antialiased bg-[#f8fafc] text-slate-900 flex flex-col justify-between selection:bg-sky-500 selection:text-white">
       {/* Top Navbar */}
       <Navbar
         currentTab={currentTab}
@@ -646,6 +648,7 @@ export default function App() {
         }}
         onOpenImport={() => setIsImportOpen(true)}
         onOpenLoginModal={() => setShowGlobalLoginModal(true)}
+        onToggleSidebar={() => setIsSidebarOpen((prev) => !prev)}
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
         theme={theme}
@@ -653,8 +656,22 @@ export default function App() {
         stats={stats}
       />
 
-      {/* Main Container */}
-      <main className="max-w-7xl w-full mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8 flex-1">
+      {/* Main Side-by-Side Glance Dashboard Layout */}
+      <div className="flex-1 flex w-full max-w-7xl mx-auto items-start">
+        {/* Left Vertical Navigation Sidebar (Glance Design Template) */}
+        <Sidebar
+          currentTab={currentTab}
+          setCurrentTab={(tab) => {
+            if (tab !== 'detail') setSelectedPodcast(null);
+            setCurrentTab(tab);
+          }}
+          stats={stats}
+          isOpen={isSidebarOpen}
+          onCloseMobile={() => setIsSidebarOpen(false)}
+        />
+
+        {/* Main Content View Container */}
+        <main className="flex-1 min-w-0 px-3 sm:px-6 lg:px-8 py-4 sm:py-6">
         {/* VIEW 1: LIBRARY & DASHBOARD */}
         {currentTab === 'dashboard' && (
           <LibraryView
@@ -793,6 +810,7 @@ export default function App() {
           />
         )}
       </main>
+      </div>
 
       {/* Import Modal */}
       <ImportModal

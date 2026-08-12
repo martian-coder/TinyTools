@@ -20,6 +20,7 @@ import {
   X,
   Sparkles,
   ExternalLink,
+  Menu,
 } from 'lucide-react';
 
 interface NavbarProps {
@@ -27,6 +28,7 @@ interface NavbarProps {
   setCurrentTab: (tab: ViewTab) => void;
   onOpenImport: () => void;
   onOpenLoginModal?: () => void;
+  onToggleSidebar?: () => void;
   searchQuery: string;
   setSearchQuery: (q: string) => void;
   theme: ThemeMode;
@@ -44,6 +46,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   setCurrentTab,
   onOpenImport,
   onOpenLoginModal,
+  onToggleSidebar,
   searchQuery,
   setSearchQuery,
   theme,
@@ -109,24 +112,35 @@ export const Navbar: React.FC<NavbarProps> = ({
     <header className="sticky top-0 z-30 bg-white/95 backdrop-blur-xl border-b border-slate-200 text-slate-800 transition-colors duration-300 shadow-xs">
       <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-14 sm:h-16 gap-2 sm:gap-4">
-          {/* Logo & App Title */}
-          <div
-            className="flex items-center gap-2 sm:gap-3 cursor-pointer select-none shrink-0"
-            onClick={() => setCurrentTab('dashboard')}
-          >
-            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-sky-500 flex items-center justify-center text-white shadow-md shadow-sky-500/25 hover:scale-105 transition-all shrink-0">
-              <Tv className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
-            </div>
-            <div>
-              <h1 className="text-sm sm:text-lg font-extrabold tracking-tight text-slate-900 flex items-center gap-1.5 sm:gap-2">
-                PodSummarizer{' '}
-                <span className="text-[9px] sm:text-[10px] px-2 py-0.5 rounded-md bg-sky-50 text-sky-700 border border-sky-200 font-bold uppercase tracking-wider">
-                  Glance Executive
-                </span>
-              </h1>
-              <p className="text-xs text-slate-500 hidden md:block font-medium">
-                Learning &amp; AI Monetization Intelligence
-              </p>
+          {/* Mobile Menu & Logo Title */}
+          <div className="flex items-center gap-2 select-none shrink-0">
+            {onToggleSidebar && (
+              <button
+                onClick={onToggleSidebar}
+                className="lg:hidden p-2 rounded-lg bg-sky-50 text-sky-700 hover:bg-sky-100 border border-sky-200 transition-colors"
+                title="Toggle Left Menu"
+              >
+                <Menu className="w-4 h-4 text-sky-700" />
+              </button>
+            )}
+            <div
+              className="flex items-center gap-2 sm:gap-3 cursor-pointer"
+              onClick={() => setCurrentTab('dashboard')}
+            >
+              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-sky-500 flex items-center justify-center text-white shadow-md shadow-sky-500/25 hover:scale-105 transition-all shrink-0">
+                <Tv className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
+              </div>
+              <div>
+                <h1 className="text-sm sm:text-lg font-extrabold tracking-tight text-slate-900 flex items-center gap-1.5 sm:gap-2">
+                  PodSummarizer{' '}
+                  <span className="text-[9px] sm:text-[10px] px-2 py-0.5 rounded-md bg-sky-50 text-sky-700 border border-sky-200 font-bold uppercase tracking-wider">
+                    Glance Executive
+                  </span>
+                </h1>
+                <p className="text-xs text-slate-500 hidden md:block font-medium">
+                  Learning &amp; AI Monetization Intelligence
+                </p>
+              </div>
             </div>
           </div>
 
