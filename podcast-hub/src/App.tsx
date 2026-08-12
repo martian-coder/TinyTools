@@ -259,6 +259,7 @@ export default function App() {
   const [selectedPodcast, setSelectedPodcast] = useState<PodcastItem | null>(null);
   const [isImportOpen, setIsImportOpen] = useState(false);
   const [isImportingFromYT, setIsImportingFromYT] = useState(false);
+  const [showGlobalLoginModal, setShowGlobalLoginModal] = useState(false);
 
   // Filters for Library
   const [searchQuery, setSearchQuery] = useState('');
@@ -652,6 +653,7 @@ export default function App() {
           setCurrentTab(tab);
         }}
         onOpenImport={() => setIsImportOpen(true)}
+        onOpenLoginModal={() => setShowGlobalLoginModal(true)}
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
         theme={theme}
@@ -806,6 +808,15 @@ export default function App() {
         onClose={() => setIsImportOpen(false)}
         onAddPodcast={handleAddPodcast}
       />
+
+      {/* Global Sign In Modal */}
+      {showGlobalLoginModal && (
+        <GoogleSignInCard
+          isModal={true}
+          onClose={() => setShowGlobalLoginModal(false)}
+          onSuccess={() => setShowGlobalLoginModal(false)}
+        />
+      )}
 
       {/* Footer */}
       <footer className="bg-slate-950 dark:bg-slate-950 light:bg-slate-200 border-t border-slate-800 dark:border-slate-800 light:border-slate-300 py-6 text-slate-500 light:text-slate-600 text-xs">
