@@ -1,0 +1,91 @@
+@import "tailwindcss";
+
+@layer base {
+  body {
+    @apply bg-[#0f0f0f] text-[#f1f1f1] antialiased transition-colors duration-300 selection:bg-red-600 selection:text-white;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  }
+
+  * {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+/* YouTube Dark Theme Palette Utilities */
+.yt-bg-base {
+  background-color: #0f0f0f;
+}
+
+.yt-bg-paper {
+  background-color: #181818;
+}
+
+.yt-bg-card {
+  background-color: #212121;
+}
+
+.yt-bg-hover {
+  background-color: #272727;
+}
+
+.yt-border {
+  border-color: #272727;
+}
+
+.yt-border-light {
+  border-color: #3f3f3f;
+}
+
+.yt-text-primary {
+  color: #f1f1f1;
+}
+
+.yt-text-secondary {
+  color: #aaaaaa;
+}
+
+.yt-text-muted {
+  color: #717171;
+}
+
+/* YouTube Chips & Buttons */
+.yt-chip {
+  @apply px-3.5 py-1.5 rounded-full text-xs font-semibold bg-[#272727] hover:bg-[#3f3f3f] text-[#f1f1f1] border border-transparent transition-all cursor-pointer whitespace-nowrap shrink-0;
+}
+
+.yt-chip-active {
+  @apply bg-white text-black font-bold shadow-md hover:bg-slate-200 border-transparent;
+}
+
+.yt-btn-primary {
+  @apply bg-red-600 hover:bg-red-700 text-white font-bold px-4 py-2 rounded-full text-xs transition-all shadow-md cursor-pointer flex items-center justify-center gap-2;
+}
+
+.yt-btn-secondary {
+  @apply bg-[#272727] hover:bg-[#3f3f3f] text-[#f1f1f1] border border-[#3f3f3f] font-semibold px-3.5 py-2 rounded-full text-xs transition-all cursor-pointer flex items-center justify-center gap-2;
+}
+
+/* Custom scrollbars */
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: #0f0f0f;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #3f3f3f;
+  border-radius: 9999px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #555555;
+}

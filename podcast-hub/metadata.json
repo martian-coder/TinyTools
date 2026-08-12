@@ -1,0 +1,6 @@
+{
+  "name": "Podcast Learning & Monetization Hub",
+  "description": "An expert AI-powered dashboard to summarize podcasts into short & detailed insights, extract business & monetization opportunities, explore ethics & discipline, and track learning progress across multiple sources.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
