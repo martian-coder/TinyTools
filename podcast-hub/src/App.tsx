@@ -656,8 +656,8 @@ export default function App() {
         stats={stats}
       />
 
-      {/* Main Side-by-Side Glance Dashboard Layout */}
-      <div className="flex-1 flex w-full max-w-7xl mx-auto items-start">
+      {/* Main Side-by-Side Glance Dashboard Layout (Full Screen Width) */}
+      <div className="flex-1 flex w-full items-start">
         {/* Left Vertical Navigation Sidebar (Glance Design Template) */}
         <Sidebar
           currentTab={currentTab}
@@ -830,7 +830,7 @@ export default function App() {
 
       {/* Footer */}
       <footer className="bg-slate-950 dark:bg-slate-950 light:bg-slate-200 border-t border-slate-800 dark:border-slate-800 light:border-slate-300 py-6 text-slate-500 light:text-slate-600 text-xs">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="w-full px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
             <Sparkles className="w-4 h-4 text-indigo-400" />
             <span className="font-medium dark:text-slate-300 light:text-slate-800">

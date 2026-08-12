@@ -9,14 +9,10 @@ import {
   Share2,
   Bot,
   User,
-  Sparkles,
-  BookOpen,
   Zap,
-  ChevronRight,
-  BarChart3,
-  Flame,
   Layers,
   X,
+  Compass,
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -40,7 +36,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 }) => {
   const navItems = [
     {
-      category: 'MAIN NAVIGATION',
+      category: 'NAVIGATION',
       items: [
         {
           id: 'dashboard' as ViewTab,
@@ -54,7 +50,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           label: 'Watch & Search YouTube',
           icon: Tv,
           badge: 'Live',
-          badgeColor: 'bg-red-100 text-red-600 font-bold',
+          badgeColor: 'bg-red-100 text-red-600 font-semibold',
         },
       ],
     },
@@ -114,58 +110,43 @@ export const Sidebar: React.FC<SidebarProps> = ({
       {/* Mobile Backdrop */}
       {isOpen && (
         <div
-          className="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-40 lg:hidden"
+          className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-40 lg:hidden"
           onClick={onCloseMobile}
         />
       )}
 
-      {/* Glance Left Sidebar Panel */}
+      {/* Glance Light Soft Grey Sidebar Panel */}
       <aside
-        className={`fixed lg:sticky top-0 left-0 z-40 h-screen w-64 xl:w-72 bg-white border-r border-slate-200 flex flex-col justify-between transition-transform duration-300 ease-in-out shrink-0 select-none ${
+        className={`fixed lg:sticky top-0 left-0 z-40 h-screen w-64 xl:w-72 bg-[#f3f4f6] border-r border-slate-200 flex flex-col justify-between transition-transform duration-300 ease-in-out shrink-0 select-none ${
           isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
         }`}
       >
         <div className="flex flex-col h-full overflow-y-auto custom-scrollbar">
-          {/* Sidebar Top Brand Header */}
-          <div className="p-4 border-b border-slate-200 flex items-center justify-between bg-slate-50/50">
-            <div
-              className="flex items-center gap-2.5 cursor-pointer"
-              onClick={() => {
-                setCurrentTab('dashboard');
-                if (onCloseMobile) onCloseMobile();
-              }}
-            >
-              <div className="w-9 h-9 rounded-lg bg-sky-500 flex items-center justify-center text-white shadow-md shadow-sky-500/25 border border-sky-400 shrink-0">
-                <Tv className="w-5 h-5 fill-white" />
-              </div>
-              <div>
-                <h2 className="text-base font-extrabold text-slate-900 tracking-tight leading-none flex items-center gap-1.5">
-                  PodSummarizer
-                </h2>
-                <span className="text-[10px] text-sky-600 font-bold tracking-wider uppercase">
-                  Glance Admin Panel
-                </span>
-              </div>
+          {/* Sidebar Top Section Label (Removed Repeated App Title) */}
+          <div className="p-3.5 border-b border-slate-200/80 flex items-center justify-between bg-[#e5e7eb]/40 text-slate-500 text-xs font-medium font-mono">
+            <div className="flex items-center gap-2 text-slate-600">
+              <Compass className="w-4 h-4 text-sky-600" />
+              <span className="font-semibold uppercase tracking-wider text-[11px]">Menu Navigation</span>
             </div>
 
             {/* Mobile Close Button */}
             <button
               onClick={onCloseMobile}
-              className="lg:hidden p-1 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100"
+              className="lg:hidden p-1 rounded-md text-slate-400 hover:text-slate-700 hover:bg-slate-200/70"
             >
-              <X className="w-5 h-5" />
+              <X className="w-4 h-4" />
             </button>
           </div>
 
-          {/* Navigation Links Grouped */}
-          <div className="p-3 space-y-6 flex-1">
+          {/* Navigation Links Grouped with Clean Easy-To-Read Non-Bold Fonts */}
+          <div className="p-3 space-y-5 flex-1">
             {navItems.map((group, groupIdx) => (
-              <div key={groupIdx} className="space-y-1.5">
-                <h3 className="px-3 text-[10px] font-extrabold text-slate-400 uppercase tracking-wider font-mono">
+              <div key={groupIdx} className="space-y-1">
+                <h3 className="px-3 text-[10px] font-semibold text-slate-400 uppercase tracking-widest font-mono">
                   {group.category}
                 </h3>
 
-                <div className="space-y-1">
+                <div className="space-y-0.5 pt-0.5">
                   {group.items.map((item) => {
                     const Icon = item.icon;
                     const isActive = currentTab === item.id;
@@ -177,16 +158,16 @@ export const Sidebar: React.FC<SidebarProps> = ({
                           setCurrentTab(item.id);
                           if (onCloseMobile) onCloseMobile();
                         }}
-                        className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-xs font-bold transition-all cursor-pointer group ${
+                        className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium transition-all cursor-pointer group ${
                           isActive
-                            ? 'bg-sky-500 text-white shadow-sm shadow-sky-500/25 border border-sky-400'
-                            : 'text-slate-700 hover:bg-sky-50 hover:text-sky-900 border border-transparent'
+                            ? 'bg-sky-500 text-white shadow-2xs font-semibold border border-sky-400'
+                            : 'text-slate-600 hover:bg-slate-200/60 hover:text-slate-900 border border-transparent'
                         }`}
                       >
                         <div className="flex items-center gap-2.5 min-w-0">
                           <Icon
-                            className={`w-4 h-4 shrink-0 transition-transform group-hover:scale-110 ${
-                              isActive ? 'text-white' : 'text-slate-500 group-hover:text-sky-600'
+                            className={`w-4 h-4 shrink-0 transition-transform group-hover:scale-105 ${
+                              isActive ? 'text-white' : 'text-slate-400 group-hover:text-sky-600'
                             }`}
                           />
                           <span className="truncate">{item.label}</span>
@@ -194,10 +175,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
                         {item.badge && (
                           <span
-                            className={`text-[10px] px-2 py-0.5 rounded-md font-extrabold shrink-0 ml-1 ${
+                            className={`text-[10px] px-2 py-0.5 rounded-md font-semibold shrink-0 ml-1 ${
                               isActive
                                 ? 'bg-white/20 text-white'
-                                : item.badgeColor || 'bg-slate-100 text-slate-600'
+                                : item.badgeColor || 'bg-slate-200/70 text-slate-600'
                             }`}
                           >
                             {item.badge}
@@ -212,17 +193,17 @@ export const Sidebar: React.FC<SidebarProps> = ({
           </div>
 
           {/* Sidebar Footer Widget */}
-          <div className="p-3.5 m-3 rounded-xl bg-sky-50 border border-sky-100 space-y-2">
-            <div className="flex items-center gap-2 text-sky-900 text-xs font-bold">
-              <Zap className="w-4 h-4 text-sky-600 fill-sky-600" />
+          <div className="p-3 m-3 rounded-lg bg-white border border-slate-200/80 shadow-2xs space-y-1.5">
+            <div className="flex items-center gap-2 text-slate-800 text-xs font-semibold">
+              <Zap className="w-3.5 h-3.5 text-sky-600 fill-sky-600" />
               <span>Podcast Intelligence</span>
             </div>
-            <p className="text-[11px] text-slate-600 font-medium leading-relaxed">
+            <p className="text-[11px] text-slate-500 font-normal leading-relaxed">
               Auto-summarized transcripts &amp; monetization blueprints.
             </p>
-            <div className="pt-1 flex items-center justify-between text-[11px] font-bold text-sky-700 border-t border-sky-200/60">
+            <div className="pt-1 flex items-center justify-between text-[11px] font-medium text-slate-600 border-t border-slate-100">
               <span>Saved Time</span>
-              <span className="text-slate-900">{stats.hoursSaved} hrs</span>
+              <span className="text-slate-900 font-semibold">{stats.hoursSaved} hrs</span>
             </div>
           </div>
         </div>
