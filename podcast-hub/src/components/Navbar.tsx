@@ -106,7 +106,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   };
 
   return (
-    <header className="sticky top-0 z-30 bg-[#1d2130]/95 backdrop-blur-xl border-b border-[#2d3245] text-[#f1f5f9] transition-colors duration-300">
+    <header className="sticky top-0 z-30 bg-white/95 backdrop-blur-xl border-b border-slate-200 text-slate-800 transition-colors duration-300 shadow-xs">
       <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-14 sm:h-16 gap-2 sm:gap-4">
           {/* Logo & App Title */}
@@ -114,49 +114,49 @@ export const Navbar: React.FC<NavbarProps> = ({
             className="flex items-center gap-2 sm:gap-3 cursor-pointer select-none shrink-0"
             onClick={() => setCurrentTab('dashboard')}
           >
-            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-2xl bg-gradient-to-r from-[#5b51d8] to-[#00c6ff] flex items-center justify-center text-white shadow-lg shadow-[#5b51d8]/30 hover:scale-105 transition-all shrink-0">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-2xl bg-[#6200ea] flex items-center justify-center text-white shadow-lg shadow-indigo-500/25 hover:scale-105 transition-all shrink-0">
               <Tv className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
             </div>
             <div>
-              <h1 className="text-sm sm:text-lg font-black tracking-tight text-white flex items-center gap-1.5 sm:gap-2">
+              <h1 className="text-sm sm:text-lg font-extrabold tracking-tight text-slate-900 flex items-center gap-1.5 sm:gap-2">
                 PodSummarizer{' '}
-                <span className="text-[9px] sm:text-[10px] px-2 py-0.5 rounded-full bg-[#5b51d8]/20 text-[#00c6ff] border border-[#5b51d8]/40 font-bold uppercase tracking-wider">
-                  Glance Executive
+                <span className="text-[9px] sm:text-[10px] px-2 py-0.5 rounded-full bg-[#6200ea]/10 text-[#6200ea] border border-[#6200ea]/20 font-bold uppercase tracking-wider">
+                  Glance Design
                 </span>
               </h1>
-              <p className="text-xs text-[#94a3b8] hidden md:block font-medium">
+              <p className="text-xs text-slate-500 hidden md:block font-medium">
                 Learning &amp; AI Monetization Intelligence
               </p>
             </div>
           </div>
 
           {/* Quick Metrics Badges */}
-          <div className="hidden xl:flex items-center gap-3 text-xs font-medium text-[#94a3b8] bg-[#222736] px-3.5 py-1.5 rounded-xl border border-[#2d3245]">
+          <div className="hidden xl:flex items-center gap-3 text-xs font-medium text-slate-600 bg-slate-50 px-3.5 py-1.5 rounded-xl border border-slate-200">
             <div className="flex items-center gap-1.5" title="Summarized Podcasts">
-              <BookOpen className="w-3.5 h-3.5 text-[#5b51d8]" />
+              <BookOpen className="w-3.5 h-3.5 text-[#6200ea]" />
               <span>
-                <strong className="font-semibold text-white">{stats.totalPodcasts}</strong> Podcasts
+                <strong className="font-semibold text-slate-900">{stats.totalPodcasts}</strong> Podcasts
               </span>
             </div>
-            <div className="h-3 w-px bg-[#2d3245]" />
+            <div className="h-3 w-px bg-slate-300" />
             <div className="flex items-center gap-1.5" title="Monetization Opportunities">
-              <Lightbulb className="w-3.5 h-3.5 text-[#f39c12]" />
+              <Lightbulb className="w-3.5 h-3.5 text-[#f59e0b]" />
               <span>
-                <strong className="font-semibold text-white">{stats.totalMonetizationIdeas}</strong> Ideas
+                <strong className="font-semibold text-slate-900">{stats.totalMonetizationIdeas}</strong> Ideas
               </span>
             </div>
-            <div className="h-3 w-px bg-[#2d3245]" />
+            <div className="h-3 w-px bg-slate-300" />
             <div className="flex items-center gap-1.5" title="Estimated Listening Hours Saved">
-              <Zap className="w-3.5 h-3.5 text-[#2ecc71]" />
+              <Zap className="w-3.5 h-3.5 text-[#10b981]" />
               <span>
-                <strong className="font-semibold text-white">{stats.hoursSaved}h</strong> Saved
+                <strong className="font-semibold text-slate-900">{stats.hoursSaved}h</strong> Saved
               </span>
             </div>
           </div>
 
           {/* Search Bar - Desktop Only */}
           <div className="hidden sm:block flex-1 min-w-0 max-w-xs sm:max-w-md relative">
-            <Search className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#64748b] absolute left-2.5 sm:left-3.5 top-1/2 -translate-y-1/2" />
+            <Search className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-slate-400 absolute left-2.5 sm:left-3.5 top-1/2 -translate-y-1/2" />
             <input
               type="text"
               value={searchQuery}
@@ -168,12 +168,12 @@ export const Navbar: React.FC<NavbarProps> = ({
                 }
               }}
               placeholder="Search YouTube podcasts, hosts, product ideas..."
-              className="w-full bg-[#141721] border border-[#2d3245] rounded-xl pl-8 sm:pl-10 pr-8 sm:pr-10 py-1.5 sm:py-2 text-xs sm:text-sm text-[#f1f5f9] placeholder-[#64748b] focus:outline-none focus:border-[#00c6ff] font-normal"
+              className="w-full bg-slate-100 border border-slate-200 rounded-xl pl-8 sm:pl-10 pr-8 sm:pr-10 py-1.5 sm:py-2 text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-[#6200ea] font-normal"
             />
             {searchQuery && (
               <button
                 onClick={() => setSearchQuery('')}
-                className="absolute right-2 sm:right-3 top-1/2 -translate-y-1/2 text-[10px] sm:text-xs text-[#94a3b8] hover:text-white font-semibold"
+                className="absolute right-2 sm:right-3 top-1/2 -translate-y-1/2 text-[10px] sm:text-xs text-slate-500 hover:text-slate-900 font-semibold"
               >
                 Clear
               </button>
@@ -191,7 +191,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                     setShowYtLoginModal(true);
                   }
                 }}
-                className="flex items-center gap-1.5 bg-gradient-to-r from-[#5b51d8] to-[#00c6ff] hover:opacity-90 text-white px-4 py-1.5 rounded-xl text-xs font-extrabold shadow-md shadow-[#5b51d8]/30 transition-all cursor-pointer shrink-0"
+                className="flex items-center gap-1.5 bg-[#6200ea] hover:bg-[#5200c4] text-white px-4 py-1.5 rounded-xl text-xs font-bold shadow-md shadow-indigo-500/20 transition-all cursor-pointer shrink-0"
                 title="Sign in with YouTube"
               >
                 <Tv className="w-3.5 h-3.5 text-white shrink-0" />
@@ -199,11 +199,11 @@ export const Navbar: React.FC<NavbarProps> = ({
                 <span className="sm:hidden text-[11px]">YouTube</span>
               </button>
             ) : (
-              <div className="flex items-center gap-1.5 bg-[#212121] border border-[#272727] pl-1.5 pr-3 py-1 rounded-full shadow-xs shrink-0">
+              <div className="flex items-center gap-1.5 bg-slate-100 border border-slate-200 pl-1.5 pr-3 py-1 rounded-xl shadow-xs shrink-0">
                 <img
                   src={ytProfile.avatar}
                   alt={ytProfile.name}
-                  className="w-6 h-6 rounded-full object-cover border border-[#3ea6ff] cursor-pointer shrink-0"
+                  className="w-6 h-6 rounded-full object-cover border border-[#6200ea] cursor-pointer shrink-0"
                   onClick={() => {
                     if (onOpenLoginModal) onOpenLoginModal();
                     else setCurrentTab('yt_search');
@@ -211,13 +211,13 @@ export const Navbar: React.FC<NavbarProps> = ({
                 />
                 <button
                   onClick={() => setCurrentTab('yt_search')}
-                  className="text-xs font-bold text-white hover:text-[#3ea6ff] transition-colors hidden md:block"
+                  className="text-xs font-bold text-slate-800 hover:text-[#6200ea] transition-colors hidden md:block"
                 >
                   {ytProfile.name}
                 </button>
                 <button
                   onClick={handleSignOut}
-                  className="text-slate-400 hover:text-red-400 p-0.5 ml-1"
+                  className="text-slate-400 hover:text-red-500 p-0.5 ml-1"
                   title="Sign Out"
                 >
                   <X className="w-3 h-3" />
@@ -227,8 +227,8 @@ export const Navbar: React.FC<NavbarProps> = ({
           </div>
         </div>
 
-        {/* Navigation Tabs Bar (YouTube Chips Pattern) */}
-        <div className="flex items-center gap-2 overflow-x-auto py-2.5 scrollbar-none border-t border-[#272727] text-xs sm:text-sm -mx-3 px-3 sm:mx-0 sm:px-0">
+        {/* Navigation Tabs Bar (Glance Design Light Chips Pattern) */}
+        <div className="flex items-center gap-2 overflow-x-auto py-2.5 scrollbar-none border-t border-slate-200 text-xs sm:text-sm -mx-3 px-3 sm:mx-0 sm:px-0">
           <button
             onClick={() => setCurrentTab('dashboard')}
             className={`yt-chip ${currentTab === 'dashboard' ? 'yt-chip-active' : ''}`}

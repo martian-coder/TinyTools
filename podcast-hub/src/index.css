@@ -1,9 +1,25 @@
+@import url('https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,500;0,600;0,700;1,400;1,600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap');
 @import "tailwindcss";
 
 @layer base {
+  :root {
+    --font-claude-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --font-claude-serif: 'Lora', Georgia, Cambria, 'Times New Roman', Times, serif;
+    --font-claude-mono: 'JetBrains Mono', monospace;
+  }
+
   body {
-    @apply bg-[#141721] text-[#f1f5f9] antialiased transition-colors duration-300 selection:bg-[#00c6ff] selection:text-black;
+    font-family: var(--font-claude-sans);
+    @apply bg-[#f8fafc] text-slate-900 antialiased transition-colors duration-300 selection:bg-[#6200ea] selection:text-white;
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  }
+
+  h1, h2, h3, .font-serif-claude {
+    font-family: var(--font-claude-serif);
+  }
+
+  .font-mono-claude {
+    font-family: var(--font-claude-mono);
   }
 
   * {
@@ -12,72 +28,75 @@
   }
 }
 
-/* Glance Design Dashboard Palette & Cards */
+/* Glance Design Dashboard Light Theme Palette & Cards */
 .yt-bg-base {
-  background-color: #141721;
+  background-color: #f8fafc;
 }
 
 .yt-bg-paper {
-  background-color: #1d2130;
+  background-color: #ffffff;
 }
 
 .yt-bg-card {
-  background-color: #222736;
+  background-color: #ffffff;
 }
 
 .yt-bg-hover {
-  background-color: #2a3042;
+  background-color: #f1f5f9;
 }
 
 .yt-border {
-  border-color: #2d3245;
+  border-color: #e2e8f0;
 }
 
 .yt-border-light {
-  border-color: #3b4259;
+  border-color: #cbd5e1;
 }
 
 .yt-text-primary {
-  color: #f1f5f9;
+  color: #0f172a;
 }
 
 .yt-text-secondary {
-  color: #94a3b8;
+  color: #475569;
 }
 
 .yt-text-muted {
   color: #64748b;
 }
 
-/* Glance Blue / Cyan Accent Utilities */
+/* Glance Primary Accent Utilities */
 .yt-text-blue {
-  color: #00c6ff;
+  color: #6200ea;
 }
 
 .yt-bg-blue {
-  background-color: #00c6ff;
+  background-color: #6200ea;
 }
 
-/* Glance Chips & Buttons */
+/* Glance Light Mode Chips & Buttons */
 .yt-chip {
-  @apply px-4 py-1.5 rounded-xl text-xs font-semibold bg-[#222736] hover:bg-[#2a3042] text-[#94a3b8] hover:text-[#f1f5f9] border border-[#2d3245] transition-all cursor-pointer whitespace-nowrap shrink-0 shadow-xs;
+  @apply px-4 py-1.5 rounded-xl text-xs font-semibold bg-white hover:bg-slate-100 text-slate-700 hover:text-slate-900 border border-slate-200 transition-all cursor-pointer whitespace-nowrap shrink-0 shadow-xs;
+  font-family: var(--font-claude-sans);
 }
 
 .yt-chip-active {
-  @apply bg-gradient-to-r from-[#5b51d8] to-[#00c6ff] text-white font-extrabold shadow-md shadow-[#5b51d8]/25 border-transparent hover:opacity-95;
+  @apply bg-[#6200ea] text-white font-extrabold shadow-md shadow-indigo-500/20 border-transparent hover:bg-[#5200c4];
 }
 
 .yt-btn-primary {
-  @apply bg-gradient-to-r from-[#5b51d8] to-[#00c6ff] hover:from-[#4b41c8] hover:to-[#00b4ea] text-white font-bold px-4 py-2 rounded-xl text-xs transition-all shadow-md shadow-[#5b51d8]/20 cursor-pointer flex items-center justify-center gap-2;
+  @apply bg-[#6200ea] hover:bg-[#5200c4] text-white font-bold px-4 py-2 rounded-xl text-xs transition-all shadow-md shadow-indigo-500/20 cursor-pointer flex items-center justify-center gap-2;
+  font-family: var(--font-claude-sans);
 }
 
 .yt-btn-secondary {
-  @apply bg-[#222736] hover:bg-[#2a3042] text-[#f1f5f9] border border-[#2d3245] font-semibold px-3.5 py-2 rounded-xl text-xs transition-all cursor-pointer flex items-center justify-center gap-2;
+  @apply bg-white hover:bg-slate-100 text-slate-800 border border-slate-200 font-semibold px-3.5 py-2 rounded-xl text-xs transition-all cursor-pointer flex items-center justify-center gap-2;
+  font-family: var(--font-claude-sans);
 }
 
 /* Glance Signature Cards */
 .glance-card {
-  @apply bg-[#222736] border border-[#2d3245] rounded-2xl shadow-md transition-all hover:border-[#3b4259];
+  @apply bg-white border border-slate-200 rounded-2xl shadow-sm transition-all hover:border-slate-300 hover:shadow-md;
 }
 
 /* Custom scrollbars */
@@ -94,12 +113,12 @@
   height: 6px;
 }
 .custom-scrollbar::-webkit-scrollbar-track {
-  background: #141721;
+  background: #f8fafc;
 }
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background: #2d3245;
+  background: #cbd5e1;
   border-radius: 9999px;
 }
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: #3b4259;
+  background: #94a3b8;
 }

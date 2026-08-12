@@ -251,7 +251,7 @@ export default function App() {
     }
   };
 
-  const [theme, setTheme] = useState<ThemeMode>('dark');
+  const [theme, setTheme] = useState<ThemeMode>('light');
 
   const [currentTab, setCurrentTab] = useState<ViewTab>('dashboard');
   const [selectedPodcast, setSelectedPodcast] = useState<PodcastItem | null>(null);
@@ -636,7 +636,7 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen font-sans antialiased bg-[#141721] text-[#f1f5f9] flex flex-col justify-between selection:bg-[#00c6ff] selection:text-black">
+    <div className="min-h-screen font-sans antialiased bg-[#f8fafc] text-slate-900 flex flex-col justify-between selection:bg-[#6200ea] selection:text-white">
       {/* Top Navbar */}
       <Navbar
         currentTab={currentTab}

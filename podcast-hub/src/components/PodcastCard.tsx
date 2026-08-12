@@ -35,6 +35,7 @@ export const PodcastCard: React.FC<PodcastCardProps> = ({
         description: podcast.shortSummary,
         isFavorite: podcast.isFavorite,
         isImported: true,
+        channelAvatar: podcast.channelAvatar,
       }}
       groups={knowledgeGroups}
       onAddToGroup={onAddVideoToGroup}

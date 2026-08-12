@@ -89,6 +89,7 @@ export interface PodcastItem {
   bookmarkedTimestamps: string[];
   collections?: string[]; // Collection IDs
   isFavorite?: boolean;
+  channelAvatar?: string;
 }
 
 export interface UserProfile {
