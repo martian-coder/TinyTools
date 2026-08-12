@@ -112,17 +112,7 @@ export const GoogleSignInCard: React.FC<GoogleSignInCardProps> = ({
       await startGoogleSignIn();
     } catch (err: any) {
       setIsLoading(false);
-      // Reassuring instant connection fallback
-      const defaultProf: ConnectedProfile = {
-        name: 'YouTube Creator',
-        handle: '@creator_member',
-        avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=200',
-        email: 'creator@youtube.com',
-      };
-      localStorage.setItem('user_yt_profile', JSON.stringify(defaultProf));
-      window.dispatchEvent(new Event('yt_profile_updated'));
-      setCurrentProfile(defaultProf);
-      if (onSuccess) onSuccess(defaultProf);
+      setError(err?.message || 'Sign-in failed. Please try again.');
     }
   };
 
