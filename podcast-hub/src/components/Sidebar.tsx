@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { ViewTab } from '../types';
 import {
   LayoutDashboard,
@@ -12,8 +12,14 @@ import {
   Zap,
   Layers,
   X,
-  Compass,
+  ChevronRight,
+  ChevronDown,
+  PlusCircle,
+  LogIn,
+  LogOut,
+  Sparkles,
 } from 'lucide-react';
+import { GoogleSignInCard } from './GoogleSignInCard';
 
 interface SidebarProps {
   currentTab: ViewTab;
@@ -25,7 +31,45 @@ interface SidebarProps {
   };
   isOpen?: boolean;
   onCloseMobile?: () => void;
+  onOpenImport?: () => void;
+  onOpenLoginModal?: () => void;
 }
+
+/* ── Nav groups with optional sub-items ──────────────────────────────── */
+const makeNavGroups = (totalIdeas: number) => [
+  {
+    category: 'MAIN',
+    items: [
+      { id: 'dashboard'       as ViewTab, label: 'Dashboard',          icon: LayoutDashboard },
+      {
+        id: 'yt_search'       as ViewTab, label: 'Watch & Search',      icon: Tv,
+        badge: 'Live', badgeTeal: true,
+      },
+    ],
+  },
+  {
+    category: 'AI & TOOLS',
+    items: [
+      { id: 'knowledge_groups' as ViewTab, label: 'Knowledge Groups',  icon: Layers },
+      {
+        id: 'monetization'    as ViewTab, label: 'Monetization Ideas',  icon: Lightbulb,
+        badge: `${totalIdeas}`, badgeAmber: true,
+      },
+      { id: 'ethics'          as ViewTab, label: 'Ethics & Discipline', icon: ShieldCheck },
+      { id: 'content_studio'  as ViewTab, label: 'Content Studio',     icon: Share2 },
+      { id: 'assistant'       as ViewTab, label: 'AI Copilot',          icon: Bot,
+        badge: 'AI', badgeGreen: true,
+      },
+    ],
+  },
+  {
+    category: 'ORGANIZE',
+    items: [
+      { id: 'collections'     as ViewTab, label: 'Playlists',           icon: Folder },
+      { id: 'profile'         as ViewTab, label: 'Profile & Goals',     icon: User },
+    ],
+  },
+];
 
 export const Sidebar: React.FC<SidebarProps> = ({
   currentTab,
@@ -33,181 +77,209 @@ export const Sidebar: React.FC<SidebarProps> = ({
   stats,
   isOpen = false,
   onCloseMobile,
+  onOpenImport,
+  onOpenLoginModal,
 }) => {
-  const navItems = [
-    {
-      category: 'NAVIGATION',
-      items: [
-        {
-          id: 'dashboard' as ViewTab,
-          label: 'Dashboard & Library',
-          icon: LayoutDashboard,
-          badge: `${stats.totalPodcasts}`,
-          badgeColor: 'bg-sky-100 text-sky-700',
-        },
-        {
-          id: 'yt_search' as ViewTab,
-          label: 'Watch & Search YouTube',
-          icon: Tv,
-          badge: 'Live',
-          badgeColor: 'bg-red-100 text-red-600 font-semibold',
-        },
-      ],
-    },
-    {
-      category: 'AI & MONETIZATION',
-      items: [
-        {
-          id: 'knowledge_groups' as ViewTab,
-          label: 'AI Knowledge Groups',
-          icon: Layers,
-        },
-        {
-          id: 'monetization' as ViewTab,
-          label: 'Monetization Ideas',
-          icon: Lightbulb,
-          badge: `${stats.totalMonetizationIdeas}`,
-          badgeColor: 'bg-amber-100 text-amber-700',
-        },
-        {
-          id: 'ethics' as ViewTab,
-          label: 'Ethics & Discipline',
-          icon: ShieldCheck,
-        },
-        {
-          id: 'content_studio' as ViewTab,
-          label: 'Content Studio',
-          icon: Share2,
-        },
-        {
-          id: 'assistant' as ViewTab,
-          label: 'AI Copilot Assistant',
-          icon: Bot,
-          badge: 'AI',
-          badgeColor: 'bg-sky-500 text-white',
-        },
-      ],
-    },
-    {
-      category: 'ORGANIZATION',
-      items: [
-        {
-          id: 'collections' as ViewTab,
-          label: 'Playlists & Collections',
-          icon: Folder,
-        },
-        {
-          id: 'profile' as ViewTab,
-          label: 'My Profile & Goals',
-          icon: User,
-        },
-      ],
-    },
-  ];
+  const navGroups = makeNavGroups(stats.totalMonetizationIdeas);
+
+  /* ── YouTube / Google profile from localStorage ──────────────────── */
+  const [ytProfile, setYtProfile] = useState<{ name: string; handle: string; avatar: string } | null>(() => {
+    try {
+      const saved = localStorage.getItem('user_yt_profile');
+      return saved ? JSON.parse(saved) : null;
+    } catch { return null; }
+  });
+
+  const [showLoginCard, setShowLoginCard] = useState(false);
+
+  useEffect(() => {
+    const onUpdate = () => {
+      try {
+        const saved = localStorage.getItem('user_yt_profile');
+        setYtProfile(saved ? JSON.parse(saved) : null);
+      } catch { setYtProfile(null); }
+    };
+    window.addEventListener('yt_profile_updated', onUpdate);
+    return () => window.removeEventListener('yt_profile_updated', onUpdate);
+  }, []);
+
+  const handleSignOut = () => {
+    setYtProfile(null);
+    localStorage.removeItem('user_yt_profile');
+    window.dispatchEvent(new Event('yt_profile_updated'));
+  };
+
+  const navigate = (tab: ViewTab) => {
+    setCurrentTab(tab);
+    if (onCloseMobile) onCloseMobile();
+  };
+
+  /* ── Item rendering ────────────────────────────────────────────────── */
+  const NavItem = ({ item }: { item: any }) => {
+    const Icon = item.icon;
+    const isActive = currentTab === item.id;
+    return (
+      <button
+        onClick={() => navigate(item.id)}
+        className="w-full flex items-center justify-between px-3 py-[7px] rounded-md text-[13px] font-normal transition-colors duration-100 cursor-pointer"
+        style={
+          isActive
+            ? { background: '#11A888', color: '#fff' }
+            : { color: '#b8c5d6', background: 'transparent' }
+        }
+        onMouseEnter={e => { if (!isActive) { (e.currentTarget as any).style.background = 'rgba(255,255,255,0.07)'; (e.currentTarget as any).style.color = '#fff'; } }}
+        onMouseLeave={e => { if (!isActive) { (e.currentTarget as any).style.background = 'transparent'; (e.currentTarget as any).style.color = '#b8c5d6'; } }}
+      >
+        <div className="flex items-center gap-2.5 min-w-0">
+          <Icon className="w-[15px] h-[15px] shrink-0" style={{ color: isActive ? '#fff' : '#6b84a0', opacity: 0.9 }} />
+          <span className="truncate leading-snug">{item.label}</span>
+        </div>
+        <div className="flex items-center gap-1 shrink-0">
+          {item.badge && (
+            <span
+              className="text-[9px] px-1.5 py-0.5 rounded font-semibold uppercase tracking-wide"
+              style={
+                isActive               ? { background: 'rgba(255,255,255,0.22)', color: '#fff' }
+                : item.badgeTeal       ? { background: '#0C8F8F', color: '#fff' }
+                : item.badgeGreen      ? { background: '#47D378', color: '#fff' }
+                : item.badgeAmber      ? { background: '#d97706', color: '#fff' }
+                : { background: 'rgba(255,255,255,0.12)', color: '#b8c5d6' }
+              }
+            >
+              {item.badge}
+            </span>
+          )}
+          {isActive && <ChevronRight className="w-3 h-3 opacity-50" />}
+        </div>
+      </button>
+    );
+  };
 
   return (
     <>
       {/* Mobile Backdrop */}
       {isOpen && (
-        <div
-          className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-40 lg:hidden"
-          onClick={onCloseMobile}
-        />
+        <div className="fixed inset-0 bg-black/50 z-40 lg:hidden" onClick={onCloseMobile} />
       )}
 
-      {/* Glance Light Soft Grey Sidebar Panel */}
+      {/*
+        Glance Dark Navy Sidebar
+        bg: #2c3349, active: #11A888, hover: rgba(255,255,255,0.07)
+        Sticky below navbar (top: 4rem = 64px), full remaining height
+      */}
       <aside
-        className={`fixed lg:sticky top-0 left-0 z-40 h-screen w-64 xl:w-72 bg-[#f3f4f6] border-r border-slate-200 flex flex-col justify-between transition-transform duration-300 ease-in-out shrink-0 select-none ${
-          isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
-        }`}
+        className={`
+          fixed lg:sticky
+          top-0 lg:top-16
+          left-0 z-40
+          w-60 xl:w-64
+          h-screen lg:h-[calc(100vh-4rem)]
+          flex flex-col
+          shrink-0 select-none
+          transition-transform duration-300 ease-in-out
+          ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+        `}
+        style={{ background: '#2c3349', borderRight: '1px solid rgba(255,255,255,0.06)' }}
       >
-        <div className="flex flex-col h-full overflow-y-auto custom-scrollbar">
-          {/* Sidebar Top Section Label (Removed Repeated App Title) */}
-          <div className="p-3.5 border-b border-slate-200/80 flex items-center justify-between bg-[#e5e7eb]/40 text-slate-500 text-xs font-medium font-mono">
-            <div className="flex items-center gap-2 text-slate-600">
-              <Compass className="w-4 h-4 text-sky-600" />
-              <span className="font-semibold uppercase tracking-wider text-[11px]">Menu Navigation</span>
-            </div>
+        {/* ── Mobile close strip ── */}
+        <div className="flex items-center justify-between px-4 py-3 lg:hidden" style={{ borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
+          <span className="text-white text-sm font-medium">Menu</span>
+          <button onClick={onCloseMobile} className="p-1 rounded hover:bg-white/10 text-white/50 hover:text-white transition-colors">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
 
-            {/* Mobile Close Button */}
+        {/* ── Profile / Sign In block ── */}
+        <div className="px-3 pt-4 pb-3" style={{ borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
+          {ytProfile ? (
+            <div className="flex items-center gap-2.5">
+              <img
+                src={ytProfile.avatar}
+                alt={ytProfile.name}
+                className="w-8 h-8 rounded-full object-cover border-2 shrink-0"
+                style={{ borderColor: '#11A888' }}
+                onError={e => { (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(ytProfile.name)}&background=11A888&color=fff&size=80`; }}
+              />
+              <div className="flex-1 min-w-0">
+                <p className="text-[13px] font-medium text-white truncate leading-none">{ytProfile.name}</p>
+                <p className="text-[11px] mt-0.5 truncate" style={{ color: '#6b84a0' }}>{ytProfile.handle}</p>
+              </div>
+              <button
+                onClick={handleSignOut}
+                title="Sign Out"
+                className="p-1 rounded hover:bg-white/10 transition-colors shrink-0"
+                style={{ color: '#6b84a0' }}
+              >
+                <LogOut className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          ) : (
             <button
-              onClick={onCloseMobile}
-              className="lg:hidden p-1 rounded-md text-slate-400 hover:text-slate-700 hover:bg-slate-200/70"
+              onClick={() => { if (onOpenLoginModal) onOpenLoginModal(); else setShowLoginCard(true); }}
+              className="w-full flex items-center gap-2.5 px-3 py-2 rounded-md text-[13px] font-normal transition-colors cursor-pointer"
+              style={{ background: 'rgba(17,168,136,0.15)', border: '1px solid rgba(17,168,136,0.3)', color: '#47D378' }}
             >
-              <X className="w-4 h-4" />
+              <LogIn className="w-4 h-4 shrink-0" />
+              <span>Sign in with Google</span>
+            </button>
+          )}
+        </div>
+
+        {/* ── Import button ── */}
+        {onOpenImport && (
+          <div className="px-3 pt-3 pb-1">
+            <button
+              onClick={() => { if (onOpenImport) onOpenImport(); if (onCloseMobile) onCloseMobile(); }}
+              className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-md text-[13px] font-medium transition-colors cursor-pointer"
+              style={{ background: '#11A888', color: '#fff' }}
+            >
+              <PlusCircle className="w-4 h-4 shrink-0" />
+              <span>Import Podcast</span>
             </button>
           </div>
+        )}
 
-          {/* Navigation Links Grouped with Clean Easy-To-Read Non-Bold Fonts */}
-          <div className="p-3 space-y-5 flex-1">
-            {navItems.map((group, groupIdx) => (
-              <div key={groupIdx} className="space-y-1">
-                <h3 className="px-3 text-[10px] font-semibold text-slate-400 uppercase tracking-widest font-mono">
-                  {group.category}
-                </h3>
-
-                <div className="space-y-0.5 pt-0.5">
-                  {group.items.map((item) => {
-                    const Icon = item.icon;
-                    const isActive = currentTab === item.id;
-
-                    return (
-                      <button
-                        key={item.id}
-                        onClick={() => {
-                          setCurrentTab(item.id);
-                          if (onCloseMobile) onCloseMobile();
-                        }}
-                        className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium transition-all cursor-pointer group ${
-                          isActive
-                            ? 'bg-sky-500 text-white shadow-2xs font-semibold border border-sky-400'
-                            : 'text-slate-600 hover:bg-slate-200/60 hover:text-slate-900 border border-transparent'
-                        }`}
-                      >
-                        <div className="flex items-center gap-2.5 min-w-0">
-                          <Icon
-                            className={`w-4 h-4 shrink-0 transition-transform group-hover:scale-105 ${
-                              isActive ? 'text-white' : 'text-slate-400 group-hover:text-sky-600'
-                            }`}
-                          />
-                          <span className="truncate">{item.label}</span>
-                        </div>
-
-                        {item.badge && (
-                          <span
-                            className={`text-[10px] px-2 py-0.5 rounded-md font-semibold shrink-0 ml-1 ${
-                              isActive
-                                ? 'bg-white/20 text-white'
-                                : item.badgeColor || 'bg-slate-200/70 text-slate-600'
-                            }`}
-                          >
-                            {item.badge}
-                          </span>
-                        )}
-                      </button>
-                    );
-                  })}
-                </div>
+        {/* ── Scrollable navigation ── */}
+        <div className="flex-1 overflow-y-auto overflow-x-hidden py-3 space-y-4 custom-scrollbar">
+          {navGroups.map((group, gi) => (
+            <div key={gi}>
+              <p className="px-4 mb-1 text-[10px] font-semibold uppercase tracking-widest" style={{ color: '#4a5a72' }}>
+                {group.category}
+              </p>
+              <div className="space-y-px px-2">
+                {group.items.map((item: any) => <NavItem key={item.id} item={item} />)}
               </div>
-            ))}
-          </div>
-
-          {/* Sidebar Footer Widget */}
-          <div className="p-3 m-3 rounded-lg bg-white border border-slate-200/80 shadow-2xs space-y-1.5">
-            <div className="flex items-center gap-2 text-slate-800 text-xs font-semibold">
-              <Zap className="w-3.5 h-3.5 text-sky-600 fill-sky-600" />
-              <span>Podcast Intelligence</span>
             </div>
-            <p className="text-[11px] text-slate-500 font-normal leading-relaxed">
-              Auto-summarized transcripts &amp; monetization blueprints.
-            </p>
-            <div className="pt-1 flex items-center justify-between text-[11px] font-medium text-slate-600 border-t border-slate-100">
-              <span>Saved Time</span>
-              <span className="text-slate-900 font-semibold">{stats.hoursSaved} hrs</span>
+          ))}
+        </div>
+
+        {/* ── Stats footer ── */}
+        <div className="px-3 pb-4">
+          <div className="p-3 rounded-lg space-y-2" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}>
+            <div className="flex items-center gap-2">
+              <Zap className="w-3.5 h-3.5 shrink-0" style={{ color: '#11A888' }} />
+              <span className="text-[12px] font-medium" style={{ color: '#b8c5d6' }}>Intelligence</span>
+            </div>
+            <div className="grid grid-cols-2 gap-x-2 gap-y-1 text-[11px]">
+              <span style={{ color: '#4a5a72' }}>Episodes</span>
+              <span className="text-right font-semibold" style={{ color: '#47D378' }}>{stats.totalPodcasts}</span>
+              <span style={{ color: '#4a5a72' }}>Ideas</span>
+              <span className="text-right font-semibold" style={{ color: '#F7C069' }}>{stats.totalMonetizationIdeas}</span>
+              <span style={{ color: '#4a5a72' }}>Hours saved</span>
+              <span className="text-right font-semibold" style={{ color: '#11A888' }}>{stats.hoursSaved}h</span>
             </div>
           </div>
         </div>
       </aside>
+
+      {/* Sign In modal if triggered from sidebar */}
+      {showLoginCard && (
+        <GoogleSignInCard
+          isModal={true}
+          onClose={() => setShowLoginCard(false)}
+          onSuccess={() => setShowLoginCard(false)}
+        />
+      )}
     </>
   );
 };

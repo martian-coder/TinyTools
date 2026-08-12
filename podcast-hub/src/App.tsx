@@ -638,7 +638,7 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen font-sans antialiased bg-[#f8fafc] text-slate-900 flex flex-col justify-between selection:bg-sky-500 selection:text-white">
+    <div className="min-h-screen font-sans antialiased bg-[#f0f2f7] text-slate-900 flex flex-col selection:bg-teal-500 selection:text-white">
       {/* Top Navbar */}
       <Navbar
         currentTab={currentTab}
@@ -657,7 +657,7 @@ export default function App() {
       />
 
       {/* Main Side-by-Side Glance Dashboard Layout (Full Screen Width) */}
-      <div className="flex-1 flex w-full items-start">
+      <div className="flex w-full" style={{ minHeight: 'calc(100vh - 4rem)' }}>
         {/* Left Vertical Navigation Sidebar (Glance Design Template) */}
         <Sidebar
           currentTab={currentTab}
@@ -668,10 +668,12 @@ export default function App() {
           stats={stats}
           isOpen={isSidebarOpen}
           onCloseMobile={() => setIsSidebarOpen(false)}
+          onOpenImport={() => setIsImportOpen(true)}
+          onOpenLoginModal={() => setShowGlobalLoginModal(true)}
         />
 
         {/* Main Content View Container */}
-        <main className="flex-1 min-w-0 px-3 sm:px-6 lg:px-8 py-4 sm:py-6">
+        <main className="flex-1 min-w-0 px-4 sm:px-6 lg:px-8 py-5 overflow-x-hidden">
         {/* VIEW 1: LIBRARY & DASHBOARD */}
         {currentTab === 'dashboard' && (
           <LibraryView
