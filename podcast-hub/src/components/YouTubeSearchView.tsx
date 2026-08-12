@@ -1052,6 +1052,7 @@ export const YouTubeSearchView: React.FC<YouTubeSearchViewProps> = ({
                   description: video.description,
                   isFavorite: isFav,
                   isImported: !!existing,
+                  channelAvatar: video.channelAvatar || video.avatarUrl,
                 }}
                 groups={knowledgeGroups}
                 onAddToGroup={onAddVideoToGroup}

@@ -54,6 +54,21 @@ const KNOWN_CHANNEL_AVATARS: Record<string, string> = {
   'y combinator': 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=200',
 };
 
+const AVATAR_POOL = [
+  'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=200',
+  'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=200',
+  'https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?auto=format&fit=crop&q=80&w=200',
+  'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=200',
+  'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&q=80&w=200',
+  'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&q=80&w=200',
+  'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?auto=format&fit=crop&q=80&w=200',
+  'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=200',
+  'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&q=80&w=200',
+  'https://images.unsplash.com/photo-1501196354995-cbb51c65aaea?auto=format&fit=crop&q=80&w=200',
+  'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&q=80&w=200',
+  'https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?auto=format&fit=crop&q=80&w=200',
+];
+
 const getRealChannelAvatar = (channelName: string, avatarUrl?: string, channelAvatar?: string) => {
   if (avatarUrl && avatarUrl.startsWith('http') && !avatarUrl.includes('ui-avatars')) return avatarUrl;
   if (channelAvatar && channelAvatar.startsWith('http') && !channelAvatar.includes('ui-avatars')) return channelAvatar;
@@ -63,8 +78,13 @@ const getRealChannelAvatar = (channelName: string, avatarUrl?: string, channelAv
     if (normalized.includes(key)) return url;
   }
 
-  // High quality Unsplash image avatar fallback
-  return `https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=200`;
+  // Deterministic avatar index based on channel name
+  let hash = 0;
+  for (let i = 0; i < normalized.length; i++) {
+    hash = (hash + normalized.charCodeAt(i)) % AVATAR_POOL.length;
+  }
+
+  return AVATAR_POOL[hash];
 };
 
 export const YouTubeVideoCard: React.FC<YouTubeVideoCardProps> = ({
