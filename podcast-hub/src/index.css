@@ -2,7 +2,7 @@
 
 @layer base {
   body {
-    @apply bg-[#0f0f0f] text-[#f1f1f1] antialiased transition-colors duration-300 selection:bg-[#3ea6ff] selection:text-black;
+    @apply bg-[#141721] text-[#f1f5f9] antialiased transition-colors duration-300 selection:bg-[#00c6ff] selection:text-black;
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   }
 
@@ -12,67 +12,72 @@
   }
 }
 
-/* YouTube Dark Theme Palette Utilities */
+/* Glance Design Dashboard Palette & Cards */
 .yt-bg-base {
-  background-color: #0f0f0f;
+  background-color: #141721;
 }
 
 .yt-bg-paper {
-  background-color: #181818;
+  background-color: #1d2130;
 }
 
 .yt-bg-card {
-  background-color: #212121;
+  background-color: #222736;
 }
 
 .yt-bg-hover {
-  background-color: #272727;
+  background-color: #2a3042;
 }
 
 .yt-border {
-  border-color: #272727;
+  border-color: #2d3245;
 }
 
 .yt-border-light {
-  border-color: #3f3f3f;
+  border-color: #3b4259;
 }
 
 .yt-text-primary {
-  color: #f1f1f1;
+  color: #f1f5f9;
 }
 
 .yt-text-secondary {
-  color: #aaaaaa;
+  color: #94a3b8;
 }
 
 .yt-text-muted {
-  color: #717171;
+  color: #64748b;
 }
 
-/* YouTube Premium Blue Accent Utilities */
+/* Glance Blue / Cyan Accent Utilities */
 .yt-text-blue {
-  color: #3ea6ff;
+  color: #00c6ff;
 }
 
 .yt-bg-blue {
-  background-color: #3ea6ff;
+  background-color: #00c6ff;
 }
 
-/* YouTube Chips & Buttons */
+/* Glance Chips & Buttons */
 .yt-chip {
-  @apply px-3.5 py-1.5 rounded-full text-xs font-semibold bg-[#272727] hover:bg-[#3f3f3f] text-[#f1f1f1] border border-transparent transition-all cursor-pointer whitespace-nowrap shrink-0;
+  @apply px-4 py-1.5 rounded-xl text-xs font-semibold bg-[#222736] hover:bg-[#2a3042] text-[#94a3b8] hover:text-[#f1f5f9] border border-[#2d3245] transition-all cursor-pointer whitespace-nowrap shrink-0 shadow-xs;
 }
 
 .yt-chip-active {
-  @apply bg-[#3ea6ff] text-black font-bold shadow-md hover:bg-[#65b8ff] border-transparent;
+  @apply bg-gradient-to-r from-[#5b51d8] to-[#00c6ff] text-white font-extrabold shadow-md shadow-[#5b51d8]/25 border-transparent hover:opacity-95;
 }
 
 .yt-btn-primary {
-  @apply bg-[#3ea6ff] hover:bg-[#2697ff] text-black font-bold px-4 py-2 rounded-full text-xs transition-all shadow-md cursor-pointer flex items-center justify-center gap-2;
+  @apply bg-gradient-to-r from-[#5b51d8] to-[#00c6ff] hover:from-[#4b41c8] hover:to-[#00b4ea] text-white font-bold px-4 py-2 rounded-xl text-xs transition-all shadow-md shadow-[#5b51d8]/20 cursor-pointer flex items-center justify-center gap-2;
 }
 
 .yt-btn-secondary {
-  @apply bg-[#272727] hover:bg-[#3f3f3f] text-[#f1f1f1] border border-[#3f3f3f] font-semibold px-3.5 py-2 rounded-full text-xs transition-all cursor-pointer flex items-center justify-center gap-2;
+  @apply bg-[#222736] hover:bg-[#2a3042] text-[#f1f5f9] border border-[#2d3245] font-semibold px-3.5 py-2 rounded-xl text-xs transition-all cursor-pointer flex items-center justify-center gap-2;
+}
+
+/* Glance Signature Cards */
+.glance-card {
+  @apply bg-[#222736] border border-[#2d3245] rounded-2xl shadow-md transition-all hover:border-[#3b4259];
 }
 
 /* Custom scrollbars */
@@ -89,12 +94,12 @@
   height: 6px;
 }
 .custom-scrollbar::-webkit-scrollbar-track {
-  background: #0f0f0f;
+  background: #141721;
 }
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background: #3f3f3f;
+  background: #2d3245;
   border-radius: 9999px;
 }
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: #555555;
+  background: #3b4259;
 }

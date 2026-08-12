@@ -106,7 +106,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   };
 
   return (
-    <header className="sticky top-0 z-30 bg-[#0f0f0f]/95 backdrop-blur-xl border-b border-[#272727] text-[#f1f1f1] transition-colors duration-300">
+    <header className="sticky top-0 z-30 bg-[#1d2130]/95 backdrop-blur-xl border-b border-[#2d3245] text-[#f1f5f9] transition-colors duration-300">
       <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-14 sm:h-16 gap-2 sm:gap-4">
           {/* Logo & App Title */}
@@ -114,40 +114,40 @@ export const Navbar: React.FC<NavbarProps> = ({
             className="flex items-center gap-2 sm:gap-3 cursor-pointer select-none shrink-0"
             onClick={() => setCurrentTab('dashboard')}
           >
-            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-2xl bg-[#3ea6ff] flex items-center justify-center text-black shadow-lg shadow-[#3ea6ff]/30 hover:scale-105 transition-all shrink-0">
-              <Tv className="w-4 h-4 sm:w-5 sm:h-5 fill-black text-black" />
+            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-2xl bg-gradient-to-r from-[#5b51d8] to-[#00c6ff] flex items-center justify-center text-white shadow-lg shadow-[#5b51d8]/30 hover:scale-105 transition-all shrink-0">
+              <Tv className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
             </div>
             <div>
               <h1 className="text-sm sm:text-lg font-black tracking-tight text-white flex items-center gap-1.5 sm:gap-2">
                 PodSummarizer{' '}
-                <span className="text-[9px] sm:text-[10px] px-1.5 sm:px-2 py-0.5 rounded-full bg-[#3ea6ff]/20 text-[#3ea6ff] border border-[#3ea6ff]/30 font-bold uppercase tracking-wider">
-                  YouTube Studio
+                <span className="text-[9px] sm:text-[10px] px-2 py-0.5 rounded-full bg-[#5b51d8]/20 text-[#00c6ff] border border-[#5b51d8]/40 font-bold uppercase tracking-wider">
+                  Glance Executive
                 </span>
               </h1>
-              <p className="text-xs text-[#aaaaaa] hidden md:block font-medium">
+              <p className="text-xs text-[#94a3b8] hidden md:block font-medium">
                 Learning &amp; AI Monetization Intelligence
               </p>
             </div>
           </div>
 
           {/* Quick Metrics Badges */}
-          <div className="hidden xl:flex items-center gap-3 text-xs font-medium text-[#aaaaaa] bg-[#212121] px-3.5 py-1.5 rounded-full border border-[#272727]">
+          <div className="hidden xl:flex items-center gap-3 text-xs font-medium text-[#94a3b8] bg-[#222736] px-3.5 py-1.5 rounded-xl border border-[#2d3245]">
             <div className="flex items-center gap-1.5" title="Summarized Podcasts">
-              <BookOpen className="w-3.5 h-3.5 text-[#3ea6ff]" />
+              <BookOpen className="w-3.5 h-3.5 text-[#5b51d8]" />
               <span>
                 <strong className="font-semibold text-white">{stats.totalPodcasts}</strong> Podcasts
               </span>
             </div>
-            <div className="h-3 w-px bg-[#3f3f3f]" />
+            <div className="h-3 w-px bg-[#2d3245]" />
             <div className="flex items-center gap-1.5" title="Monetization Opportunities">
-              <Lightbulb className="w-3.5 h-3.5 text-amber-400" />
+              <Lightbulb className="w-3.5 h-3.5 text-[#f39c12]" />
               <span>
                 <strong className="font-semibold text-white">{stats.totalMonetizationIdeas}</strong> Ideas
               </span>
             </div>
-            <div className="h-3 w-px bg-[#3f3f3f]" />
+            <div className="h-3 w-px bg-[#2d3245]" />
             <div className="flex items-center gap-1.5" title="Estimated Listening Hours Saved">
-              <Zap className="w-3.5 h-3.5 text-emerald-400" />
+              <Zap className="w-3.5 h-3.5 text-[#2ecc71]" />
               <span>
                 <strong className="font-semibold text-white">{stats.hoursSaved}h</strong> Saved
               </span>
@@ -156,7 +156,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
           {/* Search Bar - Desktop Only */}
           <div className="hidden sm:block flex-1 min-w-0 max-w-xs sm:max-w-md relative">
-            <Search className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#717171] absolute left-2.5 sm:left-3.5 top-1/2 -translate-y-1/2" />
+            <Search className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#64748b] absolute left-2.5 sm:left-3.5 top-1/2 -translate-y-1/2" />
             <input
               type="text"
               value={searchQuery}
@@ -168,12 +168,12 @@ export const Navbar: React.FC<NavbarProps> = ({
                 }
               }}
               placeholder="Search YouTube podcasts, hosts, product ideas..."
-              className="w-full bg-[#121212] border border-[#272727] rounded-full pl-8 sm:pl-10 pr-8 sm:pr-10 py-1.5 sm:py-2 text-xs sm:text-sm text-[#f1f1f1] placeholder-[#717171] focus:outline-none focus:border-[#3ea6ff] font-normal"
+              className="w-full bg-[#141721] border border-[#2d3245] rounded-xl pl-8 sm:pl-10 pr-8 sm:pr-10 py-1.5 sm:py-2 text-xs sm:text-sm text-[#f1f5f9] placeholder-[#64748b] focus:outline-none focus:border-[#00c6ff] font-normal"
             />
             {searchQuery && (
               <button
                 onClick={() => setSearchQuery('')}
-                className="absolute right-2 sm:right-3 top-1/2 -translate-y-1/2 text-[10px] sm:text-xs text-[#aaaaaa] hover:text-white font-semibold"
+                className="absolute right-2 sm:right-3 top-1/2 -translate-y-1/2 text-[10px] sm:text-xs text-[#94a3b8] hover:text-white font-semibold"
               >
                 Clear
               </button>
@@ -191,10 +191,10 @@ export const Navbar: React.FC<NavbarProps> = ({
                     setShowYtLoginModal(true);
                   }
                 }}
-                className="flex items-center gap-1.5 bg-[#3ea6ff] hover:bg-[#2697ff] text-black px-3.5 py-1.5 rounded-full text-xs font-extrabold shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer shrink-0"
+                className="flex items-center gap-1.5 bg-gradient-to-r from-[#5b51d8] to-[#00c6ff] hover:opacity-90 text-white px-4 py-1.5 rounded-xl text-xs font-extrabold shadow-md shadow-[#5b51d8]/30 transition-all cursor-pointer shrink-0"
                 title="Sign in with YouTube"
               >
-                <Tv className="w-3.5 h-3.5 fill-black text-black shrink-0" />
+                <Tv className="w-3.5 h-3.5 text-white shrink-0" />
                 <span className="hidden sm:inline">Sign in</span>
                 <span className="sm:hidden text-[11px]">YouTube</span>
               </button>

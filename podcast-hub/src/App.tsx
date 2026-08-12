@@ -636,7 +636,7 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen font-sans antialiased bg-[#0f0f0f] text-[#f1f1f1] flex flex-col justify-between selection:bg-[#3ea6ff] selection:text-black">
+    <div className="min-h-screen font-sans antialiased bg-[#141721] text-[#f1f5f9] flex flex-col justify-between selection:bg-[#00c6ff] selection:text-black">
       {/* Top Navbar */}
       <Navbar
         currentTab={currentTab}
