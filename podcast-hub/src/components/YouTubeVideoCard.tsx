@@ -23,6 +23,7 @@ export interface YouTubeCardItem {
   publishedAt?: string;
   description?: string;
   avatarUrl?: string;
+  channelAvatar?: string;
   isFavorite?: boolean;
   isImported?: boolean;
 }
@@ -41,6 +42,31 @@ interface YouTubeVideoCardProps {
   isImporting?: boolean;
 }
 
+const KNOWN_CHANNEL_AVATARS: Record<string, string> = {
+  'scott hanselman': 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=200',
+  'this week in startups': 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=200',
+  'lenny': 'https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?auto=format&fit=crop&q=80&w=200',
+  'founders podcast': 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=200',
+  'huberman lab': 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=200',
+  'lex fridman': 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&q=80&w=200',
+  'tech burner': 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&q=80&w=200',
+  'mkbhd': 'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?auto=format&fit=crop&q=80&w=200',
+  'y combinator': 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=200',
+};
+
+const getRealChannelAvatar = (channelName: string, avatarUrl?: string, channelAvatar?: string) => {
+  if (avatarUrl && avatarUrl.startsWith('http') && !avatarUrl.includes('ui-avatars')) return avatarUrl;
+  if (channelAvatar && channelAvatar.startsWith('http') && !channelAvatar.includes('ui-avatars')) return channelAvatar;
+
+  const normalized = (channelName || '').toLowerCase().trim();
+  for (const [key, url] of Object.entries(KNOWN_CHANNEL_AVATARS)) {
+    if (normalized.includes(key)) return url;
+  }
+
+  // High quality Unsplash image avatar fallback
+  return `https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=200`;
+};
+
 export const YouTubeVideoCard: React.FC<YouTubeVideoCardProps> = ({
   video,
   groups = [],
@@ -54,11 +80,7 @@ export const YouTubeVideoCard: React.FC<YouTubeVideoCardProps> = ({
   isSubscribed = false,
   isImporting = false,
 }) => {
-  const avatar =
-    video.avatarUrl ||
-    `https://ui-avatars.com/api/?name=${encodeURIComponent(
-      video.channel || 'YT'
-    )}&background=cc0000&color=fff&size=100&bold=true`;
+  const avatar = getRealChannelAvatar(video.channel, video.avatarUrl, video.channelAvatar);
 
   return (
     <div className="group flex flex-col space-y-3 bg-[#222736] border border-[#2d3245] hover:border-[#00c6ff]/40 rounded-2xl p-3 shadow-md hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200 cursor-pointer select-none">

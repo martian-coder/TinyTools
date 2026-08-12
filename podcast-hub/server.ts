@@ -1398,7 +1398,7 @@ app.get('/api/youtube/channel-by-handle', async (req, res) => {
           channel: {
             name: channelName,
             handle: cleanHandle,
-            avatar: channelAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(channelName)}&background=ef4444&color=fff&size=200&bold=true`,
+            avatar: channelAvatar || `https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=200`,
             subscriberCount: '',
             channelId: '',
             channelUrl: `https://www.youtube.com/${cleanHandle}`,

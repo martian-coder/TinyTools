@@ -135,6 +135,8 @@ export interface YouTubeSearchResult {
   description: string;
   publishedAt?: string;
   isFavorite?: boolean;
+  avatarUrl?: string;
+  channelAvatar?: string;
 }
 
 export type ThemeMode = 'dark' | 'light';
