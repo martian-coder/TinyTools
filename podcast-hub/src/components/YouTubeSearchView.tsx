@@ -280,6 +280,11 @@ export const YouTubeSearchView: React.FC<YouTubeSearchViewProps> = ({
 
   const [isFetchingSubscriptions, setIsFetchingSubscriptions] = useState(false);
 
+  const [results, setResults] = useState<YouTubeSearchResult[]>(DEFAULT_YOUTUBE_VIDEOS);
+  const [playingVideo, setPlayingVideo] = useState<YouTubeSearchResult | null>(null);
+  const [brainstormVideo, setBrainstormVideo] = useState<YouTubeSearchResult | null>(null);
+  const [copiedLinkVideoId, setCopiedLinkVideoId] = useState<string | null>(null);
+
   // Load initial personalized videos and subscriptions on screen start if profile or key is set
   useEffect(() => {
     const fetchSubscriptionsAndFeed = async (profile: any) => {
@@ -384,12 +389,7 @@ export const YouTubeSearchView: React.FC<YouTubeSearchViewProps> = ({
       window.removeEventListener('storage', checkAndLoad);
       window.removeEventListener('yt_profile_updated', handleProfileUpdate);
     };
-  }, []);
-
-  const [results, setResults] = useState<YouTubeSearchResult[]>(DEFAULT_YOUTUBE_VIDEOS);
-  const [playingVideo, setPlayingVideo] = useState<YouTubeSearchResult | null>(null);
-  const [brainstormVideo, setBrainstormVideo] = useState<YouTubeSearchResult | null>(null);
-  const [copiedLinkVideoId, setCopiedLinkVideoId] = useState<string | null>(null);
+  }, [existingPodcasts]);
 
   const quickTopics = [
     'SaaS & B2B Monetization',
