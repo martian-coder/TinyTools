@@ -3,18 +3,28 @@ import { PodcastItem, KnowledgeGroup } from '../types';
 import { CheckCircle2, Heart, Play, Sparkles, Check, Brain } from 'lucide-react';
 import { AddToGroupDropdown } from './AddToGroupDropdown';
 
-/* ── Thumbnail with fallback ── */
+/* ── Thumbnail with robust fallback ── */
 const VideoThumbnail: React.FC<{ videoId: string; thumbnailUrl?: string; title: string; className?: string }> = ({ videoId, thumbnailUrl, title, className }) => {
-  const [src, setSrc] = React.useState(
-    thumbnailUrl || `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`
-  );
+  const defaultImg = videoId ? `https://img.youtube.com/vi/${videoId}/hqdefault.jpg` : 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=600&q=80';
+  const initialSrc = (thumbnailUrl && !thumbnailUrl.includes('unsplash')) ? thumbnailUrl : defaultImg;
+  const [src, setSrc] = React.useState(initialSrc);
+
+  React.useEffect(() => {
+    const newSrc = (thumbnailUrl && !thumbnailUrl.includes('unsplash')) ? thumbnailUrl : defaultImg;
+    setSrc(newSrc);
+  }, [videoId, thumbnailUrl]);
+
   return (
     <img
       src={src}
       alt={title}
       className={className}
       loading="lazy"
-      onError={() => setSrc(`https://img.youtube.com/vi/${videoId}/hqdefault.jpg`)}
+      onError={() => {
+        if (src !== defaultImg) {
+          setSrc(defaultImg);
+        }
+      }}
     />
   );
 };
@@ -33,15 +43,14 @@ const OFFICIAL_YT_AVATARS: Record<string, string> = {
 };
 
 const getRealChannelAvatar = (channelName: string, avatarUrl?: string, channelAvatar?: string) => {
-  if (avatarUrl && avatarUrl.startsWith('http')) return avatarUrl;
-  if (channelAvatar && channelAvatar.startsWith('http')) return channelAvatar;
+  if (avatarUrl && avatarUrl.startsWith('http') && !avatarUrl.includes('ui-avatars')) return avatarUrl;
+  if (channelAvatar && channelAvatar.startsWith('http') && !channelAvatar.includes('ui-avatars')) return channelAvatar;
 
   const n = (channelName || '').toLowerCase().trim();
   for (const [k, v] of Object.entries(OFFICIAL_YT_AVATARS)) {
     if (n.includes(k)) return v;
   }
 
-  // Fallback to unavatar by channel name query
   const cleanHandle = channelName.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
   return `https://unavatar.io/youtube/${cleanHandle}`;
 };
