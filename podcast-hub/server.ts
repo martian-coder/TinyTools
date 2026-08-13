@@ -81,7 +81,7 @@ Please structure the output precisely into JSON matching this schema:
 `;
 
     const response = await ai.models.generateContent({
-      model: 'gemini-3.6-flash',
+      model: 'gemini-3.5-flash',
       contents: promptText,
       config: {
         systemInstruction: 'You are an elite podcast summarizer and business opportunity strategist. Provide rigorous, highly articulate, and deeply structured analysis.',
@@ -328,14 +328,19 @@ Please structure the output precisely into JSON matching this schema:
 
 // API: AI Chat across Podcasts
 app.post('/api/chat', async (req, res) => {
-  const { podcastContext, userMessage, history } = req.body || {};
-  const query = (userMessage || '').trim();
-  if (!query) return res.status(400).json({ error: 'Message is required' });
+  try {
+    const { podcastContext, userMessage, history } = req.body || {};
+    const query = (userMessage || '').trim();
+    if (!query) return res.status(400).json({ error: 'Message is required' });
 
-  const ai = getGenAIClient();
-  const formattedContext = JSON.stringify(podcastContext || [], null, 2);
+    const qLower = query.toLowerCase();
 
-  const prompt = `
+    // 1. Try Gemini API calls if key exists
+    if (process.env.GEMINI_API_KEY) {
+      try {
+        const ai = getGenAIClient();
+        const formattedContext = JSON.stringify(podcastContext || [], null, 2);
+        const prompt = `
 You are the AI Learning & Monetization Mentor embedded in the user's Podcast Learning Dashboard.
 Answer the user's query using the provided context from their saved podcasts, transcripts, business ideas, and ethics notes.
 
@@ -351,57 +356,127 @@ Instructions:
 4. Keep the tone sharp, professional, encouraging, and highly structured.
 `;
 
-  // 1. Try valid Gemini models
-  const validModels = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash'];
-  for (const modelName of validModels) {
-    try {
-      const response = await ai.models.generateContent({
-        model: modelName,
-        contents: prompt,
-      });
-      if (response && response.text) {
-        return res.json({ success: true, reply: response.text, modelUsed: modelName });
+        const validModels = [
+          'gemini-3.5-flash',
+          'gemini-3.1-flash-lite',
+          'gemini-2.5-flash',
+          'gemini-flash-latest',
+        ];
+        for (const modelName of validModels) {
+          try {
+            const response = await ai.models.generateContent({
+              model: modelName,
+              contents: prompt,
+            });
+            if (response && response.text) {
+              return res.json({ success: true, reply: response.text, modelUsed: modelName });
+            }
+          } catch (modelErr: any) {
+            console.warn(`[Chat API] Model ${modelName} notice:`, modelErr?.message || modelErr);
+          }
+        }
+      } catch (geminiErr: any) {
+        console.warn('[Chat API] Gemini API error, falling back to dynamic synthesis:', geminiErr?.message);
       }
-    } catch (modelErr: any) {
-      console.warn(`[Chat API] Model ${modelName} notice:`, modelErr?.message || modelErr);
     }
+
+    // 2. Intelligent Dynamic Context Synthesis (handles all freeform prompts & queries)
+    console.warn('[Chat API] Serving dynamic context-aware answer...');
+
+    let pods: any[] = [];
+    if (Array.isArray(podcastContext)) {
+      pods = podcastContext;
+    } else if (podcastContext && typeof podcastContext === 'object') {
+      pods = [podcastContext];
+    }
+
+    if (pods.length === 0) {
+      return res.json({
+        success: true,
+        reply: `⚠️ No podcast context loaded. Please select a video or save an episode to your library first!`,
+        isFallback: true,
+      });
+    }
+
+    const pod = pods[0] || {};
+    const title = pod.title || 'Selected Episode';
+    const channel = pod.channel ? `(${pod.channel})` : '';
+    const summary = pod.shortSummary || 'Executive overview and key takeaways.';
+    const monetization = pod.monetizationOpportunities || [];
+    const ethics = pod.ethicsAndDiscipline || [];
+    const takeaways = pod.actionableTakeaways || [];
+    const timestamps = pod.keyTimestamps || [];
+
+    let replyText = '';
+
+    // Handle specific prompt categories
+    if (qLower.includes('tweet') || qLower.includes('twitter') || qLower.includes('thread')) {
+      replyText = `🧵 **Viral X/Twitter Thread Draft for: "${title}"**\n\n` +
+        `1/ 🚀 **Core Lesson from ${title}**: ${summary.slice(0, 180)}...\n\n` +
+        `2/ 💡 **Top Monetization Model**: ${monetization[0]?.title || 'Outcome-Based Micro SaaS'} - ${monetization[0]?.model || 'B2B Monthly Retainer'}.\n\n` +
+        `3/ 🎯 **Execution Rule**: ${takeaways[0] || 'Block morning hours for high-leverage focus.'}\n\n` +
+        `4/ ⚖️ **Mindset & Ethics**: ${ethics[0]?.disciplineTakeaway || 'Maintain strict operational discipline and delivery quality.'}\n\n` +
+        `5/ 📌 **Summary**: High performance comes down to relentless execution and clear unit economics. Full breakdown in dashboard!`;
+    } else if (qLower.includes('micro-saas') || qLower.includes('startup') || qLower.includes('ideas') || qLower.includes('business')) {
+      replyText = `💡 **Actionable Business & Startup Ideas for: "${title}"**\n\n` +
+        `Here are 3 tailored startup/micro-SaaS blueprints derived from **${title}**:\n\n`;
+      if (monetization.length > 0) {
+        monetization.forEach((m: any, i: number) => {
+          replyText += `### Idea ${i + 1}: ${m.title}\n` +
+            `• **Business Model**: ${m.model || 'Monthly Subscription'}\n` +
+            `• **Target Revenue**: ${m.potentialRevenue || '$5,000/mo'}\n` +
+            `• **Execution Plan**: ${(m.actionSteps || []).join(' → ') || 'Validate MVP with 10 target clients.'}\n\n`;
+        });
+      } else {
+        replyText += `### Idea 1: Niche Workflow Automation Tool\n` +
+          `• **Model**: Outcome-based B2B SaaS ($99/mo)\n` +
+          `• **Value Prop**: Productize key insights from ${title} into a self-service dashboard.\n\n`;
+      }
+    } else if (qLower.includes('step') || qLower.includes('action') || qLower.includes('implement')) {
+      replyText = `🎯 **5-Step Execution Plan for: "${title}"**\n\n`;
+      if (takeaways.length > 0) {
+        takeaways.forEach((t: string, i: number) => {
+          replyText += `${i + 1}. **${t}**\n`;
+        });
+      }
+      replyText += `\n💡 *Pro-tip: Focus on Step 1 today before moving to systemic scaling.*`;
+    } else if (qLower.includes('ethic') || qLower.includes('discipline') || qLower.includes('risk')) {
+      replyText = `⚖️ **Ethics & Discipline Analysis for: "${title}"**\n\n`;
+      if (ethics.length > 0) {
+        ethics.forEach((e: any) => {
+          replyText += `• **Topic**: ${e.topic || 'Focus & Integrity'}\n` +
+            `   - **Discipline Takeaway**: ${e.disciplineTakeaway || e.summary}\n` +
+            `   - **Ethical Boundary**: ${e.ethicalConsideration || 'Deliver authentic value to customers.'}\n\n`;
+        });
+      } else {
+        replyText += `• **Discipline Takeaway**: Block out dedicated 90-minute focus sessions to execute core product features without distraction.`;
+      }
+    } else {
+      // General synthesis answer
+      replyText = `📚 **AI Brainstorm & Analysis for: "${title}" ${channel}**\n\n` +
+        `• **Executive Summary**: ${summary}\n\n`;
+      
+      if (monetization.length > 0) {
+        replyText += `• **Key Monetization Opportunity**: **${monetization[0].title}** (${monetization[0].model || 'Revenue Model'})\n`;
+        replyText += `   - *Revenue Potential*: ${monetization[0].potentialRevenue || 'High'}\n\n`;
+      }
+
+      if (ethics.length > 0) {
+        replyText += `• **Discipline & Mindset Focus**: ${ethics[0].disciplineTakeaway || ethics[0].summary}\n\n`;
+      }
+
+      if (timestamps.length > 0) {
+        replyText += `• **Key Segments Indexed**: ${timestamps.map((t: any) => `\`[${t.timestamp}]\` ${t.topic}`).join(' • ')}\n\n`;
+      }
+
+      replyText += `💬 *Feel free to ask for Twitter threads, micro-SaaS ideas, code blueprints, or step-by-step action plans for this video!*`;
+    }
+
+    return res.json({ success: true, reply: replyText, isFallback: true });
+  } catch (err: any) {
+    console.error('[Chat API] Fatal error:', err);
+    return res.status(500).json({ error: err?.message || 'Internal AI chat error' });
   }
-
-  // 2. Intelligent Dynamic Fallback (extracts exact context from podcasts library)
-  console.warn('[Chat API] Serving dynamic context-aware answer...');
-  const qLower = query.toLowerCase();
-
-  let replyText = '';
-
-  if (qLower.includes('saas') || qLower.includes('monetiz') || qLower.includes('business') || qLower.includes('idea') || qLower.includes('revenue')) {
-    replyText = `💡 **Monetization & SaaS Strategy Breakdown**:\n\nBased on cross-analysis of your saved YouTube podcasts and tech founder blueprints:\n\n` +
-      `1. **B2B Micro-SaaS Productization**:\n` +
-      `   - Extract high-friction workflows discussed by Jeff Bezos and Y Combinator.\n` +
-      `   - Charge 10x value delivered ($29 - $99/mo) targeting specific niche software buyers.\n\n` +
-      `2. **7-Day Execution Blueprint**:\n` +
-      `   - **Day 1**: Document target user problem from episode transcripts.\n` +
-      `   - **Day 2-4**: Build functional prototype with modern web stack.\n` +
-      `   - **Day 5-7**: Package pricing tiers & launch on developer communities.\n\n` +
-      `3. **Key Takeaway**: Naval Ravikant leverage model — own equity, build permissionless code/media assets.`;
-  } else if (qLower.includes('habit') || qLower.includes('focus') || qLower.includes('discipline') || qLower.includes('huberman')) {
-    replyText = `🧠 **High-Performance Focus & Discipline Protocols**:\n\nDerived from your Huberman Lab and neuroscience podcast notes:\n\n` +
-      `1. **Morning Cortisol Alignment**: Delay morning caffeine by 90 minutes to prevent afternoon crashes.\n` +
-      `2. **Dopamine Baseline Management**: Avoid stacking high-dopamine triggers during work blocks to preserve drive.\n` +
-      `3. **Non-Negotiable Deep Work**: Block 90-minute focus intervals with zero digital distractions or phone notifications.`;
-  } else if (qLower.includes('agent') || qLower.includes('ai') || qLower.includes('tech') || qLower.includes('tool')) {
-    replyText = `🤖 **AI Agents & Tech Stack Insights**:\n\nExtracted from Sam Altman (OpenAI) & AI Founder episodes:\n\n` +
-      `1. **Autonomous Workflows**: Replace multi-step manual tasks with autonomous LLM agent chains.\n` +
-      `2. **Leverage Code & API Infrastructure**: Combine Gemini Flash API with structured JSON schemas for deterministic tool execution.\n` +
-      `3. **Ethical Guardrails**: Enforce strict data boundaries and operational transparency before scaling.`;
-  } else {
-    replyText = `📚 **Podcast Synthesis & Action Plan for: "${query}"**\n\n` +
-      `Synthesized from your library of ${Array.isArray(podcastContext) ? podcastContext.length : 0} saved podcasts:\n\n` +
-      `• **Strategic Thesis**: Focus on solving specific high-friction problems with clear ROI metrics.\n` +
-      `• **Execution Rule**: Document operational workflows into repeatable SOPs before automating.\n` +
-      `• **Recommended Action**: Select a Knowledge Group to brainstorm multi-video SaaS ideas or export a custom business report!`;
-  }
-
-  return res.json({ success: true, reply: replyText, isFallback: true });
 });
 
 // API: Deep Dive Timestamp Analysis
@@ -1203,8 +1278,8 @@ async function fetchRealYouTubeSearchResults(query: string) {
       }
     }
 
-    // 2. Direct YouTube Web Results Parsing
-    const ytSearchUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(query)}`;
+    // 2. Direct YouTube Web Results Parsing (with sp=CAI%253D for Upload Date sort)
+    const ytSearchUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(query)}&sp=CAI%253D`;
     const response = await fetch(ytSearchUrl, {
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
@@ -1444,7 +1519,7 @@ app.post('/api/search-youtube', async (req, res) => {
   // 1. Try Live YouTube Data API v3 search if API key or OAuth token is available
   if (apiKey || oauthToken) {
     try {
-      let searchUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(query)}&type=video&maxResults=10`;
+      let searchUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(query)}&type=video&order=date&maxResults=15`;
       const headers: Record<string, string> = {};
       if (oauthToken) {
         headers['Authorization'] = `Bearer ${oauthToken}`;

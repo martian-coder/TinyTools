@@ -304,7 +304,7 @@ Key tools include morning light viewing, NSDR (Non-Sleep Deep Rest) for rapid co
     keyTimestamps: [
       { timestamp: '12:30', topic: 'Dopamine Baseline Management', summary: 'Sustaining intrinsic motivation' },
       { timestamp: '45:10', topic: 'The 90-Minute Focus Protocol', summary: 'Structuring deep work cycles' },
-      { timestamp: '1:15:00', topic: 'NSDR Recovery Protocol', summary: 'Restoring neurotransmitters mid-day' }
+      { timestamp: '01:15:00', topic: 'NSDR Recovery Protocol', summary: 'Restoring neurotransmitters mid-day' }
     ],
     actionableTakeaways: [
       'Schedule 90-minute focus blocks without phone distractions.',

@@ -89,56 +89,56 @@ const DEFAULT_SUBSCRIPTIONS = [
     channelId: 'UCAL3JXZSzSm8AlZyD3nQdBA',
     title: 'Lex Fridman',
     description: 'AI, Science, Technology & Philosophy',
-    thumbnail: 'https://ui-avatars.com/api/?name=Lex+Fridman&background=11A888&color=fff&size=128&bold=true',
+    thumbnail: 'https://unavatar.io/youtube/lexfridman',
   },
   {
     id: 'sub-2',
     channelId: 'UC2D2CMWXMOVWx7giW1n3LIg',
     title: 'Huberman Lab',
     description: 'Neuroscience, Focus & High Performance Protocols',
-    thumbnail: 'https://ui-avatars.com/api/?name=Huberman+Lab&background=11A888&color=fff&size=128&bold=true',
+    thumbnail: 'https://unavatar.io/youtube/hubermanlab',
   },
   {
     id: 'sub-3',
     channelId: 'UCvjjWvA-C0g9F-dC_uXzK7w',
     title: 'Y Combinator',
     description: 'SaaS, Startups, Monetization & Founders',
-    thumbnail: 'https://ui-avatars.com/api/?name=Y+Combinator&background=f97316&color=fff&size=128&bold=true',
+    thumbnail: 'https://unavatar.io/youtube/ycombinator',
   },
   {
     id: 'sub-4',
     channelId: 'UC1T2j6g9nK8kZ8K9sR1jK0w',
     title: 'Naval Ravikant',
     description: 'Wealth, Leverage, Specific Knowledge & Mindset',
-    thumbnail: 'https://ui-avatars.com/api/?name=Naval+Ravikant&background=6366f1&color=fff&size=128&bold=true',
+    thumbnail: 'https://unavatar.io/youtube/naval',
   },
   {
     id: 'sub-5',
     channelId: 'UCBv_0q-JZuJ2u5YQk055g8w',
     title: 'All-In Podcast',
     description: 'Tech, Venture Capital, Macro Economy & Business',
-    thumbnail: 'https://ui-avatars.com/api/?name=All+In&background=0ea5e9&color=fff&size=128&bold=true',
+    thumbnail: 'https://unavatar.io/youtube/allin',
   },
   {
     id: 'sub-6',
     channelId: 'UCg3u1D-s5g0n3tZ5f04j29w',
     title: 'The Diary Of A CEO',
     description: 'Entrepreneurship, Personal Branding & Media',
-    thumbnail: 'https://ui-avatars.com/api/?name=Diary+Of+CEO&background=ec4899&color=fff&size=128&bold=true',
+    thumbnail: 'https://unavatar.io/youtube/thediaryofaceo',
   },
   {
     id: 'sub-7',
     channelId: 'UC4tQ2z1n5s04g03nJ05k61w',
     title: 'My First Million',
     description: 'Micro-SaaS Product Ideas & Business Growth',
-    thumbnail: 'https://ui-avatars.com/api/?name=My+First+Million&background=8b5cf6&color=fff&size=128&bold=true',
+    thumbnail: 'https://unavatar.io/youtube/myfirstmillionpod',
   },
   {
     id: 'sub-8',
     channelId: 'UC5q0z55-dC04j02k501j62w',
     title: 'Tim Ferriss',
     description: 'Deconstructing Peak Performance & Tactics',
-    thumbnail: 'https://ui-avatars.com/api/?name=Tim+Ferriss&background=14b8a6&color=fff&size=128&bold=true',
+    thumbnail: 'https://unavatar.io/youtube/timferriss',
   },
 ];
 
@@ -280,7 +280,27 @@ export const YouTubeSearchView: React.FC<YouTubeSearchViewProps> = ({
 
   const [isFetchingSubscriptions, setIsFetchingSubscriptions] = useState(false);
 
-  const [results, setResults] = useState<YouTubeSearchResult[]>(DEFAULT_YOUTUBE_VIDEOS);
+  // Helper to map saved library podcasts to YouTube search card items
+  const mapPodcastsToResults = (list: PodcastItem[]): YouTubeSearchResult[] => {
+    return (list || []).map((p) => ({
+      videoId: p.youtubeVideoId || p.id.replace('yt-', ''),
+      title: p.title,
+      channel: p.channel,
+      duration: p.duration,
+      thumbnailUrl: p.thumbnailUrl || `https://img.youtube.com/vi/${p.youtubeVideoId || p.id.replace('yt-', '')}/hqdefault.jpg`,
+      description: p.shortSummary || `Episode from ${p.channel}`,
+      publishedAt: p.dateAdded || 'Recently',
+      isFavorite: p.isFavorite,
+      channelAvatar: p.channelAvatar,
+    }));
+  };
+
+  const [results, setResults] = useState<YouTubeSearchResult[]>(() => {
+    if (existingPodcasts && existingPodcasts.length > 0) {
+      return mapPodcastsToResults(existingPodcasts);
+    }
+    return [];
+  });
   const [playingVideo, setPlayingVideo] = useState<YouTubeSearchResult | null>(null);
   const [brainstormVideo, setBrainstormVideo] = useState<YouTubeSearchResult | null>(null);
   const [copiedLinkVideoId, setCopiedLinkVideoId] = useState<string | null>(null);
@@ -340,21 +360,7 @@ export const YouTubeSearchView: React.FC<YouTubeSearchViewProps> = ({
       if (parsedProf?.accessToken) {
         fetchSubscriptionsAndFeed(parsedProf);
       } else if (existingPodcasts && existingPodcasts.length > 0) {
-        // Sync Watch & Search view with user's saved podcasts library
-        const synced = existingPodcasts.map((p) => ({
-          videoId: p.youtubeVideoId || p.id.replace('yt-', ''),
-          title: p.title,
-          channel: p.channel,
-          duration: p.duration,
-          thumbnailUrl: p.thumbnailUrl,
-          description: p.shortSummary || `Episode from ${p.channel}`,
-          publishedAt: p.dateAdded || 'Recently',
-          isFavorite: p.isFavorite,
-          channelAvatar: p.channelAvatar,
-        }));
-        setResults(synced);
-      } else {
-        handleSearch('AI, Tech & Business Podcasts');
+        setResults(mapPodcastsToResults(existingPodcasts));
       }
     };
 
@@ -616,11 +622,62 @@ export const YouTubeSearchView: React.FC<YouTubeSearchViewProps> = ({
     };
   };
 
-  // Parse duration helper
-  const parseDurationMinutes = (dur: string): number => {
+  // Parse relative time strings like "2 hours ago", "3 days ago", "1 month ago", "2026-02-10" into numeric value for sorting
+  const parseRelativeTimeToScore = (timeStr?: string): number => {
+    if (!timeStr) return 0;
+    const str = timeStr.toLowerCase().trim();
+    if (str.includes('minute') || str.includes('min')) {
+      const match = str.match(/(\d+)/);
+      return (match ? parseInt(match[1], 10) : 1);
+    }
+    if (str.includes('hour') || str.includes('hr')) {
+      const match = str.match(/(\d+)/);
+      return (match ? parseInt(match[1], 10) : 1) * 60;
+    }
+    if (str.includes('day')) {
+      const match = str.match(/(\d+)/);
+      return (match ? parseInt(match[1], 10) : 1) * 1440;
+    }
+    if (str.includes('week')) {
+      const match = str.match(/(\d+)/);
+      return (match ? parseInt(match[1], 10) : 1) * 10080;
+    }
+    if (str.includes('month')) {
+      const match = str.match(/(\d+)/);
+      return (match ? parseInt(match[1], 10) : 1) * 43200;
+    }
+    if (str.includes('year')) {
+      const match = str.match(/(\d+)/);
+      return (match ? parseInt(match[1], 10) : 1) * 525600;
+    }
+    // Attempt ISO date parse
+    const timestamp = Date.parse(timeStr);
+    if (!isNaN(timestamp)) {
+      return Math.max(0, Math.floor((Date.now() - timestamp) / 60000));
+    }
+    return 999999;
+  };
+
+  // Robust duration parser for HH:MM:SS, MM:SS, "1h 30m", "45m"
+  const parseDurationMinutes = (dur?: string): number => {
+    if (!dur) return 30;
+    const str = dur.trim();
+    
+    // Check HH:MM:SS or MM:SS format
+    const colonParts = str.split(':');
+    if (colonParts.length === 3) {
+      const h = parseInt(colonParts[0], 10) || 0;
+      const m = parseInt(colonParts[1], 10) || 0;
+      return h * 60 + m;
+    }
+    if (colonParts.length === 2) {
+      const m = parseInt(colonParts[0], 10) || 0;
+      return m;
+    }
+
     let mins = 0;
-    const hMatch = dur.match(/(\d+)\s*h/i);
-    const mMatch = dur.match(/(\d+)\s*m/i);
+    const hMatch = str.match(/(\d+)\s*h/i);
+    const mMatch = str.match(/(\d+)\s*m/i);
     if (hMatch) mins += parseInt(hMatch[1], 10) * 60;
     if (mMatch) mins += parseInt(mMatch[1], 10);
     return mins || 30;
@@ -635,9 +692,9 @@ export const YouTubeSearchView: React.FC<YouTubeSearchViewProps> = ({
 
   const sortedResults = [...filteredResults].sort((a, b) => {
     if (sortOption === 'latest') {
-      const dateA = a.publishedAt || '2026-01-01';
-      const dateB = b.publishedAt || '2026-01-01';
-      return dateB.localeCompare(dateA);
+      const scoreA = parseRelativeTimeToScore(a.publishedAt);
+      const scoreB = parseRelativeTimeToScore(b.publishedAt);
+      return scoreA - scoreB; // Lower score = more recent (e.g. 2 hours ago < 3 days ago)
     }
     if (sortOption === 'duration_desc') {
       return parseDurationMinutes(b.duration) - parseDurationMinutes(a.duration);

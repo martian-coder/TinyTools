@@ -30,31 +30,7 @@ const VideoThumbnail: React.FC<{ videoId: string; thumbnailUrl?: string; title: 
   );
 };
 
-/* ── Real YouTube channel avatar lookup & SVG fallback generator ── */
-const OFFICIAL_YT_AVATARS: Record<string, string> = {
-  'this week in startups': 'https://unavatar.io/youtube/thisweekin',
-  'scott hanselman': 'https://unavatar.io/github/shanselman',
-  'all-in podcast': 'https://unavatar.io/youtube/allin',
-  'all in podcast': 'https://unavatar.io/youtube/allin',
-  'all in': 'https://unavatar.io/youtube/allin',
-  'lex fridman': 'https://unavatar.io/youtube/lexfridman',
-  'huberman': 'https://unavatar.io/youtube/hubermanlab',
-  'y combinator': 'https://unavatar.io/youtube/ycombinator',
-  'mkbhd': 'https://unavatar.io/youtube/mkbhd',
-};
-
-const getRealChannelAvatar = (channelName: string, avatarUrl?: string, channelAvatar?: string) => {
-  if (avatarUrl && avatarUrl.startsWith('http') && !avatarUrl.includes('ui-avatars')) return avatarUrl;
-  if (channelAvatar && channelAvatar.startsWith('http') && !channelAvatar.includes('ui-avatars')) return channelAvatar;
-
-  const n = (channelName || '').toLowerCase().trim();
-  for (const [k, v] of Object.entries(OFFICIAL_YT_AVATARS)) {
-    if (n.includes(k)) return v;
-  }
-
-  const cleanHandle = channelName.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
-  return `https://unavatar.io/youtube/${cleanHandle}`;
-};
+import { getChannelAvatarUrl } from '../utils/avatarUtils';
 
 /* ── Types ── */
 interface VideoCardVideo {
@@ -99,7 +75,7 @@ export const YouTubeVideoCard: React.FC<YouTubeVideoCardProps> = ({
   isSubscribed = false,
   isImporting = false,
 }) => {
-  const avatar = getRealChannelAvatar(video.channel, video.avatarUrl, video.channelAvatar);
+  const avatar = getChannelAvatarUrl(video.channel, video.avatarUrl, video.channelAvatar);
   const [imgError, setImgError] = React.useState(false);
 
   return (
@@ -129,6 +105,14 @@ export const YouTubeVideoCard: React.FC<YouTubeVideoCardProps> = ({
           {video.duration || '20:00'}
         </div>
 
+        {/* Analyzed / Saved Badge */}
+        {video.isImported && (
+          <div className="absolute top-2 left-2 bg-teal-600/90 text-white text-[10px] font-semibold px-2 py-0.5 rounded-md backdrop-blur-xs shadow-xs flex items-center gap-1">
+            <Check className="w-3 h-3 text-white" />
+            <span>Analyzed</span>
+          </div>
+        )}
+
         {/* Favorite */}
         {onToggleFavorite && (
           <button
@@ -149,7 +133,7 @@ export const YouTubeVideoCard: React.FC<YouTubeVideoCardProps> = ({
       <div className="flex gap-2.5 p-3 items-start">
         {/* Avatar Badge */}
         <div className="w-7 h-7 rounded-full overflow-hidden border border-slate-200 shrink-0 mt-0.5 bg-[#11A888] flex items-center justify-center text-white text-[10px] font-bold select-none">
-          {!imgError ? (
+          {!imgError && avatar ? (
             <img
               src={avatar}
               alt={video.channel}
@@ -157,7 +141,9 @@ export const YouTubeVideoCard: React.FC<YouTubeVideoCardProps> = ({
               onError={() => setImgError(true)}
             />
           ) : (
-            <span className="leading-none uppercase">{(video.channel || 'Y').slice(0, 2)}</span>
+            <span className="leading-none uppercase font-bold text-[10px] text-white">
+              {(video.channel || 'Y').trim().slice(0, 2)}
+            </span>
           )}
         </div>
 

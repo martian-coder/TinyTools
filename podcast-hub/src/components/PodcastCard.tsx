@@ -42,6 +42,7 @@ export const PodcastCard: React.FC<PodcastCardProps> = ({
       onCreateGroup={onCreateKnowledgeGroup}
       onPlay={() => onSelect(podcast)}
       onSummarize={() => onSelect(podcast)}
+      onBrainstorm={() => onSelect(podcast)}
       onToggleFavorite={(id, e) => onToggleFavorite && onToggleFavorite(podcast.id)}
     />
   );

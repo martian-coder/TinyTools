@@ -43,18 +43,60 @@ export const EpisodeChatbot: React.FC<EpisodeChatbotProps> = ({
   layoutMode = 'split',
   onLayoutModeChange,
 }) => {
-  const [messages, setMessages] = useState<ChatMessage[]>([
-    {
-      id: 'msg-init',
-      sender: 'assistant',
-      text: `👋 **Welcome! I'm your AI Research & Brainstorm Assistant for this video episode.**\n\nI have indexed the full summary, key takeaways, monetization opportunities, and timestamps for **"${podcast.title}"**.\n\nAsk me anything! You can research specific concepts, request code blueprints, draft tweet threads, or brainstorm business models like ChatGPT.`,
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-    },
-  ]);
+  const storageKey = `podsummarizer_chat_${podcast.youtubeVideoId || podcast.id}`;
+
+  const [messages, setMessages] = useState<ChatMessage[]>(() => {
+    try {
+      const saved = localStorage.getItem(storageKey);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch (e) {}
+    return [
+      {
+        id: 'msg-init',
+        sender: 'assistant',
+        text: `👋 **Welcome! I'm your AI Research & Brainstorm Assistant for this video episode.**\n\nI have indexed the full summary, key takeaways, monetization opportunities, and timestamps for **"${podcast.title}"**.\n\nAsk me anything! You can research specific concepts, request code blueprints, draft tweet threads, or brainstorm business models like ChatGPT.`,
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      },
+    ];
+  });
+
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const chatBottomRef = useRef<HTMLDivElement>(null);
+
+  // Sync messages state whenever active podcast episode changes
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(storageKey);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setMessages(parsed);
+          return;
+        }
+      }
+    } catch (e) {}
+
+    setMessages([
+      {
+        id: 'msg-init',
+        sender: 'assistant',
+        text: `👋 **Welcome! I'm your AI Research & Brainstorm Assistant for this video episode.**\n\nI have indexed the full summary, key takeaways, monetization opportunities, and timestamps for **"${podcast.title}"**.\n\nAsk me anything! You can research specific concepts, request code blueprints, draft tweet threads, or brainstorm business models like ChatGPT.`,
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      },
+    ]);
+  }, [podcast.id, podcast.youtubeVideoId]);
+
+  // Save messages to localStorage whenever messages update
+  useEffect(() => {
+    if (messages.length > 0) {
+      localStorage.setItem(storageKey, JSON.stringify(messages));
+    }
+  }, [messages, storageKey]);
 
   const promptSuggestions = [
     {
@@ -118,6 +160,7 @@ export const EpisodeChatbot: React.FC<EpisodeChatbotProps> = ({
             monetizationOpportunities: podcast.monetizationOpportunities,
             ethicsAndDiscipline: podcast.ethicsAndDiscipline,
             keyTimestamps: podcast.keyTimestamps,
+            actionableTakeaways: podcast.actionableTakeaways,
             userNotes: podcast.userNotes,
           },
         }),

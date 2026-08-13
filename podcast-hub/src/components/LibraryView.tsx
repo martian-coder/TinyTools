@@ -44,6 +44,7 @@ interface LibraryViewProps {
   setSearchQuery: (q: string) => void;
   onAddVideoToGroup?: (groupId: string, video: any) => void;
   onCreateKnowledgeGroup?: (name: string) => void;
+  onImportVideo?: (title: string, sourceUrl: string, channel: string) => Promise<void>;
 }
 
 export const LibraryView: React.FC<LibraryViewProps> = ({
@@ -59,9 +60,9 @@ export const LibraryView: React.FC<LibraryViewProps> = ({
   onOpenImport,
   onNavigateTab,
   searchQuery,
-  setSearchQuery,
   onAddVideoToGroup,
   onCreateKnowledgeGroup,
+  onImportVideo,
 }) => {
   const [activeFilter, setActiveFilter] = useState<'All' | 'Favorites' | 'WatchLater' | 'Completed'>('All');
   const [selectedCollectionId, setSelectedCollectionId] = useState<string | null>(null);
@@ -171,6 +172,23 @@ export const LibraryView: React.FC<LibraryViewProps> = ({
     fetchLiveYtData();
   }, [ytProfile?.accessToken, ytProfile?.handle]);
 
+  const handleCardClick = async (v: any) => {
+    const match = podcasts.find(
+      (p) => (p.youtubeVideoId && p.youtubeVideoId === v.videoId) || p.id === `yt-${v.videoId}` || p.title.toLowerCase() === v.title.toLowerCase()
+    );
+    if (match) {
+      onSelectPodcast(match);
+      return;
+    }
+
+    if (onImportVideo) {
+      const sourceUrl = `https://www.youtube.com/watch?v=${v.videoId}`;
+      await onImportVideo(v.title, sourceUrl, v.channel);
+    } else {
+      onNavigateTab('yt_search');
+    }
+  };
+
   const handleCreateFolder = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newFolderName.trim()) return;
@@ -185,8 +203,13 @@ export const LibraryView: React.FC<LibraryViewProps> = ({
   const watchLaterPodcasts = podcasts.filter((p) => p.status === 'In Progress' || p.status === 'Unread');
   const completedPodcasts = podcasts.filter((p) => p.status === 'Completed');
 
-  // Filter logic
+  // Filter & Deduplicate logic
+  const seenPodIds = new Set<string>();
   const filteredPodcasts = podcasts.filter((p) => {
+    const key = p.youtubeVideoId || p.id;
+    if (seenPodIds.has(key)) return false;
+    seenPodIds.add(key);
+
     const q = searchQuery.trim().toLowerCase();
     const matchesSearch =
       q === '' ||
@@ -350,27 +373,31 @@ export const LibraryView: React.FC<LibraryViewProps> = ({
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-4 gap-y-8">
-            {liveSubFeed.slice(0, 8).map((v, idx) => (
-              <YouTubeVideoCard
-                key={idx}
-                video={{
-                  videoId: v.videoId,
-                  title: v.title,
-                  channel: v.channel,
-                  thumbnailUrl: v.thumbnailUrl,
-                  duration: v.duration || '25:00',
-                  publishedAt: v.publishedAt || 'Recent',
-                  description: v.description,
-                  channelAvatar: v.channelAvatar || v.avatarUrl || v.avatar,
-                  avatarUrl: v.avatarUrl || v.avatar,
-                }}
-                groups={knowledgeGroups}
-                onAddToGroup={onAddVideoToGroup}
-                onCreateGroup={onCreateKnowledgeGroup}
-                onPlay={() => window.open(`https://www.youtube.com/watch?v=${v.videoId}`, '_blank')}
-                onSummarize={() => onNavigateTab('yt_search')}
-              />
-            ))}
+            {liveSubFeed.slice(0, 8).map((v, idx) => {
+              const isAnalyzed = podcasts.some((p) => (p.youtubeVideoId && p.youtubeVideoId === v.videoId) || p.id === `yt-${v.videoId}`);
+              return (
+                <YouTubeVideoCard
+                  key={idx}
+                  video={{
+                    videoId: v.videoId,
+                    title: v.title,
+                    channel: v.channel,
+                    thumbnailUrl: v.thumbnailUrl,
+                    duration: v.duration || '25:00',
+                    publishedAt: v.publishedAt || 'Recent',
+                    description: v.description,
+                    isImported: isAnalyzed,
+                    channelAvatar: v.channelAvatar || v.avatarUrl || v.avatar,
+                    avatarUrl: v.avatarUrl || v.avatar,
+                  }}
+                  groups={knowledgeGroups}
+                  onAddToGroup={onAddVideoToGroup}
+                  onCreateGroup={onCreateKnowledgeGroup}
+                  onPlay={() => handleCardClick(v)}
+                  onSummarize={() => handleCardClick(v)}
+                />
+              );
+            })}
           </div>
         </div>
       )}
@@ -390,28 +417,32 @@ export const LibraryView: React.FC<LibraryViewProps> = ({
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-4 gap-y-8">
-            {liveYtLikedVideos.slice(0, 8).map((v, idx) => (
-              <YouTubeVideoCard
-                key={idx}
-                video={{
-                  videoId: v.videoId,
-                  title: v.title,
-                  channel: v.channel,
-                  thumbnailUrl: v.thumbnailUrl,
-                  duration: v.duration || '20:00',
-                  publishedAt: v.publishedAt || 'Liked Video',
-                  description: v.description,
-                  isFavorite: true,
-                  channelAvatar: v.channelAvatar || v.avatarUrl || v.avatar,
-                  avatarUrl: v.avatarUrl || v.avatar,
-                }}
-                groups={knowledgeGroups}
-                onAddToGroup={onAddVideoToGroup}
-                onCreateGroup={onCreateKnowledgeGroup}
-                onPlay={() => window.open(`https://www.youtube.com/watch?v=${v.videoId}`, '_blank')}
-                onSummarize={() => onNavigateTab('yt_search')}
-              />
-            ))}
+            {liveYtLikedVideos.slice(0, 8).map((v, idx) => {
+              const isAnalyzed = podcasts.some((p) => (p.youtubeVideoId && p.youtubeVideoId === v.videoId) || p.id === `yt-${v.videoId}`);
+              return (
+                <YouTubeVideoCard
+                  key={idx}
+                  video={{
+                    videoId: v.videoId,
+                    title: v.title,
+                    channel: v.channel,
+                    thumbnailUrl: v.thumbnailUrl,
+                    duration: v.duration || '20:00',
+                    publishedAt: v.publishedAt || 'Liked Video',
+                    description: v.description,
+                    isFavorite: true,
+                    isImported: isAnalyzed,
+                    channelAvatar: v.channelAvatar || v.avatarUrl || v.avatar,
+                    avatarUrl: v.avatarUrl || v.avatar,
+                  }}
+                  groups={knowledgeGroups}
+                  onAddToGroup={onAddVideoToGroup}
+                  onCreateGroup={onCreateKnowledgeGroup}
+                  onPlay={() => handleCardClick(v)}
+                  onSummarize={() => handleCardClick(v)}
+                />
+              );
+            })}
           </div>
         </div>
       )}

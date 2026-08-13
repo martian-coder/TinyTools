@@ -41,9 +41,9 @@ const DEFAULT_KNOWLEDGE_GROUPS: KnowledgeGroup[] = [
     name: '💰 SaaS & Revenue Models',
     description: 'B2B software ideas, pricing frameworks, and monetization tactics from tech founders.',
     category: 'SaaS Products',
-    videoIds: ['M576WGiDBdQ', '8S0FDjFBj8o', '3qHkcs3kG44'],
+    videoIds: ['L_LUpnjgPso', '8S0FDjFBj8o', '3qHkcs3kG44'],
     customNotesPerVideo: {
-      'M576WGiDBdQ': 'Bezos focus on working backwards from customer needs.',
+      'L_LUpnjgPso': 'Lenny podcast on shifting from per-seat to outcome-based micro-SaaS pricing.',
       '8S0FDjFBj8o': 'YC recommendation on B2B pricing: Charge 10x value delivered.',
     },
   },
@@ -52,8 +52,9 @@ const DEFAULT_KNOWLEDGE_GROUPS: KnowledgeGroup[] = [
     name: '🤖 AI Agents & Tech Stack',
     description: 'LLM agent architectures, micro-services, and automated workflows.',
     category: 'AI & Tech Stack',
-    videoIds: ['b02TIsInTmg', 'f33m-1o2c8E'],
+    videoIds: ['L_LUpnjgPso', 'b02TIsInTmg'],
     customNotesPerVideo: {
+      'L_LUpnjgPso': 'Building vertical AI wrappers with low churn.',
       'b02TIsInTmg': 'Sam Altman on autonomous agents replacing multi-step workflows.',
     },
   },
@@ -62,28 +63,37 @@ const DEFAULT_KNOWLEDGE_GROUPS: KnowledgeGroup[] = [
     name: '🎬 Creator Brand & Media Growth',
     description: 'Audience acquisition, personal brand leverage, and distribution hacks.',
     category: 'Content Creation',
-    videoIds: ['b28A_sC8b1A'],
+    videoIds: ['M576WGiDBdQ'],
   },
   {
     id: 'g-focus',
     name: '🧠 High-Performance Focus & Protocols',
     description: 'Neuroscience toolkits for deep work, dopamine management, and endurance.',
     category: 'Mindset & Growth',
-    videoIds: ['gX_m3fU3e18', '0e3GPea1Tyg'],
+    videoIds: ['gX_m3fU3e18', '3qHkcs3kG44'],
   },
 ];
 
 export default function App() {
   const [podcasts, setPodcasts] = useState<PodcastItem[]>(() => {
+    let list = INITIAL_PODCASTS;
     const saved = localStorage.getItem('podsummarizer_library');
     if (saved) {
       try {
-        return JSON.parse(saved);
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) list = parsed;
       } catch (e) {
         console.error('Failed to parse saved library:', e);
       }
     }
-    return INITIAL_PODCASTS;
+    // Deduplicate by ID and youtubeVideoId
+    const seen = new Set<string>();
+    return list.filter((p) => {
+      const key = p.youtubeVideoId || p.id;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
   });
 
   const DEFAULT_USER_PROFILE: UserProfile = {
@@ -265,10 +275,44 @@ export default function App() {
     return 'dashboard';
   });
 
+  const [selectedPodcast, setSelectedPodcast] = useState<PodcastItem | null>(() => {
+    try {
+      const savedId = localStorage.getItem('podsummarizer_selected_podcast_id');
+      if (savedId && Array.isArray(INITIAL_PODCASTS)) {
+        const match = INITIAL_PODCASTS.find((p) => p.id === savedId || p.youtubeVideoId === savedId);
+        if (match) return match;
+      }
+    } catch {}
+    return null;
+  });
+
+  // Sync currentTab changes to localStorage
   useEffect(() => {
     localStorage.setItem('podsummarizer_current_tab', currentTab);
   }, [currentTab]);
-  const [selectedPodcast, setSelectedPodcast] = useState<PodcastItem | null>(null);
+
+  // Sync selectedPodcast changes to localStorage
+  useEffect(() => {
+    if (selectedPodcast) {
+      localStorage.setItem('podsummarizer_selected_podcast_id', selectedPodcast.youtubeVideoId || selectedPodcast.id);
+    } else {
+      localStorage.removeItem('podsummarizer_selected_podcast_id');
+    }
+  }, [selectedPodcast]);
+
+  // Fallback: If currentTab is 'detail' but no selectedPodcast, restore first podcast or fallback to dashboard
+  useEffect(() => {
+    if (currentTab === 'detail' && !selectedPodcast) {
+      if (podcasts.length > 0) {
+        const savedId = localStorage.getItem('podsummarizer_selected_podcast_id');
+        const match = podcasts.find((p) => p.id === savedId || p.youtubeVideoId === savedId);
+        setSelectedPodcast(match || podcasts[0]);
+      } else {
+        setCurrentTab('dashboard');
+      }
+    }
+  }, [currentTab, selectedPodcast, podcasts]);
+
   const [isImportOpen, setIsImportOpen] = useState(false);
   const [isImportingFromYT, setIsImportingFromYT] = useState(false);
   const [showGlobalLoginModal, setShowGlobalLoginModal] = useState(false);
@@ -708,6 +752,7 @@ export default function App() {
             setSearchQuery={setSearchQuery}
             knowledgeGroups={knowledgeGroups}
             onAddVideoToGroup={handleAddVideoToGroup}
+            onImportVideo={handleImportVideoDirectly}
           />
         )}
 

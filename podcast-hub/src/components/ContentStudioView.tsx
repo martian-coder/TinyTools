@@ -74,18 +74,18 @@ export const ContentStudioView: React.FC<ContentStudioViewProps> = ({ podcasts }
   };
 
   return (
-    <div className="space-y-6">
-      {/* Hero Banner */}
-      <div className="bg-gradient-to-r from-purple-950/60 via-slate-900 to-indigo-950/60 border border-purple-500/30 rounded-2xl p-6 sm:p-8 shadow-xl space-y-4">
+    <div className="space-y-5 animate-in fade-in duration-300">
+      {/* Hero Banner Card */}
+      <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-2xs space-y-4">
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-2xl bg-purple-500/20 border border-purple-500/40 flex items-center justify-center text-purple-400 shadow-lg shadow-purple-500/10">
-            <Share2 className="w-6 h-6" />
+          <div className="w-10 h-10 rounded-xl bg-teal-50 border border-teal-200 flex items-center justify-center text-teal-600 shrink-0">
+            <Share2 className="w-5 h-5" />
           </div>
           <div>
-            <h1 className="text-xl sm:text-2xl font-extrabold text-white">
+            <h1 className="text-base font-semibold text-slate-800">
               Content Creation Studio & Repurposing Engine
             </h1>
-            <p className="text-xs sm:text-sm text-slate-300">
+            <p className="text-xs text-slate-500">
               Transform podcast summaries, business blueprints, and quote clips into viral Twitter threads, LinkedIn posts, newsletter digests, or SaaS pitches
             </p>
           </div>
@@ -93,17 +93,17 @@ export const ContentStudioView: React.FC<ContentStudioViewProps> = ({ podcasts }
       </div>
 
       {/* Selector Controls */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
         {/* Left Control Box */}
-        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-6 h-fit">
-          <div className="space-y-2">
-            <label className="text-xs font-bold text-slate-300 uppercase tracking-wider block">
+        <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-2xs space-y-5 h-fit">
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-slate-700 block">
               1. Select Source Podcast
             </label>
             <select
               value={selectedPodcastId}
               onChange={(e) => setSelectedPodcastId(e.target.value)}
-              className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-slate-200 focus:outline-none focus:border-purple-500 cursor-pointer"
+              className="w-full bg-white border border-slate-200 rounded-lg p-2.5 text-xs text-slate-800 focus:outline-none focus:border-teal-400 font-normal"
             >
               {podcasts.map((p) => (
                 <option key={p.id} value={p.id}>
@@ -113,33 +113,29 @@ export const ContentStudioView: React.FC<ContentStudioViewProps> = ({ podcasts }
             </select>
           </div>
 
-          {/* Format Selector */}
           <div className="space-y-2">
-            <label className="text-xs font-bold text-slate-300 uppercase tracking-wider block">
-              2. Select Output Format
+            <label className="text-xs font-semibold text-slate-700 block">
+              2. Select Content Format
             </label>
             <div className="space-y-2">
-              {formats.map((fmt) => {
-                const Icon = fmt.icon;
-                const isSelected = selectedFormat === fmt.name;
+              {formats.map((f) => {
+                const Icon = f.icon;
+                const isSelected = selectedFormat === f.name;
                 return (
                   <button
-                    key={fmt.name}
-                    onClick={() => setSelectedFormat(fmt.name)}
-                    className={`w-full p-3 rounded-xl border text-left transition-all cursor-pointer flex items-center justify-between ${
+                    key={f.name}
+                    onClick={() => setSelectedFormat(f.name)}
+                    className={`w-full p-3 rounded-lg border text-left transition-all cursor-pointer flex items-center gap-3 ${
                       isSelected
-                        ? 'bg-purple-600/20 border-purple-500 text-white shadow-md'
-                        : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-slate-200'
+                        ? 'bg-teal-50 border-teal-300 text-slate-800 shadow-2xs font-medium'
+                        : 'bg-white border-slate-200 hover:bg-slate-50 text-slate-600'
                     }`}
                   >
-                    <div className="flex items-center gap-2.5">
-                      <Icon className={`w-4 h-4 ${fmt.color}`} />
-                      <div>
-                        <p className="text-xs font-bold">{fmt.name}</p>
-                        <p className="text-[10px] text-slate-500">{fmt.desc}</p>
-                      </div>
+                    <Icon className={`w-4 h-4 shrink-0 ${f.color}`} />
+                    <div className="min-w-0">
+                      <p className="text-xs font-semibold text-slate-800">{f.name}</p>
+                      <p className="text-[10px] text-slate-400 truncate">{f.desc}</p>
                     </div>
-                    {isSelected && <Check className="w-4 h-4 text-purple-400 shrink-0" />}
                   </button>
                 );
               })}
@@ -148,48 +144,48 @@ export const ContentStudioView: React.FC<ContentStudioViewProps> = ({ podcasts }
 
           <button
             onClick={handleGenerate}
-            disabled={!selectedPodcastId || isGenerating}
-            className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white py-3 rounded-xl text-xs sm:text-sm font-bold transition-all shadow-lg shadow-purple-600/30 cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2"
+            disabled={!currentPodcast || isGenerating}
+            className="w-full bg-[#11A888] hover:bg-[#0e9478] text-white py-2.5 rounded-lg text-xs font-medium transition-all cursor-pointer flex items-center justify-center gap-2 shadow-2xs"
           >
             {isGenerating ? (
               <>
                 <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                <span>Crafting Content with Gemini...</span>
+                <span>Generating {selectedFormat}...</span>
               </>
             ) : (
               <>
                 <Sparkles className="w-4 h-4" />
-                <span>Generate {selectedFormat}</span>
+                <span>Generate Repurposed Content</span>
               </>
             )}
           </button>
         </div>
 
-        {/* Output Studio Panel */}
-        <div className="lg:col-span-2 bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-4 flex flex-col justify-between">
-          <div className="space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+        {/* Right Output Display Box */}
+        <div className="lg:col-span-2 bg-white border border-slate-200 rounded-xl p-5 shadow-2xs space-y-4 flex flex-col justify-between min-h-[420px]">
+          <div className="space-y-3">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <div className="flex items-center gap-2">
-                <FileText className="w-5 h-5 text-purple-400" />
-                <h3 className="text-base font-bold text-white">
-                  Publish-Ready Output: {selectedFormat}
+                <FileText className="w-4 h-4 text-teal-600" />
+                <h3 className="text-xs font-semibold text-slate-800">
+                  Generated Output: {selectedFormat}
                 </h3>
               </div>
 
               {generatedContent && (
                 <button
                   onClick={handleCopy}
-                  className="bg-purple-600/20 hover:bg-purple-600/30 text-purple-300 border border-purple-500/40 px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 cursor-pointer transition-all"
+                  className="bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1.5 rounded-lg border border-slate-200 text-xs font-medium transition-all cursor-pointer flex items-center gap-1.5"
                 >
                   {copied ? (
                     <>
-                      <Check className="w-3.5 h-3.5 text-emerald-400" />
+                      <Check className="w-3.5 h-3.5 text-teal-600" />
                       <span>Copied!</span>
                     </>
                   ) : (
                     <>
                       <Copy className="w-3.5 h-3.5" />
-                      <span>Copy Text</span>
+                      <span>Copy Draft</span>
                     </>
                   )}
                 </button>
@@ -197,18 +193,24 @@ export const ContentStudioView: React.FC<ContentStudioViewProps> = ({ podcasts }
             </div>
 
             {generatedContent ? (
-              <div className="bg-slate-950 p-5 rounded-xl border border-slate-800 text-xs sm:text-sm text-slate-200 font-sans leading-relaxed whitespace-pre-line max-h-[60vh] overflow-y-auto">
+              <div className="bg-slate-50 border border-slate-200 rounded-lg p-4 font-mono text-xs text-slate-700 whitespace-pre-line leading-relaxed overflow-y-auto max-h-[480px]">
                 {generatedContent}
               </div>
             ) : (
-              <div className="text-center py-20 text-slate-500 space-y-3 bg-slate-950/50 rounded-xl border border-slate-800/80">
-                <Share2 className="w-10 h-10 mx-auto text-slate-600" />
-                <p className="text-xs font-medium text-slate-400">
-                  Select a podcast and click "Generate" to create Twitter threads, LinkedIn posts, or newsletters!
-                </p>
+              <div className="text-center py-20 border border-dashed border-slate-200 rounded-lg space-y-2">
+                <Sparkles className="w-8 h-8 text-slate-300 mx-auto" />
+                <p className="text-xs font-medium text-slate-600">Select a podcast and format on the left</p>
+                <p className="text-[11px] text-slate-400">Click &quot;Generate Repurposed Content&quot; to draft viral posts</p>
               </div>
             )}
           </div>
+
+          {generatedContent && (
+            <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-400">
+              <span>Ready for publishing on social platforms</span>
+              <span className="font-semibold text-teal-600">AI Repurposing Engine Active</span>
+            </div>
+          )}
         </div>
       </div>
     </div>
