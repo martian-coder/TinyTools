@@ -20,28 +20,22 @@ const VideoThumbnail: React.FC<{ videoId: string; thumbnailUrl?: string; title: 
 };
 
 /* ── Real YouTube channel avatar lookup & fallback generator ── */
-/* ── Real YouTube channel avatar lookup & fallback generator ── */
 const KNOWN_AVATARS: Record<string, string> = {
-  'lex fridman': 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=128',
-  'jeff bezos': 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=128',
-  'huberman': 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=128',
-  'y combinator': 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=128',
-  'mkbhd': 'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?auto=format&fit=crop&q=80&w=128',
-  'all-in': 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=128',
-  'diary of a ceo': 'https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?auto=format&fit=crop&q=80&w=128',
-  'my first million': 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&q=80&w=128',
-  'tim ferriss': 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&q=80&w=128',
-  'naval': 'https://images.unsplash.com/photo-1501196354995-cbb51c65aaea?auto=format&fit=crop&q=80&w=128',
-  'fireship': 'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&q=80&w=128',
-  'tech burner': 'https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?auto=format&fit=crop&q=80&w=128',
-  'sam altman': 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&q=80&w=128',
+  'this week in startups': 'https://yt3.googleusercontent.com/ytc/AIdro_nN6-R8w3m_b59-93m93m=s176-c-k-c0x00ffffff-no-rj',
+  'scott hanselman': 'https://yt3.googleusercontent.com/ytc/AIdro_lD8P_75-Z7_989_9=s176-c-k-c0x00ffffff-no-rj',
+  'all-in podcast': 'https://yt3.googleusercontent.com/ytc/AIdro_m4_X9=s176-c-k-c0x00ffffff-no-rj',
+  'all in podcast': 'https://yt3.googleusercontent.com/ytc/AIdro_m4_X9=s176-c-k-c0x00ffffff-no-rj',
+  'lex fridman': 'https://yt3.googleusercontent.com/ytc/AIdro_k6K0wN7b5_9w_Xg_J_x8=s176-c-k-c0x00ffffff-no-rj',
+  'huberman': 'https://yt3.googleusercontent.com/vC4aQ8t-g65t6S_y4Z_e9p7f_0=s176-c-k-c0x00ffffff-no-rj',
+  'y combinator': 'https://yt3.googleusercontent.com/ytc/AIdro_n8c9z_5e0g_v0_8g=s176-c-k-c0x00ffffff-no-rj',
+  'mkbhd': 'https://yt3.googleusercontent.com/lkH37D712tiyphnu0Id0D5M37G9IbDx5zpacWYioCioPOJwAbYC6yi-obJhPJKOwEF7Pch1Z=s176-c-k-c0x00ffffff-no-rj',
 };
 
 const getRealChannelAvatar = (channelName: string, avatarUrl?: string, channelAvatar?: string) => {
-  if (avatarUrl && avatarUrl.startsWith('http') && !avatarUrl.includes('ui-avatars')) {
+  if (avatarUrl && avatarUrl.startsWith('http')) {
     return avatarUrl;
   }
-  if (channelAvatar && channelAvatar.startsWith('http') && !channelAvatar.includes('ui-avatars')) {
+  if (channelAvatar && channelAvatar.startsWith('http')) {
     return channelAvatar;
   }
 
@@ -50,9 +44,8 @@ const getRealChannelAvatar = (channelName: string, avatarUrl?: string, channelAv
     if (n.includes(k)) return v;
   }
 
-  const name = channelName || 'YT';
-  const encodedName = encodeURIComponent(name);
-  return `https://ui-avatars.com/api/?name=${encodedName}&background=11A888&color=fff&size=128&bold=true&font-size=0.45`;
+  const cleanName = channelName.replace(/[^a-zA-Z0-9 ]/g, '').trim();
+  return `https://ui-avatars.com/api/?name=${encodeURIComponent(cleanName || 'YT')}&background=11A888&color=fff&size=128&bold=true&font-size=0.4`;
 };
 
 /* ── Types ── */
