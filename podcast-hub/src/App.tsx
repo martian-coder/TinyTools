@@ -453,9 +453,6 @@ export default function App() {
             setUserProfile((prev) => ({
               ...prev,
               name: parsedG.name,
-              handle: parsedG.handle || prev.handle,
-              avatar: parsedG.avatar || prev.avatar,
-              email: parsedG.email || prev.email,
             }));
           }
         } else {

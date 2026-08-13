@@ -111,18 +111,8 @@ export const GoogleSignInCard: React.FC<GoogleSignInCardProps> = ({
     try {
       await startGoogleSignIn();
     } catch (err: any) {
-      console.warn('Backend OAuth unavailable on static host, fallback to instant session:', err);
-      const instantProf: ConnectedProfile = {
-        name: 'Connected Creator',
-        handle: '@creator',
-        avatar: 'https://ui-avatars.com/api/?name=Connected+Creator&background=11A888&color=fff&size=150&bold=true',
-        email: 'creator@podcasthub.app',
-      };
-      localStorage.setItem('user_yt_profile', JSON.stringify(instantProf));
-      window.dispatchEvent(new Event('yt_profile_updated'));
-      setCurrentProfile(instantProf);
-      if (onSuccess) onSuccess(instantProf);
       setIsLoading(false);
+      setError(err?.message || 'Server OAuth not configured for static hosting. Please enter your YouTube channel handle below.');
     }
   };
 
