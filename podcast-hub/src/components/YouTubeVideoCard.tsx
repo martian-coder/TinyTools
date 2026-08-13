@@ -5,24 +5,25 @@ import { AddToGroupDropdown } from './AddToGroupDropdown';
 
 /* ── Thumbnail with robust fallback ── */
 const VideoThumbnail: React.FC<{ videoId: string; thumbnailUrl?: string; title: string; className?: string }> = ({ videoId, thumbnailUrl, title, className }) => {
-  const defaultImg = videoId ? `https://img.youtube.com/vi/${videoId}/hqdefault.jpg` : 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=600&q=80';
-  const initialSrc = (thumbnailUrl && !thumbnailUrl.includes('unsplash')) ? thumbnailUrl : defaultImg;
+  // Always derive official YouTube thumbnail directly from videoId for 100% accuracy
+  const ytThumbnail = videoId ? `https://img.youtube.com/vi/${videoId}/hqdefault.jpg` : '';
+  const initialSrc = (thumbnailUrl && !thumbnailUrl.includes('unsplash') && !thumbnailUrl.includes('ui-avatars')) ? thumbnailUrl : ytThumbnail;
   const [src, setSrc] = React.useState(initialSrc);
 
   React.useEffect(() => {
-    const newSrc = (thumbnailUrl && !thumbnailUrl.includes('unsplash')) ? thumbnailUrl : defaultImg;
+    const newSrc = (thumbnailUrl && !thumbnailUrl.includes('unsplash') && !thumbnailUrl.includes('ui-avatars')) ? thumbnailUrl : ytThumbnail;
     setSrc(newSrc);
   }, [videoId, thumbnailUrl]);
 
   return (
     <img
-      src={src}
+      src={src || ytThumbnail}
       alt={title}
       className={className}
       loading="lazy"
       onError={() => {
-        if (src !== defaultImg) {
-          setSrc(defaultImg);
+        if (src !== ytThumbnail) {
+          setSrc(ytThumbnail);
         }
       }}
     />
