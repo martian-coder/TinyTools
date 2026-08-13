@@ -131,14 +131,14 @@ const DEFAULT_SUBSCRIPTIONS = [
     channelId: 'UC4tQ2z1n5s04g03nJ05k61w',
     title: 'My First Million',
     description: 'Micro-SaaS Product Ideas & Business Growth',
-    thumbnail: 'https://images.unsplash.com/photo-1590602847861-f357a9332bbc?auto=format&fit=crop&w=200&q=80',
+    thumbnail: 'https://ui-avatars.com/api/?name=My+First+Million&background=cc0000&color=fff&size=128&bold=true',
   },
   {
     id: 'sub-8',
     channelId: 'UC5q0z55-dC04j02k501j62w',
     title: 'Tim Ferriss',
     description: 'Deconstructing Peak Performance & Tactics',
-    thumbnail: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80',
+    thumbnail: 'https://ui-avatars.com/api/?name=Tim+Ferriss&background=cc0000&color=fff&size=128&bold=true',
   },
 ];
 
