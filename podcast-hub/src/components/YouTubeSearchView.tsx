@@ -334,6 +334,20 @@ export const YouTubeSearchView: React.FC<YouTubeSearchViewProps> = ({
 
       if (parsedProf?.accessToken) {
         fetchSubscriptionsAndFeed(parsedProf);
+      } else if (existingPodcasts && existingPodcasts.length > 0) {
+        // Sync Watch & Search view with user's saved podcasts library
+        const synced = existingPodcasts.map((p) => ({
+          videoId: p.youtubeVideoId || p.id.replace('yt-', ''),
+          title: p.title,
+          channel: p.channel,
+          duration: p.duration,
+          thumbnailUrl: p.thumbnailUrl,
+          description: p.shortSummary || `Episode from ${p.channel}`,
+          publishedAt: p.dateAdded || 'Recently',
+          isFavorite: p.isFavorite,
+          channelAvatar: p.channelAvatar,
+        }));
+        setResults(synced);
       } else {
         handleSearch('AI, Tech & Business Podcasts');
       }
