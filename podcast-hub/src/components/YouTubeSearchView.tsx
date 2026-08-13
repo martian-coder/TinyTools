@@ -832,7 +832,14 @@ export const YouTubeSearchView: React.FC<YouTubeSearchViewProps> = ({
                       className="flex items-center gap-1.5 cursor-pointer"
                     >
                       {sub.thumbnail ? (
-                        <img src={sub.thumbnail} alt={sub.title} className="w-4 h-4 rounded-full object-cover shrink-0 border border-slate-200" />
+                        <img
+                          src={sub.thumbnail}
+                          alt={sub.title}
+                          className="w-4 h-4 rounded-full object-cover shrink-0 border border-slate-200"
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(sub.title)}&background=cc0000&color=fff&size=128&bold=true`;
+                          }}
+                        />
                       ) : (
                         <div className="w-4 h-4 rounded-full bg-teal-600 text-white font-medium flex items-center justify-center text-[8px] shrink-0">
                           {sub.title.slice(0, 2).toUpperCase()}

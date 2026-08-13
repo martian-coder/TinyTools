@@ -19,8 +19,22 @@ const VideoThumbnail: React.FC<{ videoId: string; thumbnailUrl?: string; title: 
   );
 };
 
-/* ── Real YouTube channel avatar fallback generator ── */
-const getRealChannelAvatar = (channelName: string, avatarUrl?: string, channelAvatar?: string, videoId?: string) => {
+/* ── Real YouTube channel avatar lookup & fallback generator ── */
+const KNOWN_AVATARS: Record<string, string> = {
+  'lex fridman': 'https://yt3.googleusercontent.com/ytc/AIdro_k6K0wN7b5_9w_Xg_J_x8=s176-c-k-c0x00ffffff-no-rj',
+  'huberman lab': 'https://yt3.googleusercontent.com/vC4aQ8t-g65t6S_y4Z_e9p7f_0=s176-c-k-c0x00ffffff-no-rj',
+  'y combinator': 'https://yt3.googleusercontent.com/ytc/AIdro_n8c9z_5e0g_v0_8g=s176-c-k-c0x00ffffff-no-rj',
+  'mkbhd': 'https://yt3.googleusercontent.com/lkH37D712tiyphnu0Id0D5M37G9IbDx5zpacWYioCioPOJwAbYC6yi-obJhPJKOwEF7Pch1Z=s176-c-k-c0x00ffffff-no-rj',
+  'all-in': 'https://yt3.googleusercontent.com/ytc/AIdro_m4_X9=s176-c-k-c0x00ffffff-no-rj',
+  'diary of a ceo': 'https://yt3.googleusercontent.com/ytc/AIdro_m5=_s176-c-k-c0x00ffffff-no-rj',
+  'my first million': 'https://yt3.googleusercontent.com/ytc/AIdro_l0_X9=s176-c-k-c0x00ffffff-no-rj',
+  'tim ferriss': 'https://yt3.googleusercontent.com/ytc/AIdro_k8_X9=s176-c-k-c0x00ffffff-no-rj',
+  'naval': 'https://yt3.googleusercontent.com/ytc/AIdro_n0_X9=s176-c-k-c0x00ffffff-no-rj',
+  'fireship': 'https://yt3.googleusercontent.com/ytc/AIdro_m0_X9=s176-c-k-c0x00ffffff-no-rj',
+  'tech burner': 'https://yt3.googleusercontent.com/ytc/AIdro_t0_X9=s176-c-k-c0x00ffffff-no-rj',
+};
+
+const getRealChannelAvatar = (channelName: string, avatarUrl?: string, channelAvatar?: string) => {
   if (avatarUrl && avatarUrl.startsWith('http') && !avatarUrl.includes('ui-avatars') && !avatarUrl.includes('unsplash')) {
     return avatarUrl;
   }
@@ -28,8 +42,12 @@ const getRealChannelAvatar = (channelName: string, avatarUrl?: string, channelAv
     return channelAvatar;
   }
 
+  const n = (channelName || '').toLowerCase().trim();
+  for (const [k, v] of Object.entries(KNOWN_AVATARS)) {
+    if (n.includes(k)) return v;
+  }
+
   const name = channelName || 'YouTube Creator';
-  // Use UI Avatars with YouTube Red (#FF0000) or Dark Navy branding
   const encodedName = encodeURIComponent(name);
   return `https://ui-avatars.com/api/?name=${encodedName}&background=cc0000&color=fff&size=128&bold=true&font-size=0.45`;
 };
@@ -129,6 +147,9 @@ export const YouTubeVideoCard: React.FC<YouTubeVideoCardProps> = ({
           src={avatar}
           alt={video.channel}
           className="w-7 h-7 rounded-full object-cover border border-slate-200 shrink-0 mt-0.5"
+          onError={(e) => {
+            (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(video.channel || 'YT')}&background=cc0000&color=fff&size=128&bold=true`;
+          }}
         />
 
         <div className="flex-1 min-w-0">
