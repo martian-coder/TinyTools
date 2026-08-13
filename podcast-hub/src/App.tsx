@@ -16,6 +16,7 @@ import { ContentStudioView } from './components/ContentStudioView';
 import { CollectionsView } from './components/CollectionsView';
 import { UserProfileView } from './components/UserProfileView';
 import { KnowledgeGroupsView } from './components/KnowledgeGroupsView';
+import { ImportModal } from './components/ImportModal';
 import {
   savePodcastsToCloud,
   loadPodcastsFromCloud,
