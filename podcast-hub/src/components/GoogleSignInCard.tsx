@@ -109,21 +109,26 @@ export const GoogleSignInCard: React.FC<GoogleSignInCardProps> = ({
   const handleGoogleSignIn = async () => {
     setIsLoading(true);
     setError('');
-    try {
-      // 1. Try server OAuth redirect if backend is active
-      await startGoogleSignIn();
-    } catch (err: any) {
-      // 2. If server API endpoint returns 404/405 (static host like GitHub Pages), use client-side Google SDK
+    
+    // 1. Check if client has a custom GOOGLE_CLIENT_ID configured
+    const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
+    
+    if (clientId) {
       try {
-        const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || '1088451838612-demo.apps.googleusercontent.com';
-        const prof = await signInWithGoogleClient(googleClientId);
+        const prof = await signInWithGoogleClient(clientId);
         setCurrentProfile(prof);
         if (onSuccess) onSuccess(prof);
-      } catch (clientErr: any) {
-        setError('Please sign in using your YouTube Channel Handle below or configure Google Client ID.');
-      } finally {
         setIsLoading(false);
-      }
+        return;
+      } catch (e) {}
+    }
+
+    // 2. Try server redirect if backend is active
+    try {
+      await startGoogleSignIn();
+    } catch (err: any) {
+      setIsLoading(false);
+      setError('To connect Google OAuth, set VITE_GOOGLE_CLIENT_ID in settings or enter your YouTube channel handle below.');
     }
   };
 
