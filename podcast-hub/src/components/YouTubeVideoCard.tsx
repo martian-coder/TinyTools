@@ -146,15 +146,18 @@ export const YouTubeVideoCard: React.FC<YouTubeVideoCardProps> = ({
 
       {/* ── Meta ── */}
       <div className="flex gap-2.5 p-3 items-start">
-        {/* Avatar */}
-        <img
-          src={avatar}
-          alt={video.channel}
-          className="w-7 h-7 rounded-full object-cover border border-slate-200 shrink-0 mt-0.5"
-          onError={(e) => {
-            (e.target as HTMLImageElement).src = createInitialAvatarSvg(video.channel || 'YT');
-          }}
-        />
+        {/* Avatar Badge */}
+        <div className="w-7 h-7 rounded-full overflow-hidden border border-slate-200 shrink-0 mt-0.5 bg-teal-600 flex items-center justify-center text-white text-[10px] font-bold select-none">
+          <img
+            src={avatar}
+            alt={video.channel}
+            className="w-full h-full object-cover"
+            onError={(e) => {
+              (e.target as HTMLImageElement).style.display = 'none';
+            }}
+          />
+          <span className="leading-none uppercase">{(video.channel || 'Y').slice(0, 2)}</span>
+        </div>
 
         <div className="flex-1 min-w-0">
           {/* Title */}
