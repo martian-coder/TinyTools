@@ -12,6 +12,7 @@ import {
   Youtube,
 } from 'lucide-react';
 import { startGoogleSignIn, logoutFirebase } from '../lib/auth';
+import { signInWithGoogleClient } from '../lib/clientAuth';
 
 interface GoogleSignInCardProps {
   onClose?: () => void;
@@ -109,10 +110,20 @@ export const GoogleSignInCard: React.FC<GoogleSignInCardProps> = ({
     setIsLoading(true);
     setError('');
     try {
+      // 1. Try server OAuth redirect if backend is active
       await startGoogleSignIn();
     } catch (err: any) {
-      setIsLoading(false);
-      setError(err?.message || 'Server OAuth not configured for static hosting. Please enter your YouTube channel handle below.');
+      // 2. If server API endpoint returns 404/405 (static host like GitHub Pages), use client-side Google SDK
+      try {
+        const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || '1088451838612-demo.apps.googleusercontent.com';
+        const prof = await signInWithGoogleClient(googleClientId);
+        setCurrentProfile(prof);
+        if (onSuccess) onSuccess(prof);
+      } catch (clientErr: any) {
+        setError('Please sign in using your YouTube Channel Handle below or configure Google Client ID.');
+      } finally {
+        setIsLoading(false);
+      }
     }
   };
 
