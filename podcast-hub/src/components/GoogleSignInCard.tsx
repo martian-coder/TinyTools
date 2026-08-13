@@ -107,19 +107,23 @@ export const GoogleSignInCard: React.FC<GoogleSignInCardProps> = ({
     return () => window.removeEventListener('yt_profile_updated', sync);
   }, []);
 
-  const handleGoogleSignIn = async (userEnteredEmailOrHandle?: string) => {
+  const handleGoogleSignIn = async (userEnteredVal?: string) => {
     setIsLoading(true);
     setError('');
     
+    // If user provided a specific email or channel handle in the input box, connect that
+    const targetInput = userEnteredVal || handleInput;
+    
     try {
-      if (!userEnteredEmailOrHandle) {
+      if (!targetInput) {
+        // Try server redirect flow if backend is active
         await startGoogleSignIn();
         return;
       }
     } catch (err: any) {}
 
-    // Universal client sign in for static GitHub Pages / production hosting
-    const prof = await executeUniversalSignIn(userEnteredEmailOrHandle || handleInput);
+    // Universal authentication resolution (static GitHub Pages & production fallback)
+    const prof = await executeUniversalSignIn(targetInput || 'Creator Account');
     setCurrentProfile(prof);
     if (onSuccess) onSuccess(prof);
     setIsLoading(false);
@@ -178,7 +182,32 @@ export const GoogleSignInCard: React.FC<GoogleSignInCardProps> = ({
   /* ── Sign-In Form ── */
   const signInUI = !currentProfile && (
     <div className="space-y-4">
-      {/* Interactive Account Form */}
+      {/* 1-Click Direct Google Sign In Button */}
+      <button
+        id="google-signin-btn"
+        onClick={() => handleGoogleSignIn()}
+        disabled={isLoading}
+        className="w-full flex items-center gap-3 bg-[#11A888] hover:bg-[#0e9478] text-white font-semibold py-3 px-4 rounded-xl shadow-2xs transition-all cursor-pointer text-xs active:scale-[0.99] group disabled:opacity-60"
+      >
+        <span className="shrink-0 bg-white p-1 rounded-full shadow-xs">
+          {isLoading ? <Loader2 className="w-4 h-4 animate-spin text-slate-800" /> : <GoogleIcon size={16} />}
+        </span>
+        <span className="flex-1 text-left text-white font-semibold">
+          {isLoading ? 'Connecting Account…' : 'Sign in with Google'}
+        </span>
+        {!isLoading && (
+          <ChevronRight className="w-4 h-4 text-white group-hover:translate-x-0.5 transition-transform ml-auto shrink-0" />
+        )}
+      </button>
+
+      {/* Divider */}
+      <div className="flex items-center gap-3 pt-1">
+        <div className="flex-1 h-px bg-slate-200" />
+        <span className="text-[10px] font-medium text-slate-400 uppercase tracking-wider">or sign in with email / handle</span>
+        <div className="flex-1 h-px bg-slate-200" />
+      </div>
+
+      {/* Optional Email / Channel Handle Input */}
       <form
         onSubmit={(e) => {
           e.preventDefault();
@@ -186,39 +215,22 @@ export const GoogleSignInCard: React.FC<GoogleSignInCardProps> = ({
             handleGoogleSignIn(handleInput);
           }
         }}
-        className="space-y-3"
+        className="flex gap-2"
       >
-        <div>
-          <label className="block text-xs font-semibold text-slate-700 mb-1.5 text-left">
-            Google Account Email or YouTube Handle
-          </label>
-          <div className="relative">
-            <input
-              type="text"
-              value={handleInput}
-              onChange={(e) => setHandleInput(e.target.value)}
-              placeholder="e.g. yourname@gmail.com or @yourchannel"
-              disabled={isLoading}
-              required
-              className="w-full px-3.5 py-2.5 text-sm bg-white border border-slate-200 rounded-xl text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-teal-500 transition-all disabled:opacity-50"
-            />
-          </div>
-        </div>
-
+        <input
+          type="text"
+          value={handleInput}
+          onChange={(e) => setHandleInput(e.target.value)}
+          placeholder="yourname@gmail.com or @handle"
+          disabled={isLoading}
+          className="flex-1 px-3 py-2 text-xs bg-white border border-slate-200 rounded-xl text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-teal-500 transition-all"
+        />
         <button
           type="submit"
           disabled={isLoading || !handleInput.trim()}
-          className="w-full flex items-center justify-center gap-2 bg-[#11A888] hover:bg-[#0e9478] text-white font-semibold py-2.5 px-4 rounded-xl shadow-2xs transition-all cursor-pointer text-xs active:scale-[0.99] group disabled:opacity-60 disabled:cursor-not-allowed"
+          className="shrink-0 px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-semibold text-xs transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
         >
-          {isLoading ? (
-            <Loader2 className="w-4 h-4 animate-spin text-white" />
-          ) : (
-            <>
-              <GoogleIcon size={16} />
-              <span>Connect Account</span>
-              <ChevronRight className="w-4 h-4 text-white group-hover:translate-x-0.5 transition-transform ml-auto" />
-            </>
-          )}
+          Connect
         </button>
       </form>
     </div>
