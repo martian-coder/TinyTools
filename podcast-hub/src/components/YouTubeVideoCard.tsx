@@ -20,28 +20,16 @@ const VideoThumbnail: React.FC<{ videoId: string; thumbnailUrl?: string; title: 
 };
 
 /* ── Real YouTube channel avatar lookup & SVG fallback generator ── */
-const KNOWN_AVATARS: Record<string, string> = {
-  'this week in startups': 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=128',
-  'scott hanselman': 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=128',
-  'all-in podcast': 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=128',
-  'all in podcast': 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=128',
-  'all in': 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=128',
-  'lex fridman': 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&q=80&w=128',
-  'huberman': 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=128',
-  'y combinator': 'https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?auto=format&fit=crop&q=80&w=128',
-  'mkbhd': 'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?auto=format&fit=crop&q=80&w=128',
-};
-
-// Generates an inline SVG Data URI avatar with initial letters — guaranteed zero network failure
-const createInitialAvatarSvg = (name: string): string => {
-  const words = (name || 'YT').trim().split(/\s+/);
-  let initials = words[0]?.[0] || 'Y';
-  if (words.length > 1 && words[1]?.[0]) {
-    initials += words[1][0];
-  }
-  initials = initials.toUpperCase();
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 80 80"><rect width="80" height="80" rx="40" fill="#11A888"/><text x="50%" y="54%" font-family="sans-serif" font-size="32" font-weight="600" fill="#ffffff" text-anchor="middle" dominant-baseline="middle">${initials}</text></svg>`;
-  return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
+const OFFICIAL_YT_AVATARS: Record<string, string> = {
+  'this week in startups': 'https://unavatar.io/youtube/thisweekin',
+  'scott hanselman': 'https://unavatar.io/github/shanselman',
+  'all-in podcast': 'https://unavatar.io/youtube/allin',
+  'all in podcast': 'https://unavatar.io/youtube/allin',
+  'all in': 'https://unavatar.io/youtube/allin',
+  'lex fridman': 'https://unavatar.io/youtube/lexfridman',
+  'huberman': 'https://unavatar.io/youtube/hubermanlab',
+  'y combinator': 'https://unavatar.io/youtube/ycombinator',
+  'mkbhd': 'https://unavatar.io/youtube/mkbhd',
 };
 
 const getRealChannelAvatar = (channelName: string, avatarUrl?: string, channelAvatar?: string) => {
@@ -49,11 +37,13 @@ const getRealChannelAvatar = (channelName: string, avatarUrl?: string, channelAv
   if (channelAvatar && channelAvatar.startsWith('http')) return channelAvatar;
 
   const n = (channelName || '').toLowerCase().trim();
-  for (const [k, v] of Object.entries(KNOWN_AVATARS)) {
+  for (const [k, v] of Object.entries(OFFICIAL_YT_AVATARS)) {
     if (n.includes(k)) return v;
   }
 
-  return createInitialAvatarSvg(channelName);
+  // Fallback to unavatar by channel name query
+  const cleanHandle = channelName.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+  return `https://unavatar.io/youtube/${cleanHandle}`;
 };
 
 /* ── Types ── */
@@ -100,6 +90,7 @@ export const YouTubeVideoCard: React.FC<YouTubeVideoCardProps> = ({
   isImporting = false,
 }) => {
   const avatar = getRealChannelAvatar(video.channel, video.avatarUrl, video.channelAvatar);
+  const [imgError, setImgError] = React.useState(false);
 
   return (
     <div className="group flex flex-col bg-white border border-slate-200/80 rounded-xl overflow-hidden hover:border-slate-300 hover:shadow-md transition-all duration-200 cursor-pointer">
@@ -147,16 +138,17 @@ export const YouTubeVideoCard: React.FC<YouTubeVideoCardProps> = ({
       {/* ── Meta ── */}
       <div className="flex gap-2.5 p-3 items-start">
         {/* Avatar Badge */}
-        <div className="w-7 h-7 rounded-full overflow-hidden border border-slate-200 shrink-0 mt-0.5 bg-teal-600 flex items-center justify-center text-white text-[10px] font-bold select-none">
-          <img
-            src={avatar}
-            alt={video.channel}
-            className="w-full h-full object-cover"
-            onError={(e) => {
-              (e.target as HTMLImageElement).style.display = 'none';
-            }}
-          />
-          <span className="leading-none uppercase">{(video.channel || 'Y').slice(0, 2)}</span>
+        <div className="w-7 h-7 rounded-full overflow-hidden border border-slate-200 shrink-0 mt-0.5 bg-[#11A888] flex items-center justify-center text-white text-[10px] font-bold select-none">
+          {!imgError ? (
+            <img
+              src={avatar}
+              alt={video.channel}
+              className="w-full h-full object-cover"
+              onError={() => setImgError(true)}
+            />
+          ) : (
+            <span className="leading-none uppercase">{(video.channel || 'Y').slice(0, 2)}</span>
+          )}
         </div>
 
         <div className="flex-1 min-w-0">
