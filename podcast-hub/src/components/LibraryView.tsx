@@ -361,6 +361,8 @@ export const LibraryView: React.FC<LibraryViewProps> = ({
                   duration: v.duration || '25:00',
                   publishedAt: v.publishedAt || 'Recent',
                   description: v.description,
+                  channelAvatar: v.channelAvatar || v.avatarUrl || v.avatar,
+                  avatarUrl: v.avatarUrl || v.avatar,
                 }}
                 groups={knowledgeGroups}
                 onAddToGroup={onAddVideoToGroup}
@@ -400,6 +402,8 @@ export const LibraryView: React.FC<LibraryViewProps> = ({
                   publishedAt: v.publishedAt || 'Liked Video',
                   description: v.description,
                   isFavorite: true,
+                  channelAvatar: v.channelAvatar || v.avatarUrl || v.avatar,
+                  avatarUrl: v.avatarUrl || v.avatar,
                 }}
                 groups={knowledgeGroups}
                 onAddToGroup={onAddVideoToGroup}

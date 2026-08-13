@@ -144,7 +144,8 @@ export const YouTubeVideoCard: React.FC<YouTubeVideoCardProps> = ({
           alt={video.channel}
           className="w-7 h-7 rounded-full object-cover border border-slate-200 shrink-0 mt-0.5"
           onError={(e) => {
-            (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(video.channel || 'YT')}&background=cc0000&color=fff&size=128&bold=true`;
+            const cleanName = (video.channel || 'YT').replace(/[^a-zA-Z0-9 ]/g, '').trim();
+            (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(cleanName || 'YT')}&background=11A888&color=fff&size=128&bold=true&font-size=0.4`;
           }}
         />
 
