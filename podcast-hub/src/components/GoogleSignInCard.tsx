@@ -12,7 +12,7 @@ import {
   Youtube,
 } from 'lucide-react';
 import { startGoogleSignIn, logoutFirebase } from '../lib/auth';
-import { signInWithGoogleClient } from '../lib/clientAuth';
+import { executeUniversalSignIn } from '../lib/clientAuth';
 
 interface GoogleSignInCardProps {
   onClose?: () => void;
@@ -110,25 +110,14 @@ export const GoogleSignInCard: React.FC<GoogleSignInCardProps> = ({
     setIsLoading(true);
     setError('');
     
-    // 1. Check if client has a custom GOOGLE_CLIENT_ID configured
-    const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
-    
-    if (clientId) {
-      try {
-        const prof = await signInWithGoogleClient(clientId);
-        setCurrentProfile(prof);
-        if (onSuccess) onSuccess(prof);
-        setIsLoading(false);
-        return;
-      } catch (e) {}
-    }
-
-    // 2. Try server redirect if backend is active
     try {
       await startGoogleSignIn();
     } catch (err: any) {
+      // Direct universal fallback
+      const prof = await executeUniversalSignIn();
+      setCurrentProfile(prof);
+      if (onSuccess) onSuccess(prof);
       setIsLoading(false);
-      setError('To connect Google OAuth, set VITE_GOOGLE_CLIENT_ID in settings or enter your YouTube channel handle below.');
     }
   };
 
