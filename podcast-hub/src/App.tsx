@@ -450,7 +450,13 @@ export default function App() {
         if (googleProf) {
           const parsedG = JSON.parse(googleProf);
           if (parsedG.name) {
-            setUserProfile((prev) => ({ ...prev, name: parsedG.name }));
+            setUserProfile((prev) => ({
+              ...prev,
+              name: parsedG.name,
+              handle: parsedG.handle || prev.handle,
+              avatar: parsedG.avatar || prev.avatar,
+              email: parsedG.email || prev.email,
+            }));
           }
         } else {
           setUserProfile((prev) => ({ ...prev, name: DEFAULT_USER_PROFILE.name }));
@@ -458,6 +464,7 @@ export default function App() {
       } catch {}
     };
 
+    handleGoogleProfileSync();
     window.addEventListener('yt_profile_updated', handleGoogleProfileSync);
     return () => window.removeEventListener('yt_profile_updated', handleGoogleProfileSync);
   }, []);
