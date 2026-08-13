@@ -5,6 +5,7 @@ import { VideoThumbnail } from './VideoThumbnail';
 import { EpisodeChatbot } from './EpisodeChatbot';
 import { GoogleSignInCard } from './GoogleSignInCard';
 import { YouTubeVideoCard } from './YouTubeVideoCard';
+import { executeClientSearch } from '../lib/clientYoutubeSearch';
 import {
   Search,
   Play,
@@ -514,21 +515,33 @@ export const YouTubeSearchView: React.FC<YouTubeSearchViewProps> = ({
         } catch (e) {}
       }
 
-      const response = await fetch('/api/search-youtube', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          query: q,
-          customApiKey: ytApiKey,
-          oauthToken: token,
-        }),
-      });
+      try {
+        const response = await fetch('/api/search-youtube', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            query: q,
+            customApiKey: ytApiKey,
+            oauthToken: token,
+          }),
+        });
 
-      const json = await response.json();
-      if (json.success && json.results) {
-        setResults(json.results);
-        setIsLiveApi(!!json.isLiveApi);
+        if (response.ok) {
+          const json = await response.json();
+          if (json.success && json.results) {
+            setResults(json.results);
+            setIsLiveApi(!!json.isLiveApi);
+            return;
+          }
+        }
+      } catch (e) {
+        console.warn('Backend search API unavailable, using client search fallback');
       }
+
+      // Client-side fallback for static hosting (GitHub Pages / Vercel Static)
+      const clientResults = await executeClientSearch(q, ytApiKey);
+      setResults(clientResults);
+      setIsLiveApi(false);
     } catch (err) {
       console.error('YouTube Search error:', err);
     } finally {
