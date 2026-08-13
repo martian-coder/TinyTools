@@ -187,19 +187,37 @@ export const GoogleSignInCard: React.FC<GoogleSignInCardProps> = ({
         )}
       </button>
 
-      {/* How it works */}
-      <div className="flex items-start gap-2.5 px-1">
-        <div className="w-1.5 h-1.5 rounded-full bg-[#3ea6ff] mt-1.5 shrink-0" />
-        <p className="text-[11px] text-slate-400 leading-relaxed">
-          Sync your real Google profile, YouTube channel subscriptions, and liked videos automatically.
-        </p>
-      </div>
+      {/* Quick Demo / Guest Sign-in */}
+      <button
+        type="button"
+        onClick={() => {
+          const demoProf: ConnectedProfile = {
+            name: 'Demo Creator',
+            handle: '@podcasthub',
+            avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
+            email: 'demo@podcasthub.app',
+          };
+          localStorage.setItem('user_yt_profile', JSON.stringify(demoProf));
+          window.dispatchEvent(new Event('yt_profile_updated'));
+          setCurrentProfile(demoProf);
+          if (onSuccess) onSuccess(demoProf);
+        }}
+        className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-2xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-white font-semibold text-xs transition-all cursor-pointer shadow-sm active:scale-[0.99]"
+      >
+        <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+        <span>Instant 1-Click Guest Sign-In</span>
+      </button>
 
-      {/* Error */}
+      {/* Error / Helpful notice */}
       {error && (
-        <div className="flex items-start gap-2 bg-blue-950/30 border border-blue-800/50 text-[#3ea6ff] text-[11px] p-3 rounded-xl">
-          <AlertTriangle className="w-3.5 h-3.5 mt-0.5 shrink-0" />
-          <span>{error}</span>
+        <div className="flex flex-col gap-1.5 bg-blue-950/40 border border-blue-800/60 text-[#3ea6ff] text-[11px] p-3 rounded-xl">
+          <div className="flex items-center gap-2 font-bold">
+            <AlertTriangle className="w-3.5 h-3.5 shrink-0 text-amber-400" />
+            <span>Google OAuth Not Configured</span>
+          </div>
+          <p className="text-slate-300 text-[11px] leading-relaxed">
+            Use <strong>1-Click Guest Sign-In</strong> above or enter any channel handle below to sign in immediately without Google API keys.
+          </p>
         </div>
       )}
 

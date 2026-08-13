@@ -16,7 +16,34 @@ import { ContentStudioView } from './components/ContentStudioView';
 import { CollectionsView } from './components/CollectionsView';
 import { UserProfileView } from './components/UserProfileView';
 import { KnowledgeGroupsView } from './components/KnowledgeGroupsView';
-import { ImportModal } from './components/ImportModal';
+import {
+  savePodcastsToCloud,
+  loadPodcastsFromCloud,
+  saveProfileToCloud,
+  loadProfileFromCloud,
+  saveKnowledgeGroupsToCloud,
+  loadKnowledgeGroupsFromCloud,
+  isSupabaseConfigured,
+} from './lib/supabase';
+import {
+  initIndexedDb,
+  dbSavePodcasts,
+  dbSaveProfile,
+  dbSaveCollections,
+  dbSaveKnowledgeGroups,
+} from './lib/db';
+
+// Helper to get active user ID for cloud sync
+const getActiveUserId = (): string => {
+  try {
+    const saved = localStorage.getItem('user_yt_profile');
+    if (saved) {
+      const p = JSON.parse(saved);
+      if (p.handle || p.email || p.name) return p.handle || p.email || p.name;
+    }
+  } catch {}
+  return 'default_user';
+};
 import {
   BookOpen,
   Filter,
@@ -322,18 +349,85 @@ export default function App() {
   const [statusFilter, setStatusFilter] = useState<'All' | PodcastStatus>('All');
   const [selectedTag, setSelectedTag] = useState<string>('All');
 
-  // Save podcasts & collections to localStorage
+  // Initial IndexedDB & Cloud Sync on App boot
+  useEffect(() => {
+    // 1. Load from local IndexedDB (with automatic migration from localStorage)
+    initIndexedDb(
+      INITIAL_PODCASTS,
+      DEFAULT_USER_PROFILE,
+      DEFAULT_COLLECTIONS,
+      DEFAULT_KNOWLEDGE_GROUPS
+    ).then(({ podcasts: dbPods, profile: dbProf, collections: dbCols, groups: dbGroups }) => {
+      if (dbPods && dbPods.length > 0) setPodcasts(dbPods);
+      if (dbProf) setUserProfile(dbProf);
+      if (dbCols && dbCols.length > 0) setCollections(dbCols);
+      if (dbGroups && dbGroups.length > 0) setKnowledgeGroups(dbGroups);
+
+      // 2. If Supabase is configured, sync with Cloud in background
+      if (isSupabaseConfigured()) {
+        const uid = getActiveUserId();
+        loadPodcastsFromCloud(uid).then((cloudPods) => {
+          if (cloudPods && cloudPods.length > 0) {
+            setPodcasts((prev) => {
+              const map = new Map<string, PodcastItem>();
+              cloudPods.forEach((p) => map.set(p.youtubeVideoId || p.id, p));
+              prev.forEach((p) => {
+                const key = p.youtubeVideoId || p.id;
+                if (!map.has(key)) map.set(key, p);
+              });
+              const merged = Array.from(map.values());
+              dbSavePodcasts(merged);
+              return merged;
+            });
+          }
+        });
+
+        loadProfileFromCloud(uid).then((cloudProf) => {
+          if (cloudProf) {
+            setUserProfile(cloudProf);
+            dbSaveProfile(cloudProf);
+          }
+        });
+
+        loadKnowledgeGroupsFromCloud(uid).then((cloudGroups) => {
+          if (cloudGroups && cloudGroups.length > 0) {
+            setKnowledgeGroups(cloudGroups);
+            dbSaveKnowledgeGroups(cloudGroups);
+          }
+        });
+      }
+    });
+  }, []);
+
+  // Save podcasts & collections to IndexedDB, localStorage, and Cloud
   useEffect(() => {
     localStorage.setItem('podsummarizer_library', JSON.stringify(podcasts));
+    dbSavePodcasts(podcasts);
+    if (isSupabaseConfigured()) {
+      savePodcastsToCloud(getActiveUserId(), podcasts);
+    }
   }, [podcasts]);
 
   useEffect(() => {
     localStorage.setItem('podsummarizer_collections', JSON.stringify(collections));
+    dbSaveCollections(collections);
   }, [collections]);
 
   useEffect(() => {
     localStorage.setItem('podsummarizer_profile', JSON.stringify(userProfile));
+    dbSaveProfile(userProfile);
+    if (isSupabaseConfigured()) {
+      saveProfileToCloud(getActiveUserId(), userProfile);
+    }
   }, [userProfile]);
+
+  useEffect(() => {
+    localStorage.setItem('podsummarizer_knowledge_groups', JSON.stringify(knowledgeGroups));
+    dbSaveKnowledgeGroups(knowledgeGroups);
+    if (isSupabaseConfigured()) {
+      saveKnowledgeGroupsToCloud(getActiveUserId(), knowledgeGroups);
+    }
+  }, [knowledgeGroups]);
 
   // Handle Google redirect sign-in result (fires once on page load after redirect)
   useEffect(() => {

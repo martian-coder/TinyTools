@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "npm exec -- tsx server.ts",
     "build": "npm exec -- vite build && npm exec -- esbuild server.ts --bundle --platform=node --format=cjs --packages=external --sourcemap --outfile=dist/server.cjs",
-    "deploy-gh": "npx vite build && npx gh-pages -d dist -e podcasthub",
+    "deploy-gh": "npx vite build && npx gh-pages -d dist -e podcasthub -a --nojekyll",
     "start": "node dist/server.cjs",
     "preview": "npm exec -- vite preview",
     "clean": "rm -rf dist server.js",
@@ -14,8 +14,10 @@
   },
   "dependencies": {
     "@google/genai": "^2.4.0",
+    "@supabase/supabase-js": "^2.112.3",
     "@tailwindcss/vite": "^4.1.14",
     "@vitejs/plugin-react": "^5.0.4",
+    "dexie": "^4.4.4",
     "dotenv": "^17.2.3",
     "express": "^4.21.2",
     "firebase": "^12.17.1",
@@ -33,6 +35,7 @@
     "autoprefixer": "^10.4.21",
     "esbuild": "^0.25.0",
     "gh-pages": "^6.3.0",
+    "supabase": "^2.114.0",
     "tailwindcss": "^4.1.14",
     "tsx": "^4.21.0",
     "typescript": "~5.8.2",

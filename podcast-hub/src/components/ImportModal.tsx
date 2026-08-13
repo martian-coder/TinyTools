@@ -59,14 +59,9 @@ export const ImportModal: React.FC<ImportModalProps> = ({
     }
 
     setIsAnalyzing(true);
-    setAnalysisStep('Initializing Gemini AI engine...');
+    setAnalysisStep('Analyzing podcast insights with Gemini 2.5 Flash...');
 
     try {
-      setTimeout(() => setAnalysisStep('Analyzing audio transcript & key discussions...'), 1200);
-      setTimeout(() => setAnalysisStep('Synthesizing Short & Detailed Summaries...'), 2400);
-      setTimeout(() => setAnalysisStep('Extracting Business Opportunities & Monetization Models...'), 3800);
-      setTimeout(() => setAnalysisStep('Framing Discipline, Ethics & Critical Debates...'), 5200);
-      setTimeout(() => setAnalysisStep('Generating Reflection Questions & Interactive Timestamps...'), 6500);
 
       const response = await fetch('/api/summarize', {
         method: 'POST',

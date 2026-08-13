@@ -36,6 +36,8 @@ interface ChatMessage {
   timestamp: string;
 }
 
+import { dbGetChatHistory, dbSaveChatHistory } from '../lib/db';
+
 export const EpisodeChatbot: React.FC<EpisodeChatbotProps> = ({
   podcast,
   isExpanded,
@@ -43,7 +45,8 @@ export const EpisodeChatbot: React.FC<EpisodeChatbotProps> = ({
   layoutMode = 'split',
   onLayoutModeChange,
 }) => {
-  const storageKey = `podsummarizer_chat_${podcast.youtubeVideoId || podcast.id}`;
+  const podcastKey = podcast.youtubeVideoId || podcast.id;
+  const storageKey = `podsummarizer_chat_${podcastKey}`;
 
   const [messages, setMessages] = useState<ChatMessage[]>(() => {
     try {
@@ -68,35 +71,43 @@ export const EpisodeChatbot: React.FC<EpisodeChatbotProps> = ({
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const chatBottomRef = useRef<HTMLDivElement>(null);
 
-  // Sync messages state whenever active podcast episode changes
+  // Sync messages state whenever active podcast episode changes from IndexedDB
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem(storageKey);
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          setMessages(parsed);
-          return;
-        }
+    dbGetChatHistory(podcastKey).then((savedMsgs) => {
+      if (savedMsgs && savedMsgs.length > 0) {
+        setMessages(savedMsgs);
+      } else {
+        try {
+          const saved = localStorage.getItem(storageKey);
+          if (saved) {
+            const parsed = JSON.parse(saved);
+            if (Array.isArray(parsed) && parsed.length > 0) {
+              setMessages(parsed);
+              dbSaveChatHistory(podcastKey, parsed);
+              return;
+            }
+          }
+        } catch (e) {}
+
+        setMessages([
+          {
+            id: 'msg-init',
+            sender: 'assistant',
+            text: `👋 **Welcome! I'm your AI Research & Brainstorm Assistant for this video episode.**\n\nI have indexed the full summary, key takeaways, monetization opportunities, and timestamps for **"${podcast.title}"**.\n\nAsk me anything! You can research specific concepts, request code blueprints, draft tweet threads, or brainstorm business models like ChatGPT.`,
+            timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          },
+        ]);
       }
-    } catch (e) {}
+    });
+  }, [podcastKey]);
 
-    setMessages([
-      {
-        id: 'msg-init',
-        sender: 'assistant',
-        text: `👋 **Welcome! I'm your AI Research & Brainstorm Assistant for this video episode.**\n\nI have indexed the full summary, key takeaways, monetization opportunities, and timestamps for **"${podcast.title}"**.\n\nAsk me anything! You can research specific concepts, request code blueprints, draft tweet threads, or brainstorm business models like ChatGPT.`,
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      },
-    ]);
-  }, [podcast.id, podcast.youtubeVideoId]);
-
-  // Save messages to localStorage whenever messages update
+  // Save messages to IndexedDB and localStorage whenever messages update
   useEffect(() => {
     if (messages.length > 0) {
       localStorage.setItem(storageKey, JSON.stringify(messages));
+      dbSaveChatHistory(podcastKey, messages);
     }
-  }, [messages, storageKey]);
+  }, [messages, storageKey, podcastKey]);
 
   const promptSuggestions = [
     {

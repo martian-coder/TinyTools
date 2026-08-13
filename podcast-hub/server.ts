@@ -81,7 +81,7 @@ Please structure the output precisely into JSON matching this schema:
 `;
 
     const response = await ai.models.generateContent({
-      model: 'gemini-3.5-flash',
+      model: 'gemini-2.5-flash',
       contents: promptText,
       config: {
         systemInstruction: 'You are an elite podcast summarizer and business opportunity strategist. Provide rigorous, highly articulate, and deeply structured analysis.',
@@ -356,24 +356,12 @@ Instructions:
 4. Keep the tone sharp, professional, encouraging, and highly structured.
 `;
 
-        const validModels = [
-          'gemini-3.5-flash',
-          'gemini-3.1-flash-lite',
-          'gemini-2.5-flash',
-          'gemini-flash-latest',
-        ];
-        for (const modelName of validModels) {
-          try {
-            const response = await ai.models.generateContent({
-              model: modelName,
-              contents: prompt,
-            });
-            if (response && response.text) {
-              return res.json({ success: true, reply: response.text, modelUsed: modelName });
-            }
-          } catch (modelErr: any) {
-            console.warn(`[Chat API] Model ${modelName} notice:`, modelErr?.message || modelErr);
-          }
+        const response = await ai.models.generateContent({
+          model: 'gemini-2.5-flash',
+          contents: prompt,
+        });
+        if (response && response.text) {
+          return res.json({ success: true, reply: response.text, modelUsed: 'gemini-2.5-flash' });
         }
       } catch (geminiErr: any) {
         console.warn('[Chat API] Gemini API error, falling back to dynamic synthesis:', geminiErr?.message);
@@ -1278,9 +1266,10 @@ async function fetchRealYouTubeSearchResults(query: string) {
       }
     }
 
-    // 2. Direct YouTube Web Results Parsing (with sp=CAI%253D for Upload Date sort)
+    // 2. Direct YouTube Web Results Parsing (with sp=CAI%253D for Upload Date sort) with 3.5s timeout
     const ytSearchUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(query)}&sp=CAI%253D`;
     const response = await fetch(ytSearchUrl, {
+      signal: AbortSignal.timeout(3500),
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
         'Accept-Language': 'en-US,en;q=0.9',
@@ -1600,7 +1589,7 @@ Provide accurate channel names, realistic durations, thumbnail URLs (like "https
 `;
 
     const response = await ai.models.generateContent({
-      model: 'gemini-3.6-flash',
+      model: 'gemini-2.5-flash',
       contents: prompt,
       config: {
         responseMimeType: 'application/json',
@@ -1718,7 +1707,7 @@ Instructions:
 `;
 
     const response = await ai.models.generateContent({
-      model: 'gemini-3.6-flash',
+      model: 'gemini-2.5-flash',
       contents: prompt,
     });
 

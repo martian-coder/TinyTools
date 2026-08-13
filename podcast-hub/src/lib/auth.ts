@@ -27,7 +27,7 @@ export const startGoogleSignIn = async (): Promise<void> => {
   if (data.url) {
     window.location.href = data.url;
   } else {
-    throw new Error(data.message || 'Could not get OAuth URL from server.');
+    throw new Error(data.error || data.message || 'GOOGLE_CLIENT_ID is not configured in .env. Use 1-Click Sign-In or Channel Handle.');
   }
 };
 
