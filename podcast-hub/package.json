@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "npm exec -- tsx server.ts",
     "build": "npm exec -- vite build && npm exec -- esbuild server.ts --bundle --platform=node --format=cjs --packages=external --sourcemap --outfile=dist/server.cjs",
+    "deploy-gh": "npx vite build && npx gh-pages -d dist",
     "start": "node dist/server.cjs",
     "preview": "npm exec -- vite preview",
     "clean": "rm -rf dist server.js",
