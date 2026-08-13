@@ -182,7 +182,9 @@ export const GoogleSignInCard: React.FC<GoogleSignInCardProps> = ({
       <form
         onSubmit={(e) => {
           e.preventDefault();
-          handleGoogleSignIn(handleInput);
+          if (handleInput.trim()) {
+            handleGoogleSignIn(handleInput);
+          }
         }}
         className="space-y-3"
       >
@@ -195,8 +197,9 @@ export const GoogleSignInCard: React.FC<GoogleSignInCardProps> = ({
               type="text"
               value={handleInput}
               onChange={(e) => setHandleInput(e.target.value)}
-              placeholder="e.g. user@gmail.com or @creator"
+              placeholder="e.g. yourname@gmail.com or @yourchannel"
               disabled={isLoading}
+              required
               className="w-full px-3.5 py-2.5 text-sm bg-white border border-slate-200 rounded-xl text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-teal-500 transition-all disabled:opacity-50"
             />
           </div>
@@ -204,8 +207,8 @@ export const GoogleSignInCard: React.FC<GoogleSignInCardProps> = ({
 
         <button
           type="submit"
-          disabled={isLoading}
-          className="w-full flex items-center justify-center gap-2 bg-[#11A888] hover:bg-[#0e9478] text-white font-semibold py-2.5 px-4 rounded-xl shadow-2xs transition-all cursor-pointer text-xs active:scale-[0.99] group disabled:opacity-60"
+          disabled={isLoading || !handleInput.trim()}
+          className="w-full flex items-center justify-center gap-2 bg-[#11A888] hover:bg-[#0e9478] text-white font-semibold py-2.5 px-4 rounded-xl shadow-2xs transition-all cursor-pointer text-xs active:scale-[0.99] group disabled:opacity-60 disabled:cursor-not-allowed"
         >
           {isLoading ? (
             <Loader2 className="w-4 h-4 animate-spin text-white" />
@@ -218,16 +221,6 @@ export const GoogleSignInCard: React.FC<GoogleSignInCardProps> = ({
           )}
         </button>
       </form>
-
-      {/* Quick 1-Click Guest Sign-In */}
-      <button
-        type="button"
-        onClick={() => handleGoogleSignIn('Guest Creator')}
-        className="w-full flex items-center justify-center gap-2 py-2 px-4 rounded-xl bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-700 font-medium text-xs transition-all cursor-pointer shadow-2xs active:scale-[0.99]"
-      >
-        <span className="w-2 h-2 rounded-full bg-teal-500 animate-pulse"></span>
-        <span>Instant 1-Click Guest Sign-In</span>
-      </button>
     </div>
   );
 
