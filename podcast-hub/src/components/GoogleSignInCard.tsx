@@ -111,19 +111,21 @@ export const GoogleSignInCard: React.FC<GoogleSignInCardProps> = ({
     setIsLoading(true);
     setError('');
     
-    // If user provided a specific email or channel handle in the input box, connect that
     const targetInput = userEnteredVal || handleInput;
     
-    try {
-      if (!targetInput) {
-        // Try server redirect flow if backend is active
+    if (!targetInput) {
+      try {
         await startGoogleSignIn();
         return;
+      } catch (err: any) {
+        setIsLoading(false);
+        setError('To sign in with Google, enter your Google account email (@gmail.com) or YouTube channel handle below.');
+        return;
       }
-    } catch (err: any) {}
+    }
 
-    // Universal authentication resolution (static GitHub Pages & production fallback)
-    const prof = await executeUniversalSignIn(targetInput || 'Creator Account');
+    // Connect user-specified account
+    const prof = await executeUniversalSignIn(targetInput);
     setCurrentProfile(prof);
     if (onSuccess) onSuccess(prof);
     setIsLoading(false);
