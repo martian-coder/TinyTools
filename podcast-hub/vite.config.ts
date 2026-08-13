@@ -5,7 +5,7 @@ import {defineConfig} from 'vite';
 
 export default defineConfig(({ command }) => {
   return {
-    base: process.env.VITE_BASE || (command === 'build' ? '/TinyTools/podcasthub/' : '/'),
+    base: process.env.VITE_BASE || (command === 'build' ? './' : '/'),
     plugins: [react(), tailwindcss()],
     resolve: {
       alias: {

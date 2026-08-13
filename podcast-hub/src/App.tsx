@@ -926,16 +926,32 @@ export default function App() {
         )}
 
         {/* VIEW 7: DETAIL VIEWER FOR SELECTED PODCAST */}
-        {currentTab === 'detail' && selectedPodcast && (
-          <PodcastDetailView
-            podcast={selectedPodcast}
-            onBack={() => {
-              setSelectedPodcast(null);
-              setCurrentTab('dashboard');
-            }}
-            onUpdatePodcast={handleUpdatePodcast}
-            onToggleFavorite={handleToggleFavorite}
-          />
+        {currentTab === 'detail' && (
+          selectedPodcast ? (
+            <PodcastDetailView
+              podcast={selectedPodcast}
+              onBack={() => {
+                setSelectedPodcast(null);
+                setCurrentTab('dashboard');
+              }}
+              onUpdatePodcast={handleUpdatePodcast}
+              onToggleFavorite={handleToggleFavorite}
+            />
+          ) : (
+            <div className="max-w-md mx-auto my-12 p-8 text-center bg-white border border-slate-200 rounded-2xl space-y-4 shadow-sm">
+              <div className="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center mx-auto text-xl font-bold">
+                🎙️
+              </div>
+              <h2 className="text-base font-bold text-slate-800">No Episode Selected</h2>
+              <p className="text-xs text-slate-500">Please choose a podcast episode from your library to explore summaries, monetization models, and AI tools.</p>
+              <button
+                onClick={() => setCurrentTab('dashboard')}
+                className="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl cursor-pointer transition-all"
+              >
+                Back to Dashboard
+              </button>
+            </div>
+          )
         )}
 
         {/* VIEW 8: AI ASSISTANT CHAT */}
