@@ -638,10 +638,10 @@ export const YouTubeSearchView: React.FC<YouTubeSearchViewProps> = ({
 
   return (
     <div className="space-y-5">
-      {/* Modern Compact Glance Design Header Toolbar (Light Blue Rectangular) */}
+      {/* Header Toolbar */}
       <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-2xs flex flex-col md:flex-row md:items-center justify-between gap-3">
-        {/* Topic Pills */}
-        <div className="flex items-center gap-2 overflow-x-auto scrollbar-none py-1">
+        {/* Topic Chips */}
+        <div className="flex items-center gap-2 overflow-x-auto scrollbar-none py-0.5">
           <button
             onClick={() => handleSearch('AI, Tech & Business Podcasts')}
             className="yt-chip yt-chip-active"
@@ -661,16 +661,17 @@ export const YouTubeSearchView: React.FC<YouTubeSearchViewProps> = ({
         </div>
 
         {/* Action Controls */}
-        <div className="flex items-center gap-2 shrink-0 self-end md:self-auto">
+        <div className="flex items-center gap-2 shrink-0">
           {onCreateKnowledgeGroup && (
             <button
               onClick={() => {
                 const name = prompt('Enter name for new Knowledge Group (e.g. AI Agents, SaaS Ideas):');
                 if (name && name.trim()) onCreateKnowledgeGroup(name.trim());
               }}
-              className="px-3.5 py-2 rounded-lg bg-sky-500 hover:bg-sky-600 text-white text-xs font-bold flex items-center gap-1.5 transition-all shadow-sm shadow-sky-500/25 border border-sky-400 cursor-pointer shrink-0"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-white transition-all cursor-pointer shadow-2xs"
+              style={{ background: '#11A888' }}
             >
-              <FolderPlus className="w-3.5 h-3.5 text-white" />
+              <FolderPlus className="w-3.5 h-3.5" />
               <span>+ Create Group</span>
             </button>
           )}
@@ -678,15 +679,15 @@ export const YouTubeSearchView: React.FC<YouTubeSearchViewProps> = ({
           {!connectedProfile ? (
             <button
               onClick={() => setShowApiSettings(true)}
-              className="px-3.5 py-2 rounded-lg bg-sky-50 hover:bg-sky-100 border border-sky-200 text-sky-800 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer shrink-0 shadow-2xs"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 text-xs font-medium transition-all cursor-pointer shrink-0"
             >
-              <Tv className="w-3.5 h-3.5 text-sky-600" />
+              <Tv className="w-3.5 h-3.5 text-slate-500" />
               <span>Connect Channel</span>
             </button>
           ) : (
-            <div className="flex items-center gap-2 bg-sky-50 border border-sky-200 pl-2 pr-3 py-1 rounded-lg">
-              <img src={connectedProfile.avatar} alt="Profile" className="w-5 h-5 rounded-md object-cover border border-sky-500 shrink-0" />
-              <span className="text-xs font-bold text-slate-900 truncate">{connectedProfile.name}</span>
+            <div className="flex items-center gap-2 bg-slate-100 border border-slate-200 pl-2 pr-3 py-1 rounded-lg">
+              <img src={connectedProfile.avatar} alt="Profile" className="w-5 h-5 rounded-full object-cover shrink-0" />
+              <span className="text-xs font-medium text-slate-800 truncate max-w-[120px]">{connectedProfile.name}</span>
               <button
                 onClick={handleDisconnectProfile}
                 title="Disconnect"
@@ -718,18 +719,18 @@ export const YouTubeSearchView: React.FC<YouTubeSearchViewProps> = ({
         />
       )}
 
-      {/* Subscribed YouTube Channels Carousel Bar */}
-      <div className="bg-[#181818] border border-[#272727] rounded-3xl p-4 sm:p-5 space-y-3 shadow-md">
-        <div className="flex flex-wrap items-center justify-between gap-2 text-xs font-semibold text-slate-300">
+      {/* Subscribed YouTube Channels Bar */}
+      <div className="bg-white border border-slate-200 rounded-xl p-4 space-y-3 shadow-2xs">
+        <div className="flex flex-wrap items-center justify-between gap-2 text-xs font-medium text-slate-500">
           <div className="flex items-center gap-2">
-            <span className="flex items-center gap-1.5 text-[#3ea6ff] font-bold text-xs sm:text-sm">
-              <Tv className="w-4 h-4 text-[#3ea6ff] fill-[#3ea6ff]" />
+            <span className="flex items-center gap-1.5 text-slate-700 font-medium text-xs">
+              <Tv className="w-3.5 h-3.5 text-teal-600" />
               Subscribed Channels ({userSubscriptions.length})
             </span>
             {selectedChannelFilter && (
               <button
                 onClick={() => setSelectedChannelFilter(null)}
-                className="px-2 py-0.5 rounded-lg bg-[#3ea6ff]/20 text-[#3ea6ff] border border-[#3ea6ff]/40 text-[11px] font-bold flex items-center gap-1 cursor-pointer"
+                className="px-2 py-0.5 rounded bg-teal-50 text-teal-700 border border-teal-200 text-[11px] font-medium flex items-center gap-1 cursor-pointer"
               >
                 <span>Filter: {selectedChannelFilter}</span>
                 <X className="w-3 h-3" />
@@ -740,9 +741,9 @@ export const YouTubeSearchView: React.FC<YouTubeSearchViewProps> = ({
           <div className="flex items-center gap-2">
             <button
               onClick={() => setShowAddChannelInput(!showAddChannelInput)}
-              className="text-[11px] font-bold text-indigo-400 hover:text-indigo-300 bg-indigo-500/10 hover:bg-indigo-500/20 px-3 py-1 rounded-xl border border-indigo-500/30 transition-all cursor-pointer flex items-center gap-1"
+              className="text-[11px] font-medium text-teal-700 hover:text-teal-800 bg-teal-50 hover:bg-teal-100 px-2.5 py-1 rounded-md border border-teal-200 transition-all cursor-pointer flex items-center gap-1"
             >
-              <span>+ Add YouTube Channel</span>
+              <span>+ Add Channel</span>
             </button>
             <button
               onClick={() => {
@@ -753,10 +754,9 @@ export const YouTubeSearchView: React.FC<YouTubeSearchViewProps> = ({
                   setUserSubscriptions(DEFAULT_SUBSCRIPTIONS);
                 }
               }}
-              className="text-[11px] font-semibold text-slate-400 hover:text-slate-200 bg-slate-800/60 hover:bg-slate-800 px-2.5 py-1 rounded-xl border border-slate-700 transition-all cursor-pointer"
-              title={userSubscriptions.length > 0 ? "Clear sample channel list to build your custom subscriptions" : "Restore default sample podcast channels"}
+              className="text-[11px] font-medium text-slate-400 hover:text-slate-600 px-2 py-1 transition-all cursor-pointer"
             >
-              {userSubscriptions.length > 0 ? 'Clear List' : 'Restore Sample Defaults'}
+              {userSubscriptions.length > 0 ? 'Clear List' : 'Restore Defaults'}
             </button>
           </div>
         </div>
@@ -768,47 +768,45 @@ export const YouTubeSearchView: React.FC<YouTubeSearchViewProps> = ({
               value={newChannelInput}
               onChange={(e) => setNewChannelInput(e.target.value)}
               placeholder="Enter YouTube channel name or handle (e.g. @mkbhd, Fireship, Lex Fridman)"
-              className="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-3 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-red-500"
+              className="flex-1 bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:border-teal-400"
             />
             <button
               type="submit"
-              className="bg-red-600 hover:bg-red-500 text-white text-xs font-semibold px-3 py-1.5 rounded-xl transition-all cursor-pointer shrink-0"
+              className="bg-[#11A888] hover:bg-[#0e9478] text-white text-xs font-medium px-3 py-1.5 rounded-lg transition-all cursor-pointer shrink-0"
             >
-              + Add Channel
+              + Add
             </button>
           </form>
         )}
 
-        {/* Carousel of Subscribed Channel Badges with Left/Right Scroll Arrows */}
+        {/* Carousel of Subscribed Channel Badges */}
         <div className="relative flex items-center group/subs">
-          {/* Scroll Left Button */}
           <button
             onClick={scrollSubsLeft}
-            className="absolute -left-2 z-10 p-2 rounded-full bg-slate-900/90 border border-slate-700 text-slate-200 hover:text-white hover:bg-slate-800 shadow-lg backdrop-blur-md cursor-pointer transition-all hover:scale-110"
+            className="absolute -left-2 z-10 p-1.5 rounded-full bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 shadow-sm cursor-pointer transition-all"
             title="Scroll Left"
           >
-            <ChevronLeft className="w-4 h-4" />
+            <ChevronLeft className="w-3.5 h-3.5" />
           </button>
 
-          {/* Horizontally Scrollable Container */}
           <div
             ref={subsContainerRef}
-            className="flex items-center gap-3 overflow-x-auto py-1 px-5 scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent scroll-smooth w-full select-none"
+            className="flex items-center gap-2 overflow-x-auto py-1 px-4 scrollbar-none scroll-smooth w-full select-none"
           >
             <button
               onClick={() => setSelectedChannelFilter(null)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-2xl border transition-all shrink-0 cursor-pointer text-xs font-semibold ${
+              className={`px-3 py-1 rounded-lg border transition-all shrink-0 cursor-pointer text-xs font-medium ${
                 selectedChannelFilter === null
-                  ? 'bg-red-600 text-white border-red-500 shadow-md'
-                  : 'bg-slate-950/80 text-slate-300 border-slate-800 hover:border-slate-700'
+                  ? 'bg-[#11A888] text-white border-transparent shadow-2xs'
+                  : 'bg-slate-50 text-slate-600 border-slate-200 hover:border-slate-300'
               }`}
             >
-              <span>All Subscriptions ({userSubscriptions.length})</span>
+              <span>All ({userSubscriptions.length})</span>
             </button>
 
             {userSubscriptions.length === 0 ? (
-              <span className="text-xs text-slate-400 italic py-2">
-                No channels subscribed yet. Click &quot;+ Add YouTube Channel&quot; above to add your favorite creators!
+              <span className="text-xs text-slate-400 italic py-1">
+                No channels subscribed yet. Click &quot;+ Add Channel&quot; to add creators.
               </span>
             ) : (
               userSubscriptions.map((sub) => {
@@ -816,10 +814,10 @@ export const YouTubeSearchView: React.FC<YouTubeSearchViewProps> = ({
                 return (
                   <div
                     key={sub.id}
-                    className={`flex items-center gap-2 px-3 py-2 rounded-2xl border transition-all shrink-0 text-left ${
+                    className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg border transition-all shrink-0 text-left ${
                       isSelected
-                        ? 'bg-red-600 text-white border-red-500 shadow-md font-bold'
-                        : 'bg-slate-950/80 hover:bg-slate-800/80 text-slate-200 border-slate-800 hover:border-red-500/40'
+                        ? 'bg-[#11A888] text-white border-transparent shadow-2xs'
+                        : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200 hover:border-slate-300'
                     }`}
                   >
                     <button
@@ -831,23 +829,23 @@ export const YouTubeSearchView: React.FC<YouTubeSearchViewProps> = ({
                           handleSearch(sub.title);
                         }
                       }}
-                      className="flex items-center gap-2 cursor-pointer"
+                      className="flex items-center gap-1.5 cursor-pointer"
                     >
                       {sub.thumbnail ? (
-                        <img src={sub.thumbnail} alt={sub.title} className="w-5 h-5 rounded-full object-cover shrink-0 border border-slate-700" />
+                        <img src={sub.thumbnail} alt={sub.title} className="w-4 h-4 rounded-full object-cover shrink-0 border border-slate-200" />
                       ) : (
-                        <div className="w-5 h-5 rounded-full bg-red-600 text-white font-bold flex items-center justify-center text-[9px] shrink-0">
+                        <div className="w-4 h-4 rounded-full bg-teal-600 text-white font-medium flex items-center justify-center text-[8px] shrink-0">
                           {sub.title.slice(0, 2).toUpperCase()}
                         </div>
                       )}
-                      <span className="text-xs font-semibold truncate max-w-[120px] leading-tight">{sub.title}</span>
+                      <span className="text-xs font-medium truncate max-w-[110px] leading-tight">{sub.title}</span>
                     </button>
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
                         toggleSubscribeChannel(sub.title);
                       }}
-                      className="text-slate-400 hover:text-red-300 transition-colors p-0.5 rounded-full hover:bg-red-500/20 cursor-pointer"
+                      className={`transition-colors p-0.5 rounded ${isSelected ? 'text-white/70 hover:text-white' : 'text-slate-400 hover:text-red-500'}`}
                       title={`Remove ${sub.title}`}
                     >
                       <X className="w-3 h-3" />
@@ -858,33 +856,32 @@ export const YouTubeSearchView: React.FC<YouTubeSearchViewProps> = ({
             )}
           </div>
 
-          {/* Scroll Right Button */}
           <button
             onClick={scrollSubsRight}
-            className="absolute -right-2 z-10 p-2 rounded-full bg-slate-900/90 border border-slate-700 text-slate-200 hover:text-white hover:bg-slate-800 shadow-lg backdrop-blur-md cursor-pointer transition-all hover:scale-110"
+            className="absolute -right-2 z-10 p-1.5 rounded-full bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 shadow-sm cursor-pointer transition-all"
             title="Scroll Right"
           >
-            <ChevronRight className="w-4 h-4" />
+            <ChevronRight className="w-3.5 h-3.5" />
           </button>
         </div>
       </div>
 
       {/* Search Input Bar */}
-      <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 p-3 sm:p-4 rounded-3xl flex flex-col sm:flex-row items-center gap-3 shadow-xs">
+      <div className="bg-white border border-slate-200 p-3 sm:p-3.5 rounded-xl flex flex-col sm:flex-row items-center gap-3 shadow-2xs">
         <div className="relative flex-1 w-full">
-          <Search className="w-4 h-4 text-slate-400 dark:text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
+          <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
           <input
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
             placeholder="Search YouTube podcasts, hosts, or business topics..."
-            className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl pl-10 pr-8 py-2.5 text-xs sm:text-sm text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-indigo-500 dark:focus:border-indigo-400 font-normal"
+            className="w-full bg-slate-50 border border-slate-200 rounded-lg pl-10 pr-8 py-2 text-xs sm:text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:border-teal-400 font-normal"
           />
           {query && (
             <button
               onClick={() => setQuery('')}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 dark:hover:text-white"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700"
             >
               <X className="w-3.5 h-3.5" />
             </button>
@@ -894,16 +891,17 @@ export const YouTubeSearchView: React.FC<YouTubeSearchViewProps> = ({
         <button
           onClick={() => handleSearch()}
           disabled={!query.trim() || isSearching}
-          className="w-full sm:w-auto bg-gradient-to-r from-red-600 to-indigo-600 hover:from-red-500 hover:to-indigo-500 text-white px-5 py-2.5 rounded-2xl text-xs font-bold transition-all shadow-xs cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2 shrink-0"
+          className="w-full sm:w-auto text-white px-4 py-2 rounded-lg text-xs font-medium transition-all shadow-2xs cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2 shrink-0"
+          style={{ background: '#11A888' }}
         >
           {isSearching ? (
             <>
-              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
               <span>Searching...</span>
             </>
           ) : (
             <>
-              <Search className="w-4 h-4" />
+              <Search className="w-3.5 h-3.5" />
               <span>Search YouTube</span>
             </>
           )}
@@ -911,20 +909,20 @@ export const YouTubeSearchView: React.FC<YouTubeSearchViewProps> = ({
       </div>
 
       {/* Controls Bar: Sort, Favorites Filter, Grid/List Mode */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-slate-50/90 dark:bg-slate-950/80 p-3 sm:p-3.5 rounded-2xl border border-slate-200 dark:border-slate-800">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-white p-3 rounded-xl border border-slate-200">
         <div className="flex flex-wrap items-center gap-2 text-xs w-full sm:w-auto justify-between sm:justify-start">
           <div className="flex items-center gap-2">
-            <span className="font-semibold text-slate-900 dark:text-white">{sortedResults.length} Videos</span>
-            {query && <span className="text-indigo-600 dark:text-indigo-400 font-medium truncate max-w-[120px]">&quot;{query}&quot;</span>}
+            <span className="font-semibold text-slate-800">{sortedResults.length} Videos</span>
+            {query && <span className="text-teal-600 font-medium truncate max-w-[120px]">&quot;{query}&quot;</span>}
           </div>
 
           {/* Favorites Filter Chip */}
           <button
             onClick={() => setShowFavoritesOnly(!showFavoritesOnly)}
-            className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 border shrink-0 ${
+            className={`px-3 py-1 rounded-lg text-xs font-medium transition-all cursor-pointer flex items-center gap-1.5 border shrink-0 ${
               showFavoritesOnly
-                ? 'bg-rose-600 text-white border-rose-500 shadow-xs'
-                : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-800 hover:text-slate-900 dark:hover:text-white'
+                ? 'bg-rose-500 text-white border-rose-500'
+                : 'bg-slate-50 text-slate-700 border-slate-200 hover:text-slate-900'
             }`}
           >
             <Heart className={`w-3.5 h-3.5 ${showFavoritesOnly ? 'fill-white text-white' : 'text-rose-500'}`} />
@@ -932,59 +930,59 @@ export const YouTubeSearchView: React.FC<YouTubeSearchViewProps> = ({
           </button>
         </div>
 
-        <div className="flex items-center gap-2 text-xs w-full sm:w-auto justify-between sm:justify-end overflow-x-auto scrollbar-none pb-0.5">
-          {/* Sorting Options Bar - Horizontally Scrollable on Mobile */}
-          <div className="flex items-center gap-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-1 shadow-xs shrink-0">
+        <div className="flex items-center gap-2 text-xs w-full sm:w-auto justify-between sm:justify-end overflow-x-auto scrollbar-none">
+          {/* Sorting Options */}
+          <div className="flex items-center gap-1 bg-slate-50 border border-slate-200 rounded-lg p-1 shrink-0">
             <button
               onClick={() => setSortOption('latest')}
-              className={`px-2.5 py-1 rounded-lg transition-all text-xs cursor-pointer shrink-0 ${
-                sortOption === 'latest' ? 'bg-red-600 text-white font-semibold' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+              className={`px-2.5 py-1 rounded-md transition-all text-xs cursor-pointer shrink-0 ${
+                sortOption === 'latest' ? 'bg-[#11A888] text-white font-medium' : 'text-slate-600 hover:text-slate-900'
               }`}
             >
-              ⚡ Latest
+              Latest
             </button>
             <button
               onClick={() => setSortOption('relevant')}
-              className={`px-2.5 py-1 rounded-lg transition-all text-xs cursor-pointer shrink-0 ${
-                sortOption === 'relevant' ? 'bg-red-600 text-white font-semibold' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+              className={`px-2.5 py-1 rounded-md transition-all text-xs cursor-pointer shrink-0 ${
+                sortOption === 'relevant' ? 'bg-[#11A888] text-white font-medium' : 'text-slate-600 hover:text-slate-900'
               }`}
             >
-              🔥 Relevant
+              Relevant
             </button>
             <button
               onClick={() => setSortOption('duration_desc')}
-              className={`px-2.5 py-1 rounded-lg transition-all text-xs cursor-pointer shrink-0 ${
-                sortOption === 'duration_desc' ? 'bg-red-600 text-white font-semibold' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+              className={`px-2.5 py-1 rounded-md transition-all text-xs cursor-pointer shrink-0 ${
+                sortOption === 'duration_desc' ? 'bg-[#11A888] text-white font-medium' : 'text-slate-600 hover:text-slate-900'
               }`}
             >
-              ⏱️ Longest
+              Longest
             </button>
             <button
               onClick={() => setSortOption('duration_asc')}
-              className={`px-2.5 py-1 rounded-lg transition-all text-xs cursor-pointer shrink-0 ${
-                sortOption === 'duration_asc' ? 'bg-red-600 text-white font-semibold' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+              className={`px-2.5 py-1 rounded-md transition-all text-xs cursor-pointer shrink-0 ${
+                sortOption === 'duration_asc' ? 'bg-[#11A888] text-white font-medium' : 'text-slate-600 hover:text-slate-900'
               }`}
             >
-              ⌛ Shortest
+              Shortest
             </button>
           </div>
 
           {/* Grid / List Layout Switcher */}
-          <div className="flex items-center bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-1 shadow-xs shrink-0">
+          <div className="flex items-center bg-slate-50 border border-slate-200 rounded-lg p-1 shrink-0">
             <button
               onClick={() => setViewMode('grid')}
-              title="Compact Grid View"
-              className={`p-1.5 rounded-lg transition-all cursor-pointer ${
-                viewMode === 'grid' ? 'bg-indigo-600 text-white' : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+              title="Grid View"
+              className={`p-1.5 rounded-md transition-all cursor-pointer ${
+                viewMode === 'grid' ? 'bg-[#11A888] text-white' : 'text-slate-500 hover:text-slate-900'
               }`}
             >
               <LayoutGrid className="w-3.5 h-3.5" />
             </button>
             <button
               onClick={() => setViewMode('list')}
-              title="Horizontal List View"
-              className={`p-1.5 rounded-lg transition-all cursor-pointer ${
-                viewMode === 'list' ? 'bg-indigo-600 text-white' : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+              title="List View"
+              className={`p-1.5 rounded-md transition-all cursor-pointer ${
+                viewMode === 'list' ? 'bg-[#11A888] text-white' : 'text-slate-500 hover:text-slate-900'
               }`}
             >
               <List className="w-3.5 h-3.5" />

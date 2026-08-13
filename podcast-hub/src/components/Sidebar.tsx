@@ -189,41 +189,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           </button>
         </div>
 
-        {/* ── Profile / Sign In block ── */}
-        <div className="px-3 pt-4 pb-3" style={{ borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
-          {ytProfile ? (
-            <div className="flex items-center gap-2.5">
-              <img
-                src={ytProfile.avatar}
-                alt={ytProfile.name}
-                className="w-8 h-8 rounded-full object-cover border-2 shrink-0"
-                style={{ borderColor: '#11A888' }}
-                onError={e => { (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(ytProfile.name)}&background=11A888&color=fff&size=80`; }}
-              />
-              <div className="flex-1 min-w-0">
-                <p className="text-[13px] font-medium text-white truncate leading-none">{ytProfile.name}</p>
-                <p className="text-[11px] mt-0.5 truncate" style={{ color: '#6b84a0' }}>{ytProfile.handle}</p>
-              </div>
-              <button
-                onClick={handleSignOut}
-                title="Sign Out"
-                className="p-1 rounded hover:bg-white/10 transition-colors shrink-0"
-                style={{ color: '#6b84a0' }}
-              >
-                <LogOut className="w-3.5 h-3.5" />
-              </button>
-            </div>
-          ) : (
-            <button
-              onClick={() => { if (onOpenLoginModal) onOpenLoginModal(); else setShowLoginCard(true); }}
-              className="w-full flex items-center gap-2.5 px-3 py-2 rounded-md text-[13px] font-normal transition-colors cursor-pointer"
-              style={{ background: 'rgba(17,168,136,0.15)', border: '1px solid rgba(17,168,136,0.3)', color: '#47D378' }}
-            >
-              <LogIn className="w-4 h-4 shrink-0" />
-              <span>Sign in with Google</span>
-            </button>
-          )}
-        </div>
+
 
         {/* ── Import button ── */}
         {onOpenImport && (

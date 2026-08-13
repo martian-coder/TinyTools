@@ -190,47 +190,40 @@ export const Navbar: React.FC<NavbarProps> = ({
             )}
           </div>
 
-          {/* YouTube Sign In & Actions CTA */}
-          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+          {/* Profile — right corner, no background box */}
+          <div className="flex items-center gap-2 shrink-0">
             {!ytProfile ? (
               <button
-                onClick={() => {
-                  if (onOpenLoginModal) {
-                    onOpenLoginModal();
-                  } else {
-                    setShowYtLoginModal(true);
-                  }
-                }}
-                className="flex items-center gap-1.5 bg-sky-500 hover:bg-sky-600 text-white px-4 py-1.5 rounded-lg text-xs font-bold shadow-sm shadow-sky-500/25 border border-sky-400 transition-all cursor-pointer shrink-0"
-                title="Sign in with YouTube"
+                onClick={() => { if (onOpenLoginModal) onOpenLoginModal(); else setShowYtLoginModal(true); }}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer"
+                style={{ background: 'rgba(17,168,136,0.18)', color: '#47D378', border: '1px solid rgba(17,168,136,0.3)' }}
               >
-                <Tv className="w-3.5 h-3.5 text-white shrink-0" />
+                <Tv className="w-3.5 h-3.5 shrink-0" />
                 <span className="hidden sm:inline">Sign in</span>
-                <span className="sm:hidden text-[11px]">YouTube</span>
               </button>
             ) : (
-              <div className="flex items-center gap-1.5 bg-sky-50 border border-sky-200 pl-1.5 pr-3 py-1 rounded-lg shadow-2xs shrink-0">
+              <div className="flex items-center gap-2 shrink-0">
                 <img
                   src={ytProfile.avatar}
                   alt={ytProfile.name}
-                  className="w-6 h-6 rounded-md object-cover border border-sky-500 cursor-pointer shrink-0"
-                  onClick={() => {
-                    if (onOpenLoginModal) onOpenLoginModal();
-                    else setCurrentTab('yt_search');
-                  }}
+                  className="w-7 h-7 rounded-full object-cover cursor-pointer shrink-0"
+                  style={{ border: '2px solid #11A888' }}
+                  onClick={() => { if (onOpenLoginModal) onOpenLoginModal(); else setCurrentTab('yt_search'); }}
                 />
-                <button
+                <span
+                  className="text-[13px] font-medium hidden md:block cursor-pointer truncate max-w-[120px]"
+                  style={{ color: '#c8cfe0' }}
                   onClick={() => setCurrentTab('yt_search')}
-                  className="text-xs font-bold text-slate-800 hover:text-sky-600 transition-colors hidden md:block"
                 >
                   {ytProfile.name}
-                </button>
+                </span>
                 <button
                   onClick={handleSignOut}
-                  className="text-slate-400 hover:text-red-500 p-0.5 ml-1"
+                  className="p-1 rounded hover:bg-white/10 transition-colors"
+                  style={{ color: '#6b84a0' }}
                   title="Sign Out"
                 >
-                  <X className="w-3 h-3" />
+                  <X className="w-3.5 h-3.5" />
                 </button>
               </div>
             )}

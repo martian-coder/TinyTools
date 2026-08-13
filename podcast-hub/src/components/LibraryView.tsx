@@ -210,106 +210,11 @@ export const LibraryView: React.FC<LibraryViewProps> = ({
 
   return (
     <div className="space-y-4 animate-in fade-in duration-300">
-      {/* ─── Compact Toolbar: Profile + Stats + Actions in one slim card ────── */}
+      {/* ─── Filter Bar ─── */}
       <div className="bg-white border border-slate-200 rounded-xl shadow-2xs overflow-hidden">
-        {/* Top Row: Profile + Counts + Actions */}
-        <div className="flex flex-wrap items-center gap-3 px-4 py-3 border-b border-slate-100">
-          {/* Profile avatar */}
-          {ytProfile ? (
-            <div className="relative shrink-0">
-              <img
-                src={ytProfile.avatar}
-                alt={ytProfile.name}
-                className="w-8 h-8 rounded-full object-cover border-2 border-sky-400"
-                onError={(e) => {
-                  (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(ytProfile.name)}&background=0ea5e9&color=fff&size=80`;
-                }}
-              />
-              <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-emerald-400 border-2 border-white" />
-            </div>
-          ) : (
-            <div className="w-8 h-8 rounded-full bg-sky-50 border border-sky-200 flex items-center justify-center shrink-0">
-              <User className="w-4 h-4 text-sky-600" />
-            </div>
-          )}
-
-          {/* Title */}
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-slate-800 leading-none truncate">
-              {ytProfile ? ytProfile.name : 'My Library'}
-            </p>
-            <p className="text-[11px] text-slate-400 mt-0.5">
-              {ytProfile ? ytProfile.handle : 'YouTube & Podcast Collection'}
-            </p>
-          </div>
-
-          {/* Inline stats pills */}
-          <div className="hidden sm:flex items-center gap-1.5 text-[11px]">
-            <span className="flex items-center gap-1 px-2.5 py-1 rounded-md bg-sky-50 border border-sky-200 text-sky-700 font-medium">
-              <BookOpen className="w-3 h-3" />{podcasts.length} Episodes
-            </span>
-            <span className="flex items-center gap-1 px-2.5 py-1 rounded-md bg-cyan-50 border border-cyan-200 text-cyan-700 font-medium">
-              <Heart className="w-3 h-3" />{favoritePodcasts.length} Fav
-            </span>
-            <span className="flex items-center gap-1 px-2.5 py-1 rounded-md bg-emerald-50 border border-emerald-200 text-emerald-700 font-medium">
-              <Clock className="w-3 h-3" />{watchLaterPodcasts.length} Later
-            </span>
-            <span className="flex items-center gap-1 px-2.5 py-1 rounded-md bg-amber-50 border border-amber-200 text-amber-700 font-medium">
-              <Folder className="w-3 h-3" />{collections.length + liveYtPlaylists.length} Lists
-            </span>
-          </div>
-
-          {/* Action buttons */}
-          <div className="flex items-center gap-1.5 shrink-0 ml-auto">
-            {ytProfile ? (
-              <>
-                <button
-                  onClick={() => setShowLoginModal(true)}
-                  className="px-3 py-1.5 rounded-lg bg-sky-50 hover:bg-sky-100 text-sky-800 border border-sky-200 text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer"
-                  title="Sync Account"
-                >
-                  <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-                  <span className="hidden sm:inline">Sync</span>
-                </button>
-                <button
-                  onClick={() => onNavigateTab('yt_search')}
-                  className="px-3 py-1.5 rounded-lg bg-sky-50 hover:bg-sky-100 text-sky-800 border border-sky-200 text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer"
-                >
-                  <Tv className="w-3.5 h-3.5 text-sky-600" />
-                  <span className="hidden sm:inline">Watch</span>
-                </button>
-                <button
-                  onClick={onOpenImport}
-                  className="px-3 py-1.5 rounded-lg bg-sky-500 hover:bg-sky-600 text-white text-xs font-semibold flex items-center gap-1.5 transition-all shadow-sm border border-sky-400 cursor-pointer"
-                >
-                  <PlusCircle className="w-3.5 h-3.5" />
-                  <span>Import</span>
-                </button>
-              </>
-            ) : (
-              <>
-                <button
-                  onClick={() => setShowLoginModal(true)}
-                  className="px-3 py-1.5 rounded-lg bg-sky-500 hover:bg-sky-600 text-white text-xs font-semibold flex items-center gap-1.5 transition-all shadow-sm border border-sky-400 cursor-pointer"
-                >
-                  <Tv className="w-3.5 h-3.5" />
-                  <span>Sign In</span>
-                </button>
-                <button
-                  onClick={onOpenImport}
-                  className="px-3 py-1.5 rounded-lg bg-sky-50 hover:bg-sky-100 text-sky-800 text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer border border-sky-200"
-                >
-                  <PlusCircle className="w-3.5 h-3.5 text-amber-500" />
-                  <span>Import</span>
-                </button>
-              </>
-            )}
-          </div>
-        </div>
-
-        {/* Bottom Row: Filter Pills + New Playlist */}
-        <div className="flex flex-wrap items-center justify-between gap-2 px-4 py-2">
-          <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none text-xs font-medium">
+        <div className="flex flex-wrap items-center justify-between gap-2 px-4 py-2.5">
+          {/* Filter chips */}
+          <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none">
             <button
               onClick={() => { setActiveFilter('All'); setSelectedCollectionId(null); }}
               className={`yt-chip ${activeFilter === 'All' && !selectedCollectionId ? 'yt-chip-active' : ''}`}
@@ -320,34 +225,37 @@ export const LibraryView: React.FC<LibraryViewProps> = ({
               onClick={() => { setActiveFilter('Favorites'); setSelectedCollectionId(null); }}
               className={`yt-chip flex items-center gap-1 ${activeFilter === 'Favorites' ? 'yt-chip-active' : ''}`}
             >
-              <Heart className={`w-3 h-3 ${activeFilter === 'Favorites' ? 'fill-black text-black' : 'text-[#3ea6ff]'}`} />
+              <Heart className={`w-3 h-3 ${activeFilter === 'Favorites' ? 'fill-white text-white' : 'text-slate-400'}`} />
               Favorites ({favoritePodcasts.length})
             </button>
             <button
               onClick={() => { setActiveFilter('WatchLater'); setSelectedCollectionId(null); }}
               className={`yt-chip flex items-center gap-1 ${activeFilter === 'WatchLater' ? 'yt-chip-active' : ''}`}
             >
-              <Clock className={`w-3 h-3 ${activeFilter === 'WatchLater' ? 'text-black' : 'text-[#3ea6ff]'}`} />
+              <Clock className={`w-3 h-3 ${activeFilter === 'WatchLater' ? 'text-white' : 'text-slate-400'}`} />
               Watch Later ({watchLaterPodcasts.length})
             </button>
             <button
               onClick={() => { setActiveFilter('Completed'); setSelectedCollectionId(null); }}
               className={`yt-chip flex items-center gap-1 ${activeFilter === 'Completed' ? 'yt-chip-active' : ''}`}
             >
-              <CheckCircle2 className={`w-3 h-3 ${activeFilter === 'Completed' ? 'text-black' : 'text-emerald-400'}`} />
+              <CheckCircle2 className={`w-3 h-3 ${activeFilter === 'Completed' ? 'text-white' : 'text-slate-400'}`} />
               Completed ({completedPodcasts.length})
             </button>
           </div>
 
+          {/* New Playlist */}
           <button
             onClick={() => setShowCreateFolderModal(true)}
-            className="px-3 py-1.5 rounded-lg bg-sky-50 hover:bg-sky-100 border border-sky-200 text-sky-800 text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer shrink-0"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-medium border cursor-pointer transition-colors shrink-0"
+            style={{ background: '#e6f7f4', color: '#0e9478', borderColor: '#b2e4da' }}
           >
             <FolderPlus className="w-3.5 h-3.5" />
-            + New Playlist
+            New Playlist
           </button>
         </div>
       </div>
+
 
       {/* ─── Playlists & Collections Folders Carousel ─────────────────────── */}
       {(collections.length > 0 || liveYtPlaylists.length > 0) && (
@@ -403,22 +311,21 @@ export const LibraryView: React.FC<LibraryViewProps> = ({
                       setActiveFilter('All');
                     }
                   }}
-                  className={`p-3.5 rounded-xl border transition-all shrink-0 text-left min-w-[170px] cursor-pointer ${
-                    isSelected
-                      ? 'bg-gradient-to-r from-[#5b51d8] to-[#00c6ff] text-white border-transparent font-extrabold shadow-md'
-                      : 'bg-[#222736] hover:bg-[#2a3042] text-[#f1f5f9] border-[#2d3245] hover:border-[#00c6ff]/40'
+                  className={`p-3 rounded-xl border transition-all shrink-0 text-left min-w-[155px] cursor-pointer ${isSelected
+                      ? 'bg-[#11A888] text-white border-transparent shadow-md'
+                      : 'bg-white hover:bg-slate-50 text-slate-700 border-slate-200 hover:border-slate-300'
                   }`}
                 >
                   <div className="flex items-center justify-between mb-1.5">
-                    <Folder className={`w-4 h-4 ${isSelected ? 'text-white' : 'text-[#5b51d8]'}`} />
-                    <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-md ${
-                      isSelected ? 'bg-white/20 text-white' : 'bg-[#141721] text-[#00c6ff] border border-[#2d3245]'
+                    <Folder className={`w-3.5 h-3.5 ${isSelected ? 'text-white' : 'text-teal-500'}`} />
+                    <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded ${
+                      isSelected ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-500 border border-slate-200'
                     }`}>
                       {count} items
                     </span>
                   </div>
-                  <div className="font-bold text-xs truncate">{col.name}</div>
-                  <div className={`text-[10px] truncate mt-0.5 ${isSelected ? 'text-white/80' : 'text-[#94a3b8]'}`}>
+                  <div className="text-[12px] font-medium truncate">{col.name}</div>
+                  <div className={`text-[11px] truncate mt-0.5 ${isSelected ? 'text-white/80' : 'text-slate-400'}`}>
                     {col.description || 'Playlist Collection'}
                   </div>
                 </button>
@@ -431,17 +338,14 @@ export const LibraryView: React.FC<LibraryViewProps> = ({
       {/* ─── Latest Uploads from Subscriptions Section ──────────────────── */}
       {liveSubFeed.length > 0 && (
         <div className="space-y-3">
-          <div className="flex items-center justify-between text-xs font-bold text-slate-300">
-            <span className="flex items-center gap-2">
-              <Tv className="w-4 h-4 text-red-500 fill-red-500" />
-              Latest Uploads from Subscriptions ({liveSubFeed.length})
+          <div className="flex items-center justify-between text-xs">
+            <span className="flex items-center gap-2 text-slate-500 font-medium">
+              <Tv className="w-3.5 h-3.5 text-slate-400" />
+              Latest Uploads ({liveSubFeed.length})
             </span>
-            <button
-              onClick={() => onNavigateTab('yt_search')}
-              className="text-red-400 hover:text-red-300 flex items-center gap-1 cursor-pointer"
-            >
-              <span>Explore All Feed</span>
-              <ChevronRight className="w-3.5 h-3.5" />
+            <button onClick={() => onNavigateTab('yt_search')} className="flex items-center gap-1 text-teal-600 hover:text-teal-700 text-[11px] font-medium cursor-pointer">
+              <span>Explore Feed</span>
+              <ChevronRight className="w-3 h-3" />
             </button>
           </div>
 
@@ -472,17 +376,14 @@ export const LibraryView: React.FC<LibraryViewProps> = ({
       {/* ─── Live Liked YouTube Videos Section ───────────────────────────── */}
       {liveYtLikedVideos.length > 0 && (
         <div className="space-y-3">
-          <div className="flex items-center justify-between text-xs font-bold text-slate-300">
-            <span className="flex items-center gap-2">
-              <Heart className="w-4 h-4 text-red-500 fill-red-500" />
-              Latest from Profile &amp; Liked Videos ({liveYtLikedVideos.length})
+          <div className="flex items-center justify-between text-xs">
+            <span className="flex items-center gap-2 text-slate-500 font-medium">
+              <Heart className="w-3.5 h-3.5 text-slate-400" />
+              Liked Videos ({liveYtLikedVideos.length})
             </span>
-            <button
-              onClick={() => onNavigateTab('yt_search')}
-              className="text-red-400 hover:text-red-300 flex items-center gap-1 cursor-pointer"
-            >
+            <button onClick={() => onNavigateTab('yt_search')} className="flex items-center gap-1 text-teal-600 hover:text-teal-700 text-[11px] font-medium cursor-pointer">
               <span>Watch in Feed</span>
-              <ChevronRight className="w-3.5 h-3.5" />
+              <ChevronRight className="w-3 h-3" />
             </button>
           </div>
 
@@ -514,44 +415,35 @@ export const LibraryView: React.FC<LibraryViewProps> = ({
       {/* ─── AI Knowledge Groups & Product Clusters Section ──────────────── */}
       {knowledgeGroups.length > 0 && (
         <div className="space-y-3">
-          <div className="flex items-center justify-between text-xs font-bold text-slate-300">
-            <span className="flex items-center gap-2">
-              <Brain className="w-4 h-4 text-amber-400" />
-              AI Knowledge Groups &amp; Product Clusters ({knowledgeGroups.length})
+          <div className="flex items-center justify-between text-xs">
+            <span className="flex items-center gap-2 text-slate-500 font-medium">
+              <Brain className="w-3.5 h-3.5 text-slate-400" />
+              AI Knowledge Groups ({knowledgeGroups.length})
             </span>
-            <button
-              onClick={() => onNavigateTab('knowledge_groups')}
-              className="text-amber-400 hover:text-amber-300 flex items-center gap-1 cursor-pointer"
-            >
-              <span>Manage Groups &amp; AI Brainstorm</span>
-              <ChevronRight className="w-3.5 h-3.5" />
+            <button onClick={() => onNavigateTab('knowledge_groups')} className="flex items-center gap-1 text-teal-600 hover:text-teal-700 text-[11px] font-medium cursor-pointer">
+              <span>Manage</span>
+              <ChevronRight className="w-3 h-3" />
             </button>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
             {knowledgeGroups.map((g) => (
               <div
                 key={g.id}
                 onClick={() => onNavigateTab('knowledge_groups')}
-                className="bg-slate-900 border border-slate-800 hover:border-amber-500/40 rounded-2xl p-4 space-y-2 transition-all cursor-pointer group"
+                className="bg-white border border-slate-200 hover:border-teal-300 hover:shadow-sm rounded-xl p-3.5 space-y-2 transition-all cursor-pointer group"
               >
                 <div className="flex items-center justify-between">
-                  <span className="px-2 py-0.5 rounded-lg bg-amber-500/20 text-amber-300 text-[10px] font-bold border border-amber-500/30">
+                  <span className="px-2 py-0.5 rounded bg-teal-50 text-teal-700 text-[10px] font-medium border border-teal-200">
                     {g.category}
                   </span>
-                  <span className="text-[11px] font-mono text-slate-400 font-bold">
-                    {g.videoIds.length} videos
-                  </span>
+                  <span className="text-[10px] text-slate-400">{g.videoIds.length} videos</span>
                 </div>
-                <h4 className="text-xs font-bold text-white group-hover:text-amber-300 transition-colors line-clamp-1">
-                  {g.name}
-                </h4>
-                <p className="text-[11px] text-slate-400 line-clamp-2 leading-relaxed">
-                  {g.description}
-                </p>
-                <div className="pt-2 flex items-center justify-between text-[11px] font-bold text-indigo-400 group-hover:text-indigo-300">
-                  <span>Brainstorm with AI</span>
-                  <ChevronRight className="w-3.5 h-3.5" />
+                <p className="text-[12px] font-medium text-slate-700 group-hover:text-teal-700 transition-colors line-clamp-1">{g.name}</p>
+                <p className="text-[11px] text-slate-400 line-clamp-2 leading-relaxed">{g.description}</p>
+                <div className="flex items-center gap-1 text-[11px] text-teal-600 font-medium">
+                  <span>Brainstorm</span>
+                  <ChevronRight className="w-3 h-3" />
                 </div>
               </div>
             ))}
@@ -560,27 +452,24 @@ export const LibraryView: React.FC<LibraryViewProps> = ({
       )}
 
       {/* ─── Main Podcast Summaries Grid ─────────────────────────────────── */}
-      <div className="space-y-4">
-        <div className="flex items-center justify-between text-xs font-bold text-slate-300">
-          <span className="flex items-center gap-2">
-            <BookOpen className="w-4 h-4 text-indigo-400" />
+      <div className="space-y-3">
+        <div className="flex items-center justify-between text-xs">
+          <span className="flex items-center gap-2 text-slate-500 font-medium">
+            <BookOpen className="w-3.5 h-3.5 text-slate-400" />
             {selectedCollectionId
               ? `Playlist: ${collections.find((c) => c.id === selectedCollectionId)?.name}`
-              : `${activeFilter} Summaries`}
-            ({filteredPodcasts.length})
+              : `${activeFilter === 'All' ? 'All Episodes' : activeFilter}`}
+            <span className="text-slate-300">({filteredPodcasts.length})</span>
           </span>
           {selectedCollectionId && (
-            <button
-              onClick={() => setSelectedCollectionId(null)}
-              className="text-xs text-red-400 hover:underline cursor-pointer flex items-center gap-1"
-            >
-              <X className="w-3 h-3" /> Clear Filter
+            <button onClick={() => setSelectedCollectionId(null)} className="text-[11px] text-slate-400 hover:text-slate-600 cursor-pointer flex items-center gap-1">
+              <X className="w-3 h-3" /> Clear
             </button>
           )}
         </div>
 
         {filteredPodcasts.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-4 gap-y-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {filteredPodcasts.map((podcast) => (
               <PodcastCard
                 key={podcast.id}
@@ -596,22 +485,20 @@ export const LibraryView: React.FC<LibraryViewProps> = ({
             ))}
           </div>
         ) : (
-          <div className="text-center py-20 bg-slate-900 border border-slate-800 rounded-3xl space-y-4 shadow-sm">
-            <BookOpen className="w-12 h-12 text-indigo-500 mx-auto" />
+          <div className="text-center py-16 bg-white border border-slate-200 rounded-xl space-y-3">
+            <BookOpen className="w-10 h-10 text-slate-300 mx-auto" />
             <div className="space-y-1">
-              <h3 className="text-base font-bold text-white">
-                No podcasts in this view yet
-              </h3>
-              <p className="text-xs text-slate-400 max-w-sm mx-auto">
-                Explore popular topics, search YouTube, or import new video episodes to build your learning library.
+              <h3 className="text-sm font-medium text-slate-700">No episodes here yet</h3>
+              <p className="text-[12px] text-slate-400 max-w-xs mx-auto leading-relaxed">
+                Import a YouTube episode or search to add videos to your library.
               </p>
             </div>
             <button
               onClick={onOpenImport}
-              className="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white px-5 py-2.5 rounded-2xl text-xs font-semibold shadow-md shadow-indigo-600/20 transition-all cursor-pointer"
+              className="inline-flex items-center gap-2 bg-[#11A888] hover:bg-[#0e9478] text-white px-4 py-2 rounded-lg text-[12px] font-medium transition-all cursor-pointer"
             >
-              <PlusCircle className="w-4 h-4 text-amber-300" />
-              <span>Import Podcast Now</span>
+              <PlusCircle className="w-3.5 h-3.5" />
+              <span>Import Episode</span>
             </button>
           </div>
         )}
@@ -620,56 +507,46 @@ export const LibraryView: React.FC<LibraryViewProps> = ({
       {/* ─── Create Playlist Modal ────────────────────────────────────────── */}
       {showCreateFolderModal && (
         <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 max-w-md w-full space-y-4 shadow-2xl">
+          <div className="bg-white border border-slate-200 rounded-xl p-5 max-w-md w-full space-y-4 shadow-xl">
             <div className="flex items-center justify-between">
-              <h3 className="text-base font-bold text-white flex items-center gap-2">
-                <FolderPlus className="w-5 h-5 text-indigo-400" />
-                Create New Playlist
+              <h3 className="text-sm font-semibold text-slate-800 flex items-center gap-2">
+                <FolderPlus className="w-4 h-4 text-teal-500" />
+                New Playlist
               </h3>
-              <button
-                onClick={() => setShowCreateFolderModal(false)}
-                className="text-slate-400 hover:text-white p-1 rounded-lg"
-              >
+              <button onClick={() => setShowCreateFolderModal(false)} className="text-slate-400 hover:text-slate-600 p-1 rounded">
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            <form onSubmit={handleCreateFolder} className="space-y-4 text-xs">
-              <div className="space-y-1 text-left">
-                <label className="font-semibold text-slate-400">Playlist Name</label>
+            <form onSubmit={handleCreateFolder} className="space-y-3 text-xs">
+              <div className="space-y-1">
+                <label className="text-[11px] font-medium text-slate-500">Playlist Name</label>
                 <input
                   type="text"
                   required
                   value={newFolderName}
                   onChange={(e) => setNewFolderName(e.target.value)}
-                  placeholder="e.g. SaaS Monetization, AI Engineering"
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-white focus:outline-none focus:border-indigo-500"
+                  placeholder="e.g. SaaS Ideas, AI Engineering"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-slate-800 text-[13px] focus:outline-none focus:border-teal-400 placeholder:text-slate-400"
                 />
               </div>
 
-              <div className="space-y-1 text-left">
-                <label className="font-semibold text-slate-400">Description</label>
+              <div className="space-y-1">
+                <label className="text-[11px] font-medium text-slate-500">Description</label>
                 <textarea
                   rows={2}
                   value={newFolderDesc}
                   onChange={(e) => setNewFolderDesc(e.target.value)}
-                  placeholder="Short description of what goes into this playlist..."
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-white focus:outline-none focus:border-indigo-500"
+                  placeholder="Short description..."
+                  className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-slate-800 text-[13px] focus:outline-none focus:border-teal-400 placeholder:text-slate-400 resize-none"
                 />
               </div>
 
-              <div className="flex items-center justify-end gap-2 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setShowCreateFolderModal(false)}
-                  className="px-4 py-2 bg-slate-800 text-slate-300 rounded-xl font-medium cursor-pointer"
-                >
+              <div className="flex items-center justify-end gap-2 pt-1">
+                <button type="button" onClick={() => setShowCreateFolderModal(false)} className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg text-[12px] font-medium cursor-pointer transition-colors">
                   Cancel
                 </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-bold shadow cursor-pointer"
-                >
+                <button type="submit" className="px-3 py-1.5 bg-[#11A888] hover:bg-[#0e9478] text-white rounded-lg text-[12px] font-medium cursor-pointer transition-colors">
                   Create Playlist
                 </button>
               </div>
