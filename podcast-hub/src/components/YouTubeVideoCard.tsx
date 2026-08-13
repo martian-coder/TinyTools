@@ -19,33 +19,41 @@ const VideoThumbnail: React.FC<{ videoId: string; thumbnailUrl?: string; title: 
   );
 };
 
-/* ── Real YouTube channel avatar lookup & fallback generator ── */
+/* ── Real YouTube channel avatar lookup & SVG fallback generator ── */
 const KNOWN_AVATARS: Record<string, string> = {
   'this week in startups': 'https://yt3.googleusercontent.com/ytc/AIdro_nN6-R8w3m_b59-93m93m=s176-c-k-c0x00ffffff-no-rj',
   'scott hanselman': 'https://yt3.googleusercontent.com/ytc/AIdro_lD8P_75-Z7_989_9=s176-c-k-c0x00ffffff-no-rj',
   'all-in podcast': 'https://yt3.googleusercontent.com/ytc/AIdro_m4_X9=s176-c-k-c0x00ffffff-no-rj',
   'all in podcast': 'https://yt3.googleusercontent.com/ytc/AIdro_m4_X9=s176-c-k-c0x00ffffff-no-rj',
+  'all in': 'https://yt3.googleusercontent.com/ytc/AIdro_m4_X9=s176-c-k-c0x00ffffff-no-rj',
   'lex fridman': 'https://yt3.googleusercontent.com/ytc/AIdro_k6K0wN7b5_9w_Xg_J_x8=s176-c-k-c0x00ffffff-no-rj',
   'huberman': 'https://yt3.googleusercontent.com/vC4aQ8t-g65t6S_y4Z_e9p7f_0=s176-c-k-c0x00ffffff-no-rj',
   'y combinator': 'https://yt3.googleusercontent.com/ytc/AIdro_n8c9z_5e0g_v0_8g=s176-c-k-c0x00ffffff-no-rj',
   'mkbhd': 'https://yt3.googleusercontent.com/lkH37D712tiyphnu0Id0D5M37G9IbDx5zpacWYioCioPOJwAbYC6yi-obJhPJKOwEF7Pch1Z=s176-c-k-c0x00ffffff-no-rj',
 };
 
+// Generates an inline SVG Data URI avatar with initial letters — guaranteed zero network failure
+const createInitialAvatarSvg = (name: string): string => {
+  const words = (name || 'YT').trim().split(/\s+/);
+  let initials = words[0]?.[0] || 'Y';
+  if (words.length > 1 && words[1]?.[0]) {
+    initials += words[1][0];
+  }
+  initials = initials.toUpperCase();
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 80 80"><rect width="80" height="80" rx="40" fill="#11A888"/><text x="50%" y="54%" font-family="sans-serif" font-size="32" font-weight="600" fill="#ffffff" text-anchor="middle" dominant-baseline="middle">${initials}</text></svg>`;
+  return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
+};
+
 const getRealChannelAvatar = (channelName: string, avatarUrl?: string, channelAvatar?: string) => {
-  if (avatarUrl && avatarUrl.startsWith('http')) {
-    return avatarUrl;
-  }
-  if (channelAvatar && channelAvatar.startsWith('http')) {
-    return channelAvatar;
-  }
+  if (avatarUrl && avatarUrl.startsWith('http')) return avatarUrl;
+  if (channelAvatar && channelAvatar.startsWith('http')) return channelAvatar;
 
   const n = (channelName || '').toLowerCase().trim();
   for (const [k, v] of Object.entries(KNOWN_AVATARS)) {
     if (n.includes(k)) return v;
   }
 
-  const cleanName = channelName.replace(/[^a-zA-Z0-9 ]/g, '').trim();
-  return `https://ui-avatars.com/api/?name=${encodeURIComponent(cleanName || 'YT')}&background=11A888&color=fff&size=128&bold=true&font-size=0.4`;
+  return createInitialAvatarSvg(channelName);
 };
 
 /* ── Types ── */
@@ -144,8 +152,7 @@ export const YouTubeVideoCard: React.FC<YouTubeVideoCardProps> = ({
           alt={video.channel}
           className="w-7 h-7 rounded-full object-cover border border-slate-200 shrink-0 mt-0.5"
           onError={(e) => {
-            const cleanName = (video.channel || 'YT').replace(/[^a-zA-Z0-9 ]/g, '').trim();
-            (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(cleanName || 'YT')}&background=11A888&color=fff&size=128&bold=true&font-size=0.4`;
+            (e.target as HTMLImageElement).src = createInitialAvatarSvg(video.channel || 'YT');
           }}
         />
 
