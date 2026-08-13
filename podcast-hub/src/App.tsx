@@ -255,7 +255,19 @@ export default function App() {
   const [theme, setTheme] = useState<ThemeMode>('light');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
-  const [currentTab, setCurrentTab] = useState<ViewTab>('dashboard');
+  const [currentTab, setCurrentTab] = useState<ViewTab>(() => {
+    try {
+      const savedTab = localStorage.getItem('podsummarizer_current_tab');
+      if (savedTab && ['dashboard', 'monetization', 'ethics', 'detail', 'assistant', 'yt_search', 'content_studio', 'collections', 'knowledge_groups', 'profile'].includes(savedTab)) {
+        return savedTab as ViewTab;
+      }
+    } catch {}
+    return 'dashboard';
+  });
+
+  useEffect(() => {
+    localStorage.setItem('podsummarizer_current_tab', currentTab);
+  }, [currentTab]);
   const [selectedPodcast, setSelectedPodcast] = useState<PodcastItem | null>(null);
   const [isImportOpen, setIsImportOpen] = useState(false);
   const [isImportingFromYT, setIsImportingFromYT] = useState(false);
@@ -285,7 +297,6 @@ export default function App() {
       .then((prof) => {
         if (prof) {
           setUserProfile((prev) => ({ ...prev, name: prof.name }));
-          setCurrentTab('dashboard');
           window.dispatchEvent(new Event('yt_profile_updated'));
         }
       })
