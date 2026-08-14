@@ -22,12 +22,16 @@ export interface UserAuthProfile {
  */
 export const startGoogleSignIn = async (): Promise<void> => {
   const origin = window.location.origin;
+  // If running on static host like github.io, throw immediately to trigger client authentication without HTTP 404 logs
+  if (origin.includes('github.io') || origin.includes('vercel.app')) {
+    throw new Error('Static host detected — using browser client authentication');
+  }
   const res = await fetch(`/api/auth/youtube/url?origin=${encodeURIComponent(origin)}`);
   const data = await res.json();
   if (data.url) {
     window.location.href = data.url;
   } else {
-    throw new Error(data.error || data.message || 'GOOGLE_CLIENT_ID is not configured in .env. Use 1-Click Sign-In or Channel Handle.');
+    throw new Error(data.error || data.message || 'GOOGLE_CLIENT_ID is not configured in .env.');
   }
 };
 

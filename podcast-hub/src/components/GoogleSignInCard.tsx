@@ -111,19 +111,21 @@ export const GoogleSignInCard: React.FC<GoogleSignInCardProps> = ({
     setIsLoading(true);
     setError('');
     
-    const targetInput = userEnteredVal || handleInput;
+    const targetInput = (userEnteredVal || handleInput).trim();
     
-    try {
-      if (!targetInput) {
+    if (!targetInput) {
+      try {
         await startGoogleSignIn();
         return;
+      } catch (err: any) {
+        setIsLoading(false);
+        setError('Please enter your Google account email (@gmail.com) or YouTube channel handle to sign in.');
+        return;
       }
-    } catch (err: any) {
-      console.warn('Backend OAuth unavailable on static host, resolving client authentication cleanly');
     }
 
-    // Connect user account cleanly on static web hosting (GitHub Pages)
-    const prof = await executeUniversalSignIn(targetInput || 'Google Creator');
+    // Connect user-specified account
+    const prof = await executeUniversalSignIn(targetInput);
     setCurrentProfile(prof);
     if (onSuccess) onSuccess(prof);
     setIsLoading(false);
