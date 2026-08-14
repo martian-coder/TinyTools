@@ -195,57 +195,29 @@ export const GoogleSignInCard: React.FC<GoogleSignInCardProps> = ({
   /* ── Sign-In Form ── */
   const signInUI = !currentProfile && (
     <div className="space-y-4">
-      {/* 1-Click Direct Google Sign In Button */}
+      {/* Pure 1-Click Direct Google Sign In Button */}
       <button
         id="google-signin-btn"
         onClick={() => handleGoogleSignIn()}
         disabled={isLoading}
-        className="w-full flex items-center gap-3 bg-[#11A888] hover:bg-[#0e9478] text-white font-semibold py-3 px-4 rounded-xl shadow-2xs transition-all cursor-pointer text-xs active:scale-[0.99] group disabled:opacity-60"
+        className="w-full flex items-center gap-3 bg-[#11A888] hover:bg-[#0e9478] text-white font-semibold py-3.5 px-4 rounded-xl shadow-md transition-all cursor-pointer text-sm active:scale-[0.99] group disabled:opacity-60"
       >
-        <span className="shrink-0 bg-white p-1 rounded-full shadow-xs">
-          {isLoading ? <Loader2 className="w-4 h-4 animate-spin text-slate-800" /> : <GoogleIcon size={16} />}
+        <span className="shrink-0 bg-white p-1.5 rounded-full shadow-xs">
+          {isLoading ? <Loader2 className="w-5 h-5 animate-spin text-slate-800" /> : <GoogleIcon size={18} />}
         </span>
-        <span className="flex-1 text-left text-white font-semibold">
-          {isLoading ? 'Connecting Account…' : 'Sign in with Google'}
+        <span className="flex-1 text-left text-white font-bold text-sm">
+          {isLoading ? 'Connecting to Google…' : 'Sign in with Google'}
         </span>
         {!isLoading && (
           <ChevronRight className="w-4 h-4 text-white group-hover:translate-x-0.5 transition-transform ml-auto shrink-0" />
         )}
       </button>
 
-      {/* Divider */}
-      <div className="flex items-center gap-3 pt-1">
-        <div className="flex-1 h-px bg-slate-200" />
-        <span className="text-[10px] font-medium text-slate-400 uppercase tracking-wider">or sign in with email / handle</span>
-        <div className="flex-1 h-px bg-slate-200" />
-      </div>
-
-      {/* Optional Email / Channel Handle Input */}
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          if (handleInput.trim()) {
-            handleGoogleSignIn(handleInput);
-          }
-        }}
-        className="flex gap-2"
-      >
-        <input
-          type="text"
-          value={handleInput}
-          onChange={(e) => setHandleInput(e.target.value)}
-          placeholder="yourname@gmail.com or @handle"
-          disabled={isLoading}
-          className="flex-1 px-3 py-2 text-xs bg-white border border-slate-200 rounded-xl text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-teal-500 transition-all"
-        />
-        <button
-          type="submit"
-          disabled={isLoading || !handleInput.trim()}
-          className="shrink-0 px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-semibold text-xs transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
-        >
-          Connect
-        </button>
-      </form>
+      {error && (
+        <div className="bg-red-50 border border-red-200 text-red-700 text-xs p-3 rounded-xl text-center">
+          {error}
+        </div>
+      )}
     </div>
   );
 
