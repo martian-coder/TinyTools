@@ -542,27 +542,31 @@ export const YouTubeSearchView: React.FC<YouTubeSearchViewProps> = ({
         } catch (e) {}
       }
 
-      try {
-        const response = await fetch('/api/search-youtube', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            query: q,
-            customApiKey: ytApiKey,
-            oauthToken: token,
-          }),
-        });
+      const isStaticHost = window.location.origin.includes('github.io') || window.location.origin.includes('vercel.app');
 
-        if (response.ok) {
-          const json = await response.json();
-          if (json.success && json.results) {
-            setResults(json.results);
-            setIsLiveApi(!!json.isLiveApi);
-            return;
+      if (!isStaticHost) {
+        try {
+          const response = await fetch('/api/search-youtube', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              query: q,
+              customApiKey: ytApiKey,
+              oauthToken: token,
+            }),
+          });
+
+          if (response.ok) {
+            const json = await response.json();
+            if (json.success && json.results) {
+              setResults(json.results);
+              setIsLiveApi(!!json.isLiveApi);
+              return;
+            }
           }
+        } catch (e) {
+          console.warn('Backend search API unavailable, using client search fallback');
         }
-      } catch (e) {
-        console.warn('Backend search API unavailable, using client search fallback');
       }
 
       // Client-side fallback for static hosting (GitHub Pages / Vercel Static)
