@@ -12,7 +12,7 @@ import {
   Youtube,
 } from 'lucide-react';
 import { startGoogleSignIn, logoutFirebase } from '../lib/auth';
-import { executeUniversalSignIn } from '../lib/clientAuth';
+import { executeUniversalSignIn, promptGoogleGisLogin } from '../lib/clientAuth';
 
 interface GoogleSignInCardProps {
   onClose?: () => void;
@@ -111,8 +111,22 @@ export const GoogleSignInCard: React.FC<GoogleSignInCardProps> = ({
     setIsLoading(true);
     setError('');
     
+    // 1. If Google Client ID is set in environment or settings, trigger real Google One Tap / GIS OAuth SDK
+    const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
+    if (clientId && !userEnteredVal && !handleInput) {
+      try {
+        const gisProfile = await promptGoogleGisLogin(clientId);
+        setCurrentProfile(gisProfile);
+        if (onSuccess) onSuccess(gisProfile);
+        setIsLoading(false);
+        return;
+      } catch (err: any) {
+        console.warn('Google One Tap not completed:', err);
+      }
+    }
+
+    // 2. Connect user-specified Google Email or YouTube handle
     let targetInput = (userEnteredVal || handleInput).trim();
-    
     if (!targetInput) {
       const prompted = window.prompt('Enter your Google account email or YouTube channel handle:', 'user@gmail.com');
       if (!prompted || !prompted.trim()) {
@@ -122,7 +136,6 @@ export const GoogleSignInCard: React.FC<GoogleSignInCardProps> = ({
       targetInput = prompted.trim();
     }
 
-    // Connect user-specified account
     const prof = await executeUniversalSignIn(targetInput);
     setCurrentProfile(prof);
     if (onSuccess) onSuccess(prof);
