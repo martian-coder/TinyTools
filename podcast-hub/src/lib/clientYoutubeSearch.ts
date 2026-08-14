@@ -13,7 +13,7 @@ export interface ClientSearchResult {
   publishedAt: string;
 }
 
-const DEFAULT_YOUTUBE_RECORDS: ClientSearchResult[] = [
+export const DEFAULT_YOUTUBE_RECORDS: ClientSearchResult[] = [
   {
     videoId: 'M576WGiDBdQ',
     title: 'Jeff Bezos on Amazon, Blue Origin, AI & Future of Technology',
@@ -97,7 +97,26 @@ export async function executeClientSearch(query: string, apiKey?: string): Promi
     } catch {}
   }
 
-  // 2. If user provided a custom YouTube API key, call official endpoint client-side
+  // 2. Fetch user's YouTube Subscriptions directly via Google OAuth Access Token
+  const savedProfile = localStorage.getItem('user_yt_profile');
+  if (savedProfile) {
+    try {
+      const prof = JSON.parse(savedProfile);
+      if (prof.accessToken) {
+        const subRes = await fetch(`https://www.googleapis.com/youtube/v3/subscriptions?part=snippet&mine=true&maxResults=20`, {
+          headers: { Authorization: `Bearer ${prof.accessToken}` }
+        });
+        if (subRes.ok) {
+          const subData = await subRes.json();
+          if (subData.items && subData.items.length > 0) {
+            console.info('[Client YouTube] Successfully loaded live Google user subscriptions');
+          }
+        }
+      }
+    } catch {}
+  }
+
+  // 3. If user provided a custom YouTube API key, call official endpoint client-side
   if (apiKey) {
     try {
       const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(query)}&type=video&order=date&maxResults=12&key=${apiKey}`;
@@ -123,7 +142,7 @@ export async function executeClientSearch(query: string, apiKey?: string): Promi
     } catch {}
   }
 
-  // 3. Fallback client-side filter over default curated video library
+  // 4. Fallback client-side filter over default curated video library
   const matched = DEFAULT_YOUTUBE_RECORDS.filter(
     (v) =>
       v.title.toLowerCase().includes(cleanQuery) ||

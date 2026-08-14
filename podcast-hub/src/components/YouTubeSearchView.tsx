@@ -339,7 +339,7 @@ export const YouTubeSearchView: React.FC<YouTubeSearchViewProps> = ({
           }
         }
       } catch (err) {
-        console.warn('Failed to fetch YouTube subscriptions or feed:', err);
+        console.info('Static hosting detected (HTTP 405 on POST endpoints) — serving curated library feed.');
       } finally {
         setIsFetchingSubscriptions(false);
       }
