@@ -291,22 +291,26 @@ function YTHandleFallback({
     setIsLoading(true);
     setStatus('Looking up channel…');
 
+    const isStaticHost = window.location.origin.includes('github.io') || window.location.origin.includes('vercel.app');
+
     try {
-      const res = await fetch(`/api/youtube/channel-by-handle?handle=${encodeURIComponent(cleanHandle)}`);
-      if (res.ok) {
-        const data = await res.json();
-        if (data.success && data.channel?.name) {
-          const prof: ConnectedProfile = {
-            name: data.channel.name,
-            handle: data.channel.handle || cleanHandle,
-            avatar:
-              data.channel.avatar ||
-              `https://ui-avatars.com/api/?name=${encodeURIComponent(data.channel.name)}&background=ef4444&color=fff&size=200&bold=true`,
-          };
-          localStorage.setItem('user_yt_profile', JSON.stringify(prof));
-          window.dispatchEvent(new Event('yt_profile_updated'));
-          onSuccess(prof);
-          return;
+      if (!isStaticHost) {
+        const res = await fetch(`/api/youtube/channel-by-handle?handle=${encodeURIComponent(cleanHandle)}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.success && data.channel?.name) {
+            const prof: ConnectedProfile = {
+              name: data.channel.name,
+              handle: data.channel.handle || cleanHandle,
+              avatar:
+                data.channel.avatar ||
+                `https://ui-avatars.com/api/?name=${encodeURIComponent(data.channel.name)}&background=ef4444&color=fff&size=200&bold=true`,
+            };
+            localStorage.setItem('user_yt_profile', JSON.stringify(prof));
+            window.dispatchEvent(new Event('yt_profile_updated'));
+            onSuccess(prof);
+            return;
+          }
         }
       }
     } catch {}

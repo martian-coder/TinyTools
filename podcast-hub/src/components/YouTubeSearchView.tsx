@@ -464,20 +464,25 @@ export const YouTubeSearchView: React.FC<YouTubeSearchViewProps> = ({
 
     setNewChannelInput('');
     setShowAddChannelInput(false);
+    const isStaticHost = window.location.origin.includes('github.io') || window.location.origin.includes('vercel.app');
 
     try {
-      // Try the dedicated channel-by-handle endpoint first
-      const chRes = await fetch(`/api/youtube/channel-by-handle?handle=${encodeURIComponent(cleanHandle)}`);
-      if (chRes.ok) {
-        const chData = await chRes.json();
-        if (chData.success && chData.channel?.name) {
-          toggleSubscribeChannel(chData.channel.name, chData.channel.avatar);
-          handleSearch(chData.channel.name);
-          return;
+      if (!isStaticHost) {
+        // Try the dedicated channel-by-handle endpoint first
+        const chRes = await fetch(`/api/youtube/channel-by-handle?handle=${encodeURIComponent(cleanHandle)}`);
+        if (chRes.ok) {
+          const chData = await chRes.json();
+          if (chData.success && chData.channel?.name) {
+            toggleSubscribeChannel(chData.channel.name, chData.channel.avatar);
+            handleSearch(chData.channel.name);
+            return;
+          }
         }
       }
+    } catch {}
 
-      // Fallback to search
+    // Fallback to search
+    try {
       const res = await fetch('/api/search-youtube', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
