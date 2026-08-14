@@ -570,7 +570,7 @@ export const YouTubeSearchView: React.FC<YouTubeSearchViewProps> = ({
       }
 
       // Client-side fallback for static hosting (GitHub Pages / Vercel Static)
-      const clientResults = await executeClientSearch(q, ytApiKey);
+      const clientResults = await executeClientSearch(q, ytApiKey, token);
       setResults(clientResults);
       setIsLiveApi(false);
     } catch (err) {

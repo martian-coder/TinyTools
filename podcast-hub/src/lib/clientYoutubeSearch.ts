@@ -53,11 +53,11 @@ export const DEFAULT_YOUTUBE_RECORDS: ClientSearchResult[] = [
     publishedAt: '2026-02-02',
   },
   {
-    videoId: 'b02TIsInTmg',
+    videoId: 'jvqFAi7vkBc',
     title: 'Sam Altman on OpenAI, GPT-5, AI Agents & Future Wealth',
     channel: 'Lex Fridman Podcast',
     duration: '2h 15m',
-    thumbnailUrl: 'https://img.youtube.com/vi/b02TIsInTmg/hqdefault.jpg',
+    thumbnailUrl: 'https://img.youtube.com/vi/jvqFAi7vkBc/hqdefault.jpg',
     description: 'Sam Altman discusses the trajectory of autonomous AI agents, economic transformation, labor automation, and compute scaling.',
     publishedAt: '2026-01-28',
   },
@@ -152,11 +152,11 @@ export async function fetchClientLikedVideos(accessToken?: string): Promise<Clie
 /**
  * Execute client-side YouTube search with public oEmbed / fetch fallback
  */
-export async function executeClientSearch(query: string, apiKey?: string): Promise<ClientSearchResult[]> {
+export async function executeClientSearch(query: string, apiKey?: string, oauthToken?: string): Promise<ClientSearchResult[]> {
   const cleanQuery = (query || '').trim().toLowerCase();
 
-  // 1. Direct YouTube Video URL or ID check
-  const videoUrlMatch = query.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|\/v\/|\/embed\/|^)([a-zA-Z0-9_-]{11})(?:[&?\s]|$)/i);
+  // 1. Direct YouTube Video URL (e.g. watch?v=... or youtu.be/...)
+  const videoUrlMatch = query.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|\/v\/|\/embed\/)([a-zA-Z0-9_-]{11})(?:[&?\s]|$)/i);
   if (videoUrlMatch && videoUrlMatch[1] && videoUrlMatch[1].length === 11) {
     const vId = videoUrlMatch[1];
     try {
@@ -176,16 +176,18 @@ export async function executeClientSearch(query: string, apiKey?: string): Promi
     } catch {}
   }
 
-  // 2. If user provided a custom YouTube API key, call official endpoint client-side
-  if (apiKey) {
+  // 2. If user is logged in with Google OAuth, use their access token for direct client YouTube Search API
+  if (oauthToken) {
     try {
-      const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(query)}&type=video&order=date&maxResults=12&key=${apiKey}`;
-      const res = await fetch(url);
+      const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(query)}&type=video&maxResults=15`;
+      const res = await fetch(url, {
+        headers: { Authorization: `Bearer ${oauthToken}` },
+      });
       if (res.ok) {
         const data = await res.json();
         if (data.items && data.items.length > 0) {
           return data.items.map((item: any) => {
-            const vId = item.id?.videoId;
+            const vId = item.id?.videoId || '';
             const snip = item.snippet || {};
             return {
               videoId: vId,
@@ -196,13 +198,39 @@ export async function executeClientSearch(query: string, apiKey?: string): Promi
               description: snip.description || `Watch episode by ${snip.channelTitle || 'creator'} on YouTube.`,
               publishedAt: (snip.publishedAt || '').split('T')[0] || 'Recent',
             };
-          });
+          }).filter((v: any) => v.videoId);
         }
       }
     } catch {}
   }
 
-  // 3. Fallback client-side filter over default curated video library
+  // 3. If user provided a custom YouTube API key, call official endpoint client-side
+  if (apiKey) {
+    try {
+      const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(query)}&type=video&order=date&maxResults=15&key=${apiKey}`;
+      const res = await fetch(url);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.items && data.items.length > 0) {
+          return data.items.map((item: any) => {
+            const vId = item.id?.videoId || '';
+            const snip = item.snippet || {};
+            return {
+              videoId: vId,
+              title: snip.title || 'YouTube Episode',
+              channel: snip.channelTitle || 'YouTube Creator',
+              duration: '30m',
+              thumbnailUrl: snip.thumbnails?.high?.url || snip.thumbnails?.medium?.url || `https://img.youtube.com/vi/${vId}/hqdefault.jpg`,
+              description: snip.description || `Watch episode by ${snip.channelTitle || 'creator'} on YouTube.`,
+              publishedAt: (snip.publishedAt || '').split('T')[0] || 'Recent',
+            };
+          }).filter((v: any) => v.videoId);
+        }
+      }
+    } catch {}
+  }
+
+  // 4. Curated local fallback
   const matched = DEFAULT_YOUTUBE_RECORDS.filter(
     (v) =>
       v.title.toLowerCase().includes(cleanQuery) ||
