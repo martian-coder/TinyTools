@@ -107,39 +107,29 @@ export const GoogleSignInCard: React.FC<GoogleSignInCardProps> = ({
     return () => window.removeEventListener('yt_profile_updated', sync);
   }, []);
 
-  const handleGoogleSignIn = async (userEnteredVal?: string) => {
+  const handleGoogleSignIn = async () => {
     setIsLoading(true);
     setError('');
     
-    // 1. If Google Client ID is set in environment or settings, trigger real Google One Tap / GIS OAuth SDK
-    const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
-    if (clientId && !userEnteredVal && !handleInput) {
+    try {
+      // Direct browser OAuth redirect flow to Google
+      await startGoogleSignIn();
+      return;
+    } catch (err: any) {
+      console.warn('Backend OAuth unavailable or redirected:', err);
+      // Fallback to client GIS OAuth if configured
+      const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || '285175014537-nn318q5n4gqd1fglqgkgsapuhd0s0cvn.apps.googleusercontent.com';
       try {
         const gisProfile = await promptGoogleGisLogin(clientId);
         setCurrentProfile(gisProfile);
         if (onSuccess) onSuccess(gisProfile);
         setIsLoading(false);
         return;
-      } catch (err: any) {
-        console.warn('Google One Tap not completed:', err);
-      }
-    }
-
-    // 2. Connect user-specified Google Email or YouTube handle
-    let targetInput = (userEnteredVal || handleInput).trim();
-    if (!targetInput) {
-      const prompted = window.prompt('Enter your Google account email or YouTube channel handle:', 'user@gmail.com');
-      if (!prompted || !prompted.trim()) {
+      } catch (gisErr: any) {
+        setError('Google Sign-In requires connecting your Google Account. Please select your account when prompted.');
         setIsLoading(false);
-        return;
       }
-      targetInput = prompted.trim();
     }
-
-    const prof = await executeUniversalSignIn(targetInput);
-    setCurrentProfile(prof);
-    if (onSuccess) onSuccess(prof);
-    setIsLoading(false);
   };
 
   const handleSignOut = async () => {
