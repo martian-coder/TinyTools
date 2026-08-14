@@ -61,11 +61,57 @@ export function promptGoogleGisLogin(clientId: string): Promise<GoogleGisProfile
     try {
       await loadGoogleSdk();
 
-      if (!window.google?.accounts?.id) {
+      if (!window.google?.accounts) {
         reject(new Error('Google Identity SDK unavailable'));
         return;
       }
 
+      // Try OAuth2 token client popup first (bypasses One Tap origin restrictions)
+      if (window.google.accounts.oauth2) {
+        const client = window.google.accounts.oauth2.initTokenClient({
+          client_id: clientId,
+          scope: 'openid profile email https://www.googleapis.com/auth/youtube.readonly',
+          callback: async (tokenResponse: any) => {
+            if (tokenResponse.error) {
+              reject(new Error(tokenResponse.error_description || tokenResponse.error));
+              return;
+            }
+
+            try {
+              // Fetch user profile from Google UserInfo endpoint with access token
+              const userInfoRes = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+                headers: { Authorization: `Bearer ${tokenResponse.access_token}` },
+              });
+              const payload = await userInfoRes.json();
+
+              const name = payload.name || payload.given_name || 'Google User';
+              const email = payload.email || '';
+              const avatar = payload.picture || `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=11A888&color=fff&size=200&bold=true`;
+              const handle = '@' + (email ? email.split('@')[0] : 'google_user');
+
+              const profile: GoogleGisProfile = {
+                name,
+                email,
+                avatar,
+                handle,
+                accessToken: tokenResponse.access_token,
+              };
+
+              localStorage.setItem('user_yt_profile', JSON.stringify(profile));
+              window.dispatchEvent(new Event('yt_profile_updated'));
+
+              resolve(profile);
+            } catch (fetchErr) {
+              reject(fetchErr);
+            }
+          },
+        });
+
+        client.requestAccessToken();
+        return;
+      }
+
+      // Fallback: One Tap ID token flow
       window.google.accounts.id.initialize({
         client_id: clientId,
         callback: (response: any) => {
