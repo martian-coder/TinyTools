@@ -111,17 +111,15 @@ export const GoogleSignInCard: React.FC<GoogleSignInCardProps> = ({
     setIsLoading(true);
     setError('');
     
-    const targetInput = (userEnteredVal || handleInput).trim();
+    let targetInput = (userEnteredVal || handleInput).trim();
     
     if (!targetInput) {
-      try {
-        await startGoogleSignIn();
-        return;
-      } catch (err: any) {
+      const prompted = window.prompt('Enter your Google account email or YouTube channel handle:', 'user@gmail.com');
+      if (!prompted || !prompted.trim()) {
         setIsLoading(false);
-        setError('Please enter your Google account email (@gmail.com) or YouTube channel handle to sign in.');
         return;
       }
+      targetInput = prompted.trim();
     }
 
     // Connect user-specified account
