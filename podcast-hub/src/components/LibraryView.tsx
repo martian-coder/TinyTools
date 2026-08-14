@@ -27,6 +27,7 @@ import {
 
 import { AddToGroupDropdown } from './AddToGroupDropdown';
 import { YouTubeVideoCard } from './YouTubeVideoCard';
+import { fetchClientPlaylists, fetchClientLikedVideos } from '../lib/clientYoutubeSearch';
 
 interface LibraryViewProps {
   podcasts: PodcastItem[];
@@ -123,44 +124,60 @@ export const LibraryView: React.FC<LibraryViewProps> = ({
         const handle = ytProfile?.handle || '';
 
         // 1. Fetch playlists
-        const plRes = await fetch('/api/youtube/my-playlists', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ access_token: accessToken, handle }),
-        });
-        if (plRes.ok) {
-          const plJson = await plRes.json();
-          if (plJson.playlists && plJson.playlists.length > 0) {
-            setLiveYtPlaylists(plJson.playlists);
+        try {
+          const plRes = await fetch('/api/youtube/my-playlists', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ access_token: accessToken, handle }),
+          });
+          if (plRes.ok) {
+            const plJson = await plRes.json();
+            if (plJson.playlists && plJson.playlists.length > 0) {
+              setLiveYtPlaylists(plJson.playlists);
+            }
+          }
+        } catch {
+          if (accessToken) {
+            const clientPls = await fetchClientPlaylists(accessToken);
+            if (clientPls.length > 0) setLiveYtPlaylists(clientPls);
           }
         }
 
         // 2. Fetch liked videos
         if (accessToken) {
-          const likedRes = await fetch('/api/youtube/my-liked-videos', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ access_token: accessToken }),
-          });
-          if (likedRes.ok) {
-            const likedJson = await likedRes.json();
-            if (likedJson.results && likedJson.results.length > 0) {
-              setLiveYtLikedVideos(likedJson.results);
+          try {
+            const likedRes = await fetch('/api/youtube/my-liked-videos', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ access_token: accessToken }),
+            });
+            if (likedRes.ok) {
+              const likedJson = await likedRes.json();
+              if (likedJson.results && likedJson.results.length > 0) {
+                setLiveYtLikedVideos(likedJson.results);
+              }
             }
+          } catch {
+            const clientLiked = await fetchClientLikedVideos(accessToken);
+            if (clientLiked.length > 0) setLiveYtLikedVideos(clientLiked);
           }
         }
 
         // 3. Fetch subscription feed
-        const feedRes = await fetch('/api/youtube/my-feed', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ access_token: accessToken }),
-        });
-        if (feedRes.ok) {
-          const feedJson = await feedRes.json();
-          if (feedJson.results && feedJson.results.length > 0) {
-            setLiveSubFeed(feedJson.results);
+        try {
+          const feedRes = await fetch('/api/youtube/my-feed', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ access_token: accessToken }),
+          });
+          if (feedRes.ok) {
+            const feedJson = await feedRes.json();
+            if (feedJson.results && feedJson.results.length > 0) {
+              setLiveSubFeed(feedJson.results);
+            }
           }
+        } catch {
+          console.info('Static host detected — client YouTube data active');
         }
       } catch (err) {
         console.warn('Failed to load live YouTube profile data:', err);

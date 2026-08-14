@@ -1,6 +1,6 @@
 /**
  * Client-Side YouTube & AI Search Resolver for Static Hosting (GitHub Pages / Vercel Static)
- * Provides seamless fallback when Express /api/search-youtube server endpoint is unavailable (e.g. static GitHub Pages).
+ * Provides direct browser fetching from Google's YouTube Data API v3 and fallback library.
  */
 
 export interface ClientSearchResult {
@@ -11,6 +11,17 @@ export interface ClientSearchResult {
   thumbnailUrl: string;
   description: string;
   publishedAt: string;
+}
+
+export interface ClientPlaylist {
+  id: string;
+  name: string;
+  title: string;
+  channel: string;
+  itemCount: number;
+  thumbnail: string;
+  thumbnailUrl: string;
+  description: string;
 }
 
 export const DEFAULT_YOUTUBE_RECORDS: ClientSearchResult[] = [
@@ -71,6 +82,74 @@ export const DEFAULT_YOUTUBE_RECORDS: ClientSearchResult[] = [
 ];
 
 /**
+ * Direct client-side fetch of user's YouTube Playlists using Google OAuth access token
+ */
+export async function fetchClientPlaylists(accessToken?: string): Promise<ClientPlaylist[]> {
+  if (!accessToken) return [];
+
+  try {
+    const res = await fetch(`https://www.googleapis.com/youtube/v3/playlists?part=snippet,contentDetails&mine=true&maxResults=20`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    if (res.ok) {
+      const data = await res.json();
+      if (data.items && data.items.length > 0) {
+        return data.items.map((item: any) => {
+          const snip = item.snippet || {};
+          const details = item.contentDetails || {};
+          return {
+            id: item.id,
+            name: snip.title || 'YouTube Playlist',
+            title: snip.title || 'YouTube Playlist',
+            channel: snip.channelTitle || 'YouTube Channel',
+            itemCount: details.itemCount || 0,
+            thumbnail: snip.thumbnails?.high?.url || snip.thumbnails?.medium?.url || `https://images.unsplash.com/photo-1579202673506-ca3ce28943ef?auto=format&fit=crop&w=400`,
+            thumbnailUrl: snip.thumbnails?.high?.url || snip.thumbnails?.medium?.url || `https://images.unsplash.com/photo-1579202673506-ca3ce28943ef?auto=format&fit=crop&w=400`,
+            description: snip.description || '',
+          };
+        });
+      }
+    }
+  } catch (err) {
+    console.warn('[Client YouTube] Playlists fetch error:', err);
+  }
+  return [];
+}
+
+/**
+ * Direct client-side fetch of user's Liked Videos using Google OAuth access token
+ */
+export async function fetchClientLikedVideos(accessToken?: string): Promise<ClientSearchResult[]> {
+  if (!accessToken) return [];
+
+  try {
+    const res = await fetch(`https://www.googleapis.com/youtube/v3/videos?part=snippet,contentDetails&myRating=like&maxResults=15`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    if (res.ok) {
+      const data = await res.json();
+      if (data.items && data.items.length > 0) {
+        return data.items.map((item: any) => {
+          const snip = item.snippet || {};
+          return {
+            videoId: item.id,
+            title: snip.title || 'Liked Video',
+            channel: snip.channelTitle || 'YouTube Channel',
+            duration: '25m',
+            thumbnailUrl: snip.thumbnails?.high?.url || snip.thumbnails?.medium?.url || `https://img.youtube.com/vi/${item.id}/hqdefault.jpg`,
+            description: snip.description || '',
+            publishedAt: (snip.publishedAt || '').split('T')[0] || 'Recent',
+          };
+        });
+      }
+    }
+  } catch (err) {
+    console.warn('[Client YouTube] Liked videos fetch error:', err);
+  }
+  return [];
+}
+
+/**
  * Execute client-side YouTube search with public oEmbed / fetch fallback
  */
 export async function executeClientSearch(query: string, apiKey?: string): Promise<ClientSearchResult[]> {
@@ -97,26 +176,7 @@ export async function executeClientSearch(query: string, apiKey?: string): Promi
     } catch {}
   }
 
-  // 2. Fetch user's YouTube Subscriptions directly via Google OAuth Access Token
-  const savedProfile = localStorage.getItem('user_yt_profile');
-  if (savedProfile) {
-    try {
-      const prof = JSON.parse(savedProfile);
-      if (prof.accessToken) {
-        const subRes = await fetch(`https://www.googleapis.com/youtube/v3/subscriptions?part=snippet&mine=true&maxResults=20`, {
-          headers: { Authorization: `Bearer ${prof.accessToken}` }
-        });
-        if (subRes.ok) {
-          const subData = await subRes.json();
-          if (subData.items && subData.items.length > 0) {
-            console.info('[Client YouTube] Successfully loaded live Google user subscriptions');
-          }
-        }
-      }
-    } catch {}
-  }
-
-  // 3. If user provided a custom YouTube API key, call official endpoint client-side
+  // 2. If user provided a custom YouTube API key, call official endpoint client-side
   if (apiKey) {
     try {
       const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(query)}&type=video&order=date&maxResults=12&key=${apiKey}`;
@@ -142,7 +202,7 @@ export async function executeClientSearch(query: string, apiKey?: string): Promi
     } catch {}
   }
 
-  // 4. Fallback client-side filter over default curated video library
+  // 3. Fallback client-side filter over default curated video library
   const matched = DEFAULT_YOUTUBE_RECORDS.filter(
     (v) =>
       v.title.toLowerCase().includes(cleanQuery) ||
