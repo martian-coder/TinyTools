@@ -312,34 +312,56 @@ export const YouTubeSearchView: React.FC<YouTubeSearchViewProps> = ({
       if (!profile || !profile.accessToken) return;
       setIsFetchingSubscriptions(true);
 
-      try {
-        // 1. Fetch user's YouTube subscriptions
-        const subsRes = await fetch('/api/youtube/subscriptions', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ access_token: profile.accessToken }),
-        });
-        if (subsRes.ok) {
-          const subsJson = await subsRes.json();
-          if (subsJson.subscriptions && subsJson.subscriptions.length > 0) {
-            setUserSubscriptions(subsJson.subscriptions);
-          }
-        }
+      const isStaticHost = window.location.origin.includes('github.io') || window.location.origin.includes('vercel.app');
 
-        // 2. Fetch user's YouTube activity / subscription feed
-        const feedRes = await fetch('/api/youtube/my-feed', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ access_token: profile.accessToken }),
-        });
-        if (feedRes.ok) {
-          const feedJson = await feedRes.json();
-          if (feedJson.results && feedJson.results.length > 0) {
-            setResults(feedJson.results);
+      try {
+        if (!isStaticHost) {
+          // 1. Fetch user's YouTube subscriptions
+          const subsRes = await fetch('/api/youtube/subscriptions', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ access_token: profile.accessToken }),
+          });
+          if (subsRes.ok) {
+            const subsJson = await subsRes.json();
+            if (subsJson.subscriptions && subsJson.subscriptions.length > 0) {
+              setUserSubscriptions(subsJson.subscriptions);
+            }
           }
+
+          // 2. Fetch user's YouTube activity / subscription feed
+          const feedRes = await fetch('/api/youtube/my-feed', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ access_token: profile.accessToken }),
+          });
+          if (feedRes.ok) {
+            const feedJson = await feedRes.json();
+            if (feedJson.results && feedJson.results.length > 0) {
+              setResults(feedJson.results);
+            }
+          }
+        } else {
+          // Direct client-side fetch from Google's YouTube Data API for static host
+          try {
+            const subRes = await fetch(`https://www.googleapis.com/youtube/v3/subscriptions?part=snippet&mine=true&maxResults=20`, {
+              headers: { Authorization: `Bearer ${profile.accessToken}` }
+            });
+            if (subRes.ok) {
+              const subData = await subRes.json();
+              if (subData.items && subData.items.length > 0) {
+                const mappedSubs = subData.items.map((it: any) => ({
+                  title: it.snippet?.title || 'Channel',
+                  channelId: it.snippet?.resourceId?.channelId || '',
+                  thumbnail: it.snippet?.thumbnails?.default?.url || '',
+                }));
+                setUserSubscriptions(mappedSubs);
+              }
+            }
+          } catch {}
         }
       } catch (err) {
-        console.info('Static hosting detected (HTTP 405 on POST endpoints) — serving curated library feed.');
+        console.info('Static hosting detected — using client YouTube Data API.');
       } finally {
         setIsFetchingSubscriptions(false);
       }
