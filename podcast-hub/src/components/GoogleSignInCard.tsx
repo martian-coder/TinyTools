@@ -111,27 +111,24 @@ export const GoogleSignInCard: React.FC<GoogleSignInCardProps> = ({
     setIsLoading(true);
     setError('');
     
+    // 1. Try server-side OAuth redirect (for localhost or backend deployment)
     try {
-      // Direct browser OAuth redirect flow to Google
       await startGoogleSignIn();
       return;
     } catch (err: any) {
-      console.warn('Backend OAuth unavailable on static host:', err);
+      console.info('Backend OAuth not available on static host, initializing Google Identity SDK...');
     }
 
+    // 2. Client-side Google Identity Services (GIS) OAuth
     const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || '285175014537-nn318q5n4gqd1fglqgkgsapuhd0s0cvn.apps.googleusercontent.com';
     try {
       const gisProfile = await promptGoogleGisLogin(clientId);
       setCurrentProfile(gisProfile);
       if (onSuccess) onSuccess(gisProfile);
       setIsLoading(false);
-      return;
     } catch (gisErr: any) {
-      // If Google Cloud Console hasn't finished registering https://martian-coder.github.io yet
-      console.warn('Google Cloud origin registration pending, resolving Google Creator identity cleanly');
-      const prof = await executeUniversalSignIn('amit.nilajkar@gmail.com');
-      setCurrentProfile(prof);
-      if (onSuccess) onSuccess(prof);
+      console.error('Google Sign-In error:', gisErr);
+      setError('Google Sign-In failed or was closed. Please select your Google account to sign in.');
       setIsLoading(false);
     }
   };
