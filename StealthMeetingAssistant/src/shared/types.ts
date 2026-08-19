@@ -85,7 +85,18 @@ export type QuickActionId =
   | 'follow-up-email'
   | 'risks'
   | 'critique'
-  | 'quiz-me';
+  | 'quiz-me'
+  | 'brief';
+
+export interface MeetingProfileInfo {
+  id: string;
+  name: string;
+  brief: string;
+  carryOver?: string;
+  carryOverAt?: number;
+  lastUsedAt?: number;
+  createdAt: number;
+}
 
 /** Locally computed delivery stats — no model call, no network. */
 export interface DeliveryMetrics {

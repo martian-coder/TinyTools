@@ -168,6 +168,7 @@ function registerShortcuts(): void {
     // Start/stop listening without touching the overlay — the one hotkey you
     // want when a meeting starts unexpectedly.
     'CommandOrControl+Shift+L': () => dispatch('listen'),
+    'CommandOrControl+Shift+K': () => dispatch('meeting'),
   };
 
   for (const [accelerator, handler] of Object.entries(bindings)) {

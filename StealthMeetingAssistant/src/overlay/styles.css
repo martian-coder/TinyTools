@@ -629,6 +629,11 @@ kbd {
 .browser-item .kind { color: var(--dim); flex: none; }
 .browser-item .size { margin-left: auto; font-size: 10px; color: var(--dim); font-family: var(--mono); }
 
+.carry { margin: 10px 0; }
+.carry .source-text { max-height: 160px; }
+
+.icon.hasmeeting { color: var(--accent); }
+
 .kv { font-size: 11px; line-height: 1.75; color: var(--dim); margin-bottom: 11px; }
 .kv b { color: var(--text); font-weight: 500; }
 

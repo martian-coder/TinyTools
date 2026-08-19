@@ -364,6 +364,37 @@ Filler detection is narrower than a word list: `like` only counts when it is a
 verbal tic (`"it was, like, slow"`), not a comparison (`"works like a
 charm"`), and `um` never fires inside `number`.
 
+## Recurring meetings
+
+Built for the daily standup, the weekly client call, the follow-up — meetings
+that happen again. Write the context once and every later session opens already
+knowing what this meeting is.
+
+`Ctrl/Cmd + Shift + K` opens the meeting panel. Give it a name and a standing
+brief:
+
+> *Weekly with Acme. Priya is their PM, cares about dates not detail. We owe
+> them the migration plan. Do not commit to Q3 without checking with Dan.*
+
+At the end, **Wrap up** condenses the session into a short handover — what was
+decided, what is still open, with owners and dates. The next occurrence opens
+with that already loaded, which is what makes a follow-up a thread rather than
+a fresh start. **Where we stand** briefs you from it plus your documents before
+anyone has spoken.
+
+Nothing needs re-selecting per question: the active meeting is applied by the
+backend on every request. A tinted 📋 in the top bar is the sign context is
+loaded.
+
+**The two kinds of context are kept apart on purpose.** The brief *you* wrote
+is instruction and goes in the system prompt. The handover was generated from a
+transcript, so it is fenced as untrusted data like any other quoted content — a
+meeting where somebody says "ignore previous instructions" cannot smuggle that
+into next week's session.
+
+Only the brief and the latest handover persist — never the raw transcript,
+which still dies with the process.
+
 ## Screen context
 
 With **See screen** enabled, a downscaled screenshot rides along with each

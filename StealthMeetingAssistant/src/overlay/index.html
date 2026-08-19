@@ -25,6 +25,7 @@
           <option value="practice">Practice</option>
         </select>
         <div class="spacer"></div>
+        <button class="icon" id="btnMeeting" title="Meeting context (Ctrl+Shift+K)" aria-label="Meeting">📋</button>
         <button class="icon listen" id="btnListen" title="Start listening (Ctrl+Shift+L)" aria-label="Listen">
           <span class="level" id="levelBar"></span>🎙
         </button>
@@ -101,6 +102,7 @@
           <button class="pill" data-action="risks">Risks</button>
           <button class="pill" data-action="suggest-reply">Reply</button>
           <button class="pill" data-action="explain-jargon">Explain</button>
+          <button class="pill" data-action="brief">Where we stand</button>
           <button class="pill" data-action="follow-up-email">Email</button>
           <button class="pill practice-only" data-action="critique" hidden>Critique me</button>
           <button class="pill practice-only" data-action="quiz-me" hidden>Quiz me</button>
@@ -230,6 +232,49 @@
           <button class="ghost" id="btnStopAll">Stop all</button>
         </div>
         <p class="hint" id="audioError"></p>
+      </div>
+    </div>
+
+    <div class="panel" id="panelMeeting" hidden>
+      <div class="panel-head">
+        <strong>Meeting context</strong>
+        <button class="icon" data-close="panelMeeting">✕</button>
+      </div>
+      <div class="panel-body">
+        <label class="field">
+          <span>Meeting</span>
+          <select id="meetingSelect"></select>
+        </label>
+        <label class="field">
+          <span>Name</span>
+          <input id="meetingName" placeholder="Daily status — Checkout" />
+        </label>
+        <label class="field">
+          <span>Standing context — who is in it, what it is for, what matters</span>
+          <textarea
+            id="meetingBrief"
+            rows="5"
+            placeholder="Weekly with Acme. Priya is their PM, cares about dates not detail. We owe them the migration plan. Do not commit to Q3 without checking with Dan."
+          ></textarea>
+        </label>
+        <div class="row">
+          <button class="primary" id="btnSaveMeeting">Save &amp; use</button>
+          <button class="ghost" id="btnNewMeeting">New</button>
+          <button class="ghost" id="btnDeleteMeeting">Delete</button>
+        </div>
+
+        <div class="carry" id="carryBox" hidden>
+          <div class="sources-title">From last time</div>
+          <div class="source-text" id="carryText"></div>
+        </div>
+
+        <p class="hint">
+          Wrap up at the end and the next session opens with what was decided and
+          what is still open.
+        </p>
+        <div class="row">
+          <button class="ghost" id="btnWrap">Wrap up &amp; save for next time</button>
+        </div>
       </div>
     </div>
 

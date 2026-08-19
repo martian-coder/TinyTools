@@ -5,6 +5,7 @@ import { detectFocus } from '../prompts/intent';
 import { buildUserMessage, systemPrompt } from '../prompts/modes';
 import { retrieve } from '../rag/retrieve';
 import { deliveryMetrics, deliveryNote } from '../session/delivery';
+import { activeMeeting } from '../session/meetings';
 import { transcript } from '../session/transcript';
 import {
   ASSISTANT_MODES,
@@ -103,6 +104,9 @@ chatRouter.post('/chat', async (req, res) => {
       }));
 
     const images = Array.isArray(body.images) ? body.images.slice(0, 2) : [];
+    // Whatever meeting is selected is applied automatically, so the overlay
+    // never has to remember to send it.
+    const meeting = activeMeeting();
 
     const userMessage = buildUserMessage({
       message,
@@ -114,13 +118,14 @@ chatRouter.post('/chat', async (req, res) => {
       // Only in practice mode, and only when something is worth mentioning.
       delivery:
         mode === 'practice' ? deliveryNote(deliveryMetrics(transcriptContext)) : undefined,
+      carryOver: meeting?.carryOver,
     });
 
     let full = '';
     for await (const delta of streamCompletion({
       provider: body.provider,
       model: body.model,
-      system: systemPrompt(mode, body.customInstructions, focus),
+      system: systemPrompt(mode, body.customInstructions, focus, meeting?.brief),
       messages: [...history, { role: 'user', content: userMessage }],
       images,
       signal: controller.signal,

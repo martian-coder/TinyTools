@@ -34,6 +34,9 @@
     lastAutoAt: 0,
     autoPending: [],
     lastAnswerWasAuto: false,
+    // Meeting context
+    meetings: [],
+    activeMeeting: null,
   };
 
   /** Wait for the other side to actually stop talking before reacting. */
@@ -72,7 +75,13 @@
     loadPreferences();
     wireUi();
     initAudio();
-    await Promise.all([loadModels(), loadDocuments(), loadTranscript(), loadSttProviders()]);
+    await Promise.all([
+      loadModels(),
+      loadDocuments(),
+      loadTranscript(),
+      loadSttProviders(),
+      loadMeetings(),
+    ]);
     subscribeDocumentEvents();
     subscribeAudioEvents();
     connectTranscriptSocket();
@@ -863,6 +872,113 @@
     toast('Mock meeting loaded');
   }
 
+  /* ── Meeting context ───────────────────────────────────────── */
+
+  /**
+   * Named contexts for recurring meetings. The active one is applied by the
+   * backend automatically, so nothing else in the renderer has to remember it.
+   */
+  async function loadMeetings() {
+    try {
+      const data = await api('/api/meetings');
+      state.meetings = data.meetings ?? [];
+      state.activeMeeting = data.active ?? null;
+      renderMeetings();
+    } catch (err) {
+      console.warn('meetings unavailable', err);
+    }
+  }
+
+  function renderMeetings() {
+    const select = $('meetingSelect');
+    select.innerHTML = '';
+
+    const none = document.createElement('option');
+    none.value = '';
+    none.textContent = 'No meeting context';
+    select.append(none);
+
+    for (const meeting of state.meetings) {
+      const option = document.createElement('option');
+      option.value = meeting.id;
+      option.textContent = meeting.name;
+      select.append(option);
+    }
+    select.value = state.activeMeeting?.id ?? '';
+
+    $('meetingName').value = state.activeMeeting?.name ?? '';
+    $('meetingBrief').value = state.activeMeeting?.brief ?? '';
+
+    const carry = state.activeMeeting?.carryOver;
+    $('carryBox').hidden = !carry;
+    if (carry) {
+      const when = state.activeMeeting.carryOverAt
+        ? new Date(state.activeMeeting.carryOverAt).toLocaleDateString()
+        : '';
+      $('carryText').textContent = when ? `(${when})\n${carry}` : carry;
+    }
+
+    // A tinted icon is the only always-visible sign that context is loaded.
+    $('btnMeeting').classList.toggle('hasmeeting', Boolean(state.activeMeeting));
+    $('btnMeeting').title = state.activeMeeting
+      ? `Meeting: ${state.activeMeeting.name}`
+      : 'Meeting context (none selected)';
+  }
+
+  async function activateMeeting(id) {
+    try {
+      const data = await api('/api/meetings/activate', {
+        method: 'POST',
+        body: JSON.stringify({ id: id || undefined }),
+      });
+      state.meetings = data.meetings ?? state.meetings;
+      state.activeMeeting = data.active ?? null;
+      renderMeetings();
+      if (state.activeMeeting) toast(`Context loaded: ${state.activeMeeting.name}`);
+    } catch (err) {
+      toast(err.message, true);
+    }
+  }
+
+  async function saveMeeting() {
+    const name = $('meetingName').value.trim();
+    if (!name) return toast('Give the meeting a name first', true);
+    try {
+      const data = await api('/api/meetings', {
+        method: 'POST',
+        body: JSON.stringify({
+          id: state.activeMeeting?.id,
+          name,
+          brief: $('meetingBrief').value,
+        }),
+      });
+      state.meetings = data.meetings ?? [];
+      await activateMeeting(data.meeting.id);
+      toast(`Saved ${name}`);
+    } catch (err) {
+      toast(err.message, true);
+    }
+  }
+
+  /** Condense this session into the recap the next occurrence opens with. */
+  async function wrapUp() {
+    if (!state.activeMeeting) return toast('Select a meeting context first', true);
+    setStatus('busy', 'Writing handover…');
+    try {
+      const data = await api(`/api/meetings/${state.activeMeeting.id}/wrap`, {
+        method: 'POST',
+        body: JSON.stringify({ provider: state.provider, model: state.model }),
+      });
+      state.activeMeeting = data.meeting;
+      renderMeetings();
+      setStatus('ready', 'Handover saved');
+      toast('Saved for next time');
+    } catch (err) {
+      setStatus('ready', 'Ready');
+      toast(err.message, true);
+    }
+  }
+
   /* ── Delivery metrics ──────────────────────────────────────── */
 
   /**
@@ -1330,7 +1446,9 @@
   }
 
   function closePanels() {
-    for (const id of ['panelModels', 'panelDocs', 'panelSettings', 'panelAudio']) $(id).hidden = true;
+    for (const id of ['panelModels', 'panelDocs', 'panelSettings', 'panelAudio', 'panelMeeting']) {
+      $(id).hidden = true;
+    }
     $('browser').hidden = true;
   }
 
@@ -1372,6 +1490,9 @@
         break;
       case 'listen':
         toggleListening();
+        break;
+      case 'meeting':
+        openPanel('panelMeeting');
         break;
       default:
         break;
@@ -1469,6 +1590,31 @@
     );
     $('btnRefreshDevices').addEventListener('click', refreshDevices);
     $('btnExport').addEventListener('click', exportNotes);
+    $('btnMeeting').addEventListener('click', () => openPanel('panelMeeting'));
+    $('meetingSelect').addEventListener('change', (e) => activateMeeting(e.target.value));
+    $('btnSaveMeeting').addEventListener('click', saveMeeting);
+    $('btnNewMeeting').addEventListener('click', () => {
+      state.activeMeeting = null;
+      $('meetingName').value = '';
+      $('meetingBrief').value = '';
+      $('meetingSelect').value = '';
+      $('carryBox').hidden = true;
+      $('meetingName').focus();
+    });
+    $('btnDeleteMeeting').addEventListener('click', async () => {
+      if (!state.activeMeeting) return;
+      const name = state.activeMeeting.name;
+      try {
+        const data = await api(`/api/meetings/${state.activeMeeting.id}`, { method: 'DELETE' });
+        state.meetings = data.meetings ?? [];
+        state.activeMeeting = null;
+        renderMeetings();
+        toast(`Deleted ${name}`);
+      } catch (err) {
+        toast(err.message, true);
+      }
+    });
+    $('btnWrap').addEventListener('click', wrapUp);
     for (const id of ['customInstructions', 'ctxLines', 'useScreen']) {
       $(id).addEventListener('change', savePreferences);
     }

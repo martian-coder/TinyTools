@@ -8,6 +8,7 @@ import { authEnabled, loadEnv, port as configuredPort, sessionToken } from './co
 import { audioRouter } from './routes/audio';
 import { chatRouter } from './routes/chat';
 import { documentsRouter } from './routes/documents';
+import { meetingsRouter } from './routes/meetings';
 import { modelsRouter } from './routes/models';
 import { sessionRouter } from './routes/session';
 import { stopAllAudio, writeAudio } from './session/audioSession';
@@ -52,6 +53,7 @@ export function createApp(): Express {
   app.use('/api', requireToken, documentsRouter);
   app.use('/api', requireToken, sessionRouter);
   app.use('/api', requireToken, audioRouter);
+  app.use('/api', requireToken, meetingsRouter);
 
   // The overlay is served from here so it has a real http origin (file://
   // pages get null origins and inconsistent fetch behaviour).
