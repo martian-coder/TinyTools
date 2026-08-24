@@ -40,16 +40,16 @@ const MemoraQueryHandler = {
         .getResponse();
     }
 
-    // Progressive response buys time while Claude is running
-    if (input.responseBuilder.addDirective) {
-      try {
-        input.responseBuilder.addDirective({
-          type: 'VoicePlayer.Speak',
-          speech: '<speak>Let me think.</speak>',
-        });
-      } catch (_) {
-        // Not all Alexa surfaces support progressive responses — safe to ignore
-      }
+    // Send a progressive response so Alexa doesn't time out while Claude is running.
+    // Must go through the Directive Service, not responseBuilder.addDirective.
+    try {
+      const directiveServiceClient = input.serviceClientFactory.getDirectiveServiceClient();
+      await directiveServiceClient.enqueue({
+        header: { requestId: input.requestEnvelope.request.requestId },
+        directive: { type: 'VoicePlayer.Speak', speech: '<speak>Let me think.</speak>' },
+      });
+    } catch (_) {
+      // Progressive responses are not supported on all Alexa surfaces — safe to ignore
     }
 
     const { history, facts } = await getMemory(userId);

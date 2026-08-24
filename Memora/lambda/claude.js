@@ -2,7 +2,7 @@
 
 const Anthropic = require('@anthropic-ai/sdk');
 
-const client = new Anthropic.default({ apiKey: process.env.ANTHROPIC_API_KEY });
+const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
 // Voice-optimised system prompt: no markdown, short sentences, conversational tone
 const SYSTEM_PROMPT = `You are Memora, a helpful voice assistant speaking through an Amazon Echo device.
