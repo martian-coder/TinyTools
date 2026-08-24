@@ -1,0 +1,29 @@
+{
+  "Comment": "CloudFormation snippet for the Memora memory table. Include in your stack or create manually via the AWS console.",
+  "MemoraMemoryTable": {
+    "Type": "AWS::DynamoDB::Table",
+    "Properties": {
+      "TableName": "MemoraMemory",
+      "BillingMode": "PAY_PER_REQUEST",
+      "AttributeDefinitions": [
+        {
+          "AttributeName": "userId",
+          "AttributeType": "S"
+        }
+      ],
+      "KeySchema": [
+        {
+          "AttributeName": "userId",
+          "KeyType": "HASH"
+        }
+      ],
+      "TimeToLiveSpecification": {
+        "AttributeName": "ttl",
+        "Enabled": true
+      },
+      "Tags": [
+        { "Key": "project", "Value": "Memora" }
+      ]
+    }
+  }
+}
