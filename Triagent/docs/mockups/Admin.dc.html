@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Triagent admin</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#F5F6F8}
+a{color:#1F5FB0}a:hover{color:#174A8A}
+</style>
+</helmet>
+<div style="font-family: Inter, system-ui, sans-serif; color: #14171C; background: #F5F6F8; min-height: 100vh">
+  <header style="background: #FFFFFF; border-bottom: 1px solid #E2E5EA; padding: 12px 24px; display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between">
+    <nav aria-label="Screens" style="display: flex; flex-wrap: wrap; gap: 4px; align-items: center">
+      <a href="Main.dc.html" style="font-weight: 700; font-size: 16px; color: #14171C; text-decoration: none; padding: 8px 10px 8px 0">Triagent</a>
+      <a href="Pipeline.dc.html" style="font-size: 14px; color: #4A515C; text-decoration: none; padding: 8px 12px; border-radius: 8px">Pipeline</a>
+      <a href="Trace.dc.html" style="font-size: 14px; color: #4A515C; text-decoration: none; padding: 8px 12px; border-radius: 8px">Trace</a>
+      <a href="Review.dc.html" style="font-size: 14px; color: #4A515C; text-decoration: none; padding: 8px 12px; border-radius: 8px">Review</a>
+      <a href="Rules.dc.html" style="font-size: 14px; color: #4A515C; text-decoration: none; padding: 8px 12px; border-radius: 8px">Rules</a>
+      <a href="SLA.dc.html" style="font-size: 14px; color: #4A515C; text-decoration: none; padding: 8px 12px; border-radius: 8px">SLA</a>
+      <a href="Insights.dc.html" style="font-size: 14px; color: #4A515C; text-decoration: none; padding: 8px 12px; border-radius: 8px">Insights</a>
+      <a href="Admin.dc.html" aria-current="page" style="font-size: 14px; font-weight: 600; color: #FFFFFF; background: #14171C; text-decoration: none; padding: 8px 12px; border-radius: 8px">Admin</a>
+    </nav>
+    <span style="font-size: 12px; font-weight: 600; background: #EEF1F5; border-radius: 6px; padding: 4px 10px">Served by Appsmith · users and roles in Keycloak</span>
+  </header>
+
+  <main style="max-width: 1360px; margin: 0 auto; padding: 24px; display: flex; flex-direction: column; gap: 20px">
+    <div style="display: flex; flex-direction: column; gap: 4px">
+      <h1 style="margin: 0; font-size: 26px; font-weight: 700">Admin</h1>
+      <span style="font-size: 14px; color: #5F6672">Every change here is written to the audit log</span>
+    </div>
+
+    <section style="background: #FFFFFF; border: 1px solid #E2E5EA; border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 12px">
+      <h2 style="margin: 0; font-size: 17px; font-weight: 600">Queues and modes</h2>
+      <sc-if value="{{showNote}}" hint-placeholder-val="{{ false }}">
+        <div role="status" style="font-size: 14px; background: #EEF4FC; border: 1px solid #B7D3F6; border-radius: 8px; padding: 10px 12px">{{note}}</div>
+      </sc-if>
+      <div style="overflow-x: auto">
+        <table style="width: 100%; border-collapse: collapse; font-size: 14px; min-width: 760px">
+          <thead><tr style="text-align: left; color: #5F6672; font-size: 12px"><th style="padding: 8px; font-weight: 600">Queue</th><th style="padding: 8px; font-weight: 600">Source</th><th style="padding: 8px; font-weight: 600">Mode</th><th style="padding: 8px; font-weight: 600; text-align: right">Shadow agreement (14 d)</th></tr></thead>
+          <tbody>
+            <sc-for list="{{queues}}" as="q" hint-placeholder-count="5">
+              <tr style="border-top: 1px solid #EEF1F5">
+                <td style="padding: 10px 8px; font-family: 'JetBrains Mono', monospace; font-size: 13px">{{q.name}}</td>
+                <td style="padding: 10px 8px; color: #4A515C">{{q.source}}</td>
+                <td style="padding: 10px 8px">
+                  <div role="group" aria-label="Mode for {{q.name}}" style="display: inline-flex; border: 1px solid #D3D8DF; border-radius: 8px; overflow: hidden">
+                    <sc-for list="{{q.modes}}" as="m" hint-placeholder-count="3">
+                      <button type="button" aria-pressed="{{m.pressed}}" onClick="{{m.pick}}" style="font: inherit; font-size: 13px; font-weight: 600; min-height: 40px; min-width: 72px; padding: 0 12px; border: 0; cursor: pointer; background: {{m.bg}}; color: {{m.ink}}">{{m.label}}</button>
+                    </sc-for>
+                  </div>
+                </td>
+                <td style="padding: 10px 8px; text-align: right; font-variant-numeric: tabular-nums">{{q.agree}}</td>
+              </tr>
+            </sc-for>
+          </tbody>
+        </table>
+      </div>
+      <span style="font-size: 13px; color: #4A515C">Promotion to auto needs an admin and at least 90% shadow agreement over 14 days.</span>
+    </section>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); gap: 20px">
+      <section style="background: #FFFFFF; border: 1px solid #E2E5EA; border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 10px">
+        <h2 style="margin: 0; font-size: 17px; font-weight: 600">Connectors</h2>
+        <sc-for list="{{connectors}}" as="c" hint-placeholder-count="4">
+          <div style="display: flex; gap: 12px; align-items: flex-start; border-top: 1px solid #EEF1F5; padding-top: 10px">
+            <span style="width: 10px; height: 10px; border-radius: 5px; margin-top: 5px; background: {{c.dot}}; flex-shrink: 0"></span>
+            <span style="display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0">
+              <span style="display: flex; justify-content: space-between; gap: 8px"><span style="font-size: 14px; font-weight: 600">{{c.name}}</span><span style="font-size: 12px; font-weight: 600">{{c.status}}</span></span>
+              <span style="font-size: 13px; color: #4A515C; line-height: 1.4">{{c.detail}}</span>
+            </span>
+          </div>
+        </sc-for>
+      </section>
+
+      <section style="background: #FFFFFF; border: 1px solid #E2E5EA; border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 10px">
+        <h2 style="margin: 0; font-size: 17px; font-weight: 600">Team capacity · storage-emea</h2>
+        <sc-for list="{{people}}" as="p" hint-placeholder-count="4">
+          <div style="display: grid; grid-template-columns: minmax(0, 1fr) 120px 64px; gap: 10px; align-items: center; border-top: 1px solid #EEF1F5; padding-top: 10px">
+            <span style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: 14px; font-weight: 600">{{p.name}}</span><span style="font-size: 12px; color: #5F6672">{{p.skills}}</span></span>
+            <div style="height: 8px; background: #EEF1F5; border-radius: 4px"><div style="height: 8px; border-radius: 4px; background: #2A78D6; width: {{p.bar}}"></div></div>
+            <span style="font-size: 13px; text-align: right; font-variant-numeric: tabular-nums">{{p.load}}</span>
+          </div>
+        </sc-for>
+        <h3 style="margin: 10px 0 0; font-size: 14px; font-weight: 600">Roles</h3>
+        <div style="display: flex; flex-wrap: wrap; gap: 8px">
+          <span style="font-size: 13px; border: 1px solid #D3D8DF; border-radius: 999px; padding: 4px 12px">viewer · 42</span>
+          <span style="font-size: 13px; border: 1px solid #D3D8DF; border-radius: 999px; padding: 4px 12px">reviewer · 18</span>
+          <span style="font-size: 13px; border: 1px solid #D3D8DF; border-radius: 999px; padding: 4px 12px">rule-author · 5</span>
+          <span style="font-size: 13px; border: 1px solid #D3D8DF; border-radius: 999px; padding: 4px 12px">admin · 2</span>
+        </div>
+        <a href="#" style="font-size: 14px; font-weight: 600">Manage users in Keycloak →</a>
+      </section>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1060}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { modes: { 'storage-emea': 'auto', 'storage-amer': 'auto', 'servers-apj': 'assist', 'laptops-amer': 'assist', 'networking-emea': 'shadow' }, note: '' };
+  }
+  renderVals() {
+    const defs = [
+      { name: 'storage-emea', source: 'Jira · NWSTOR', agree: 94 },
+      { name: 'storage-amer', source: 'Jira · NWSTOR', agree: 93 },
+      { name: 'servers-apj', source: 'SQL view · v_escalations', agree: 91 },
+      { name: 'laptops-amer', source: 'Jira · NWEND', agree: 90 },
+      { name: 'networking-emea', source: 'Webhook · netops', agree: 81 }
+    ];
+    const { modes } = this.state;
+    const queues = defs.map((q) => ({ ...q, agree: q.agree + '%',
+      modes: ['shadow', 'assist', 'auto'].map((m) => ({ label: m,
+        pressed: modes[q.name] === m ? 'true' : 'false',
+        bg: modes[q.name] === m ? '#14171C' : '#FFFFFF', ink: modes[q.name] === m ? '#FFFFFF' : '#14171C',
+        pick: () => {
+          if (m === 'auto' && q.agree < 90) {
+            this.setState({ note: q.name + ' stays in ' + modes[q.name] + ': shadow agreement is ' + q.agree + '%, below the 90% needed for auto.' });
+          } else {
+            this.setState({ modes: { ...modes, [q.name]: m }, note: q.name + ' set to ' + m + ' by Ana Lima · audit entry written.' });
+          }
+        } })) }));
+    return {
+      queues, note: this.state.note, showNote: !!this.state.note,
+      connectors: [
+        { name: 'Jira Cloud · jira-escalations', status: 'Healthy', dot: '#0CA30C', detail: 'Webhook live · permission check passed (BROWSE, EDIT_ISSUES, ASSIGN_ISSUES, ADD_COMMENTS)' },
+        { name: 'SQL view · v_escalations', status: 'Schema drift', dot: '#D03B3B', detail: 'Mapped column product_family is missing since 06:00. 14 tickets sent to review. New column product_group found.' },
+        { name: 'Webhook · netops', status: 'Healthy', dot: '#0CA30C', detail: 'HMAC verified · 167 deliveries in 24 h · 0 rejected' },
+        { name: 'CSV import', status: 'Idle', dot: '#5F6672', detail: 'Last backfill 20 Oct · 1,200 rows' }
+      ],
+      people: [
+        { name: 'Priya Raman', skills: 'san, nas · CET', load: '3 of 6', bar: '50%' },
+        { name: 'Jonas Weber', skills: 'san, hci · CET', load: '5 of 6', bar: '83%' },
+        { name: 'Elena Rossi', skills: 'nas · on leave until 2 Nov', load: '0 of 0', bar: '0%' },
+        { name: 'Tomás Ortega', skills: 'storage, backup · WET', load: '2 of 5', bar: '40%' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

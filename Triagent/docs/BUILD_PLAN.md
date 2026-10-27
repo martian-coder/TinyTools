@@ -1,13 +1,41 @@
 # Triagent: Open-Source Escalation Triage Agent Platform
 
-**Build plan for Claude Code (revision 2: updated stack)**
+**Build plan for Claude Code (revision 3: assemble the UI from open-source platforms)**
 
 > **Working name:** `triagent`. Check GitHub, PyPI and npm for name clashes before you publish, and rename if needed.
 > **Home:** its own GitHub organisation (`github.com/<org>`, written `<org>` below; ideally `triagent`). Not a personal repo and not part of any other project. Section 16 covers the org setup.
 > **Licence:** Apache-2.0.
-> **Stack:** Python 3.13, FastAPI, LangGraph (isolated in `pipeline/`), Pydantic v2 + Pydantic AI, PostgreSQL 17 (Procrastinate queue), Vue 3 + TanStack Query + Chart.js.
+> **Stack:** Python 3.13, FastAPI, LangGraph (isolated in `pipeline/`), Pydantic v2 + Pydantic AI, PostgreSQL 17 (Procrastinate queue). Screens on Grafana, Langfuse, Appsmith and Keycloak.
 
 This document is the single source of truth for building an open-source, vendor-neutral version of an intake escalation triage platform. Hand it to Claude Code phase by phase (section 12 has ready-to-paste prompts).
+
+---
+
+## What changed in revision 3 (assemble, don't build)
+
+Triagent's value is the agents, rules, picker, SLA engine and audit trail. Building a custom dashboard (the old Phase 7, 4–5 days plus upkeep) is not. Revision 3 drops the custom Vue frontend and serves every screen from well-known open-source platforms that read Triagent's API, Postgres, Prometheus metrics and OpenTelemetry traces. Clickable mocks of every screen: [Triagent screen mocks](https://claude.ai/artifact/3GhCHxN5Ja4hDyYa4epwdu) (source in `docs/mockups/`).
+
+| Screen | Platform | Licence | Reads from |
+| --- | --- | --- | --- |
+| 01 Pipeline | **Grafana** | AGPL-3.0, run unmodified as a separate service | Prometheus metrics, Postgres |
+| 02 Ticket trace | **Langfuse** (self-hosted) | MIT | OTel spans from the LangGraph run, Pydantic AI generations |
+| 03 Review queue | **Appsmith** | Apache-2.0 | Triagent REST API (`/review`, resume actions) |
+| 04 Rules | **Appsmith** + **Git** | Apache-2.0 | Triagent API (versions, validate, golden tests, replay); edits committed as pull requests |
+| 05 SLA | **Grafana** | AGPL-3.0 | Postgres, alert rules |
+| 06 Insights | **Grafana** + **Langfuse** scores | AGPL-3.0 / MIT | Postgres decisions and overrides, Langfuse eval scores |
+| 07 Admin | **Appsmith** + **Keycloak** | Apache-2.0 | Triagent API (modes, connectors, capacity); Keycloak for users and roles |
+
+**What Triagent ships instead of a frontend:** provisioned config in `deploy/`: Grafana dashboards as JSON, Appsmith app exports (Git-synced), Langfuse project setup, a Keycloak realm export, all started by `docker compose --profile demo up`.
+
+**Why these four:**
+- **Grafana:** the standard for ops dashboards; native Postgres and Prometheus sources, alerting for SLA breaches. AGPL is fine because we run it unmodified and only ship dashboard JSON. Apache Superset (Apache-2.0) is the alternative if AGPL is a problem for a deployer.
+- **Langfuse:** agent and LLM tracing, prompt versioning, datasets and evals in one self-hosted tool; ingests OpenTelemetry, which Pydantic AI and our LangGraph nodes already emit. Replaces the custom eval harness too.
+- **Appsmith:** Apache-2.0 low-code builder for the screens that *act* (review, rules, admin). Every button calls the Triagent API, so all rules ("rules decide", outbox, audit, roles) stay enforced server-side. A custom widget hosts CodeMirror for YAML editing.
+- **Keycloak:** OIDC for Triagent's API and SSO for all three UIs, with the four roles defined once.
+
+**Not chosen:** n8n (Sustainable Use Licence, not open source), Dify (licence adds conditions on top of Apache-2.0), LangGraph Platform/Studio (not fully open source), Label Studio/Argilla (built for dataset labelling, not live ticket actions).
+
+**Knock-on changes in this document:** no `frontend/`; the Vue, TanStack Query, openapi-fetch, CodeMirror-in-Vue, Vitest and Node rows of revision 2 are dropped; Phase 7 becomes "Platform screens"; `pydantic-evals` is replaced by Langfuse evals. The API must be complete and well-documented, because every screen is built on it.
 
 ---
 
@@ -28,11 +56,11 @@ The original stack was sound. These changes remove hand-rolled infrastructure, c
 | Webhook ingest | Process in request | **Write raw payload to an `inbox` table, return 202** | Never lose a webhook because a downstream step is slow or down. The ingest task picks it up from the queue. |
 | Settings / CLI / HTTP | unspecified | **pydantic-settings, Typer, httpx** | Typed config from env; typed CLI; one async HTTP client used by every connector (write our own small Jira client rather than a sync SDK). |
 | Auth | "generic OIDC" | **Authlib** (OIDC/JWT validation) | Maintained, provider-neutral, works with Keycloak, Entra ID, Okta, Auth0, Dex. Ship Keycloak in the compose demo. |
-| Frontend server state | Pinia for everything | **TanStack Query (Vue)** for server state, Pinia for UI state only | Caching, refetch, optimistic updates for review actions, SSE-driven invalidation, with no hand-written loading/error flags. |
-| Frontend API types | unspecified | **openapi-typescript + openapi-fetch** generated from FastAPI's OpenAPI | Backend and frontend types can't drift; CI fails if the generated client is stale. |
-| Rules editor | "YAML with validation" | **CodeMirror 6** + `codemirror-json-schema` (YAML mode) | Lighter than Monaco; schema-driven autocomplete and inline errors from the same generated JSON Schema. |
-| Frontend unit tests | Playwright only | **Vitest** + Playwright | Fast component and store tests; Playwright stays for e2e. |
-| Node | unspecified | **Node 24 LTS** | Current active LTS. |
+| Frontend server state | Pinia for everything | **TanStack Query (Vue)** for server state, Pinia for UI state only | Caching, refetch, optimistic updates for review actions, SSE-driven invalidation, with no hand-written loading/error flags. *(dropped in revision 3)* |
+| Frontend API types | unspecified | **openapi-typescript + openapi-fetch** generated from FastAPI's OpenAPI | Backend and frontend types can't drift; CI fails if the generated client is stale. *(dropped in revision 3)* |
+| Rules editor | "YAML with validation" | **CodeMirror 6** + `codemirror-json-schema` (YAML mode) | Lighter than Monaco; schema-driven autocomplete and inline errors from the same generated JSON Schema. *(dropped in revision 3)* |
+| Frontend unit tests | Playwright only | **Vitest** + Playwright | Fast component and store tests; Playwright stays for e2e. *(dropped in revision 3)* |
+| Node | unspecified | **Node 24 LTS** | Current active LTS. *(dropped in revision 3)* |
 | Integration tests | docker compose in CI | **testcontainers-python** (Postgres) | Each test session gets a clean, throwaway database; works the same locally and in CI. |
 | HTTP cassettes | "VCR-style" | **pytest-recording** (vcrpy) + **respx** for hand-written mocks | Concrete choices; both understand httpx. |
 | Logs | structured JSON | **structlog** (JSON renderer) with OTel trace ids injected | |
@@ -41,7 +69,7 @@ The original stack was sound. These changes remove hand-rolled infrastructure, c
 | Supply chain | "signed images" | **cosign** keyless signing, **syft** SBOM, GitHub artifact attestations | Concrete, free, standard. |
 | Docs site | MkDocs | **MkDocs Material** (or **Zensical**, its successor from the same team, if stable when you start) | Check the status before you start: Material for MkDocs is in maintenance mode. |
 
-**Things deliberately kept:** FastAPI, Pydantic v2, SQLAlchemy 2.0 + Alembic, LangGraph (for checkpoints and `interrupt()`), Vue 3 + Vite + TS + Pinia, Chart.js 4, uv, ruff, mypy, hypothesis, Playwright, ESLint + Prettier, OpenTelemetry + Prometheus.
+**Things deliberately kept:** FastAPI, Pydantic v2, SQLAlchemy 2.0 + Alembic, LangGraph (for checkpoints and `interrupt()`), uv, ruff, mypy, hypothesis, Playwright, ESLint + Prettier, OpenTelemetry + Prometheus.
 
 **On LangGraph:** the pipeline is linear, so LangGraph earns its place only through the Postgres checkpointer and `interrupt()`/`Command(resume=…)`. Keep every LangGraph import inside `backend/triagent/pipeline/`. Nodes call pure functions from `core/`. If LangGraph ever becomes a burden, the graph can be replaced by a small state machine over the `decisions` table without touching `core/`.
 
@@ -75,7 +103,7 @@ This project must be a **clean-room build**. It must not contain anything from a
 | **SLA engine** | Per region, severity and queue. Business-hours calendars and breach prediction. |
 | **Human in the loop** | Review queue with accept, override and redirect actions. Overrides feed rule-tuning reports. |
 | **Write-back** | Idempotent updates to the source (assign, label, comment, transition) via an outbox pattern. |
-| **Dashboard** | Vue 3 and Chart.js: pipeline view, review queue, rules editor, SLA and insights, admin. Three themes. |
+| **Screens** | Pipeline, ticket trace, review queue, rules, SLA, insights and admin, served by Grafana, Langfuse, Appsmith and Keycloak from config Triagent ships. |
 | **Operating modes** | `shadow` (decide but don't write), `assist` (suggest only), `auto` (write high-confidence decisions). Per queue. |
 | **Audit** | Every decision stores its inputs, rule version, rule trace, model output, confidence and actor. Replayable. |
 
@@ -117,7 +145,8 @@ This project must be a **clean-room build**. It must not contain anything from a
    Postgres: inbox · tickets · decisions · audit · rulesets · outbox
              · checkpoints · procrastinate_jobs
    Events:   Postgres LISTEN/NOTIFY → API → SSE
-   API: FastAPI (REST + SSE)      UI: Vue 3 + TanStack Query + Chart.js
+   API: FastAPI (REST + SSE)
+   Screens: Grafana · Langfuse · Appsmith (via the API, a read-only DB role, metrics and traces) · Keycloak SSO
 ```
 
 ### Key design decisions (keep these, they are the product)
@@ -155,9 +184,11 @@ This project must be a **clean-room build**. It must not contain anything from a
 | HTTP client | httpx | Async, one client for every connector |
 | CLI | Typer | Typed commands |
 | Auth | Authlib (OIDC, JWT) | Provider-neutral |
-| UI | Vue 3, Vite, TypeScript, Pinia (UI state), TanStack Query (server state), Chart.js 4, CodeMirror 6 | Matches enterprise constraints |
-| API client | openapi-typescript + openapi-fetch | Generated types from FastAPI |
-| Tests | pytest, pytest-asyncio, hypothesis, testcontainers, pytest-recording, respx, Vitest, Playwright | Deterministic, replayable |
+| Dashboards | Grafana (provisioned JSON dashboards) | Pipeline, SLA, Insights; alerting |
+| Agent observability and evals | Langfuse, self-hosted | Traces, prompt versions, eval scores |
+| Action screens | Appsmith (Git-synced app exports) | Review, Rules, Admin on top of the API |
+| SSO | Keycloak (realm export) | One identity for API and all UIs |
+| Tests | pytest, pytest-asyncio, hypothesis, testcontainers, pytest-recording, respx, Playwright (against the Appsmith review app) | Deterministic, replayable |
 | Quality | ruff, mypy (strict on `core/`), import-linter, pre-commit, ESLint, Prettier | |
 | Packaging | Docker multi-stage (uv build, slim/distroless runtime, non-root), `docker compose` for local, Helm chart in v1.1 | Self-hosted first |
 | Observability | OpenTelemetry traces (incl. GenAI conventions), Prometheus metrics, structlog JSON logs | |
@@ -167,7 +198,7 @@ This project must be a **clean-room build**. It must not contain anything from a
 
 ## 4. Repository layout
 
-The org holds a small number of repos (section 16). This is the main one, `<org>/triagent`, a monorepo for the backend, frontend and docs:
+The org holds a small number of repos (section 16). This is the main one, `<org>/triagent`, a monorepo for the backend, platform config and docs:
 
 ```
 triagent/
@@ -199,14 +230,11 @@ triagent/
 │       ├── workers/           # ingest, pipeline, outbox tasks; periodic pollers and SLA sweeps
 │       ├── settings.py        # pydantic-settings
 │       └── cli.py             # Typer: triagent run | replay | dry-run | rules test | seed
-├── frontend/
-│   └── src/
-│       ├── api/               # generated OpenAPI types + openapi-fetch client
-│       ├── queries/           # TanStack Query composables
-│       ├── views/             # Pipeline, Review, Rules, SLA, Insights, Admin
-│       ├── components/charts/ # Chart.js wrappers and custom plugins (gauge, rings, heatmap)
-│       ├── themes/            # atlas.css, nebula.css, slate.css (design tokens)
-│       └── stores/            # Pinia (UI state only: theme, filters, layout)
+├── deploy/                    # config for the platforms that serve the screens
+│   ├── grafana/               # provisioning: data sources + dashboards/*.json (Pipeline, SLA, Insights)
+│   ├── appsmith/              # Git-synced app exports (Review, Rules, Admin) + CodeMirror custom widget
+│   ├── langfuse/              # project bootstrap, score configs, eval datasets (synthetic)
+│   └── keycloak/              # realm export: clients, roles viewer/reviewer/rule-author/admin
 ├── config/examples/northwind/ # fictional company: mappings, rulesets, SLAs, teams
 ├── schemas/                   # generated JSON Schemas (ruleset, mapping); checked in, CI verifies fresh
 ├── scripts/seed_synthetic.py  # generates realistic fake tickets
@@ -215,6 +243,7 @@ triagent/
 │   ├── golden/                # input ticket → expected decision and trace (YAML)
 │   └── cassettes/             # recorded API responses (synthetic only)
 ├── docs/                      # MkDocs Material / Zensical: concepts, rules DSL, connectors, deployment
+│   └── mockups/               # screen mocks (source of the shared canvas)
 └── .github/workflows/         # ci.yml, release.yml, codeql.yml
 ```
 
@@ -390,11 +419,11 @@ required: [title, region]
 | Replay | `triagent replay --from <date>` re-runs past tickets with a new ruleset and diffs the decisions | CLI |
 | Dry run | `triagent dry-run <ticket.json>` prints the decision and trace without writing | CLI |
 | Canary | A single-ticket mode in production with a write allow-list | Config flag |
-| UI unit | Components, stores, query composables | Vitest |
-| UI e2e | Pipeline, review flow and rules editor | Playwright |
-| LLM evals | Signal accuracy on a labelled synthetic set, tracked per prompt version | pytest + `pydantic-evals` |
+| Platform config | Grafana dashboards load and every panel query runs; Appsmith exports import cleanly | CI job against the compose demo profile |
+| UI e2e | Review flow in the Appsmith app resumes the graph | Playwright |
+| LLM evals | Signal accuracy on a labelled synthetic set, tracked per prompt version | Langfuse datasets and evals, run from CI |
 
-**Coverage gates:** 90% or more on `core/`, 75% or more overall. CI fails if a ruleset change alters any golden decision without the golden file being updated in the same PR. CI also fails if `schemas/` or the frontend's generated API client is stale.
+**Coverage gates:** 90% or more on `core/`, 75% or more overall. CI fails if a ruleset change alters any golden decision without the golden file being updated in the same PR. CI also fails if `schemas/` or the exported OpenAPI spec is stale.
 
 ---
 
@@ -419,7 +448,7 @@ Triagent: open-source escalation triage. Read docs/ARCHITECTURE.md before large 
 - Test: `uv run pytest -q` (unit) · `uv run pytest -m integration` (needs Docker for testcontainers)
 - Lint/type: `uv run ruff check . && uv run mypy backend/triagent/core && uv run lint-imports`
 - Regenerate schemas: `uv run triagent schemas export`
-- Frontend: `cd frontend && npm ci && npm run dev` · `npm run gen:api` · `npm test` · `npm run test:e2e`
+- Screens: `docker compose --profile demo up` (Grafana, Langfuse, Appsmith, Keycloak with seeded Northwind data)
 - Seed data: `uv run triagent seed --company northwind --tickets 500`
 
 ## Workflow
@@ -430,8 +459,7 @@ Triagent: open-source escalation triage. Read docs/ARCHITECTURE.md before large 
 
 ## Style
 - Python: typed, async I/O, Pydantic v2 models at boundaries, no bare except, timezone-aware datetimes only.
-- Vue: <script setup lang="ts">, TanStack Query for server data, Pinia for UI state, design tokens from themes/, no inline colours.
-- Charts: Chart.js 4 only; shared plugins live in components/charts/plugins/.
+- Screens: no custom frontend. Grafana dashboards, Appsmith apps and Langfuse config live in deploy/ as exported files; every action goes through the Triagent API, never straight to the database.
 ```
 
 ---
@@ -461,13 +489,13 @@ Run them in order. Each phase ends green (tests passing) and with a commit. Star
 ### Phase 6: API (2 days)
 > Build FastAPI routers for tickets, decisions, the review queue (accept/override/redirect enqueues a resume job), rulesets (draft, validate, publish, roll back), SLA, metrics, admin and modes (shadow/assist/auto per queue). Add an SSE stream fed by Postgres LISTEN/NOTIFY (sse-starlette), OIDC auth with roles via Authlib, and OpenAPI docs. Add a CI check that the exported OpenAPI spec is current.
 
-### Phase 7: Dashboard (4–5 days)
-> Build the Vue 3 + TS + Vite UI on Node 24 with a generated openapi-fetch client, TanStack Query for server state (SSE events invalidate queries), Pinia for UI state and Chart.js 4. Views: Pipeline (live animated flow), Review queue (optimistic accept/override/redirect), Rules editor (CodeMirror 6 YAML with JSON-Schema validation and a golden-test run button), SLA, Insights, Admin. Add three themes (atlas, nebula, slate) as CSS design tokens. Write shared Chart.js plugins (gloss, gauge needle, centre text, crosshair, heatmap cells) and an HTML tooltip. Support reduced motion and keyboard access. Add Vitest unit tests and Playwright e2e for the review flow.
+### Phase 7: Platform screens (2–3 days)
+> Using the mocks in `docs/mockups/` as the spec, add a compose `demo` profile with Grafana, Langfuse, Appsmith and Keycloak, all wired to Keycloak SSO. Provision Grafana data sources and dashboards for Pipeline, SLA and Insights as JSON in `deploy/grafana/`, with SLA alert rules. Point the OTel exporter at Langfuse and check that one ticket shows as a trace with six node spans and the LLM generation. Build the Review, Rules and Admin apps in Appsmith against the Triagent API, export them to `deploy/appsmith/`, and add a CodeMirror custom widget for ruleset YAML. Add a Langfuse dataset of labelled synthetic tickets and an eval run in CI. Add a Playwright test for the review flow and a CI job that loads every dashboard and app.
 
 ### Phase 8: Hardening and release (2–3 days)
-> Add OpenTelemetry traces (with GenAI conventions for LLM spans), Prometheus metrics, structlog JSON logs with trace ids, a multi-stage Dockerfile (uv build, slim non-root runtime), a compose "demo" profile with Keycloak and seeded Northwind data, the docs site, CodeQL, Dependabot, syft SBOM, cosign-signed images and a v0.1.0 release workflow. README: a GIF, a 5-minute quickstart, and an architecture diagram.
+> Add OpenTelemetry traces (with GenAI conventions for LLM spans), Prometheus metrics, structlog JSON logs with trace ids, a multi-stage Dockerfile (uv build, slim non-root runtime), seeded Northwind data for the demo profile, the docs site, CodeQL, Dependabot, syft SBOM, cosign-signed images and a v0.1.0 release workflow. README: a GIF, a 5-minute quickstart, and an architecture diagram.
 
-**Total:** about 4–5 weeks part-time for one developer with Claude Code. Procrastinate and Pydantic AI should claw back a day or two from phases 3 and 4.
+**Total:** about 3½–4½ weeks part-time for one developer with Claude Code. Procrastinate and Pydantic AI save a day or two in phases 3 and 4, and using platforms for the screens saves two or three more in Phase 7.
 
 ---
 
@@ -518,7 +546,7 @@ Triagent lives in its own GitHub organisation. Do this before Phase 0; it takes 
 
 | Repo | Purpose | When |
 | --- | --- | --- |
-| `<org>/triagent` | Main monorepo: backend, frontend, docs, compose, examples | Phase 0 |
+| `<org>/triagent` | Main monorepo: backend, platform config (`deploy/`), docs, compose, examples | Phase 0 |
 | `<org>/.github` | Org-wide defaults: `CONTRIBUTING.md` (DCO), `CODE_OF_CONDUCT.md`, `SECURITY.md`, `SUPPORT.md`, issue and PR templates, `profile/README.md` (the org landing page). Every repo in the org inherits these. | Phase 0 |
 | `<org>/helm-charts` | Helm chart, published as an OCI chart on GHCR | v1.1 |
 | `<org>/connector-template` | Cookiecutter-style template for third-party connectors | v2.0 (plugin marketplace) |

@@ -41,3 +41,14 @@ Outbox worker → source write-back (only in `auto` mode, or after human accepta
 4. `decision_id = hash(ticket_id, ruleset_version, prompt_version, input_hash)`.
 5. New queues start in `shadow` mode; promotion is an audited action.
 6. The audit table is append-only (Postgres trigger).
+
+## Screens
+
+No custom frontend. Each screen is served by an open-source platform reading the Triagent API, a read-only Postgres role, Prometheus metrics or OTel traces. See [mockups/](mockups/) and `deploy/`.
+
+| Screen | Platform |
+| --- | --- |
+| Pipeline, SLA, Insights | Grafana |
+| Ticket trace, classifier evals | Langfuse |
+| Review queue, Rules, Admin | Appsmith (every action calls the API) |
+| Sign-in and roles | Keycloak |

@@ -33,7 +33,8 @@ uv run pytest -q
 | `backend/triagent/pipeline/` | LangGraph triage graph (the only place LangGraph is imported). |
 | `backend/triagent/adapters/` | Sources, LLM providers, Postgres store, queue, notifiers. |
 | `backend/triagent/api/` | FastAPI routers and SSE. |
-| `frontend/` | Vue 3 dashboard (Phase 7). |
+| `deploy/` | Config for the platforms that serve the screens: Grafana, Langfuse, Appsmith, Keycloak (Phase 7). |
+| `docs/mockups/` | Clickable screen mocks ([view](https://claude.ai/artifact/3GhCHxN5Ja4hDyYa4epwdu)). |
 | `config/examples/northwind/` | Fictional example configuration. |
 | `tests/` | Unit, integration, e2e, golden and cassette tests. |
 | `docs/` | Architecture and build plan. |

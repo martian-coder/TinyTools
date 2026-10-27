@@ -17,7 +17,7 @@ While incubating inside the TinyTools repo, run every command from the `Triagent
 - Test: `uv run pytest -q` (unit) · `uv run pytest -m integration` (needs Docker for testcontainers)
 - Lint/type: `uv run ruff check . && uv run mypy backend/triagent/core && uv run lint-imports`
 - Regenerate schemas: `uv run triagent schemas export`
-- Frontend: `cd frontend && npm ci && npm run dev` · `npm run gen:api` · `npm test` · `npm run test:e2e`
+- Screens: `docker compose --profile demo up` (Grafana, Langfuse, Appsmith, Keycloak with seeded Northwind data)
 - Seed data: `uv run triagent seed --company northwind --tickets 500`
 
 ## Workflow
@@ -28,5 +28,4 @@ While incubating inside the TinyTools repo, run every command from the `Triagent
 
 ## Style
 - Python: typed, async I/O, Pydantic v2 models at boundaries, no bare except, timezone-aware datetimes only.
-- Vue: <script setup lang="ts">, TanStack Query for server data, Pinia for UI state, design tokens from themes/, no inline colours.
-- Charts: Chart.js 4 only; shared plugins live in components/charts/plugins/.
+- Screens: no custom frontend. Grafana dashboards, Appsmith apps and Langfuse config live in deploy/ as exported files; every action goes through the Triagent API, never straight to the database.

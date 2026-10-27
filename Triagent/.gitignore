@@ -11,7 +11,5 @@ htmlcov/
 .import_linter_cache/
 dist/
 site/
-node_modules/
-frontend/dist/
 playwright-report/
 test-results/
