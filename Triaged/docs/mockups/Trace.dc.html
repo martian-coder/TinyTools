@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Triaged ticket trace</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#F5F6F8}
+a{color:#1F5FB0}a:hover{color:#174A8A}
+</style>
+</helmet>
+<div style="font-family: Inter, system-ui, sans-serif; color: #14171C; background: #F5F6F8; min-height: 100vh">
+  <header style="background: #FFFFFF; border-bottom: 1px solid #E2E5EA; padding: 12px 24px; display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between">
+    <nav aria-label="Screens" style="display: flex; flex-wrap: wrap; gap: 4px; align-items: center">
+      <a href="Main.dc.html" style="font-weight: 700; font-size: 16px; color: #14171C; text-decoration: none; padding: 8px 10px 8px 0">Triaged</a>
+      <a href="Pipeline.dc.html" style="font-size: 14px; color: #4A515C; text-decoration: none; padding: 8px 12px; border-radius: 8px">Pipeline</a>
+      <a href="Trace.dc.html" aria-current="page" style="font-size: 14px; font-weight: 600; color: #FFFFFF; background: #14171C; text-decoration: none; padding: 8px 12px; border-radius: 8px">Trace</a>
+      <a href="Review.dc.html" style="font-size: 14px; color: #4A515C; text-decoration: none; padding: 8px 12px; border-radius: 8px">Review</a>
+      <a href="Rules.dc.html" style="font-size: 14px; color: #4A515C; text-decoration: none; padding: 8px 12px; border-radius: 8px">Rules</a>
+      <a href="SLA.dc.html" style="font-size: 14px; color: #4A515C; text-decoration: none; padding: 8px 12px; border-radius: 8px">SLA</a>
+      <a href="Insights.dc.html" style="font-size: 14px; color: #4A515C; text-decoration: none; padding: 8px 12px; border-radius: 8px">Insights</a>
+      <a href="Admin.dc.html" style="font-size: 14px; color: #4A515C; text-decoration: none; padding: 8px 12px; border-radius: 8px">Admin</a>
+    </nav>
+    <span style="font-size: 12px; font-weight: 600; background: #EEF1F5; border-radius: 6px; padding: 4px 10px">Served by Langfuse · OTel spans from the LangGraph run</span>
+  </header>
+
+  <main style="max-width: 1360px; margin: 0 auto; padding: 24px; display: flex; flex-direction: column; gap: 20px">
+    <section style="background: #FFFFFF; border: 1px solid #E2E5EA; border-radius: 12px; padding: 20px; display: flex; flex-wrap: wrap; gap: 16px 32px; align-items: flex-start; justify-content: space-between">
+      <div style="display: flex; flex-direction: column; gap: 6px; flex: 1 1 520px; min-width: 0">
+        <span style="font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #5F6672">jira-escalations:NW-48213 · thread NW-48213</span>
+        <h1 style="margin: 0; font-size: 24px; font-weight: 700; line-height: 1.3">Array controller drops paths after firmware 4.2 update</h1>
+        <span style="font-size: 14px; color: #4A515C">Paused at review · waiting for a reviewer since 17:56</span>
+      </div>
+      <dl style="margin: 0; display: grid; grid-template-columns: repeat(4, minmax(0, auto)); gap: 4px 24px; font-size: 13px">
+        <dt style="color: #5F6672">Region</dt><dt style="color: #5F6672">Severity</dt><dt style="color: #5F6672">Ruleset</dt><dt style="color: #5F6672">Prompt</dt>
+        <dd style="margin: 0; font-weight: 600">EMEA</dd><dd style="margin: 0; font-weight: 600">sev2</dd><dd style="margin: 0; font-weight: 600">1.4.0</dd><dd style="margin: 0; font-weight: 600">classify-v3</dd>
+      </dl>
+    </section>
+
+    <div style="display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-start">
+      <section style="flex: 999 1 560px; min-width: 0; background: #FFFFFF; border: 1px solid #E2E5EA; border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 6px">
+        <div style="display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; padding-bottom: 8px">
+          <h2 style="margin: 0; font-size: 17px; font-weight: 600">Spans</h2>
+          <span style="font-size: 13px; color: #5F6672">0 ms → 2.4 s · select a span</span>
+        </div>
+        <sc-for list="{{spans}}" as="s" hint-placeholder-count="6">
+          <button type="button" onClick="{{s.pick}}" aria-pressed="{{s.pressed}}" style="font: inherit; text-align: left; cursor: pointer; display: grid; grid-template-columns: 180px minmax(0, 1fr) 76px; gap: 12px; align-items: center; min-height: 44px; padding: 6px 10px; border-radius: 8px; border: 1px solid {{s.border}}; background: {{s.bg}}; color: #14171C">
+            <span style="display: flex; flex-direction: column; gap: 2px; padding-left: {{s.indent}}">
+              <span style="font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 500">{{s.name}}</span>
+              <span style="font-size: 11px; color: #5F6672">{{s.kind}}</span>
+            </span>
+            <span style="position: relative; height: 12px; background: #EEF1F5; border-radius: 4px">
+              <span style="position: absolute; top: 0; height: 12px; border-radius: 4px; left: {{s.left}}; width: {{s.width}}; background: {{s.fill}}"></span>
+            </span>
+            <span style="font-size: 12px; color: #4A515C; text-align: right; font-variant-numeric: tabular-nums">{{s.dur}}</span>
+          </button>
+        </sc-for>
+        <div style="display: flex; flex-wrap: wrap; gap: 16px; padding-top: 10px; font-size: 12px; color: #4A515C">
+          <span style="display: flex; gap: 6px; align-items: center"><span style="width: 12px; height: 12px; border-radius: 3px; background: #2A78D6"></span>Node</span>
+          <span style="display: flex; gap: 6px; align-items: center"><span style="width: 12px; height: 12px; border-radius: 3px; background: #EB6834"></span>LLM generation</span>
+          <span style="display: flex; gap: 6px; align-items: center"><span style="width: 12px; height: 12px; border-radius: 3px; background: repeating-linear-gradient(45deg, #9AA3AF 0 3px, #E2E5EA 3px 6px)"></span>Paused (interrupt)</span>
+        </div>
+      </section>
+
+      <section style="flex: 1 1 420px; min-width: 0; background: #FFFFFF; border: 1px solid #E2E5EA; border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 12px">
+        <div style="display: flex; flex-direction: column; gap: 4px">
+          <span style="font-size: 12px; color: #5F6672">Selected span</span>
+          <h2 style="margin: 0; font-family: 'JetBrains Mono', monospace; font-size: 18px; font-weight: 500">{{sel.name}}</h2>
+          <span style="font-size: 13px; color: #4A515C">{{sel.summary}}</span>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 6px">
+          <span style="font-size: 12px; font-weight: 600; color: #4A515C">Input</span>
+          <pre style="margin: 0; background: #F5F6F8; border: 1px solid #E2E5EA; border-radius: 8px; padding: 12px; font-family: 'JetBrains Mono', monospace; font-size: 12px; line-height: 1.55; white-space: pre-wrap; overflow-wrap: anywhere">{{sel.input}}</pre>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 6px">
+          <span style="font-size: 12px; font-weight: 600; color: #4A515C">Output</span>
+          <pre style="margin: 0; background: #F5F6F8; border: 1px solid #E2E5EA; border-radius: 8px; padding: 12px; font-family: 'JetBrains Mono', monospace; font-size: 12px; line-height: 1.55; white-space: pre-wrap; overflow-wrap: anywhere">{{sel.output}}</pre>
+        </div>
+        <a href="Review.dc.html" style="font-size: 14px; font-weight: 600">Open in review queue →</a>
+      </section>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1060}}'>
+class Component extends DCLogic {
+  constructor(props) { super(props); this.state = { picked: 'llm' }; }
+  renderVals() {
+    const total = 2400;
+    const raw = [
+      { id: 'intake', name: 'intake', kind: 'node', start: 0, end: 38, fill: '#2A78D6', indent: '0px',
+        summary: 'Normalised the Jira payload, checked for duplicates.',
+        input: 'source: jira-escalations\nnative_id: NW-48213\nraw_hash: 9f1c…a2e7',
+        output: 'Ticket(id="jira-escalations:NW-48213",\n  region="EMEA", severity="sev2",\n  product_line=None)  # not mapped' },
+      { id: 'validate', name: 'validate', kind: 'node', start: 38, end: 52, fill: '#2A78D6', indent: '0px',
+        summary: 'Required fields present. product_line missing, so classify runs.',
+        input: 'required: [title, region]',
+        output: 'ok: true\nwarnings: ["product_line missing"]' },
+      { id: 'classify', name: 'classify', kind: 'node', start: 52, end: 2298, fill: '#2A78D6', indent: '0px',
+        summary: 'Redacted PII, then asked the classifier for a Signal.',
+        input: 'redactions: 2 (email, phone)\nfields sent: title, body',
+        output: 'Signal returned (see generation)' },
+      { id: 'llm', name: 'generation', kind: 'LLM · openai-compatible · local vLLM', start: 71, end: 2281, fill: '#EB6834', indent: '20px',
+        summary: '2.2 s · 612 input tokens · 88 output tokens · structured output',
+        input: 'Classify this escalation. Return a Signal.\n\nTitle: Array controller drops paths after\nfirmware 4.2 update\nBody: Customer [EMAIL_1] reports path\nfailover on two hosts… call [PHONE_1]',
+        output: '{\n  "product_line": "storage",\n  "intent": "defect",\n  "summary": "Multipath loss after FW 4.2",\n  "confidence": 0.62\n}' },
+      { id: 'policy', name: 'policy', kind: 'node · rules engine', start: 2298, end: 2311, fill: '#2A78D6', indent: '0px',
+        summary: 'Ruleset northwind-global 1.4.0. Deciding rule: low-confidence-review.',
+        input: 'ruleset: northwind-global@1.4.0\nlayers: global → EMEA → storage-emea',
+        output: 'sev1-always-review        fail\nstorage-to-storage-team   pass  → storage-EMEA\nlow-confidence-review     pass  → review\n  reason: Classifier unsure (0.62 < 0.75)' },
+      { id: 'review', name: 'review', kind: 'interrupt · waiting for a human', start: 2311, end: 2400, fill: 'repeating-linear-gradient(45deg, #9AA3AF 0 3px, #E2E5EA 3px 6px)', indent: '0px',
+        summary: 'Graph paused with interrupt(). Resumes when a reviewer acts.',
+        input: 'draft: assign → storage-EMEA (Priya Raman)\nsla_due: 2026-10-28 09:56 CET',
+        output: 'pending' }
+    ];
+    const picked = this.state.picked;
+    const spans = raw.map((s) => ({
+      ...s,
+      left: (s.start / total * 100).toFixed(2) + '%',
+      width: Math.max(0.6, (s.end - s.start) / total * 100).toFixed(2) + '%',
+      dur: s.id === 'review' ? 'paused' : (s.end - s.start >= 1000 ? ((s.end - s.start) / 1000).toFixed(2) + ' s' : (s.end - s.start) + ' ms'),
+      bg: s.id === picked ? '#EEF4FC' : '#FFFFFF',
+      border: s.id === picked ? '#2A78D6' : '#FFFFFF',
+      pressed: s.id === picked ? 'true' : 'false',
+      pick: () => this.setState({ picked: s.id })
+    }));
+    const sel = raw.find((s) => s.id === picked) || raw[0];
+    return { spans, sel };
+  }
+}
+</script>
+</body>
+</html>

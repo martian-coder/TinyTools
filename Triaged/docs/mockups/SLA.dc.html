@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Triaged SLA</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#F5F6F8}
+a{color:#1F5FB0}a:hover{color:#174A8A}
+</style>
+</helmet>
+<div style="font-family: Inter, system-ui, sans-serif; color: #14171C; background: #F5F6F8; min-height: 100vh">
+  <header style="background: #FFFFFF; border-bottom: 1px solid #E2E5EA; padding: 12px 24px; display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between">
+    <nav aria-label="Screens" style="display: flex; flex-wrap: wrap; gap: 4px; align-items: center">
+      <a href="Main.dc.html" style="font-weight: 700; font-size: 16px; color: #14171C; text-decoration: none; padding: 8px 10px 8px 0">Triaged</a>
+      <a href="Pipeline.dc.html" style="font-size: 14px; color: #4A515C; text-decoration: none; padding: 8px 12px; border-radius: 8px">Pipeline</a>
+      <a href="Trace.dc.html" style="font-size: 14px; color: #4A515C; text-decoration: none; padding: 8px 12px; border-radius: 8px">Trace</a>
+      <a href="Review.dc.html" style="font-size: 14px; color: #4A515C; text-decoration: none; padding: 8px 12px; border-radius: 8px">Review</a>
+      <a href="Rules.dc.html" style="font-size: 14px; color: #4A515C; text-decoration: none; padding: 8px 12px; border-radius: 8px">Rules</a>
+      <a href="SLA.dc.html" aria-current="page" style="font-size: 14px; font-weight: 600; color: #FFFFFF; background: #14171C; text-decoration: none; padding: 8px 12px; border-radius: 8px">SLA</a>
+      <a href="Insights.dc.html" style="font-size: 14px; color: #4A515C; text-decoration: none; padding: 8px 12px; border-radius: 8px">Insights</a>
+      <a href="Admin.dc.html" style="font-size: 14px; color: #4A515C; text-decoration: none; padding: 8px 12px; border-radius: 8px">Admin</a>
+    </nav>
+    <span style="font-size: 12px; font-weight: 600; background: #EEF1F5; border-radius: 6px; padding: 4px 10px">Served by Grafana · Postgres data source + alert rules</span>
+  </header>
+
+  <main style="max-width: 1360px; margin: 0 auto; padding: 24px; display: flex; flex-direction: column; gap: 20px">
+    <div style="display: flex; flex-direction: column; gap: 4px">
+      <h1 style="margin: 0; font-size: 26px; font-weight: 700">SLA</h1>
+      <span style="font-size: 14px; color: #5F6672">Last 30 days · business hours from each region’s calendar · target 95% · sample data</span>
+    </div>
+
+    <section aria-label="Attainment by region" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px">
+      <sc-for list="{{regions}}" as="r" hint-placeholder-count="3">
+        <div style="background: #FFFFFF; border: 1px solid #E2E5EA; border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 10px">
+          <div style="display: flex; justify-content: space-between; align-items: center"><span style="font-size: 14px; font-weight: 600">{{r.name}}</span>
+            <span style="display: flex; gap: 6px; align-items: center; font-size: 12px; font-weight: 600"><span style="width: 10px; height: 10px; border-radius: 5px; background: {{r.dot}}"></span>{{r.status}}</span></div>
+          <span style="font-size: 32px; font-weight: 700; font-variant-numeric: tabular-nums">{{r.value}}</span>
+          <div style="position: relative; height: 10px; background: #EEF1F5; border-radius: 5px">
+            <div style="height: 10px; border-radius: 5px; background: #2A78D6; width: {{r.bar}}"></div>
+            <div style="position: absolute; top: -4px; left: 50%; width: 2px; height: 18px; background: #14171C"></div>
+          </div>
+          <span style="font-size: 12px; color: #4A515C">Scale 90–100%; line marks the 95% target · {{r.breaches}}</span>
+        </div>
+      </sc-for>
+    </section>
+
+    <div style="display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-start">
+      <section style="flex: 999 1 560px; min-width: 0; background: #FFFFFF; border: 1px solid #E2E5EA; border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 12px">
+        <div style="display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px"><h2 style="margin: 0; font-size: 17px; font-weight: 600">At risk now</h2><span style="font-size: 13px; color: #5F6672">Breach risk from queue depth, assignee load and remaining business hours</span></div>
+        <div style="overflow-x: auto">
+          <table style="width: 100%; border-collapse: collapse; font-size: 14px; min-width: 680px">
+            <thead><tr style="text-align: left; color: #5F6672; font-size: 12px"><th style="padding: 8px; font-weight: 600">Ticket</th><th style="padding: 8px; font-weight: 600">Sev</th><th style="padding: 8px; font-weight: 600">Owner</th><th style="padding: 8px; font-weight: 600; text-align: right">Business time left</th><th style="padding: 8px; font-weight: 600">Breach risk</th></tr></thead>
+            <tbody>
+              <sc-for list="{{risk}}" as="k" hint-placeholder-count="6">
+                <tr style="border-top: 1px solid #EEF1F5">
+                  <td style="padding: 10px 8px"><span style="display: flex; flex-direction: column; gap: 2px"><span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #4A515C">{{k.id}} · {{k.region}}</span><span>{{k.title}}</span></span></td>
+                  <td style="padding: 10px 8px">{{k.sev}}</td>
+                  <td style="padding: 10px 8px">{{k.owner}}</td>
+                  <td style="padding: 10px 8px; text-align: right; font-variant-numeric: tabular-nums">{{k.left}}</td>
+                  <td style="padding: 10px 8px"><span style="display: inline-flex; gap: 6px; align-items: center; font-size: 13px; font-weight: 600"><span style="width: 10px; height: 10px; border-radius: 5px; background: {{k.dot}}"></span>{{k.level}} · {{k.p}}</span></td>
+                </tr>
+              </sc-for>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section style="flex: 1 1 420px; min-width: 0; background: #FFFFFF; border: 1px solid #E2E5EA; border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 12px">
+        <div style="display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; align-items: baseline"><h2 style="margin: 0; font-size: 17px; font-weight: 600">Breaches by received time</h2><span style="font-size: 13px; font-variant-numeric: tabular-nums">{{hoverText}}</span></div>
+        <div style="display: flex; flex-direction: column; gap: 2px; font-size: 11px; color: #5F6672">
+          <div style="display: grid; grid-template-columns: 36px repeat(10, minmax(0, 1fr)); gap: 2px">
+            <span></span>
+            <sc-for list="{{hourLabels}}" as="h" hint-placeholder-count="10"><span style="text-align: center">{{h}}</span></sc-for>
+          </div>
+          <sc-for list="{{rows}}" as="row" hint-placeholder-count="5">
+            <div style="display: grid; grid-template-columns: 36px repeat(10, minmax(0, 1fr)); gap: 2px">
+              <span style="display: flex; align-items: center">{{row.label}}</span>
+              <sc-for list="{{row.cells}}" as="c" hint-placeholder-count="10">
+                <span onMouseEnter="{{c.enter}}" onMouseLeave="{{c.leave}}" style="height: 28px; border-radius: 4px; background: {{c.fill}}; outline: {{c.ring}}"></span>
+              </sc-for>
+            </div>
+          </sc-for>
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px; font-size: 12px; color: #4A515C"><span>0</span><span style="flex: 1; max-width: 160px; height: 8px; border-radius: 4px; background: linear-gradient(90deg, #EEF1F5, #B7D3F6, #6DA7EC, #2A78D6, #184F95)"></span><span>6+ breaches</span></div>
+        <span style="font-size: 13px; color: #4A515C; line-height: 1.45">Tickets received late on Friday breach most: the clock runs into Monday morning queues.</span>
+      </section>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1060}}'>
+class Component extends DCLogic {
+  constructor(props) { super(props); this.state = { hover: null }; }
+  renderVals() {
+    const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
+    const hours = ['08', '09', '10', '11', '12', '13', '14', '15', '16', '17'];
+    const grid = [
+      [1, 2, 1, 0, 1, 0, 1, 1, 2, 2],
+      [0, 1, 0, 0, 1, 1, 0, 1, 1, 2],
+      [0, 0, 1, 0, 0, 1, 1, 0, 2, 3],
+      [1, 0, 0, 1, 0, 1, 1, 2, 2, 3],
+      [1, 1, 1, 2, 2, 3, 4, 5, 6, 7]
+    ];
+    const ramp = ['#EEF1F5', '#CDE2FB', '#9EC5F4', '#6DA7EC', '#3987E5', '#256ABF', '#184F95', '#104281'];
+    const hover = this.state.hover;
+    const rows = days.map((d, di) => ({
+      label: d,
+      cells: hours.map((h, hi) => {
+        const v = grid[di][hi]; const key = di + '-' + hi;
+        return { fill: ramp[Math.min(v, 7)],
+          ring: hover && hover.key === key ? '2px solid #14171C' : 'none',
+          enter: () => this.setState({ hover: { key, text: d + ' ' + h + ':00 · ' + v + ' breaches' } }),
+          leave: () => this.setState({ hover: null }) };
+      })
+    }));
+    return {
+      rows, hourLabels: hours,
+      hoverText: hover ? hover.text : 'Hover a cell',
+      regions: [
+        { name: 'EMEA', value: '96.2%', bar: '62%', status: 'On target', dot: '#0CA30C', breaches: '41 breaches' },
+        { name: 'APJ', value: '93.8%', bar: '38%', status: 'Below target', dot: '#D03B3B', breaches: '57 breaches' },
+        { name: 'AMER', value: '97.1%', bar: '71%', status: 'On target', dot: '#0CA30C', breaches: '29 breaches' }
+      ],
+      risk: [
+        { id: 'NW-48218', region: 'APJ', title: 'Rack powered off after PSU alarm', sev: 'sev1', owner: 'Mei Tanaka', left: '1 h 12 m', level: 'Critical', p: '82%', dot: '#D03B3B' },
+        { id: 'NW-48164', region: 'APJ', title: 'BMC unreachable on two nodes', sev: 'sev2', owner: 'Arjun Mehta', left: '2 h 40 m', level: 'Serious', p: '61%', dot: '#EC835A' },
+        { id: 'NW-48190', region: 'EMEA', title: 'Switch stack reboot loop', sev: 'sev2', owner: 'unassigned', left: '3 h 05 m', level: 'Serious', p: '55%', dot: '#EC835A' },
+        { id: 'NW-48202', region: 'AMER', title: 'Battery swelling on laptop', sev: 'sev2', owner: 'Diego Alvarez', left: '5 h 30 m', level: 'Warning', p: '34%', dot: '#FAB219' },
+        { id: 'NW-48213', region: 'EMEA', title: 'Controller drops paths after FW 4.2', sev: 'sev2', owner: 'in review', left: '15 h 40 m', level: 'Warning', p: '22%', dot: '#FAB219' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

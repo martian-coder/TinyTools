@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Triaged screen map</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#F5F6F8}
+a{color:#1F5FB0}a:hover{color:#174A8A}
+</style>
+</helmet>
+<div style="font-family: Inter, system-ui, sans-serif; color: #14171C; background: #F5F6F8; min-height: 100vh; box-sizing: border-box">
+  <header style="background: #FFFFFF; border-bottom: 1px solid #E2E5EA; padding: 16px 24px; display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between">
+    <div style="display: flex; align-items: center; gap: 10px">
+      <svg width="28" height="28" viewBox="0 0 28 28" aria-hidden="true"><rect x="1" y="1" width="26" height="26" rx="7" fill="#14171C"></rect><path d="M8 9h12M14 9v11M9 15l5 5 5-5" stroke="#FFFFFF" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+      <span style="font-weight: 700; font-size: 18px">Triaged</span>
+      <span style="font-size: 13px; color: #5F6672">screen mocks · synthetic Northwind Devices data</span>
+    </div>
+    <span style="font-size: 13px; color: #4A515C; border: 1px solid #E2E5EA; border-radius: 999px; padding: 4px 12px">Assemble, don’t build: 4 open-source platforms + the Triaged API</span>
+  </header>
+
+  <main style="max-width: 1360px; margin: 0 auto; padding: 32px 24px 48px; display: flex; flex-direction: column; gap: 28px">
+    <section style="display: flex; flex-direction: column; gap: 8px; max-width: 860px">
+      <h1 style="margin: 0; font-size: 32px; line-height: 1.2; font-weight: 700">Every screen, and the platform that serves it</h1>
+      <p style="margin: 0; font-size: 16px; line-height: 1.5; color: #4A515C">Triaged owns the agents, rules, picker, SLA engine and API. The screens people use are configured on well-known open-source platforms, shipped as dashboards and app exports in <span style="font-family: 'JetBrains Mono', monospace; font-size: 14px">deploy/</span>. Select a screen to open it.</p>
+    </section>
+
+    <section style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px" aria-label="Screens">
+      <sc-for list="{{screens}}" as="s" hint-placeholder-count="7">
+        <a href="{{s.href}}" style="text-decoration: none; color: #14171C; background: #FFFFFF; border: 1px solid #E2E5EA; border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 10px; min-height: 172px; box-sizing: border-box">
+          <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px">
+            <span style="font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #5F6672">{{s.num}}</span>
+            <span style="font-size: 12px; font-weight: 600; color: #14171C; background: #EEF1F5; border-radius: 6px; padding: 3px 8px">{{s.platform}}</span>
+          </div>
+          <span style="font-size: 20px; font-weight: 600">{{s.name}}</span>
+          <span style="font-size: 14px; line-height: 1.45; color: #4A515C">{{s.what}}</span>
+          <span style="margin-top: auto; font-size: 14px; font-weight: 600; color: #1F5FB0">Open screen →</span>
+        </a>
+      </sc-for>
+    </section>
+
+    <section style="display: flex; flex-direction: column; gap: 12px">
+      <h2 style="margin: 0; font-size: 20px; font-weight: 600">How the pieces connect</h2>
+      <div style="display: flex; flex-wrap: wrap; gap: 12px; align-items: stretch">
+        <div style="flex: 1 1 220px; background: #FFFFFF; border: 1px solid #E2E5EA; border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 6px">
+          <span style="font-size: 12px; font-weight: 600; color: #5F6672; letter-spacing: 0.04em; text-transform: uppercase">Sources</span>
+          <span style="font-size: 15px; font-weight: 600">Jira · SQL view · Webhook · CSV</span>
+          <span style="font-size: 13px; color: #4A515C">Read and written back by Triaged connectors</span>
+        </div>
+        <div style="flex: 1.4 1 280px; background: #14171C; color: #FFFFFF; border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 6px">
+          <span style="font-size: 12px; font-weight: 600; color: #C9CED6; letter-spacing: 0.04em; text-transform: uppercase">Triaged (we build this)</span>
+          <span style="font-size: 15px; font-weight: 600">LangGraph agents · rules · picker · SLA · outbox · FastAPI</span>
+          <span style="font-size: 13px; color: #C9CED6">Postgres 17 + Procrastinate · emits OTel traces and Prometheus metrics</span>
+        </div>
+        <div style="flex: 2 1 420px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px">
+          <sc-for list="{{platforms}}" as="p" hint-placeholder-count="4">
+            <div style="background: #FFFFFF; border: 1px solid #E2E5EA; border-radius: 12px; padding: 14px; display: flex; flex-direction: column; gap: 4px">
+              <span style="font-size: 15px; font-weight: 600">{{p.name}}</span>
+              <span style="font-size: 12px; font-family: 'JetBrains Mono', monospace; color: #5F6672">{{p.licence}}</span>
+              <span style="font-size: 13px; color: #4A515C; line-height: 1.4">{{p.role}}</span>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1060}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      screens: [
+        { num: '01', name: 'Pipeline', platform: 'Grafana', href: 'Pipeline.dc.html', what: 'Live stage counts, throughput, queue depth and the mode each queue runs in.' },
+        { num: '02', name: 'Ticket trace', platform: 'Langfuse', href: 'Trace.dc.html', what: 'One ticket through all six nodes: timings, redacted LLM input, Signal output, rule trace.' },
+        { num: '03', name: 'Review queue', platform: 'Appsmith', href: 'Review.dc.html', what: 'Accept, override or redirect uncertain decisions. Each action resumes the paused graph.' },
+        { num: '04', name: 'Rules', platform: 'Appsmith + Git', href: 'Rules.dc.html', what: 'Ruleset versions, diff, golden tests and replay impact. Edits land as pull requests.' },
+        { num: '05', name: 'SLA', platform: 'Grafana', href: 'SLA.dc.html', what: 'Attainment by region, at-risk tickets and predicted breaches over business hours.' },
+        { num: '06', name: 'Insights', platform: 'Grafana + Langfuse', href: 'Insights.dc.html', what: 'Override rates by rule, classifier accuracy per prompt version, automation share.' },
+        { num: '07', name: 'Admin', platform: 'Appsmith + Keycloak', href: 'Admin.dc.html', what: 'Queue modes and promotion, connector health and drift, teams, capacity and roles.' }
+      ],
+      platforms: [
+        { name: 'Grafana', licence: 'AGPL-3.0 · run unmodified', role: 'Pipeline, SLA and Insights dashboards over Prometheus and Postgres' },
+        { name: 'Langfuse', licence: 'MIT · self-hosted', role: 'Agent traces, prompt versions, evals and scores' },
+        { name: 'Appsmith', licence: 'Apache-2.0', role: 'Review queue, rules and admin apps calling the Triaged API' },
+        { name: 'Keycloak', licence: 'Apache-2.0', role: 'OIDC sign-in and the four roles for every screen' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

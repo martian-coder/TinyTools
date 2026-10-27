@@ -1,0 +1,64 @@
+name: Triaged CI
+
+# Triaged incubates in Triaged/. When it moves to its own repository,
+# copy this file to .github/workflows/ci.yml there and drop the paths
+# filters and working-directory default.
+
+on:
+  push:
+    paths:
+      - "Triaged/**"
+      - ".github/workflows/triaged-ci.yml"
+  pull_request:
+    paths:
+      - "Triaged/**"
+      - ".github/workflows/triaged-ci.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: triaged-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    working-directory: Triaged
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: "3.13"
+          enable-cache: true
+          cache-dependency-glob: Triaged/uv.lock
+      - run: uv sync --locked
+      - name: ruff format
+        run: uv run ruff format --check .
+      - name: ruff check
+        run: uv run ruff check --output-format=github .
+      - name: mypy
+        run: uv run mypy backend/triaged
+      - name: import contracts
+        run: uv run lint-imports
+
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.13", "3.14"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: ${{ matrix.python-version }}
+          enable-cache: true
+          cache-dependency-glob: Triaged/uv.lock
+      - run: uv sync --locked
+      - name: pytest
+        run: uv run pytest -q --cov --cov-report=term-missing

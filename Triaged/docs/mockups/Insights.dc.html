@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Triaged insights</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#F5F6F8}
+a{color:#1F5FB0}a:hover{color:#174A8A}
+</style>
+</helmet>
+<div style="font-family: Inter, system-ui, sans-serif; color: #14171C; background: #F5F6F8; min-height: 100vh">
+  <header style="background: #FFFFFF; border-bottom: 1px solid #E2E5EA; padding: 12px 24px; display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between">
+    <nav aria-label="Screens" style="display: flex; flex-wrap: wrap; gap: 4px; align-items: center">
+      <a href="Main.dc.html" style="font-weight: 700; font-size: 16px; color: #14171C; text-decoration: none; padding: 8px 10px 8px 0">Triaged</a>
+      <a href="Pipeline.dc.html" style="font-size: 14px; color: #4A515C; text-decoration: none; padding: 8px 12px; border-radius: 8px">Pipeline</a>
+      <a href="Trace.dc.html" style="font-size: 14px; color: #4A515C; text-decoration: none; padding: 8px 12px; border-radius: 8px">Trace</a>
+      <a href="Review.dc.html" style="font-size: 14px; color: #4A515C; text-decoration: none; padding: 8px 12px; border-radius: 8px">Review</a>
+      <a href="Rules.dc.html" style="font-size: 14px; color: #4A515C; text-decoration: none; padding: 8px 12px; border-radius: 8px">Rules</a>
+      <a href="SLA.dc.html" style="font-size: 14px; color: #4A515C; text-decoration: none; padding: 8px 12px; border-radius: 8px">SLA</a>
+      <a href="Insights.dc.html" aria-current="page" style="font-size: 14px; font-weight: 600; color: #FFFFFF; background: #14171C; text-decoration: none; padding: 8px 12px; border-radius: 8px">Insights</a>
+      <a href="Admin.dc.html" style="font-size: 14px; color: #4A515C; text-decoration: none; padding: 8px 12px; border-radius: 8px">Admin</a>
+    </nav>
+    <span style="font-size: 12px; font-weight: 600; background: #EEF1F5; border-radius: 6px; padding: 4px 10px">Served by Grafana · classifier scores from Langfuse</span>
+  </header>
+
+  <main style="max-width: 1360px; margin: 0 auto; padding: 24px; display: flex; flex-direction: column; gap: 20px">
+    <div style="display: flex; flex-direction: column; gap: 4px">
+      <h1 style="margin: 0; font-size: 26px; font-weight: 700">Insights</h1>
+      <span style="font-size: 14px; color: #5F6672">Last 8 weeks · all queues · sample data</span>
+    </div>
+
+    <section style="background: #FFFFFF; border: 1px solid #E2E5EA; border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 14px">
+      <div style="display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; align-items: baseline">
+        <h2 style="margin: 0; font-size: 17px; font-weight: 600">Who made each decision, per week</h2>
+        <span style="font-size: 13px; font-variant-numeric: tabular-nums">{{hoverText}}</span>
+      </div>
+      <div style="display: flex; flex-wrap: wrap; gap: 16px; font-size: 13px; color: #4A515C">
+        <span style="display: flex; gap: 6px; align-items: center"><span style="width: 12px; height: 12px; border-radius: 3px; background: #2A78D6"></span>Routed automatically</span>
+        <span style="display: flex; gap: 6px; align-items: center"><span style="width: 12px; height: 12px; border-radius: 3px; background: #EB6834"></span>Human accepted the draft</span>
+        <span style="display: flex; gap: 6px; align-items: center"><span style="width: 12px; height: 12px; border-radius: 3px; background: #1BAF7A"></span>Human overrode or redirected</span>
+      </div>
+      <div style="display: flex; gap: 10px">
+        <div style="display: flex; flex-direction: column; justify-content: space-between; font-size: 11px; color: #5F6672; height: 200px; text-align: right"><span>100%</span><span>50%</span><span>0%</span></div>
+        <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px">
+          <div style="height: 200px; display: flex; gap: 12px; align-items: flex-end; border-bottom: 1px solid #C9CED6">
+            <sc-for list="{{weeks}}" as="w" hint-placeholder-count="8">
+              <div onMouseEnter="{{w.enter}}" onMouseLeave="{{w.leave}}" style="flex: 1; height: 200px; display: flex; flex-direction: column; justify-content: flex-end; gap: 2px; opacity: {{w.opacity}}">
+                <div style="height: {{w.oPx}}; background: #1BAF7A; border-radius: 4px 4px 0 0"></div>
+                <div style="height: {{w.hPx}}; background: #EB6834"></div>
+                <div style="height: {{w.aPx}}; background: #2A78D6"></div>
+              </div>
+            </sc-for>
+          </div>
+          <div style="display: flex; gap: 12px; font-size: 11px; color: #5F6672"><sc-for list="{{weeks}}" as="w" hint-placeholder-count="8"><span style="flex: 1; text-align: center">{{w.label}}</span></sc-for></div>
+        </div>
+      </div>
+      <span style="font-size: 13px; color: #4A515C">Automatic routing grew from 38% to 63% as storage and laptop queues moved from shadow to auto.</span>
+    </section>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); gap: 20px">
+      <section style="background: #FFFFFF; border: 1px solid #E2E5EA; border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 12px">
+        <h2 style="margin: 0; font-size: 17px; font-weight: 600">Overrides by deciding rule</h2>
+        <span style="font-size: 13px; color: #5F6672">Share of that rule’s decisions a human changed</span>
+        <sc-for list="{{overrides}}" as="o" hint-placeholder-count="5">
+          <div style="display: grid; grid-template-columns: minmax(0, 210px) minmax(0, 1fr) 44px; gap: 10px; align-items: center">
+            <span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">{{o.rule}}</span>
+            <div style="height: 14px; background: #EEF1F5; border-radius: 4px"><div style="height: 14px; border-radius: 0 4px 4px 0; background: #2A78D6; width: {{o.bar}}"></div></div>
+            <span style="font-size: 13px; text-align: right; font-variant-numeric: tabular-nums">{{o.pct}}</span>
+          </div>
+        </sc-for>
+        <a href="Rules.dc.html" style="font-size: 14px; font-weight: 600">Tune storage-to-storage-team →</a>
+      </section>
+
+      <section style="background: #FFFFFF; border: 1px solid #E2E5EA; border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 12px">
+        <h2 style="margin: 0; font-size: 17px; font-weight: 600">Classifier accuracy by prompt version</h2>
+        <span style="font-size: 13px; color: #5F6672">Langfuse eval on 400 labelled synthetic tickets</span>
+        <sc-for list="{{prompts}}" as="p" hint-placeholder-count="3">
+          <div style="display: grid; grid-template-columns: 110px minmax(0, 1fr) 44px; gap: 10px; align-items: center">
+            <span style="font-family: 'JetBrains Mono', monospace; font-size: 12px">{{p.ver}}</span>
+            <div style="height: 14px; background: #EEF1F5; border-radius: 4px"><div style="height: 14px; border-radius: 0 4px 4px 0; background: #2A78D6; width: {{p.bar}}"></div></div>
+            <span style="font-size: 13px; text-align: right; font-variant-numeric: tabular-nums">{{p.acc}}</span>
+          </div>
+        </sc-for>
+        <h3 style="margin: 8px 0 0; font-size: 14px; font-weight: 600">Top override reasons</h3>
+        <ol style="margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 6px; font-size: 14px; color: #4A515C">
+          <li>HCI appliances routed to servers instead of storage (31)</li>
+          <li>RMA requests landing in defect queues (24)</li>
+          <li>Owner on leave; picker capacity not updated (12)</li>
+        </ol>
+      </section>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1060}}'>
+class Component extends DCLogic {
+  constructor(props) { super(props); this.state = { hover: null }; }
+  renderVals() {
+    const data = [
+      ['7 Sep', 38, 49, 13], ['14 Sep', 41, 47, 12], ['21 Sep', 44, 45, 11], ['28 Sep', 47, 42, 11],
+      ['5 Oct', 52, 38, 10], ['12 Oct', 56, 35, 9], ['19 Oct', 60, 32, 8], ['26 Oct', 63, 30, 7]
+    ];
+    const h = this.state.hover;
+    const px = (v) => Math.round(v * 2 - 2) + 'px';
+    const weeks = data.map((d, i) => ({ label: d[0], aPx: px(d[1]), hPx: px(d[2]), oPx: px(d[3]),
+      opacity: h === null || h === i ? '1' : '0.45',
+      enter: () => this.setState({ hover: i }), leave: () => this.setState({ hover: null }) }));
+    return {
+      weeks,
+      hoverText: h === null ? 'Hover a week' : 'Week of ' + data[h][0] + ' · auto ' + data[h][1] + '% · accepted ' + data[h][2] + '% · overrode ' + data[h][3] + '%',
+      overrides: [
+        { rule: 'storage-to-storage-team', pct: '14%', bar: '70%' },
+        { rule: 'servers-by-region', pct: '9%', bar: '45%' },
+        { rule: 'laptops-to-endpoint', pct: '6%', bar: '30%' },
+        { rule: 'low-confidence-review', pct: '4%', bar: '20%' },
+        { rule: 'sev1-always-review', pct: '2%', bar: '10%' }
+      ],
+      prompts: [
+        { ver: 'classify-v1', acc: '81%', bar: '81%' },
+        { ver: 'classify-v2', acc: '86%', bar: '86%' },
+        { ver: 'classify-v3', acc: '91%', bar: '91%' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>
