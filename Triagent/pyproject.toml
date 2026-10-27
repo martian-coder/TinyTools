@@ -1,0 +1,112 @@
+[project]
+name = "triagent"
+version = "0.0.1"
+description = "Open-source escalation triage: versioned rules, optional LLM signals, human review, full audit."
+readme = "README.md"
+license = "Apache-2.0"
+license-files = ["LICENSE", "NOTICE"]
+requires-python = ">=3.13"
+classifiers = [
+    "Development Status :: 1 - Planning",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Framework :: FastAPI",
+    "Typing :: Typed",
+]
+dependencies = [
+    "pydantic>=2.11",
+    "pydantic-settings>=2.10",
+    "typer>=0.16",
+]
+
+[project.scripts]
+triagent = "triagent.cli:app"
+
+[dependency-groups]
+dev = [
+    "import-linter>=2.3",
+    "mypy>=1.17",
+    "pre-commit>=4.2",
+    "pytest>=8.4",
+    "pytest-asyncio>=1.1",
+    "pytest-cov>=6.2",
+    "ruff>=0.12",
+]
+
+[build-system]
+requires = ["uv_build>=0.8,<0.12"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-root = "backend"
+
+[tool.ruff]
+line-length = 100
+target-version = "py313"
+src = ["backend", "tests"]
+extend-exclude = ["*.md"]
+
+[tool.ruff.lint]
+select = ["E", "W", "F", "I", "B", "UP", "SIM", "ASYNC", "S", "N", "RUF", "PT", "BLE", "TRY"]
+ignore = ["TRY003"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S101"]
+
+[tool.mypy]
+python_version = "3.13"
+plugins = ["pydantic.mypy"]
+warn_unused_configs = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+
+[[tool.mypy.overrides]]
+module = "triagent.core.*"
+strict = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra --strict-markers"
+asyncio_mode = "auto"
+markers = [
+    "integration: needs Docker (testcontainers Postgres)",
+    "e2e: end-to-end tests",
+]
+
+[tool.coverage.run]
+source = ["triagent"]
+branch = true
+
+[tool.importlinter]
+root_packages = ["triagent"]
+include_external_packages = true
+
+[[tool.importlinter.contracts]]
+name = "core is pure: no frameworks, drivers or vendor SDKs"
+type = "forbidden"
+source_modules = ["triagent.core"]
+forbidden_modules = [
+    "fastapi", "starlette", "langgraph", "langchain", "langchain_core", "sqlalchemy",
+    "psycopg", "alembic", "pydantic_ai", "procrastinate", "httpx", "typer",
+    "openai", "anthropic", "ollama", "pydantic_settings",
+]
+allow_indirect_imports = true
+
+[[tool.importlinter.contracts]]
+name = "core depends on nothing else in triagent"
+type = "forbidden"
+source_modules = ["triagent.core"]
+forbidden_modules = [
+    "triagent.pipeline", "triagent.adapters", "triagent.mapping", "triagent.api",
+    "triagent.workers", "triagent.cli", "triagent.settings",
+]
+
+[[tool.importlinter.contracts]]
+name = "LangGraph only in pipeline"
+type = "forbidden"
+source_modules = [
+    "triagent.adapters", "triagent.mapping", "triagent.api", "triagent.workers",
+    "triagent.cli", "triagent.settings",
+]
+forbidden_modules = ["langgraph"]
+allow_indirect_imports = true

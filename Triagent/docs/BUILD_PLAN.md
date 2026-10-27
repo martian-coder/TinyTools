@@ -440,7 +440,7 @@ Triagent: open-source escalation triage. Read docs/ARCHITECTURE.md before large 
 
 Run them in order. Each phase ends green (tests passing) and with a commit. Start every session with: *"Read CLAUDE.md and docs/ARCHITECTURE.md, then …"*
 
-### Phase 0: Scaffold (½ day)
+### Phase 0: Scaffold (½ day) ✅ done
 > Create the repo layout for `<org>/triagent` from section 4 of `docs/BUILD_PLAN.md` (the org and its `.github` repo already exist, per section 16). Set up uv (Python 3.13), ruff, mypy, import-linter (core/ forbidden imports), pytest, pre-commit, Apache-2.0 LICENSE and NOTICE, CONTRIBUTING with DCO, SECURITY.md, docker-compose with Postgres 17, pydantic-settings and a Typer CLI stub, and a GitHub Actions CI workflow (lint, type-check, import contracts, test on 3.13 and 3.14). Add CLAUDE.md from section 11. No business logic yet. Make CI pass.
 
 ### Phase 1: Domain core and rules engine (2–3 days)
