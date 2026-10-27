@@ -4,7 +4,7 @@
 
 **Status:** Phase 0 (scaffold). No triage logic yet. See [`docs/BUILD_PLAN.md`](docs/BUILD_PLAN.md) for the plan and phases.
 
-> This folder is incubating inside TinyTools and will move to its own GitHub organisation (see section 16 of the build plan).
+> This folder is incubating inside TinyTools. It is moving to [triagedaemon/triaged](https://github.com/triagedaemon/triaged), which becomes the source of truth.
 
 ## Principles
 

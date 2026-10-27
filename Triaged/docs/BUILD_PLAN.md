@@ -3,7 +3,7 @@
 **Build plan for Claude Code (revision 3: assemble the UI from open-source platforms)**
 
 > **Name:** `triaged`, as in "triage daemon" (the Unix habit of naming a background agent with a trailing *d*, like `sshd`). Renamed from the working name `triagent`, which PyPI, npm and ~90 GitHub repos already use for AI agents. `triaged` was free on PyPI and npm on 27 Oct 2026; reserve both early.
-> **Home:** its own GitHub organisation (`github.com/<org>`, written `<org>` below; `triaged` if available). Not a personal repo and not part of any other project. Section 16 covers the org setup.
+> **Home:** its own GitHub organisation, [`github.com/triagedaemon`](https://github.com/triagedaemon) ("triaged" was taken on GitHub). Not a personal repo and not part of any other project. Section 16 covers the org setup.
 > **Licence:** Apache-2.0.
 > **Stack:** Python 3.13, FastAPI, LangGraph (isolated in `pipeline/`), Pydantic v2 + Pydantic AI, PostgreSQL 17 (Procrastinate queue). Screens on Grafana, Langfuse, Appsmith and Keycloak.
 
@@ -198,7 +198,7 @@ This project must be a **clean-room build**. It must not contain anything from a
 
 ## 4. Repository layout
 
-The org holds a small number of repos (section 16). This is the main one, `<org>/triaged`, a monorepo for the backend, platform config and docs:
+The org holds a small number of repos (section 16). This is the main one, `triagedaemon/triaged`, a monorepo for the backend, platform config and docs:
 
 ```
 triaged/
@@ -206,7 +206,7 @@ triaged/
 ├── README.md
 ├── LICENSE                    # Apache-2.0
 ├── NOTICE
-├── CONTRIBUTING.md            # repo-specific dev setup; DCO and PR rules inherited from <org>/.github
+├── CONTRIBUTING.md            # repo-specific dev setup; DCO and PR rules inherited from triagedaemon/.github
 ├── SECURITY.md                # kept here too so scanners and PyPI find it
 ├── docker-compose.yml         # db, keycloak (demo profile), api, worker, ui
 ├── pyproject.toml / uv.lock
@@ -469,7 +469,7 @@ Triaged: open-source escalation triage. Read docs/ARCHITECTURE.md before large c
 Run them in order. Each phase ends green (tests passing) and with a commit. Start every session with: *"Read CLAUDE.md and docs/ARCHITECTURE.md, then …"*
 
 ### Phase 0: Scaffold (½ day) ✅ done
-> Create the repo layout for `<org>/triaged` from section 4 of `docs/BUILD_PLAN.md` (the org and its `.github` repo already exist, per section 16). Set up uv (Python 3.13), ruff, mypy, import-linter (core/ forbidden imports), pytest, pre-commit, Apache-2.0 LICENSE and NOTICE, CONTRIBUTING with DCO, SECURITY.md, docker-compose with Postgres 17, pydantic-settings and a Typer CLI stub, and a GitHub Actions CI workflow (lint, type-check, import contracts, test on 3.13 and 3.14). Add CLAUDE.md from section 11. No business logic yet. Make CI pass.
+> Create the repo layout for `triagedaemon/triaged` from section 4 of `docs/BUILD_PLAN.md` (the org and its `.github` repo already exist, per section 16). Set up uv (Python 3.13), ruff, mypy, import-linter (core/ forbidden imports), pytest, pre-commit, Apache-2.0 LICENSE and NOTICE, CONTRIBUTING with DCO, SECURITY.md, docker-compose with Postgres 17, pydantic-settings and a Typer CLI stub, and a GitHub Actions CI workflow (lint, type-check, import contracts, test on 3.13 and 3.14). Add CLAUDE.md from section 11. No business logic yet. Make CI pass.
 
 ### Phase 1: Domain core and rules engine (2–3 days)
 > Implement `core/models.py` (section 5) and the rules DSL (section 6) as Pydantic models: YAML loader (`safe_load`) validated against them, generated JSON Schema in `schemas/`, evaluator with Kleene tri-state outcomes, RE2 regex, layering, and a full trace. No `eval`. Add hypothesis property tests (for example, that missing fields never yield `pass`) and 20 golden tests using Northwind examples. Add CLI `triaged rules test` and `triaged schemas export`.
@@ -503,7 +503,7 @@ Run them in order. Each phase ends green (tests passing) and with a commit. Star
 
 - **One phase per session.** Start each with "Read CLAUDE.md and the plan section for Phase N. Propose a file-by-file plan before editing."
 - **Ask for tests first** on core logic: "Write failing golden tests for these 5 scenarios, then implement until they pass."
-- **Keep the plan in the repo.** Commit this file as `docs/BUILD_PLAN.md` in `<org>/triaged` and tick off phases as you go.
+- **Keep the plan in the repo.** Commit this file as `docs/BUILD_PLAN.md` in `triagedaemon/triaged` and tick off phases as you go.
 - **Use plan mode** for cross-cutting changes such as schema changes or new connectors.
 - **Review every diff** that touches security, auth, the outbox or write-back paths yourself.
 - **Use the CLI as the check.** `triaged dry-run` and `triaged replay` are how you and Claude verify behaviour without touching real systems.
@@ -513,15 +513,15 @@ Run them in order. Each phase ends green (tests passing) and with a commit. Star
 
 ## 14. Open-source launch checklist
 
-- [ ] Name is clear of trademark clashes; GitHub org, PyPI project, npm scope (`@<org>`) and domain reserved
+- [ ] Name is clear of trademark clashes; GitHub org, PyPI project, npm scope (`@triagedaemon`) and domain reserved
 - [ ] Employer approval on file, if required
 - [ ] Org set up per section 16 (2FA required, two owners, rulesets, security features on)
-- [ ] Apache-2.0 LICENSE and NOTICE in `<org>/triaged`; CONTRIBUTING (DCO), CODE_OF_CONDUCT, SECURITY in `<org>/.github`
+- [ ] Apache-2.0 LICENSE and NOTICE in `triagedaemon/triaged`; CONTRIBUTING (DCO), CODE_OF_CONDUCT, SECURITY in `triagedaemon/.github`
 - [ ] README: problem, demo GIF, quickstart (`docker compose --profile demo up`), architecture, roadmap
 - [ ] Synthetic Northwind demo works from a clean clone in under 5 minutes
-- [ ] Docs site published (GitHub Pages at `<org>.github.io/triaged` or a custom domain verified on the org)
+- [ ] Docs site published (GitHub Pages at `triagedaemon.github.io/triaged` or a custom domain verified on the org)
 - [ ] Issue templates, PR template and "good first issue" labels
-- [ ] v0.1.0 tagged with release notes, SBOM and signed images on `ghcr.io/<org>/triaged`
+- [ ] v0.1.0 tagged with release notes, SBOM and signed images on `ghcr.io/triagedaemon/triaged`
 - [ ] Python package published from CI via PyPI trusted publishing; npm packages (if any) with provenance
 - [ ] Roadmap issues: ServiceNow and Zendesk connectors, Helm chart, multi-tenant mode, DataRobot/MLflow model-registry adapter
 
@@ -546,10 +546,10 @@ Triaged lives in its own GitHub organisation. Do this before Phase 0; it takes a
 
 | Repo | Purpose | When |
 | --- | --- | --- |
-| `<org>/triaged` | Main monorepo: backend, platform config (`deploy/`), docs, compose, examples | Phase 0 |
-| `<org>/.github` | Org-wide defaults: `CONTRIBUTING.md` (DCO), `CODE_OF_CONDUCT.md`, `SECURITY.md`, `SUPPORT.md`, issue and PR templates, `profile/README.md` (the org landing page). Every repo in the org inherits these. | Phase 0 |
-| `<org>/helm-charts` | Helm chart, published as an OCI chart on GHCR | v1.1 |
-| `<org>/connector-template` | Cookiecutter-style template for third-party connectors | v2.0 (plugin marketplace) |
+| `triagedaemon/triaged` | Main monorepo: backend, platform config (`deploy/`), docs, compose, examples | Phase 0 |
+| `triagedaemon/.github` | Org-wide defaults: `CONTRIBUTING.md` (DCO), `CODE_OF_CONDUCT.md`, `SECURITY.md`, `SUPPORT.md`, issue and PR templates, `profile/README.md` (the org landing page). Every repo in the org inherits these. | Phase 0 |
+| `triagedaemon/helm-charts` | Helm chart, published as an OCI chart on GHCR | v1.1 |
+| `triagedaemon/connector-template` | Cookiecutter-style template for third-party connectors | v2.0 (plugin marketplace) |
 
 Start with just the first two. Splitting the monorepo early costs more than it saves.
 
@@ -560,12 +560,12 @@ Start with just the first two. Splitting the monorepo early costs more than it s
 - **Rulesets (org level, target `main` on all repos):** pull request required with 1 approval, required status checks (`ci`, `codeql`, `dco`), linear history, no force pushes or deletion, signed commits optional. Add a tag ruleset so only maintainers can create `v*` tags.
 - **Apps:** the DCO app (or a DCO check workflow) to enforce `Signed-off-by`; Dependabot is built in. Install only the apps you need, scoped to selected repos.
 - **Actions:** allow only GitHub-authored and verified-creator actions plus an explicit allow-list; pin third-party actions to commit SHAs; default `GITHUB_TOKEN` permissions to **read-only**; require approval for workflows from first-time contributors' forks.
-- **Packages:** container images at `ghcr.io/<org>/triaged`, linked to the repo so they inherit its visibility and permissions.
+- **Packages:** container images at `ghcr.io/triagedaemon/triaged`, linked to the repo so they inherit its visibility and permissions.
 - **Publishing:** PyPI **trusted publishing** (OIDC from the `release.yml` workflow in a protected `release` environment), so there are no long-lived PyPI tokens. Same idea for npm with `--provenance`.
-- **Pages:** docs at `<org>.github.io/triaged`, or verify a custom domain on the org (`docs.<domain>`) before pointing DNS at it, to block domain takeover.
-- **Discussions:** enable on `<org>/triaged` for questions, keeping Issues for bugs and features.
+- **Pages:** docs at `triagedaemon.github.io/triaged`, or verify a custom domain on the org (`docs.<domain>`) before pointing DNS at it, to block domain takeover.
+- **Discussions:** enable on `triagedaemon/triaged` for questions, keeping Issues for bugs and features.
 - **Labels:** create a shared label set (`good first issue`, `help wanted`, `area/rules`, `area/connectors`, `area/ui`, `kind/bug`, `kind/feature`, `needs-triage`) and apply it to each repo.
 
 ### Moving this plan
 
-This document was drafted inside an unrelated personal repo. Once `<org>/triaged` exists, commit it there as `docs/BUILD_PLAN.md` and delete the draft copy so there is only one source of truth.
+This document was drafted inside an unrelated personal repo. Once `triagedaemon/triaged` exists, commit it there as `docs/BUILD_PLAN.md` and delete the draft copy so there is only one source of truth.
